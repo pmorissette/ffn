@@ -36,3 +36,28 @@ def test_clean_ticker():
 
     actual = utils.clean_ticker('C')
     assert actual == 'c'
+
+
+def test_fmtp():
+    actual = utils.fmtp(0.2364)
+    assert actual == '23.64%'
+
+    actual = utils.fmtp(0.2364222)
+    assert actual == '23.64%'
+
+    actual = utils.fmtp(0.2364922)
+    assert actual == '23.65%'
+
+    actual = utils.fmtp(0.236)
+    assert actual == '23.60%'
+
+
+def test_fmtn():
+    actual = utils.fmtn(0.2364)
+    assert actual == '0.24'
+
+    actual = utils.fmtn(1000.2364)
+    assert actual == '1000.24'
+
+    actual = utils.fmtn(1000.2)
+    assert actual == '1000.20'
