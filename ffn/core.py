@@ -267,6 +267,16 @@ class PerformanceStats(object):
                 ['12m up %', fmtp(self.twelve_month_win_perc)]]
         print tabulate(data)
 
+    def display_return_table(self):
+        data = [['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
+                 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'YTD']]
+        for k in self.return_table.keys():
+            r = self.return_table[k]
+            data.append([k, fmtn(r[1]), fmtn(r[2]), fmtn(r[3]), fmtn(r[4]),
+                         fmtn(r[5]), fmtn(r[6]), fmtn(r[7]), fmtn(r[8]),
+                         fmtn(r[9]), fmtn(r[10]), fmtn(r[11]), fmtn(r[12]), fmtn(r[13])])
+        print tabulate(data, headers='firstrow')
+
 
 def to_returns(self):
     """
