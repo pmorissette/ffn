@@ -1,6 +1,271 @@
+from ffn.utils import fmtp, fmtn
 import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
+from tabulate import tabulate
+
+
+class PerformanceStats(object):
+
+    def __init__(self, prices):
+        self._calculate(prices)
+
+    def _calculate(self, obj):
+        # default values
+        self.daily_mean = np.nan
+        self.daily_vol = np.nan
+        self.daily_sharpe = np.nan
+        self.best_day = np.nan
+        self.worst_day = np.nan
+        self.total_return = np.nan
+        self.cagr = np.nan
+        self.incep = np.nan
+        self.drawdown = np.nan
+        self.max_drawdown = np.nan
+        self.drawdown_details = np.nan
+        self.daily_skew = np.nan
+        self.daily_kurt = np.nan
+        self.monthly_returns = np.nan
+        self.avg_drawdown = np.nan
+        self.avg_drawdown_days = np.nan
+        self.monthly_mean = np.nan
+        self.monthly_vol = np.nan
+        self.monthly_sharpe = np.nan
+        self.best_month = np.nan
+        self.worst_month = np.nan
+        self.mtd = np.nan
+        self.three_month = np.nan
+        self.pos_month_perc = np.nan
+        self.avg_up_month = np.nan
+        self.avg_down_month = np.nan
+        self.monthly_skew = np.nan
+        self.monthly_kurt = np.nan
+        self.six_month = np.nan
+        self.yearly_returns = np.nan
+        self.ytd = np.nan
+        self.one_year = np.nan
+        self.yearly_mean = np.nan
+        self.yearly_vol = np.nan
+        self.yearly_sharpe = np.nan
+        self.best_year = np.nan
+        self.worst_year = np.nan
+        self.three_year = np.nan
+        self.win_year_perc = np.nan
+        self.twelve_month_win_perc = np.nan
+        self.yearly_skew = np.nan
+        self.yearly_kurt = np.nan
+        self.five_year = np.nan
+        self.ten_year = np.nan
+        self.return_table = {}
+        # end default values
+
+        if len(obj) is 0:
+            return
+
+        self.start = obj.index[0]
+        self.end = obj.index[-1]
+
+        # save daily prices for future use
+        self.daily_prices = obj
+        # M = month end frequency
+        self.monthly_prices = obj.resample('M', 'last')
+        # A == year end frequency
+        self.yearly_prices = obj.resample('A', 'last')
+
+        # let's save some typing
+        p = obj
+        mp = self.monthly_prices
+        yp = self.yearly_prices
+
+        if len(p) is 1:
+            return
+
+        # stats using daily data
+        self.returns = p.to_returns()
+        self.log_returns = p.to_log_returns()
+        r = self.returns
+
+        if len(r) < 2:
+            return
+
+        self.daily_mean = r.mean() * 252
+        self.daily_vol = r.std() * np.sqrt(252)
+        self.daily_sharpe = self.daily_mean / self.daily_vol
+        self.best_day = r.max()
+        self.worst_day = r.min()
+
+        self.total_return = obj[-1] / obj[0] - 1
+        # save ytd as total_return for now - if we get to real ytd
+        # then it will get updated
+        self.ytd = self.total_return
+        self.cagr = calc_cagr(p)
+        self.incep = self.cagr
+
+        self.drawdown = p.to_drawdown_series()
+        self.max_drawdown = self.drawdown.min()
+        self.drawdown_details = drawdown_details(self.drawdown)
+        if self.drawdown_details:
+            self.avg_drawdown = self.drawdown_details['drawdown'].mean()
+            self.avg_drawdown_days = self.drawdown_details['days'].mean()
+
+        if len(r) < 4:
+            return
+
+        self.daily_skew = r.skew()
+
+        # if all zero/nan kurt fails division by zero
+        if len(r[(~np.isnan(r)) & (r != 0)]) > 0:
+            self.daily_kurt = r.kurt()
+
+        # stats using monthly data
+        self.monthly_returns = self.monthly_prices.to_returns()
+        mr = self.monthly_returns
+
+        if len(mr) < 2:
+            return
+
+        self.monthly_mean = mr.mean() * 12
+        self.monthly_vol = mr.std() * np.sqrt(12)
+        self.monthly_sharpe = self.monthly_mean / self.monthly_vol
+        self.best_month = mr.max()
+        self.worst_month = mr.min()
+
+        # -2 because p[-1] will be mp[-1]
+        self.mtd = p[-1] / mp[-2] - 1
+
+        # -1 here to account for first return that will be nan
+        self.pos_month_perc = len(mr[mr > 0]) / float(len(mr) - 1)
+        self.avg_up_month = mr[mr > 0].mean()
+        self.avg_down_month = mr[mr <= 0].mean()
+
+        # return_table
+        for idx in mr.index:
+            if idx.year not in self.return_table:
+                self.return_table[idx.year] = {1: 0, 2: 0, 3: 0,
+                                               4: 0, 5: 0, 6: 0,
+                                               7: 0, 8: 0, 9: 0,
+                                               10: 0, 11: 0, 12: 0}
+            if not np.isnan(mr[idx]):
+                self.return_table[idx.year][idx.month] = mr[idx]
+        # add first month
+        fidx = mr.index[0]
+        self.return_table[fidx.year][fidx.month] = float(mp[0]) / p[0] - 1
+        # calculate the YTD values
+        for idx in self.return_table:
+            arr = np.array(self.return_table[idx].values())
+            self.return_table[idx][13] = np.prod(arr + 1) - 1
+
+        if len(mr) < 3:
+            return
+
+        denom = p[:p.index[-1] - pd.DateOffset(months=3)]
+        if len(denom) > 0:
+            self.three_month = p[-1] / denom[-1] - 1
+
+        if len(mr) < 4:
+            return
+
+        self.monthly_skew = mr.skew()
+
+        # if all zero/nan kurt fails division by zero
+        if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
+            self.monthly_kurt = mr.kurt()
+
+        denom = p[:p.index[-1] - pd.DateOffset(months=6)]
+        if len(denom) > 0:
+            self.six_month = p[-1] / denom[-1] - 1
+
+        self.yearly_returns = self.yearly_prices.to_returns()
+        yr = self.yearly_returns
+
+        if len(yr) < 2:
+            return
+
+        self.ytd = p[-1] / yp[-2] - 1
+
+        denom = p[:p.index[-1] - pd.DateOffset(years=1)]
+        if len(denom) > 0:
+            self.one_year = p[-1] / denom[-1] - 1
+
+        self.yearly_mean = yr.mean()
+        self.yearly_vol = yr.std()
+        self.yearly_sharpe = self.yearly_mean / self.yearly_vol
+        self.best_year = yr.max()
+        self.worst_year = yr.min()
+
+        # annualize stat for over 1 year
+        self.three_year = calc_cagr(p[p.index[-1] - pd.DateOffset(years=3):])
+
+        # -1 here to account for first return that will be nan
+        self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
+
+        tot = 0
+        win = 0
+        for i in range(11, len(mr)):
+            tot = tot + 1
+            if mp[i] / mp[i - 11] > 1:
+                win = win + 1
+        self.twelve_month_win_perc = float(win) / tot
+
+        if len(yr) < 4:
+            return
+
+        self.yearly_skew = yr.skew()
+
+        # if all zero/nan kurt fails division by zero
+        if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
+            self.yearly_kurt = yr.kurt()
+
+        self.five_year = calc_cagr(p[p.index[-1] - pd.DateOffset(years=5):])
+        self.ten_year = calc_cagr(p[p.index[-1] - pd.DateOffset(years=10):])
+
+        return
+
+    def display(self):
+        print 'Summary:'
+        data = [[fmtn(self.daily_sharpe), fmtp(self.cagr),
+                 fmtp(self.max_drawdown)]]
+        print tabulate(data, headers=['Sharpe', 'CAGR', 'Max Drawdown'])
+
+        print '\nAnnualized Returns:'
+        data = [[fmtp(self.mtd), fmtp(self.three_month), fmtp(self.six_month),
+                 fmtp(self.ytd), fmtp(self.one_year), fmtp(self.three_year),
+                 fmtp(self.five_year), fmtp(self.ten_year),
+                 fmtp(self.incep)]]
+        print tabulate(data,
+                       headers=['mtd', '3m', '6m', 'ytd', '1y',
+                                '3y', '5y', '10y', 'incep.'])
+
+        print '\nPeriodic:'
+        data = [
+            ['sharpe', fmtn(self.daily_sharpe), fmtn(self.monthly_sharpe),
+             fmtn(self.yearly_sharpe)],
+            ['mean', fmtp(self.daily_mean), fmtp(self.monthly_mean),
+             fmtp(self.yearly_mean)],
+            ['vol', fmtp(self.daily_vol), fmtp(self.monthly_vol),
+             fmtp(self.yearly_vol)],
+            ['skew', fmtn(self.daily_skew), fmtn(self.monthly_skew),
+             fmtn(self.yearly_skew)],
+            ['kurt', fmtn(self.daily_kurt), fmtn(self.monthly_kurt),
+             fmtn(self.yearly_kurt)],
+            ['best', fmtp(self.best_day), fmtp(self.best_month),
+             fmtp(self.best_year)],
+            ['worst', fmtp(self.worst_day), fmtp(self.worst_month),
+             fmtp(self.worst_year)]]
+        print tabulate(data, headers=['daily', 'monthly', 'yearly'])
+
+        print '\nDrawdowns:'
+        data = [
+            [fmtp(self.max_drawdown), fmtp(self.avg_drawdown),
+             fmtn(self.avg_drawdown_days)]]
+        print tabulate(data, headers=['max', 'avg', '# days'])
+
+        print '\nMisc:'
+        data = [['avg. up month', fmtp(self.avg_up_month)],
+                ['avg. down month', fmtp(self.avg_down_month)],
+                ['up year %', fmtp(self.win_year_perc)],
+                ['12m up %', fmtp(self.twelve_month_win_perc)]]
+        print tabulate(data)
 
 
 def to_returns(self):
@@ -61,222 +326,12 @@ def calc_perf_stats(obj):
     Calculates the performance statistics given an object.
     The object should be a TimeSeries of prices.
 
-    A dictionary will be returned containing all the stats.
+    A PerformanceStats object will be returned containing all the stats.
 
     Args:
         * obj: A Pandas TimeSeries representing a series of prices.
-    Returns:
-        * object -- Returns an object (Bunch) containing
-            all relevant statistics.
     """
-    stats = {}
-
-    if len(obj) is 0:
-        return stats
-
-    stats['start'] = obj.index[0]
-    stats['end'] = obj.index[-1]
-
-    # default values
-    stats['daily_mean'] = np.nan
-    stats['daily_vol'] = np.nan
-    stats['daily_sharpe'] = np.nan
-    stats['best_day'] = np.nan
-    stats['worst_day'] = np.nan
-    stats['total_return'] = np.nan
-    stats['cagr'] = np.nan
-    stats['incep'] = np.nan
-    stats['drawdown'] = np.nan
-    stats['max_drawdown'] = np.nan
-    stats['drawdown_details'] = np.nan
-    stats['daily_skew'] = np.nan
-    stats['daily_kurt'] = np.nan
-    stats['monthly_returns'] = np.nan
-    stats['avg_drawdown'] = np.nan
-    stats['avg_drawdown_days'] = np.nan
-    stats['monthly_mean'] = np.nan
-    stats['monthly_vol'] = np.nan
-    stats['monthly_sharpe'] = np.nan
-    stats['best_month'] = np.nan
-    stats['worst_month'] = np.nan
-    stats['mtd'] = np.nan
-    stats['three_month'] = np.nan
-    stats['pos_month_perc'] = np.nan
-    stats['avg_up_month'] = np.nan
-    stats['avg_down_month'] = np.nan
-    stats['monthly_skew'] = np.nan
-    stats['monthly_kurt'] = np.nan
-    stats['six_month'] = np.nan
-    stats['yearly_returns'] = np.nan
-    stats['ytd'] = np.nan
-    stats['one_year'] = np.nan
-    stats['yearly_mean'] = np.nan
-    stats['yearly_vol'] = np.nan
-    stats['yearly_sharpe'] = np.nan
-    stats['best_year'] = np.nan
-    stats['worst_year'] = np.nan
-    stats['three_year'] = np.nan
-    stats['win_year_perc'] = np.nan
-    stats['twelve_month_win_perc'] = np.nan
-    stats['yearly_skew'] = np.nan
-    stats['yearly_kurt'] = np.nan
-    stats['five_year'] = np.nan
-    stats['ten_year'] = np.nan
-    stats['return_table'] = {}
-    # end default values
-
-    # save daily prices for future use
-    stats['daily_prices'] = obj
-    # M = month end frequency
-    stats['monthly_prices'] = obj.resample('M', 'last')
-    # A == year end frequency
-    stats['yearly_prices'] = obj.resample('A', 'last')
-
-    # let's save some typing
-    p = obj
-    mp = stats['monthly_prices']
-    yp = stats['yearly_prices']
-
-    if len(p) is 1:
-        return stats
-
-    # stats using daily data
-    stats['returns'] = p.to_returns()
-    stats['log_returns'] = p.to_log_returns()
-    r = stats['returns']
-
-    if len(r) < 2:
-        return stats
-
-    stats['daily_mean'] = r.mean() * 252
-    stats['daily_vol'] = r.std() * np.sqrt(252)
-    stats['daily_sharpe'] = stats['daily_mean'] / stats['daily_vol']
-    stats['best_day'] = r.max()
-    stats['worst_day'] = r.min()
-
-    stats['total_return'] = obj[-1] / obj[0] - 1
-    # save ytd as total_return for now - if we get to real ytd
-    # then it will get updated
-    stats['ytd'] = stats['total_return']
-    stats['cagr'] = calc_cagr(p)
-    stats['incep'] = stats['cagr']
-
-    stats['drawdown'] = p.to_drawdown_series()
-    stats['max_drawdown'] = stats['drawdown'].min()
-    stats['drawdown_details'] = drawdown_details(stats['drawdown'])
-    if stats['drawdown_details']:
-        stats['avg_drawdown'] = stats['drawdown_details']['drawdown'].mean()
-        stats['avg_drawdown_days'] = stats['drawdown_details']['days'].mean()
-
-    if len(r) < 4:
-        return stats
-
-    stats['daily_skew'] = r.skew()
-
-    # if all zero/nan kurt fails division by zero
-    if len(r[(~np.isnan(r)) & (r != 0)]) > 0:
-        stats['daily_kurt'] = r.kurt()
-
-    # stats using monthly data
-    stats['monthly_returns'] = stats['monthly_prices'].to_returns()
-    mr = stats['monthly_returns']
-
-    if len(mr) < 2:
-        return stats
-
-    stats['monthly_mean'] = mr.mean() * 12
-    stats['monthly_vol'] = mr.std() * np.sqrt(12)
-    stats['monthly_sharpe'] = stats['monthly_mean'] / stats['monthly_vol']
-    stats['best_month'] = mr.max()
-    stats['worst_month'] = mr.min()
-
-    # -2 because p[-1] will be mp[-1]
-    stats['mtd'] = p[-1] / mp[-2] - 1
-
-    # -1 here to account for first return that will be nan
-    stats['pos_month_perc'] = len(mr[mr > 0]) / float(len(mr) - 1)
-    stats['avg_up_month'] = mr[mr > 0].mean()
-    stats['avg_down_month'] = mr[mr <= 0].mean()
-
-    # return_table
-    for idx in mr.index:
-        if idx.year not in stats['return_table']:
-            stats['return_table'][idx.year] = {1: 0, 2: 0, 3: 0,
-                                               4: 0, 5: 0, 6: 0,
-                                               7: 0, 8: 0, 9: 0,
-                                               10: 0, 11: 0, 12: 0}
-        if not np.isnan(mr[idx]):
-            stats['return_table'][idx.year][idx.month] = mr[idx]
-    # add first month
-    fidx = mr.index[0]
-    stats['return_table'][fidx.year][fidx.month] = float(mp[0]) / p[0] - 1
-    # calculate the YTD values
-    for idx in stats['return_table']:
-        arr = np.array(stats['return_table'][idx].values())
-        stats['return_table'][idx][13] = np.prod(arr + 1) - 1
-
-    if len(mr) < 3:
-        return stats
-
-    stats['three_month'] = p[-1] / \
-        p[:p.index[-1] - pd.DateOffset(months=3)][-1] - 1
-
-    if len(mr) < 4:
-        return stats
-
-    stats['monthly_skew'] = mr.skew()
-
-    # if all zero/nan kurt fails division by zero
-    if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
-        stats['monthly_kurt'] = mr.kurt()
-
-    stats['six_month'] = p[-1] / \
-        p[:p.index[-1] - pd.DateOffset(months=6)][-1] - 1
-    # -2 because p[-1] == yp[-1]
-
-    stats['yearly_returns'] = stats['yearly_prices'].to_returns()
-    yr = stats['yearly_returns']
-
-    if len(yr) < 2:
-        return stats
-
-    stats['ytd'] = p[-1] / yp[-2] - 1
-    stats['one_year'] = p[-1] / \
-        p[:p.index[-1] - pd.DateOffset(years=1)][-1] - 1
-
-    stats['yearly_mean'] = yr.mean()
-    stats['yearly_vol'] = yr.std()
-    stats['yearly_sharpe'] = stats['yearly_mean'] / stats['yearly_vol']
-    stats['best_year'] = yr.max()
-    stats['worst_year'] = yr.min()
-
-    # annualize stat for over 1 year
-    stats['three_year'] = calc_cagr(p[p.index[-1] - pd.DateOffset(years=3):])
-
-    # -1 here to account for first return that will be nan
-    stats['win_year_perc'] = len(yr[yr > 0]) / float(len(yr) - 1)
-
-    tot = 0
-    win = 0
-    for i in range(11, len(mr)):
-        tot = tot + 1
-        if mp[i] / mp[i - 11] > 1:
-            win = win + 1
-    stats['twelve_month_win_perc'] = float(win) / tot
-
-    if len(yr) < 4:
-        return stats
-
-    stats['yearly_skew'] = yr.skew()
-
-    # if all zero/nan kurt fails division by zero
-    if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
-        stats['yearly_kurt'] = yr.kurt()
-
-    stats['five_year'] = calc_cagr(p[p.index[-1] - pd.DateOffset(years=5):])
-    stats['ten_year'] = calc_cagr(p[p.index[-1] - pd.DateOffset(years=10):])
-
-    return stats
+    return PerformanceStats(obj)
 
 
 def to_drawdown_series(prices):

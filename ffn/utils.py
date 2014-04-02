@@ -1,5 +1,6 @@
 import re
 import decorator
+import numpy as np
 
 
 def _memoize(func, *args, **kw):
@@ -66,3 +67,15 @@ def clean_ticker(ticker):
     pattern = re.compile('[\W_]+')
     res = pattern.sub('', ticker.split(' ')[0])
     return res.lower()
+
+
+def fmtp(number):
+    if np.isnan(number):
+        return '-'
+    return format(number, '.2%')
+
+
+def fmtn(number):
+    if np.isnan(number):
+        return '-'
+    return format(number, '.2f')
