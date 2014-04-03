@@ -315,8 +315,10 @@ class PerformanceStats(object):
         ser = self._get_series(period).to_returns().dropna()
 
         plt.figure(figsize=figsize)
-        ser.hist(bins=bins, figsize=figsize, title=title, **kwargs)
+        ax = ser.hist(bins=bins, figsize=figsize, normed=True, **kwargs)
+        ax.set_title(title)
         plt.axvline(0, linewidth=4)
+        ax2 = ser.plot(kind='kde')
 
     def _get_series(self, per):
         if per is 'd':
@@ -438,8 +440,11 @@ class GroupStats(dict):
     def plot_scatter_matrix(self, period='d', title=None, figsize=(10, 10), **kwargs):
         if title is None:
             title = '%s return scatter matrix' % get_period_name(period)
+
+        plt.figure()
         ser = self._get_series(period).to_returns().dropna()
-        pd.scatter_matrix(ser, figsize=figsize, title=title, **kwargs)
+        ax = pd.scatter_matrix(ser, figsize=figsize, **kwargs)
+        plt.suptitle(title)
 
     def _get_series(self, per):
         if per is 'd':
