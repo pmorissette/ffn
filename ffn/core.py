@@ -285,14 +285,117 @@ class PerformanceStats(object):
                 ['12m up %', fmtp(self.twelve_month_win_perc)]]
         print tabulate(data)
 
-    def display_return_table(self):
+    def display_monthly_returns(self):
         data = [['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
                  'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'YTD']]
         for k in self.return_table.keys():
             r = self.return_table[k]
-            data.append([k, fmtn(r[1]), fmtn(r[2]), fmtn(r[3]), fmtn(r[4]),
-                         fmtn(r[5]), fmtn(r[6]), fmtn(r[7]), fmtn(r[8]),
-                         fmtn(r[9]), fmtn(r[10]), fmtn(r[11]), fmtn(r[12]), fmtn(r[13])])
+            data.append([k, fmtpn(r[1]), fmtpn(r[2]), fmtpn(r[3]), fmtpn(r[4]),
+                         fmtpn(r[5]), fmtpn(r[6]), fmtpn(r[7]), fmtpn(r[8]),
+                         fmtpn(r[9]), fmtpn(r[10]), fmtpn(r[11]), fmtpn(r[12]),
+                         fmtpn(r[13])])
+        print tabulate(data, headers='firstrow')
+
+
+class GroupStats(dict):
+
+    def __init__(self, *prices):
+        # store original prices
+        self.prices = merge(*prices).dropna()
+        # duplicate columns
+        if len(self.prices.columns) != len(set(self.prices.columns)):
+            raise ValueError('One or more data series provided',
+                             'have same name! Please provide unique names')
+
+        # calculate stats for entire series
+        self._calculate(self.prices)
+
+    def _calculate(self, data):
+        for c in data.columns:
+            prc = data[c]
+            self[c] = prc.calc_perf_stats()
+
+    def set_date_range(self, start=None, end=None):
+        for k in self:
+            self[k].set_date_range(start, end)
+
+    def display(self):
+        data = []
+        first_row = ['Stat']
+        first_row.extend(self.keys())
+        data.append(first_row)
+
+        stats = [('start', 'Start', 'dt'),
+                 ('end', 'End', 'dt'),
+                 (None, None, None),
+                 ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('cagr', 'CAGR', 'p'),
+                 ('max_drawdown', 'Max Drawdown', 'p'),
+                 (None, None, None),
+                 ('mtd', 'MTD', 'p'),
+                 ('three_month', '3m', 'p'),
+                 ('six_month', '6m', 'p'),
+                 ('ytd', 'YTD', 'p'),
+                 ('one_year', '1Y', 'p'),
+                 ('three_year', '3Y (ann.)', 'p'),
+                 ('five_year', '5Y (ann.)', 'p'),
+                 ('ten_year', '10Y (ann.)', 'p'),
+                 ('incep', 'Since Incep. (ann.)', 'p'),
+                 (None, None, None),
+                 ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('daily_mean', 'Daily Mean (ann.)', 'p'),
+                 ('daily_vol', 'Daily Vol (ann.)', 'p'),
+                 ('daily_skew', 'Daily Skew', 'n'),
+                 ('daily_kurt', 'Daily Kurt', 'n'),
+                 ('best_day', 'Best Day', 'p'),
+                 ('worst_day', 'Worst Day', 'p'),
+                 (None, None, None),
+                 ('monthly_sharpe', 'Monthly Sharpe', 'p'),
+                 ('monthly_mean', 'Monthly Mean (ann.)', 'p'),
+                 ('monthly_vol', 'Monthly Vol (ann.)', 'p'),
+                 ('monthly_skew', 'Monthly Skew', 'n'),
+                 ('monthly_kurt', 'Monthly Kurt', 'n'),
+                 ('best_month', 'Best Month', 'p'),
+                 ('worst_month', 'Worst Month', 'p'),
+                 (None, None, None),
+                 ('yearly_sharpe', 'Yearly Sharpe', 'n'),
+                 ('yearly_mean', 'Yearly Mean', 'p'),
+                 ('yearly_vol', 'Yearly Vol', 'p'),
+                 ('yearly_skew', 'Yearly Skew', 'n'),
+                 ('yearly_kurt', 'Yearly Kurt', 'n'),
+                 ('best_year', 'Best Year', 'p'),
+                 ('worst_year', 'Worst Year', 'p'),
+                 (None, None, None),
+                 ('avg_drawdown', 'Avg. Drawdown', 'p'),
+                 ('avg_drawdown_days', 'Avg. Drawdown Days', 'n'),
+                 ('avg_up_month', 'Avg. Up Month', 'p'),
+                 ('avg_down_month', 'Avg. Down Month', 'p'),
+                 ('win_year_perc', 'Win Year %', 'p'),
+                 ('twelve_month_win_perc', 'Win 12m %', 'p')]
+
+        for stat in stats:
+            k, n, f = stat
+            # blank row
+            if k is None:
+                row = [''] * len(data[0])
+                data.append(row)
+                continue
+
+            row = [n]
+            for key in self.keys():
+                raw = getattr(self[key], k)
+                if f is None:
+                    row.append(raw)
+                elif f == 'p':
+                    row.append(fmtp(raw))
+                elif f == 'n':
+                    row.append(fmtn(raw))
+                elif f == 'dt':
+                    row.append(raw.strftime('%Y-%m-%d'))
+                else:
+                    raise NotImplementedError('unsupported format %s' % f)
+            data.append(row)
+
         print tabulate(data, headers='firstrow')
 
 
@@ -490,6 +593,20 @@ def year_frac(start, end):
 
     # obviously not perfect but good enough
     return (end - start).total_seconds() / (31557600)
+
+
+def merge(*series):
+    dfs = []
+    for s in series:
+        if isinstance(s, pd.DataFrame):
+            dfs.append(s)
+        elif isinstance(s, pd.Series):
+            tmpdf = pd.DataFrame({s.name: s})
+            dfs.append(tmpdf)
+        else:
+            raise NotImplementedError('Unsupported merge type')
+
+    return pd.concat(dfs, axis=1)
 
 
 def extend_pandas():
