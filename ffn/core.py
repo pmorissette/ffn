@@ -315,7 +315,7 @@ class PerformanceStats(object):
         ser = self._get_series(period).to_returns().dropna()
 
         plt.figure(figsize=figsize)
-        ser.hist(bins=bins, figsize=figsize, **kwargs)
+        ser.hist(bins=bins, figsize=figsize, title=title, **kwargs)
         plt.axvline(0, linewidth=4)
 
     def _get_series(self, per):
@@ -325,6 +325,7 @@ class PerformanceStats(object):
             return self.monthly_prices
         elif per is 'y':
             return self.yearly_prices
+
 
 class GroupStats(dict):
 
@@ -438,7 +439,7 @@ class GroupStats(dict):
         if title is None:
             title = '%s return scatter matrix' % get_period_name(period)
         ser = self._get_series(period).to_returns().dropna()
-        pd.scatter_matrix(ser, figsize=figsize, **kwargs)
+        pd.scatter_matrix(ser, figsize=figsize, title=title, **kwargs)
 
     def _get_series(self, per):
         if per is 'd':
@@ -447,6 +448,7 @@ class GroupStats(dict):
             return self.prices.resample('M', 'last')
         elif per is 'y':
             return self.prices.resample('A', 'last')
+
 
 def to_returns(self):
     """
