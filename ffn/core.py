@@ -398,6 +398,10 @@ class GroupStats(dict):
 
         print tabulate(data, headers='firstrow')
 
+    def plot(self, figsize=(15,5), logy=False, **kwargs):
+        self.prices.rebase().plot(figsize=figsize, logy=logy,
+                                  **kwargs)
+
 
 def to_returns(self):
     """
