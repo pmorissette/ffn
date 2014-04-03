@@ -75,6 +75,12 @@ def fmtp(number):
     return format(number, '.2%')
 
 
+def fmtpn(number):
+    if np.isnan(number):
+        return '-'
+    return format(number * 100, '.2f')
+
+
 def fmtn(number):
     if np.isnan(number):
         return '-'

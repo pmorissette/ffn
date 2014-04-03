@@ -1,4 +1,4 @@
-from ffn.utils import fmtp, fmtn
+from ffn.utils import fmtp, fmtn, fmtpn
 import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
@@ -8,7 +8,11 @@ from tabulate import tabulate
 class PerformanceStats(object):
 
     def __init__(self, prices):
-        self._calculate(prices)
+        self.prices = prices
+        self.name = self.prices.name
+        self._start = self.prices.index[0]
+        self._end = self.prices.index[-1]
+        self._calculate(self.prices)
 
     def _calculate(self, obj):
         # default values
@@ -221,7 +225,21 @@ class PerformanceStats(object):
 
         return
 
+    def set_date_range(self, start=None, end=None):
+        if start is None:
+            start = self._start
+        else:
+            start = pd.to_datetime(start)
+
+        if end is None:
+            end = self._end
+        else:
+            end = pd.to_datetime(end)
+
+        self._calculate(self.prices.ix[start:end])
+
     def display(self):
+        print 'Stats for %s from %s - %s' % (self.name, self.start, self.end)
         print 'Summary:'
         data = [[fmtn(self.daily_sharpe), fmtp(self.cagr),
                  fmtp(self.max_drawdown)]]
