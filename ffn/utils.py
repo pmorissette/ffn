@@ -85,3 +85,12 @@ def fmtn(number):
     if np.isnan(number):
         return '-'
     return format(number, '.2f')
+
+
+def get_period_name(period):
+    if period is 'd':
+        return 'daily'
+    elif period is 'm':
+        return 'monthly'
+    elif period is 'y':
+        return 'yearly'

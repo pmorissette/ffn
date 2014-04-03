@@ -1,8 +1,13 @@
-from ffn.utils import fmtp, fmtn, fmtpn
+from ffn.utils import fmtp, fmtn, fmtpn, get_period_name
 import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
 from tabulate import tabulate
+from matplotlib import pyplot as plt
+try:
+    import prettyplotlib
+except ImportError:
+    pass
 
 
 class PerformanceStats(object):
@@ -296,6 +301,30 @@ class PerformanceStats(object):
                          fmtpn(r[13])])
         print tabulate(data, headers='firstrow')
 
+    def plot(self, period='d', figsize=(15, 5), title=None, logy=False, **kwargs):
+        if title is None:
+            title = '%s %s price series' % (self.name, get_period_name(period))
+
+        ser = self._get_series(period)
+        ser.plot(figsize=figsize, title=title, logy=logy, **kwargs)
+
+    def plot_histogram(self, period='d', figsize=(15, 5), title=None, bins=20, **kwargs):
+        if title is None:
+            title = '%s %s return histogram' % (self.name, get_period_name(period))
+
+        ser = self._get_series(period).to_returns().dropna()
+
+        plt.figure(figsize=figsize)
+        ser.hist(bins=bins, figsize=figsize, **kwargs)
+        plt.axvline(0, linewidth=4)
+
+    def _get_series(self, per):
+        if per is 'd':
+            return self.daily_prices
+        elif per is 'm':
+            return self.monthly_prices
+        elif per is 'y':
+            return self.yearly_prices
 
 class GroupStats(dict):
 
@@ -398,10 +427,26 @@ class GroupStats(dict):
 
         print tabulate(data, headers='firstrow')
 
-    def plot(self, figsize=(15,5), logy=False, **kwargs):
-        self.prices.rebase().plot(figsize=figsize, logy=logy,
-                                  **kwargs)
+    def plot(self, period='d', figsize=(15,5), title=None, logy=False, **kwargs):
+        if title is None:
+            title = '%s equity progression' % get_period_name(period)
+        ser = self._get_series(period).rebase()
+        ser.plot(figsize=figsize, logy=logy,
+                 title=title, **kwargs)
 
+    def plot_scatter_matrix(self, period='d', title=None, figsize=(10, 10), **kwargs):
+        if title is None:
+            title = '%s return scatter matrix' % get_period_name(period)
+        ser = self._get_series(period).to_returns().dropna()
+        pd.scatter_matrix(ser, figsize=figsize, **kwargs)
+
+    def _get_series(self, per):
+        if per is 'd':
+            return self.prices
+        elif per is 'm':
+            return self.prices.resample('M', 'last')
+        elif per is 'y':
+            return self.prices.resample('A', 'last')
 
 def to_returns(self):
     """
