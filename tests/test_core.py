@@ -147,3 +147,40 @@ def test_cagr_df():
     assert_almost_equal(actual['AAPL'], 0.440, 3)
     assert_almost_equal(actual['MSFT'], 0.041, 3)
     assert_almost_equal(actual['C'], -0.205, 3)
+
+
+def test_merge():
+    a = pd.TimeSeries(index=pd.date_range('2010-01-01', periods=5),
+                      data=100, name='a')
+    b = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=5),
+                      data=200, name='b')
+    actual = ffn.merge(a, b)
+
+    assert 'a' in actual
+    assert 'b' in actual
+    assert len(actual) == 6
+    assert len(actual.columns) == 2
+    assert np.isnan(actual['a'][-1])
+    assert np.isnan(actual['b'][0])
+    assert actual['a'][0] == 100
+    assert actual['a'][1] == 100
+    assert actual['b'][-1] == 200
+    assert actual['b'][1] == 200
+
+    old = actual
+    old.columns = ['c', 'd']
+
+    actual = ffn.merge(old, a, b)
+
+    assert 'a' in actual
+    assert 'b' in actual
+    assert 'c' in actual
+    assert 'd' in actual
+    assert len(actual) == 6
+    assert len(actual.columns) == 4
+    assert np.isnan(actual['a'][-1])
+    assert np.isnan(actual['b'][0])
+    assert actual['a'][0] == 100
+    assert actual['a'][1] == 100
+    assert actual['b'][-1] == 200
+    assert actual['b'][1] == 200

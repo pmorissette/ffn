@@ -61,3 +61,18 @@ def test_fmtn():
 
     actual = utils.fmtn(1000.2)
     assert actual == '1000.20'
+
+
+def test_fmtpn():
+    actual = utils.fmtpn(0.2364)
+    assert actual == '23.64'
+
+    actual = utils.fmtpn(0.2364222)
+    assert actual == '23.64'
+
+    actual = utils.fmtpn(0.2364922)
+    assert actual == '23.65'
+
+    actual = utils.fmtpn(0.236)
+    assert actual == '23.60'
+
