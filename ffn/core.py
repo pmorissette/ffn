@@ -5,7 +5,7 @@ from pandas.core.base import PandasObject
 from tabulate import tabulate
 from matplotlib import pyplot as plt
 try:
-    import prettyplotlib
+    import prettyplotlib  # NOQA
 except ImportError:
     pass
 
@@ -301,16 +301,19 @@ class PerformanceStats(object):
                          fmtpn(r[13])])
         print tabulate(data, headers='firstrow')
 
-    def plot(self, period='d', figsize=(15, 5), title=None, logy=False, **kwargs):
+    def plot(self, period='d', figsize=(15, 5), title=None,
+             logy=False, **kwargs):
         if title is None:
             title = '%s %s price series' % (self.name, get_period_name(period))
 
         ser = self._get_series(period)
         ser.plot(figsize=figsize, title=title, logy=logy, **kwargs)
 
-    def plot_histogram(self, period='d', figsize=(15, 5), title=None, bins=20, **kwargs):
+    def plot_histogram(self, period='d', figsize=(15, 5), title=None,
+                       bins=20, **kwargs):
         if title is None:
-            title = '%s %s return histogram' % (self.name, get_period_name(period))
+            title = '%s %s return histogram' % (
+                self.name, get_period_name(period))
 
         ser = self._get_series(period).to_returns().dropna()
 
@@ -318,7 +321,7 @@ class PerformanceStats(object):
         ax = ser.hist(bins=bins, figsize=figsize, normed=True, **kwargs)
         ax.set_title(title)
         plt.axvline(0, linewidth=4)
-        ax2 = ser.plot(kind='kde')
+        ser.plot(kind='kde')
 
     def _get_series(self, per):
         if per is 'd':
@@ -430,20 +433,22 @@ class GroupStats(dict):
 
         print tabulate(data, headers='firstrow')
 
-    def plot(self, period='d', figsize=(15,5), title=None, logy=False, **kwargs):
+    def plot(self, period='d', figsize=(15, 5), title=None,
+             logy=False, **kwargs):
         if title is None:
             title = '%s equity progression' % get_period_name(period)
         ser = self._get_series(period).rebase()
         ser.plot(figsize=figsize, logy=logy,
                  title=title, **kwargs)
 
-    def plot_scatter_matrix(self, period='d', title=None, figsize=(10, 10), **kwargs):
+    def plot_scatter_matrix(self, period='d', title=None,
+                            figsize=(10, 10), **kwargs):
         if title is None:
             title = '%s return scatter matrix' % get_period_name(period)
 
         plt.figure()
         ser = self._get_series(period).to_returns().dropna()
-        ax = pd.scatter_matrix(ser, figsize=figsize, **kwargs)
+        pd.scatter_matrix(ser, figsize=figsize, **kwargs)
         plt.suptitle(title)
 
     def _get_series(self, per):
