@@ -1,7 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal as aae
 
 
 df = pd.read_csv('tests/data/test_data.csv', index_col=0, parse_dates=True)
@@ -14,8 +14,8 @@ def test_to_returns_ts():
 
     assert len(actual) == len(data)
     assert np.isnan(actual[0])
-    assert_almost_equal(actual[1], -0.019, 3)
-    assert_almost_equal(actual[9], -0.022, 3)
+    aae(actual[1], -0.019, 3)
+    aae(actual[9], -0.022, 3)
 
 
 def test_to_returns_df():
@@ -24,12 +24,12 @@ def test_to_returns_df():
 
     assert len(actual) == len(data)
     assert all(np.isnan(actual.ix[0]))
-    assert_almost_equal(actual['AAPL'][1], -0.019, 3)
-    assert_almost_equal(actual['AAPL'][9], -0.022, 3)
-    assert_almost_equal(actual['MSFT'][1], -0.011, 3)
-    assert_almost_equal(actual['MSFT'][9], -0.014, 3)
-    assert_almost_equal(actual['C'][1], -0.012, 3)
-    assert_almost_equal(actual['C'][9], 0.004, 3)
+    aae(actual['AAPL'][1], -0.019, 3)
+    aae(actual['AAPL'][9], -0.022, 3)
+    aae(actual['MSFT'][1], -0.011, 3)
+    aae(actual['MSFT'][9], -0.014, 3)
+    aae(actual['C'][1], -0.012, 3)
+    aae(actual['C'][9], 0.004, 3)
 
 
 def test_to_log_returns_ts():
@@ -38,8 +38,8 @@ def test_to_log_returns_ts():
 
     assert len(actual) == len(data)
     assert np.isnan(actual[0])
-    assert_almost_equal(actual[1], -0.019, 3)
-    assert_almost_equal(actual[9], -0.022, 3)
+    aae(actual[1], -0.019, 3)
+    aae(actual[9], -0.022, 3)
 
 
 def test_to_log_returns_df():
@@ -48,12 +48,12 @@ def test_to_log_returns_df():
 
     assert len(actual) == len(data)
     assert all(np.isnan(actual.ix[0]))
-    assert_almost_equal(actual['AAPL'][1], -0.019, 3)
-    assert_almost_equal(actual['AAPL'][9], -0.022, 3)
-    assert_almost_equal(actual['MSFT'][1], -0.011, 3)
-    assert_almost_equal(actual['MSFT'][9], -0.014, 3)
-    assert_almost_equal(actual['C'][1], -0.012, 3)
-    assert_almost_equal(actual['C'][9], 0.004, 3)
+    aae(actual['AAPL'][1], -0.019, 3)
+    aae(actual['AAPL'][9], -0.022, 3)
+    aae(actual['MSFT'][1], -0.011, 3)
+    aae(actual['MSFT'][9], -0.014, 3)
+    aae(actual['C'][1], -0.012, 3)
+    aae(actual['C'][9], 0.004, 3)
 
 
 def test_to_price_index():
@@ -62,12 +62,12 @@ def test_to_price_index():
     actual = rets.to_price_index()
 
     assert len(actual) == len(data)
-    assert_almost_equal(actual['AAPL'][0], 100, 3)
-    assert_almost_equal(actual['MSFT'][0], 100, 3)
-    assert_almost_equal(actual['C'][0], 100, 3)
-    assert_almost_equal(actual['AAPL'][9], 91.366, 3)
-    assert_almost_equal(actual['MSFT'][9], 95.191, 3)
-    assert_almost_equal(actual['C'][9], 101.199, 3)
+    aae(actual['AAPL'][0], 100, 3)
+    aae(actual['MSFT'][0], 100, 3)
+    aae(actual['C'][0], 100, 3)
+    aae(actual['AAPL'][9], 91.366, 3)
+    aae(actual['MSFT'][9], 95.191, 3)
+    aae(actual['C'][9], 101.199, 3)
 
 
 def test_rebase():
@@ -75,12 +75,12 @@ def test_rebase():
     actual = data.rebase()
 
     assert len(actual) == len(data)
-    assert_almost_equal(actual['AAPL'][0], 100, 3)
-    assert_almost_equal(actual['MSFT'][0], 100, 3)
-    assert_almost_equal(actual['C'][0], 100, 3)
-    assert_almost_equal(actual['AAPL'][9], 91.366, 3)
-    assert_almost_equal(actual['MSFT'][9], 95.191, 3)
-    assert_almost_equal(actual['C'][9], 101.199, 3)
+    aae(actual['AAPL'][0], 100, 3)
+    aae(actual['MSFT'][0], 100, 3)
+    aae(actual['C'][0], 100, 3)
+    aae(actual['AAPL'][9], 91.366, 3)
+    aae(actual['MSFT'][9], 95.191, 3)
+    aae(actual['C'][9], 101.199, 3)
 
 
 def test_to_drawdown_series_ts():
@@ -88,9 +88,9 @@ def test_to_drawdown_series_ts():
     actual = data.to_drawdown_series()
 
     assert len(actual) == len(data)
-    assert_almost_equal(actual[0], 0, 3)
-    assert_almost_equal(actual[1], -0.019, 3)
-    assert_almost_equal(actual[9], -0.086, 3)
+    aae(actual[0], 0, 3)
+    aae(actual[1], -0.019, 3)
+    aae(actual[9], -0.086, 3)
 
 
 def test_to_drawdown_series_df():
@@ -98,24 +98,24 @@ def test_to_drawdown_series_df():
     actual = data.to_drawdown_series()
 
     assert len(actual) == len(data)
-    assert_almost_equal(actual['AAPL'][0], 0, 3)
-    assert_almost_equal(actual['MSFT'][0], 0, 3)
-    assert_almost_equal(actual['C'][0], 0, 3)
+    aae(actual['AAPL'][0], 0, 3)
+    aae(actual['MSFT'][0], 0, 3)
+    aae(actual['C'][0], 0, 3)
 
-    assert_almost_equal(actual['AAPL'][1], -0.019, 3)
-    assert_almost_equal(actual['MSFT'][1], -0.011, 3)
-    assert_almost_equal(actual['C'][1], -0.012, 3)
+    aae(actual['AAPL'][1], -0.019, 3)
+    aae(actual['MSFT'][1], -0.011, 3)
+    aae(actual['C'][1], -0.012, 3)
 
-    assert_almost_equal(actual['AAPL'][9], -0.086, 3)
-    assert_almost_equal(actual['MSFT'][9], -0.048, 3)
-    assert_almost_equal(actual['C'][9], -0.029, 3)
+    aae(actual['AAPL'][9], -0.086, 3)
+    aae(actual['MSFT'][9], -0.048, 3)
+    aae(actual['C'][9], -0.029, 3)
 
 
 def test_max_drawdown_ts():
     data = ts
     actual = data.calc_max_drawdown()
 
-    assert_almost_equal(actual, -0.086, 3)
+    aae(actual, -0.086, 3)
 
 
 def test_max_drawdown_df():
@@ -123,30 +123,30 @@ def test_max_drawdown_df():
     data = data[0:10]
     actual = data.calc_max_drawdown()
 
-    assert_almost_equal(actual['AAPL'], -0.086, 3)
-    assert_almost_equal(actual['MSFT'], -0.048, 3)
-    assert_almost_equal(actual['C'], -0.033, 3)
+    aae(actual['AAPL'], -0.086, 3)
+    aae(actual['MSFT'], -0.048, 3)
+    aae(actual['C'], -0.033, 3)
 
 
 def test_year_frac():
     actual = ffn.year_frac(pd.to_datetime('2004-03-10'),
                            pd.to_datetime('2004-03-29'))
     # not exactly the same as excel but close enough
-    assert_almost_equal(actual, 0.0520, 4)
+    aae(actual, 0.0520, 4)
 
 
 def test_cagr_ts():
     data = ts
     actual = data.calc_cagr()
-    assert_almost_equal(actual, -0.921, 3)
+    aae(actual, -0.921, 3)
 
 
 def test_cagr_df():
     data = df
     actual = data.calc_cagr()
-    assert_almost_equal(actual['AAPL'], 0.440, 3)
-    assert_almost_equal(actual['MSFT'], 0.041, 3)
-    assert_almost_equal(actual['C'], -0.205, 3)
+    aae(actual['AAPL'], 0.440, 3)
+    aae(actual['MSFT'], 0.041, 3)
+    aae(actual['C'], -0.205, 3)
 
 
 def test_merge():
@@ -184,3 +184,18 @@ def test_merge():
     assert actual['a'][1] == 100
     assert actual['b'][-1] == 200
     assert actual['b'][1] == 200
+
+
+def test_calc_inv_vol_weights():
+    prc = df.ix[0:11]
+    rets = prc.to_returns().dropna()
+    actual = ffn.finance.calc_inv_vol_weights(rets)
+
+    assert len(actual) == 3
+    assert 'AAPL' in actual
+    assert 'MSFT' in actual
+    assert 'C' in actual
+
+    aae(actual['AAPL'], 0.218, 3)
+    aae(actual['MSFT'], 0.464, 3)
+    aae(actual['C'], 0.318, 3)

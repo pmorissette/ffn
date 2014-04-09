@@ -679,3 +679,20 @@ def extend_pandas():
     PandasObject.to_drawdown_series = to_drawdown_series
     PandasObject.calc_max_drawdown = calc_max_drawdown
     PandasObject.calc_cagr = calc_cagr
+
+
+def calc_inv_vol_weights(returns):
+    """
+    Calculates weights proportional to inverse volatility of each column.
+
+    Returns weights that are inversely proportional to the column's
+    volatility resulting in a set of portfolio weights where each position
+    has the same level of volatility.
+
+    Returns:
+        dict {col_name: weight}
+    """
+    # calc vols
+    vol = 1.0 / returns.std()
+    vols = vol.sum()
+    return (vol / vols).to_dict()
