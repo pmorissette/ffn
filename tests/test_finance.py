@@ -199,3 +199,18 @@ def test_calc_inv_vol_weights():
     aae(actual['AAPL'], 0.218, 3)
     aae(actual['MSFT'], 0.464, 3)
     aae(actual['C'], 0.318, 3)
+
+
+def test_calc_mean_var_weights():
+    prc = df.ix[0:11]
+    rets = prc.to_returns().dropna()
+    actual = ffn.finance.calc_mean_var_weights(rets)
+
+    assert len(actual) == 3
+    assert 'AAPL' in actual
+    assert 'MSFT' in actual
+    assert 'C' in actual
+
+    aae(actual['AAPL'], 0.000, 3)
+    aae(actual['MSFT'], 0.000, 3)
+    aae(actual['C'], 1.000, 3)

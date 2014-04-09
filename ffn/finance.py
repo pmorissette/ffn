@@ -4,6 +4,8 @@ import pandas as pd
 from pandas.core.base import PandasObject
 from tabulate import tabulate
 from matplotlib import pyplot as plt
+import sklearn.covariance
+from scipy.optimize import minimize
 try:
     import prettyplotlib  # NOQA
 except ImportError:
@@ -696,3 +698,45 @@ def calc_inv_vol_weights(returns):
     vol = 1.0 / returns.std()
     vols = vol.sum()
     return (vol / vols).to_dict()
+
+
+def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
+                          rf=0.,
+                          covar_method='ledoit-wolf'):
+    def fitness(weights, exp_rets, covar, rf):
+        # portfolio mean
+        mean = sum(exp_rets * weights)
+        # portfolio var
+        var = np.dot(np.dot(weights, covar), weights)
+        # utility - i.e. sharpe ratio
+        util = (mean - rf) / np.sqrt(var)
+        # negative because we want to maximize and optimizer
+        # minimizes metric
+        return -util
+
+    n = len(returns.columns)
+
+    # expected return defaults to mean return by default
+    exp_rets = returns.mean()
+
+    # calc covariance matrix
+    if covar_method == 'ledoit-wolf':
+        covar = sklearn.covariance.ledoit_wolf(returns)[0]
+    elif covar_method == 'standard':
+        covar = returns.cov()
+    else:
+        raise NotImplementedError('covar_method not implemented')
+
+    weights = np.ones([n]) / n
+    bounds = [weight_bounds for i in range(n)]
+    # sum of weights must be equal to 1
+    constraints = ({'type': 'eq', 'fun': lambda W: sum(W) - 1.})
+    optimized = minimize(fitness, weights, (exp_rets, covar, rf),
+                         method='SLSQP', constraints=constraints,
+                         bounds=bounds)
+    # check if success
+    if not optimized.success:
+        raise Exception(optimized.message)
+
+    # return weight vector
+    return {returns.columns[i]: optimized.x[i] for i in range(n)}
