@@ -224,3 +224,14 @@ def test_calc_total_return():
     aae(actual['AAPL'], -0.079, 3)
     aae(actual['MSFT'], -0.038, 3)
     aae(actual['C'], 0.012, 3)
+
+
+def test_get_num_days_required():
+    actual = ffn.finance.get_num_days_required(pd.DateOffset(months=3),
+                                               perc_required=1.)
+    assert actual >= 60
+
+    actual = ffn.finance.get_num_days_required(pd.DateOffset(months=3),
+                                               perc_required=1.,
+                                               period='m')
+    assert actual >= 3

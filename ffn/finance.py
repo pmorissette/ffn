@@ -747,3 +747,22 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
 
     # return weight vector
     return {returns.columns[i]: optimized.x[i] for i in range(n)}
+
+
+def get_num_days_required(offset, period='d', perc_required=0.90):
+    x = pd.to_datetime('2010-01-01')
+    delta = x - (x - offset)
+    # convert to 'trading days' - rough guestimate
+    days = delta.days * 0.69
+
+    if period == 'd':
+        req = days * perc_required
+    elif period == 'm':
+        req = (days / 20) * perc_required
+    elif period == 'y':
+        req = (days / 252) * perc_required
+    else:
+        raise NotImplementedError(
+            'period not supported. Supported periods are d, m, y')
+
+    return req
