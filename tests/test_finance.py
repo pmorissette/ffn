@@ -214,3 +214,13 @@ def test_calc_mean_var_weights():
     aae(actual['AAPL'], 0.000, 3)
     aae(actual['MSFT'], 0.000, 3)
     aae(actual['C'], 1.000, 3)
+
+
+def test_calc_total_return():
+    prc = df.ix[0:11]
+    actual = prc.calc_total_return()
+
+    assert len(actual) == 3
+    aae(actual['AAPL'], -0.079, 3)
+    aae(actual['MSFT'], -0.038, 3)
+    aae(actual['C'], 0.012, 3)

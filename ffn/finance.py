@@ -641,6 +641,10 @@ def calc_cagr(prices):
     return (prices.ix[-1] / prices.ix[0]) ** (1 / year_frac(start, end)) - 1
 
 
+def calc_total_return(prices):
+    return (prices.ix[-1] / prices.ix[0]) - 1
+
+
 def year_frac(start, end):
     """
     Similar to excel's yearfrac function. Returns
@@ -683,6 +687,7 @@ def extend_pandas():
     PandasObject.to_drawdown_series = to_drawdown_series
     PandasObject.calc_max_drawdown = calc_max_drawdown
     PandasObject.calc_cagr = calc_cagr
+    PandasObject.calc_total_return = calc_total_return
 
 
 def calc_inv_vol_weights(returns):
