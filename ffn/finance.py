@@ -248,9 +248,10 @@ class PerformanceStats(object):
     def display(self):
         print 'Stats for %s from %s - %s' % (self.name, self.start, self.end)
         print 'Summary:'
-        data = [[fmtn(self.daily_sharpe), fmtp(self.cagr),
-                 fmtp(self.max_drawdown)]]
-        print tabulate(data, headers=['Sharpe', 'CAGR', 'Max Drawdown'])
+        data = [[fmtp(self.total_return), fmtn(self.daily_sharpe),
+                 fmtp(self.cagr), fmtp(self.max_drawdown)]]
+        print tabulate(data, headers=['Total Return', 'Sharpe',
+                                      'CAGR', 'Max Drawdown'])
 
         print '\nAnnualized Returns:'
         data = [[fmtp(self.mtd), fmtp(self.three_month), fmtp(self.six_month),
@@ -365,6 +366,7 @@ class GroupStats(dict):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
                  (None, None, None),
+                 ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
                  ('cagr', 'CAGR', 'p'),
                  ('max_drawdown', 'Max Drawdown', 'p'),
