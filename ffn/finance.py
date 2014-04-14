@@ -115,7 +115,7 @@ class PerformanceStats(object):
         self.drawdown = p.to_drawdown_series()
         self.max_drawdown = self.drawdown.min()
         self.drawdown_details = drawdown_details(self.drawdown)
-        if self.drawdown_details:
+        if self.drawdown_details is not None:
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
             self.avg_drawdown_days = self.drawdown_details['days'].mean()
 
