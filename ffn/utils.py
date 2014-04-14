@@ -1,6 +1,7 @@
 import re
 import decorator
 import numpy as np
+import cPickle
 
 
 def _memoize(func, *args, **kw):
@@ -18,10 +19,7 @@ def _memoize(func, *args, **kw):
         if kw[refresh_kw]:
             refresh = True
 
-    if kw:
-        key = args, frozenset(kw.iteritems())
-    else:
-        key = args
+    key = cPickle.dumps(args, 1) + cPickle.dumps(kw, 1)
 
     cache = func.mcache
     if not refresh and key in cache:
