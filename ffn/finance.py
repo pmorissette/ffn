@@ -686,6 +686,41 @@ def as_percent(self, digits=2):
     return np.round(self * 100, digits)
 
 
+def to_monthly(self, method='ffill', how='end'):
+    """
+    Wraps asfreq_actual.
+    """
+    return self.asfreq_actual('M', method=method, how=how)
+
+
+def asfreq_actual(self, freq, method=None, how=None, normalize=False):
+    """
+    Similar to pandas' asfreq but keeps the actual dates.
+    For example, if last datapoint in Jan is on the 29th,
+    that date will be used instead of the 31st.
+    """
+    orig = self
+    is_series = False
+    if isinstance(self, pd.Series):
+        is_series = True
+        name = self.name if self.name else 'data'
+        orig = pd.DataFrame({name: self})
+
+    # add date column
+    t = pd.concat([orig, pd.DataFrame({'dt': orig.index.values},
+                                      index=orig.index.values)], axis=1)
+    # fetch dates
+    dts = t.asfreq(freq=freq, method=method, how=how,
+                   normalize=normalize)['dt']
+
+    res = orig.ix[dts.values]
+
+    if is_series:
+        return res[name]
+    else:
+        return res
+
+
 def extend_pandas():
     PandasObject.to_returns = to_returns
     PandasObject.to_log_returns = to_log_returns
@@ -697,6 +732,8 @@ def extend_pandas():
     PandasObject.calc_cagr = calc_cagr
     PandasObject.calc_total_return = calc_total_return
     PandasObject.as_percent = as_percent
+    PandasObject.to_monthly = to_monthly
+    PandasObject.asfreq_actual = asfreq_actual
 
 
 def calc_inv_vol_weights(returns):

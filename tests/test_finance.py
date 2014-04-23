@@ -244,3 +244,26 @@ def test_as_percent():
     assert actual[0] == 1.00
     assert actual[1] == -2.00
     assert actual[2] == 5.32
+
+
+def test_asfreq_actual():
+    a = pd.TimeSeries({pd.to_datetime('2010-02-27'): 100,
+                       pd.to_datetime('2010-03-25'): 200})
+    actual = a.asfreq_actual(freq='M', method='ffill')
+
+    assert len(actual) == 1
+    assert '2010-02-27' in actual
+
+
+def test_to_monthly():
+    a = pd.TimeSeries(range(100), index=pd.date_range('2010-01-01',
+                                                      periods=100))
+    # to test for actual dates
+    a['2010-01-31'] = np.nan
+    a = a.dropna()
+
+    actual = a.to_monthly()
+
+    assert len(actual) == 3
+    assert '2010-01-30' in actual
+    assert actual['2010-01-30'] == 29
