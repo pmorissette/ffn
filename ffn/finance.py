@@ -678,6 +678,14 @@ def merge(*series):
     return pd.concat(dfs, axis=1)
 
 
+def as_percent(self, digits=2):
+    """
+    Multiply by 100 and round to digits decimal places.
+    Useful for printing to notebook.
+    """
+    return np.round(self * 100, digits)
+
+
 def extend_pandas():
     PandasObject.to_returns = to_returns
     PandasObject.to_log_returns = to_log_returns
@@ -688,6 +696,7 @@ def extend_pandas():
     PandasObject.calc_max_drawdown = calc_max_drawdown
     PandasObject.calc_cagr = calc_cagr
     PandasObject.calc_total_return = calc_total_return
+    PandasObject.as_percent = as_percent
 
 
 def calc_inv_vol_weights(returns):

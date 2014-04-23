@@ -235,3 +235,12 @@ def test_get_num_days_required():
                                                perc_required=1.,
                                                period='m')
     assert actual >= 3
+
+
+def test_as_percent():
+    ser = pd.Series([0.01, -0.02, 0.0532])
+    actual = ser.as_percent()
+
+    assert actual[0] == 1.00
+    assert actual[1] == -2.00
+    assert actual[2] == 5.32
