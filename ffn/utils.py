@@ -92,3 +92,20 @@ def get_period_name(period):
         return 'monthly'
     elif period is 'y':
         return 'yearly'
+
+
+def scale(val, src, dst):
+    """
+    Scale value from src range to dst range.
+    If value outside bounds, it is clipped and set to
+    the low or high bound of dst.
+    Ex:
+        scale(0, (0.0, 99.0), (-1.0, 1.0)) == -1.0
+        scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0
+    """
+    if val < src[0]:
+        return dst[0]
+    if val > src[1]:
+        return dst[1]
+
+    return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0]

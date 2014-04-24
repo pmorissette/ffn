@@ -76,3 +76,9 @@ def test_fmtpn():
     actual = utils.fmtpn(0.236)
     assert actual == '23.60'
 
+
+def test_scale():
+    assert utils.scale(0, (0.0, 99.0), (-1.0, 1.0)) == -1.0
+    assert utils.scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0
+    assert utils.scale(105, (0.0, 99.0), (-1.0, 1.0)) == 1.0
+    assert utils.scale(50, (0.0, 100.0), (-1.0, 1.0)) == 0.0
