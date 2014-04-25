@@ -339,23 +339,36 @@ class GroupStats(dict):
 
     def __init__(self, *prices):
         # store original prices
-        self.prices = merge(*prices).dropna()
-        # duplicate columns
-        if len(self.prices.columns) != len(set(self.prices.columns)):
+        self._prices = merge(*prices).dropna()
+
+        # check for duplicate columns
+        if len(self._prices.columns) != len(set(self._prices.columns)):
             raise ValueError('One or more data series provided',
                              'have same name! Please provide unique names')
 
+        self._start = self._prices.index[0]
+        self._end = self._prices.index[-1]
         # calculate stats for entire series
-        self._calculate(self.prices)
+        self._calculate(self._prices)
 
     def _calculate(self, data):
+        self.prices = data
         for c in data.columns:
             prc = data[c]
             self[c] = prc.calc_perf_stats()
 
     def set_date_range(self, start=None, end=None):
-        for k in self:
-            self[k].set_date_range(start, end)
+        if start is None:
+            start = self._start
+        else:
+            start = pd.to_datetime(start)
+
+        if end is None:
+            end = self._end
+        else:
+            end = pd.to_datetime(end)
+
+        self._calculate(self._prices.ix[start:end])
 
     def display(self):
         data = []
