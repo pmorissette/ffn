@@ -355,7 +355,7 @@ class GroupStats(dict):
         self.prices = data
         for c in data.columns:
             prc = data[c]
-            self[c] = prc.calc_perf_stats()
+            self[c] = PerformanceStats(prc)
 
     def set_date_range(self, start=None, end=None):
         if start is None:
@@ -402,7 +402,7 @@ class GroupStats(dict):
                  ('best_day', 'Best Day', 'p'),
                  ('worst_day', 'Worst Day', 'p'),
                  (None, None, None),
-                 ('monthly_sharpe', 'Monthly Sharpe', 'p'),
+                 ('monthly_sharpe', 'Monthly Sharpe', 'n'),
                  ('monthly_mean', 'Monthly Mean (ann.)', 'p'),
                  ('monthly_vol', 'Monthly Vol (ann.)', 'p'),
                  ('monthly_skew', 'Monthly Skew', 'n'),
