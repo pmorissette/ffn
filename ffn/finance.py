@@ -691,6 +691,28 @@ def merge(*series):
     return pd.concat(dfs, axis=1)
 
 
+def drop_duplicate_cols(df):
+    """
+    Removes duplicate columns from a dataframe
+    and keeps column w/ longest history
+    """
+    names = set(df.columns)
+    for n in names:
+        if len(df[n].shape) > 1:
+            # get subset of df w/ colname n
+            sub = df[n]
+            # make unique colnames
+            sub.columns = ['%s-%s' % (n, x) for x in range(sub.shape[1])]
+            # get colname w/ max # of data
+            keep = sub.count().idxmax()
+            # drop all columns of name n from original df
+            df = df.drop(n, axis=1)
+            # update original df w/ longest col with name n
+            df[n] = sub[keep]
+
+    return df
+
+
 def as_percent(self, digits=2):
     """
     Multiply by 100 and round to digits decimal places.
@@ -747,6 +769,7 @@ def extend_pandas():
     PandasObject.as_percent = as_percent
     PandasObject.to_monthly = to_monthly
     PandasObject.asfreq_actual = asfreq_actual
+    PandasObject.drop_duplicate_cols = drop_duplicate_cols
 
 
 def calc_inv_vol_weights(returns):

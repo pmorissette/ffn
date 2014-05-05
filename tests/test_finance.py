@@ -267,3 +267,24 @@ def test_to_monthly():
     assert len(actual) == 3
     assert '2010-01-30' in actual
     assert actual['2010-01-30'] == 29
+
+
+def test_drop_duplicate_cols():
+    a = pd.TimeSeries(index=pd.date_range('2010-01-01', periods=5),
+                      data=100, name='a')
+    # second version of a w/ less data
+    a2 = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=4),
+                       data=900, name='a')
+    b = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=5),
+                      data=200, name='b')
+    actual = ffn.merge(a, a2, b)
+
+    assert actual['a'].shape[1] == 2
+    assert len(actual.columns) == 3
+
+    actual = actual.drop_duplicate_cols()
+
+    assert len(actual.columns) == 2
+    assert 'a' in actual
+    assert 'b' in actual
+    assert len(actual['a'].dropna()) == 5
