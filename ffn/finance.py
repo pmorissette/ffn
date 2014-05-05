@@ -706,7 +706,7 @@ def drop_duplicate_cols(df):
             # get colname w/ max # of data
             keep = sub.count().idxmax()
             # drop all columns of name n from original df
-            df = df.drop(n, axis=1)
+            del df[n]
             # update original df w/ longest col with name n
             df[n] = sub[keep]
 
