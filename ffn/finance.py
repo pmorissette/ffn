@@ -232,6 +232,58 @@ class PerformanceStats(object):
 
         return
 
+    def _stats(self):
+        stats = [('start', 'Start', 'dt'),
+                 ('end', 'End', 'dt'),
+                 (None, None, None),
+                 ('total_return', 'Total Return', 'p'),
+                 ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('cagr', 'CAGR', 'p'),
+                 ('max_drawdown', 'Max Drawdown', 'p'),
+                 (None, None, None),
+                 ('mtd', 'MTD', 'p'),
+                 ('three_month', '3m', 'p'),
+                 ('six_month', '6m', 'p'),
+                 ('ytd', 'YTD', 'p'),
+                 ('one_year', '1Y', 'p'),
+                 ('three_year', '3Y (ann.)', 'p'),
+                 ('five_year', '5Y (ann.)', 'p'),
+                 ('ten_year', '10Y (ann.)', 'p'),
+                 ('incep', 'Since Incep. (ann.)', 'p'),
+                 (None, None, None),
+                 ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('daily_mean', 'Daily Mean (ann.)', 'p'),
+                 ('daily_vol', 'Daily Vol (ann.)', 'p'),
+                 ('daily_skew', 'Daily Skew', 'n'),
+                 ('daily_kurt', 'Daily Kurt', 'n'),
+                 ('best_day', 'Best Day', 'p'),
+                 ('worst_day', 'Worst Day', 'p'),
+                 (None, None, None),
+                 ('monthly_sharpe', 'Monthly Sharpe', 'n'),
+                 ('monthly_mean', 'Monthly Mean (ann.)', 'p'),
+                 ('monthly_vol', 'Monthly Vol (ann.)', 'p'),
+                 ('monthly_skew', 'Monthly Skew', 'n'),
+                 ('monthly_kurt', 'Monthly Kurt', 'n'),
+                 ('best_month', 'Best Month', 'p'),
+                 ('worst_month', 'Worst Month', 'p'),
+                 (None, None, None),
+                 ('yearly_sharpe', 'Yearly Sharpe', 'n'),
+                 ('yearly_mean', 'Yearly Mean', 'p'),
+                 ('yearly_vol', 'Yearly Vol', 'p'),
+                 ('yearly_skew', 'Yearly Skew', 'n'),
+                 ('yearly_kurt', 'Yearly Kurt', 'n'),
+                 ('best_year', 'Best Year', 'p'),
+                 ('worst_year', 'Worst Year', 'p'),
+                 (None, None, None),
+                 ('avg_drawdown', 'Avg. Drawdown', 'p'),
+                 ('avg_drawdown_days', 'Avg. Drawdown Days', 'n'),
+                 ('avg_up_month', 'Avg. Up Month', 'p'),
+                 ('avg_down_month', 'Avg. Down Month', 'p'),
+                 ('win_year_perc', 'Win Year %', 'p'),
+                 ('twelve_month_win_perc', 'Win 12m %', 'p')]
+
+        return stats
+
     def set_date_range(self, start=None, end=None):
         if start is None:
             start = self._start
@@ -334,6 +386,39 @@ class PerformanceStats(object):
         elif per is 'y':
             return self.yearly_prices
 
+    def to_csv(self, sep=','):
+        stats = self._stats()
+
+        data = []
+        first_row = ['Stat', self.name]
+        data.append(sep.join(first_row))
+
+        for stat in stats:
+            k, n, f = stat
+
+            # blank row
+            if k is None:
+                row = [''] * len(data[0])
+                data.append(sep.join(row))
+                continue
+
+            row = [n]
+            raw = getattr(self, k)
+            if f is None:
+                row.append(raw)
+            elif f == 'p':
+                row.append(fmtp(raw))
+            elif f == 'n':
+                row.append(fmtn(raw))
+            elif f == 'dt':
+                row.append(raw.strftime('%Y-%m-%d'))
+            else:
+                raise NotImplementedError('unsupported format %s' % f)
+
+            data.append(sep.join(row))
+
+        return '\n'.join(data)
+
 
 class GroupStats(dict):
 
@@ -357,25 +442,7 @@ class GroupStats(dict):
             prc = data[c]
             self[c] = PerformanceStats(prc)
 
-    def set_date_range(self, start=None, end=None):
-        if start is None:
-            start = self._start
-        else:
-            start = pd.to_datetime(start)
-
-        if end is None:
-            end = self._end
-        else:
-            end = pd.to_datetime(end)
-
-        self._calculate(self._prices.ix[start:end])
-
-    def display(self):
-        data = []
-        first_row = ['Stat']
-        first_row.extend(self.keys())
-        data.append(first_row)
-
+    def _stats(self):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
                  (None, None, None),
@@ -424,6 +491,29 @@ class GroupStats(dict):
                  ('avg_down_month', 'Avg. Down Month', 'p'),
                  ('win_year_perc', 'Win Year %', 'p'),
                  ('twelve_month_win_perc', 'Win 12m %', 'p')]
+
+        return stats
+
+    def set_date_range(self, start=None, end=None):
+        if start is None:
+            start = self._start
+        else:
+            start = pd.to_datetime(start)
+
+        if end is None:
+            end = self._end
+        else:
+            end = pd.to_datetime(end)
+
+        self._calculate(self._prices.ix[start:end])
+
+    def display(self):
+        data = []
+        first_row = ['Stat']
+        first_row.extend(self.keys())
+        data.append(first_row)
+
+        stats = self._stats()
 
         for stat in stats:
             k, n, f = stat
@@ -475,6 +565,39 @@ class GroupStats(dict):
             return self.prices.resample('M', 'last')
         elif per is 'y':
             return self.prices.resample('A', 'last')
+
+    def to_csv(self, sep=','):
+        data = []
+        first_row = ['Stat']
+        first_row.extend(self.keys())
+        data.append(sep.join(first_row))
+
+        stats = self._stats()
+
+        for stat in stats:
+            k, n, f = stat
+            # blank row
+            if k is None:
+                row = [''] * len(data[0])
+                data.append(sep.join(row))
+                continue
+
+            row = [n]
+            for key in self.keys():
+                raw = getattr(self[key], k)
+                if f is None:
+                    row.append(raw)
+                elif f == 'p':
+                    row.append(fmtp(raw))
+                elif f == 'n':
+                    row.append(fmtn(raw))
+                elif f == 'dt':
+                    row.append(raw.strftime('%Y-%m-%d'))
+                else:
+                    raise NotImplementedError('unsupported format %s' % f)
+            data.append(sep.join(row))
+
+        return '\n'.join(data)
 
 
 def to_returns(self):
