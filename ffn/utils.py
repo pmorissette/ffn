@@ -67,6 +67,10 @@ def clean_ticker(ticker):
     return res.lower()
 
 
+def clean_tickers(tickers):
+    return [clean_ticker(x) for x in tickers]
+
+
 def fmtp(number):
     if np.isnan(number):
         return '-'

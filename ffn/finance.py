@@ -777,6 +777,13 @@ def calc_cagr(prices):
     return (prices.ix[-1] / prices.ix[0]) ** (1 / year_frac(start, end)) - 1
 
 
+def calc_risk_return_ratio(self):
+    """
+    Calculates sharpe ratio
+    """
+    return self.mean() / self.std()
+
+
 def calc_total_return(prices):
     return (prices.ix[-1] / prices.ix[0]) - 1
 
