@@ -784,6 +784,19 @@ def calc_risk_return_ratio(self):
     return self.mean() / self.std()
 
 
+def calc_information_ratio(self, benchmark):
+    """
+    http://en.wikipedia.org/wiki/Information_ratio
+    """
+    diff_rets = self - benchmark
+    diff_std = diff_rets.std()
+
+    if np.isnan(diff_std) or diff_std == 0:
+        return 0.0
+
+    return diff_rets.mean() / diff_std
+
+
 def calc_total_return(prices):
     return (prices.ix[-1] / prices.ix[0]) - 1
 
@@ -900,6 +913,7 @@ def extend_pandas():
     PandasObject.to_monthly = to_monthly
     PandasObject.asfreq_actual = asfreq_actual
     PandasObject.drop_duplicate_cols = drop_duplicate_cols
+    PandasObject.calc_information_ratio = calc_information_ratio
 
 
 def calc_inv_vol_weights(returns):
