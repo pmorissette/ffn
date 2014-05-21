@@ -356,7 +356,7 @@ class PerformanceStats(object):
                          fmtpn(r[13])])
         print tabulate(data, headers='firstrow')
 
-    def plot(self, period='d', figsize=(15, 5), title=None,
+    def plot(self, period='m', figsize=(15, 5), title=None,
              logy=False, **kwargs):
         if title is None:
             title = '%s %s price series' % (self.name, get_period_name(period))
@@ -364,7 +364,7 @@ class PerformanceStats(object):
         ser = self._get_series(period)
         ser.plot(figsize=figsize, title=title, logy=logy, **kwargs)
 
-    def plot_histogram(self, period='d', figsize=(15, 5), title=None,
+    def plot_histogram(self, period='m', figsize=(15, 5), title=None,
                        bins=20, **kwargs):
         if title is None:
             title = '%s %s return histogram' % (
@@ -540,7 +540,7 @@ class GroupStats(dict):
 
         print tabulate(data, headers='firstrow')
 
-    def plot(self, period='d', figsize=(15, 5), title=None,
+    def plot(self, period='m', figsize=(15, 5), title=None,
              logy=False, **kwargs):
         if title is None:
             title = '%s equity progression' % get_period_name(period)
@@ -548,7 +548,7 @@ class GroupStats(dict):
         ser.plot(figsize=figsize, logy=logy,
                  title=title, **kwargs)
 
-    def plot_scatter_matrix(self, period='d', title=None,
+    def plot_scatter_matrix(self, period='m', title=None,
                             figsize=(10, 10), **kwargs):
         if title is None:
             title = '%s return scatter matrix' % get_period_name(period)
