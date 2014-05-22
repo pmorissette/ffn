@@ -6,6 +6,7 @@ from tabulate import tabulate
 from matplotlib import pyplot as plt
 import sklearn.covariance
 from scipy.optimize import minimize
+from scipy.stats import t
 try:
     import prettyplotlib  # NOQA
 except ImportError:
@@ -797,6 +798,14 @@ def calc_information_ratio(self, benchmark):
     return diff_rets.mean() / diff_std
 
 
+def calc_prob_mom(self, other):
+    """
+    Probabilistic momentum
+    http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/ # NOQA
+    """
+    return t.cdf(self.calc_information_ratio(other), len(self) - 1)
+
+
 def calc_total_return(prices):
     return (prices.ix[-1] / prices.ix[0]) - 1
 
@@ -914,6 +923,7 @@ def extend_pandas():
     PandasObject.asfreq_actual = asfreq_actual
     PandasObject.drop_duplicate_cols = drop_duplicate_cols
     PandasObject.calc_information_ratio = calc_information_ratio
+    PandasObject.calc_prob_mom = calc_prob_mom
 
 
 def calc_inv_vol_weights(returns):
