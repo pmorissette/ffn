@@ -708,7 +708,7 @@ def calc_max_drawdown(prices):
     Calculates the max drawdown of a price series. If you want the
     actual drawdown series, please use to_drawdown_series.
     """
-    return prices.to_drawdown_series().min()
+    return (prices / pd.expanding_max(prices)).min() - 1
 
 
 def drawdown_details(drawdown):
