@@ -288,3 +288,51 @@ def test_drop_duplicate_cols():
     assert 'a' in actual
     assert 'b' in actual
     assert len(actual['a'].dropna()) == 5
+
+
+def test_limit_weights():
+    w = {'a': 0.3, 'b': 0.1,
+         'c': 0.05, 'd': 0.05,
+         'e': 0.5}
+
+    actual = ffn.finance.limit_weights(w, 0.3)
+
+    assert actual.sum() == 1.0
+
+    assert actual['a'] == 0.3
+    assert actual['b'] == 0.2
+    assert actual['c'] == 0.1
+    assert actual['d'] == 0.1
+    assert actual['e'] == 0.3
+
+    w = pd.Series({'a': 0.3, 'b': 0.1,
+                   'c': 0.05, 'd': 0.05,
+                   'e': 0.5})
+
+    actual = ffn.finance.limit_weights(w, 0.3)
+
+    assert actual.sum() == 1.0
+
+    assert actual['a'] == 0.3
+    assert actual['b'] == 0.2
+    assert actual['c'] == 0.1
+    assert actual['d'] == 0.1
+    assert actual['e'] == 0.3
+
+    w = pd.Series({'a': 0.29, 'b': 0.1,
+                   'c': 0.06, 'd': 0.05,
+                   'e': 0.5})
+
+    assert w.sum() == 1.0
+
+    actual = ffn.finance.limit_weights(w, 0.3)
+
+    assert actual.sum() == 1.0
+
+    assert np.all([x <= 0.3 for x in actual])
+
+    aae(actual['a'], 0.300, 3)
+    aae(actual['b'], 0.190, 3)
+    aae(actual['c'], 0.114, 3)
+    aae(actual['d'], 0.095, 3)
+    aae(actual['e'], 0.300, 3)

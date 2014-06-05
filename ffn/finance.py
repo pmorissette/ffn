@@ -4,6 +4,8 @@ import pandas as pd
 from pandas.core.base import PandasObject
 from tabulate import tabulate
 from matplotlib import pyplot as plt
+import sklearn.manifold
+import sklearn.cluster
 import sklearn.covariance
 from scipy.optimize import minimize
 from scipy.stats import t
@@ -1016,3 +1018,208 @@ def get_num_days_required(offset, period='d', perc_required=0.90):
             'period not supported. Supported periods are d, m, y')
 
     return req
+
+
+def clusters(returns, n=None, plot=False):
+    """
+    Calculates the clusters based on k-means
+    clustering.
+
+    Args:
+        * returns (pd.DataFrame): DataFrame of returns
+        * n (int): Specify # of clusters. If None, this
+            will be automatically determined
+    Returns:
+        dict with structure: {cluster# : [col names]}
+    """
+    # calculate correlation
+    corr = returns.corr()
+
+    # calculate dissimilarity matrix
+    diss = 1 - corr
+
+    # scale down to 2 dimensions using MDS
+    # (multi-dimensional scaling) using the
+    # dissimilarity matrix
+    mds = sklearn.manifold.MDS(dissimilarity='precomputed')
+    xy = mds.fit_transform(diss)
+
+    def routine(k):
+        # fit KMeans
+        km = sklearn.cluster.KMeans(n_clusters=k)
+        km_fit = km.fit(xy)
+        labels = km_fit.labels_
+        centers = km_fit.cluster_centers_
+
+        # get {ticker: label} mappings
+        mappings = dict(zip(returns.columns, labels))
+
+        # print % of var explained
+        totss = 0
+        withinss = 0
+        # column average fot totss
+        avg = np.array([np.mean(xy[:, 0]), np.mean(xy[:, 1])])
+        for idx, lbl in enumerate(labels):
+            withinss += sum((xy[idx] - centers[lbl]) ** 2)
+            totss += sum((xy[idx] - avg) ** 2)
+        pvar_expl = 1.0 - withinss / totss
+
+        return mappings, pvar_expl, labels
+
+    if n:
+        result = routine(n)
+    else:
+        n = len(returns.columns)
+        n1 = int(np.ceil(n * 0.6666666666))
+        for i in range(2, n1 + 1):
+            result = routine(i)
+            if result[1] > 0.9:
+                break
+
+    if plot:
+        fig, ax = plt.subplots()
+        ax.scatter(xy[:, 0], xy[:, 1], c=result[2], s=90)
+        for i, txt in enumerate(returns.columns):
+            ax.annotate(txt, (xy[i, 0], xy[i, 1]), size=14)
+
+    # sanitize return value
+    tmp = result[0]
+    # map as such {cluster: [list of tickers], cluster2: [...]}
+    inv_map = {}
+    for k, v in tmp.iteritems():
+        inv_map[v] = inv_map.get(v, [])
+        inv_map[v].append(k)
+    return inv_map
+
+
+def princomp(data):
+    """
+    Returns the principal components.
+
+    Code based on http://glowingpython.blogspot.ca/2011/07/
+    principal-component-analysis-with-numpy.html
+
+    Matches results in R.
+    """
+    M = data - data.mean()
+    [latent, weights] = np.linalg.eig(M.cov())
+    score = np.dot(weights.T, M)
+    return weights.T, score, latent
+
+
+def ftca(returns, threshold=0.5):
+    """
+    Implementation of David Varadi's Fast Threshold
+    Clustering Algorithm (FTCA).
+
+    http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/  #NOQA
+
+    More stable than k-means for clustering purposes.
+    If you want more clusters, use a higher threshold.
+
+
+    Args:
+        returns - expects a pandas dataframe of returns where
+            each column is the name of a given security.
+    Returns:
+        dict of cluster name (a number) and list of securities in cluster
+    """
+    # cluster index (name)
+    i = 0
+    # correlation matrix
+    corr = returns.corr()
+    # remaining securities to cluster
+    remain = list(corr.index.copy())
+    n = len(remain)
+    res = {}
+
+    while n > 0:
+        # if only one left then create cluster and finish
+        if n == 1:
+            i += 1
+            res[i] = remain
+            n = 0
+        # if not then we have some work to do
+        else:
+            # filter down correlation matrix to current remain
+            cur_corr = corr[remain].ix[remain]
+            # get mean correlations, ordered
+            mc = cur_corr.mean().order()
+            # get lowest and highest mean correlation
+            low = mc.index[0]
+            high = mc.index[-1]
+
+            # case if corr(high,low) > threshold
+            if corr[high][low] > threshold:
+                i += 1
+
+                # new cluster for high and low
+                res[i] = [low, high]
+                remain.remove(low)
+                remain.remove(high)
+
+                rmv = []
+                for x in remain:
+                    avg_corr = (corr[x][high] + corr[x][low]) / 2.0
+                    if avg_corr > threshold:
+                        res[i].append(x)
+                        rmv.append(x)
+                [remain.remove(x) for x in rmv]
+
+                n = len(remain)
+
+            # otherwise we are creating two clusters - one for high
+            # and one for low
+            else:
+                # add cluster with HC
+                i += 1
+                res[i] = [high]
+                remain.remove(high)
+                remain.remove(low)
+
+                rmv = []
+                for x in remain:
+                    if corr[x][high] > threshold:
+                        res[i].append(x)
+                        rmv.append(x)
+                [remain.remove(x) for x in rmv]
+
+                i += 1
+                res[i] = [low]
+
+                rmv = []
+                for x in remain:
+                    if corr[x][low] > threshold:
+                        res[i].append(x)
+                        rmv.append(x)
+                [remain.remove(x) for x in rmv]
+
+                n = len(remain)
+
+    return res
+
+
+def limit_weights(weights, limit=0.1):
+    if 1.0 / limit > len(weights):
+        raise ValueError('invalid limit -> 1 / limit must be <= len(weights)')
+
+    if isinstance(weights, dict):
+        weights = pd.Series(weights)
+
+    if np.round(weights.sum(), 1) != 1.0:
+        raise ValueError('Expecting weights (that sum to 1) - sum is %s'
+                         % weights.sum())
+
+    res = np.round(weights.copy(), 4)
+    to_rebalance = (res[res > limit] - limit).sum()
+
+    ok = res[res < limit]
+    ok += (ok / ok.sum()) * to_rebalance
+
+    res[res > limit] = limit
+    res[res < limit] = ok
+
+    if not np.all([x <= limit for x in res]):
+        return limit_weights(res, limit=limit)
+
+    return res
