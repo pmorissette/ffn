@@ -424,8 +424,22 @@ class PerformanceStats(object):
 class GroupStats(dict):
 
     def __init__(self, *prices):
+        names = []
+        for p in prices:
+            if isinstance(p, pd.DataFrame):
+                names.extend(p.columns)
+            elif isinstance(p, pd.Series):
+                names.append(p.name)
+            else:
+                print 'else'
+                names.append(getattr(p, 'name', 'n/a'))
+        self._names = names
+
         # store original prices
         self._prices = merge(*prices).dropna()
+
+        # proper ordering
+        self._prices = self._prices[self._names]
 
         # check for duplicate columns
         if len(self._prices.columns) != len(set(self._prices.columns)):
@@ -511,7 +525,7 @@ class GroupStats(dict):
     def display(self):
         data = []
         first_row = ['Stat']
-        first_row.extend(self.keys())
+        first_row.extend(self._names)
         data.append(first_row)
 
         stats = self._stats()
@@ -525,7 +539,7 @@ class GroupStats(dict):
                 continue
 
             row = [n]
-            for key in self.keys():
+            for key in self._names:
                 raw = getattr(self[key], k)
                 if f is None:
                     row.append(raw)
@@ -570,7 +584,7 @@ class GroupStats(dict):
     def to_csv(self, sep=','):
         data = []
         first_row = ['Stat']
-        first_row.extend(self.keys())
+        first_row.extend(self._names)
         data.append(sep.join(first_row))
 
         stats = self._stats()
@@ -584,7 +598,7 @@ class GroupStats(dict):
                 continue
 
             row = [n]
-            for key in self.keys():
+            for key in self._names:
                 raw = getattr(self[key], k)
                 if f is None:
                     row.append(raw)
