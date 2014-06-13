@@ -26,7 +26,8 @@ def get(tickers, provider=None, common_dates=True, forward_fill=True,
 
         # call provider - check if supports memoization
         if hasattr(provider, 'mcache'):
-            data[ticker] = provider(ticker=t, field=f, mrefresh=mrefresh, **kwargs)
+            data[ticker] = provider(ticker=t, field=f,
+                                    mrefresh=mrefresh, **kwargs)
         else:
             data[ticker] = provider(ticker=t, field=f, **kwargs)
 
@@ -59,16 +60,28 @@ def get(tickers, provider=None, common_dates=True, forward_fill=True,
 @utils.memoize
 def web(ticker, field=None, start=None, end=None,
         mrefresh=False, source='yahoo'):
-    if field is None:
+
+    if source == 'yahoo' and field is None:
         field = 'Adj Close'
 
-    tmp = pdata.DataReader(ticker, data_source=source,
-                           start=start, end=end)
+    tmp = _download_web(ticker, data_source=source,
+                        start=start, end=end)
 
     if tmp is None:
         raise ValueError('failed to retrieve data for %s:%s' % (ticker, field))
 
-    return tmp[field]
+    if field:
+        return tmp[field]
+    else:
+        return tmp
+
+
+@utils.memoize
+def _download_web(name, **kwargs):
+    """
+    Thin wrapper to enable memoization
+    """
+    return pdata.DataReader(name, **kwargs)
 
 
 @utils.memoize

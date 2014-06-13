@@ -113,3 +113,11 @@ def scale(val, src, dst):
         return dst[1]
 
     return ((val - src[0]) / (src[1] - src[0])) * (dst[1] - dst[0]) + dst[0]
+
+
+def as_percent(self, digits=2):
+    """
+    Multiply by 100 and round to digits decimal places.
+    Useful for printing to notebook.
+    """
+    return np.round(self * 100, digits)

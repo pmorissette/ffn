@@ -189,7 +189,7 @@ def test_merge():
 def test_calc_inv_vol_weights():
     prc = df.ix[0:11]
     rets = prc.to_returns().dropna()
-    actual = ffn.finance.calc_inv_vol_weights(rets)
+    actual = ffn.core.calc_inv_vol_weights(rets)
 
     assert len(actual) == 3
     assert 'AAPL' in actual
@@ -204,7 +204,7 @@ def test_calc_inv_vol_weights():
 def test_calc_mean_var_weights():
     prc = df.ix[0:11]
     rets = prc.to_returns().dropna()
-    actual = ffn.finance.calc_mean_var_weights(rets)
+    actual = ffn.core.calc_mean_var_weights(rets)
 
     assert len(actual) == 3
     assert 'AAPL' in actual
@@ -227,13 +227,13 @@ def test_calc_total_return():
 
 
 def test_get_num_days_required():
-    actual = ffn.finance.get_num_days_required(pd.DateOffset(months=3),
-                                               perc_required=1.)
+    actual = ffn.core.get_num_days_required(pd.DateOffset(months=3),
+                                            perc_required=1.)
     assert actual >= 60
 
-    actual = ffn.finance.get_num_days_required(pd.DateOffset(months=3),
-                                               perc_required=1.,
-                                               period='m')
+    actual = ffn.core.get_num_days_required(pd.DateOffset(months=3),
+                                            perc_required=1.,
+                                            period='m')
     assert actual >= 3
 
 
@@ -292,10 +292,9 @@ def test_drop_duplicate_cols():
 
 def test_limit_weights():
     w = {'a': 0.3, 'b': 0.1,
-         'c': 0.05, 'd': 0.05,
-         'e': 0.5}
+         'c': 0.05, 'd': 0.05, 'e': 0.5}
 
-    actual = ffn.finance.limit_weights(w, 0.3)
+    actual = ffn.core.limit_weights(w, 0.3)
 
     assert actual.sum() == 1.0
 
@@ -306,10 +305,9 @@ def test_limit_weights():
     assert actual['e'] == 0.3
 
     w = pd.Series({'a': 0.3, 'b': 0.1,
-                   'c': 0.05, 'd': 0.05,
-                   'e': 0.5})
+                   'c': 0.05, 'd': 0.05, 'e': 0.5})
 
-    actual = ffn.finance.limit_weights(w, 0.3)
+    actual = ffn.core.limit_weights(w, 0.3)
 
     assert actual.sum() == 1.0
 
@@ -320,12 +318,11 @@ def test_limit_weights():
     assert actual['e'] == 0.3
 
     w = pd.Series({'a': 0.29, 'b': 0.1,
-                   'c': 0.06, 'd': 0.05,
-                   'e': 0.5})
+                   'c': 0.06, 'd': 0.05, 'e': 0.5})
 
     assert w.sum() == 1.0
 
-    actual = ffn.finance.limit_weights(w, 0.3)
+    actual = ffn.core.limit_weights(w, 0.3)
 
     assert actual.sum() == 1.0
 

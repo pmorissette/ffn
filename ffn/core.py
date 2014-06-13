@@ -1,4 +1,4 @@
-from ffn.utils import fmtp, fmtn, fmtpn, get_period_name
+from ffn.utils import fmtp, fmtn, fmtpn, get_period_name, as_percent
 import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
@@ -617,46 +617,46 @@ class GroupStats(dict):
         return '\n'.join(data)
 
 
-def to_returns(self):
+def to_returns(prices):
     """
     Calculates the simple arithmetic returns of a price series.
 
     Formula is: (t1 / t0) - 1
 
     Args:
-        self: Expects a price series
+        prices: Expects a price series
     """
-    return self / self.shift(1) - 1
+    return prices / prices.shift(1) - 1
 
 
-def to_log_returns(self):
+def to_log_returns(prices):
     """
     Calculates the log returns of a price series.
 
     Formula is: ln(p1/p0)
 
     Args:
-        self: Expects a price series
+        prices: Expects a price series
     """
-    return np.log(self / self.shift(1))
+    return np.log(prices / prices.shift(1))
 
 
-def to_price_index(self, start=100):
+def to_price_index(returns, start=100):
     """
     Returns a price index given a series of returns.
 
     Args:
-        * self: Expects a return series
+        * returns: Expects a return series
         * start (number): Starting level
 
     Assumes arithmetic returns.
 
     Formula is: cumprod (1+r)
     """
-    return (self.replace(to_replace=np.nan, value=0) + 1).cumprod() * 100
+    return (returns.replace(to_replace=np.nan, value=0) + 1).cumprod() * 100
 
 
-def rebase(self, value=100):
+def rebase(prices, value=100):
     """
     Rebase all series to a given intial value.
 
@@ -664,10 +664,10 @@ def rebase(self, value=100):
     together easier.
 
     Args:
-        * self: Expects a price series
+        * prices: Expects a price series
         * value (number): starting value for all series.
     """
-    return self / self.ix[0] * value
+    return prices / prices.ix[0] * value
 
 
 def calc_perf_stats(obj):
@@ -801,11 +801,11 @@ def calc_risk_return_ratio(self):
     return self.mean() / self.std()
 
 
-def calc_information_ratio(self, benchmark):
+def calc_information_ratio(returns, benchmark_returns):
     """
     http://en.wikipedia.org/wiki/Information_ratio
     """
-    diff_rets = self - benchmark
+    diff_rets = returns - benchmark_returns
     diff_std = diff_rets.std()
 
     if np.isnan(diff_std) or diff_std == 0:
@@ -814,12 +814,12 @@ def calc_information_ratio(self, benchmark):
     return diff_rets.mean() / diff_std
 
 
-def calc_prob_mom(self, other):
+def calc_prob_mom(returns, other):
     """
     Probabilistic momentum
     http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/ # NOQA
     """
-    return t.cdf(self.calc_information_ratio(other), len(self) - 1)
+    return t.cdf(returns.calc_information_ratio(other), len(returns) - 1)
 
 
 def calc_total_return(prices):
@@ -881,33 +881,25 @@ def drop_duplicate_cols(df):
     return df
 
 
-def as_percent(self, digits=2):
-    """
-    Multiply by 100 and round to digits decimal places.
-    Useful for printing to notebook.
-    """
-    return np.round(self * 100, digits)
-
-
-def to_monthly(self, method='ffill', how='end'):
+def to_monthly(series, method='ffill', how='end'):
     """
     Wraps asfreq_actual.
     """
-    return self.asfreq_actual('M', method=method, how=how)
+    return series.asfreq_actual('M', method=method, how=how)
 
 
-def asfreq_actual(self, freq, method=None, how=None, normalize=False):
+def asfreq_actual(series, freq, method=None, how=None, normalize=False):
     """
     Similar to pandas' asfreq but keeps the actual dates.
     For example, if last datapoint in Jan is on the 29th,
     that date will be used instead of the 31st.
     """
-    orig = self
+    orig = series
     is_series = False
-    if isinstance(self, pd.Series):
+    if isinstance(series, pd.Series):
         is_series = True
-        name = self.name if self.name else 'data'
-        orig = pd.DataFrame({name: self})
+        name = series.name if series.name else 'data'
+        orig = pd.DataFrame({name: series})
 
     # add date column
     t = pd.concat([orig, pd.DataFrame({'dt': orig.index.values},
@@ -924,24 +916,6 @@ def asfreq_actual(self, freq, method=None, how=None, normalize=False):
         return res
 
 
-def extend_pandas():
-    PandasObject.to_returns = to_returns
-    PandasObject.to_log_returns = to_log_returns
-    PandasObject.to_price_index = to_price_index
-    PandasObject.rebase = rebase
-    PandasObject.calc_perf_stats = calc_perf_stats
-    PandasObject.to_drawdown_series = to_drawdown_series
-    PandasObject.calc_max_drawdown = calc_max_drawdown
-    PandasObject.calc_cagr = calc_cagr
-    PandasObject.calc_total_return = calc_total_return
-    PandasObject.as_percent = as_percent
-    PandasObject.to_monthly = to_monthly
-    PandasObject.asfreq_actual = asfreq_actual
-    PandasObject.drop_duplicate_cols = drop_duplicate_cols
-    PandasObject.calc_information_ratio = calc_information_ratio
-    PandasObject.calc_prob_mom = calc_prob_mom
-
-
 def calc_inv_vol_weights(returns):
     """
     Calculates weights proportional to inverse volatility of each column.
@@ -956,7 +930,7 @@ def calc_inv_vol_weights(returns):
     # calc vols
     vol = 1.0 / returns.std()
     vols = vol.sum()
-    return (vol / vols).to_dict()
+    return vol / vols
 
 
 def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
@@ -998,7 +972,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
         raise Exception(optimized.message)
 
     # return weight vector
-    return {returns.columns[i]: optimized.x[i] for i in range(n)}
+    return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
 
 
 def get_num_days_required(offset, period='d', perc_required=0.90):
@@ -1020,7 +994,7 @@ def get_num_days_required(offset, period='d', perc_required=0.90):
     return req
 
 
-def clusters(returns, n=None, plot=False):
+def calc_clusters(returns, n=None, plot=False):
     """
     Calculates the clusters based on k-means
     clustering.
@@ -1089,25 +1063,11 @@ def clusters(returns, n=None, plot=False):
     for k, v in tmp.iteritems():
         inv_map[v] = inv_map.get(v, [])
         inv_map[v].append(k)
+
     return inv_map
 
 
-def princomp(data):
-    """
-    Returns the principal components.
-
-    Code based on http://glowingpython.blogspot.ca/2011/07/
-    principal-component-analysis-with-numpy.html
-
-    Matches results in R.
-    """
-    M = data - data.mean()
-    [latent, weights] = np.linalg.eig(M.cov())
-    score = np.dot(weights.T, M)
-    return weights.T, score, latent
-
-
-def ftca(returns, threshold=0.5):
+def calc_ftca(returns, threshold=0.5):
     """
     Implementation of David Varadi's Fast Threshold
     Clustering Algorithm (FTCA).
@@ -1223,3 +1183,26 @@ def limit_weights(weights, limit=0.1):
         return limit_weights(res, limit=limit)
 
     return res
+
+
+def extend_pandas():
+    PandasObject.to_returns = to_returns
+    PandasObject.to_log_returns = to_log_returns
+    PandasObject.to_price_index = to_price_index
+    PandasObject.rebase = rebase
+    PandasObject.calc_perf_stats = calc_perf_stats
+    PandasObject.to_drawdown_series = to_drawdown_series
+    PandasObject.calc_max_drawdown = calc_max_drawdown
+    PandasObject.calc_cagr = calc_cagr
+    PandasObject.calc_total_return = calc_total_return
+    PandasObject.as_percent = as_percent
+    PandasObject.to_monthly = to_monthly
+    PandasObject.asfreq_actual = asfreq_actual
+    PandasObject.drop_duplicate_cols = drop_duplicate_cols
+    PandasObject.calc_information_ratio = calc_information_ratio
+    PandasObject.calc_prob_mom = calc_prob_mom
+    PandasObject.calc_risk_return_ratio = calc_risk_return_ratio
+    PandasObject.calc_inv_vol_weights = calc_inv_vol_weights
+    PandasObject.calc_mean_var_weights = calc_mean_var_weights
+    PandasObject.calc_clusters = calc_clusters
+    PandasObject.calc_ftca = calc_ftca

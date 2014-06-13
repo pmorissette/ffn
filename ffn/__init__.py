@@ -1,7 +1,8 @@
-import finance
+import core
 import data
 
 from .data import get
-from .finance import year_frac, PerformanceStats, GroupStats, merge
+#from .core import year_frac, PerformanceStats, GroupStats, merge
+from .core import *
 
-finance.extend_pandas()
+core.extend_pandas()
