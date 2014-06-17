@@ -22,7 +22,22 @@ class PerformanceStats(object):
         self.name = self.prices.name
         self._start = self.prices.index[0]
         self._end = self.prices.index[-1]
-        self._calculate(self.prices)
+
+        self._update(self.prices)
+
+    def _update(self, obj):
+        # calc
+        self._calculate(obj)
+
+        # update derived structure
+        # return table as dataframe for easier manipulation
+        self.return_table = pd.DataFrame(self.return_table).T
+        self.lookback_returns = pd.Series(
+            [self.mtd, self.three_month, self.six_month, self.ytd,
+             self.one_year, self.three_year, self.five_year,
+             self.ten_year, self.cagr],
+            ['mtd', '3m', '6m', 'ytd', '1y', '3y', '5y', '10y', 'incep'])
+        self.lookback_returns.name = self.name
 
     def _calculate(self, obj):
         # default values
@@ -70,6 +85,7 @@ class PerformanceStats(object):
         self.yearly_kurt = np.nan
         self.five_year = np.nan
         self.ten_year = np.nan
+
         self.return_table = {}
         # end default values
 
@@ -298,7 +314,7 @@ class PerformanceStats(object):
         else:
             end = pd.to_datetime(end)
 
-        self._calculate(self.prices.ix[start:end])
+        self._update(self.prices.ix[start:end])
 
     def display(self):
         print 'Stats for %s from %s - %s' % (self.name, self.start, self.end)
@@ -351,13 +367,16 @@ class PerformanceStats(object):
     def display_monthly_returns(self):
         data = [['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
                  'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'YTD']]
-        for k in self.return_table.keys():
-            r = self.return_table[k]
+        for k in self.return_table.index:
+            r = self.return_table.ix[k]
             data.append([k, fmtpn(r[1]), fmtpn(r[2]), fmtpn(r[3]), fmtpn(r[4]),
                          fmtpn(r[5]), fmtpn(r[6]), fmtpn(r[7]), fmtpn(r[8]),
                          fmtpn(r[9]), fmtpn(r[10]), fmtpn(r[11]), fmtpn(r[12]),
                          fmtpn(r[13])])
         print tabulate(data, headers='firstrow')
+
+    def display_lookback_returns(self):
+        return self.lookback_returns.map('{:,.2%}'.format)
 
     def plot(self, period='m', figsize=(15, 5), title=None,
              logy=False, **kwargs):
@@ -451,7 +470,20 @@ class GroupStats(dict):
         self._start = self._prices.index[0]
         self._end = self._prices.index[-1]
         # calculate stats for entire series
-        self._calculate(self._prices)
+        self._update(self._prices)
+
+    def __getitem__(self, key):
+        if type(key) == int:
+            return self[self._names[key]]
+        else:
+            return self.get(key)
+
+    def _update(self, data):
+        self._calculate(data)
+        # lookback returns dataframe
+        self.lookback_returns = pd.DataFrame(
+            {x.lookback_returns.name: x.lookback_returns for x in
+             self.values()})
 
     def _calculate(self, data):
         self.prices = data
@@ -522,7 +554,7 @@ class GroupStats(dict):
         else:
             end = pd.to_datetime(end)
 
-        self._calculate(self._prices.ix[start:end])
+        self._update(self._prices.ix[start:end])
 
     def display(self):
         data = []
@@ -556,6 +588,10 @@ class GroupStats(dict):
             data.append(row)
 
         print tabulate(data, headers='firstrow')
+
+    def display_lookback_returns(self):
+        return self.lookback_returns.apply(
+            lambda x: x.map('{:,.2%}'.format), axis=1)
 
     def plot(self, period='m', figsize=(15, 5), title=None,
              logy=False, **kwargs):
