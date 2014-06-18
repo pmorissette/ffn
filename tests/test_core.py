@@ -333,3 +333,71 @@ def test_limit_weights():
     aae(actual['c'], 0.114, 3)
     aae(actual['d'], 0.095, 3)
     aae(actual['e'], 0.300, 3)
+
+
+def test_random_long_only_weights():
+    n = 10
+    bounds = (0., 1.)
+    tot = 1.0000
+    low = bounds[0]
+    high = bounds[1]
+
+    df = pd.DataFrame(index=range(1000), columns=range(n))
+    for i in df.index:
+        df.ix[i] = ffn.random_long_only_weights(n, bounds, tot)
+    assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
+    assert df.applymap(lambda x: (x >= low and x <= high)).all().all()
+
+    n = 4
+    bounds = (0., 0.25)
+    tot = 1.0000
+    low = bounds[0]
+    high = bounds[1]
+
+    df = pd.DataFrame(index=range(1000), columns=range(n))
+    for i in df.index:
+        df.ix[i] = ffn.random_long_only_weights(n, bounds, tot)
+    assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
+    assert df.applymap(
+        lambda x: (np.round(x, 2) >= low and
+                   np.round(x, 2) <= high)).all().all()
+
+    n = 7
+    bounds = (0., 0.25)
+    tot = 0.8000
+    low = bounds[0]
+    high = bounds[1]
+
+    df = pd.DataFrame(index=range(1000), columns=range(n))
+    for i in df.index:
+        df.ix[i] = ffn.random_long_only_weights(n, bounds, tot)
+    assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
+    assert df.applymap(
+        lambda x: (np.round(x, 2) >= low and
+                   np.round(x, 2) <= high)).all().all()
+
+
+def test_random_long_only_weights_throws_error():
+    try:
+        ffn.random_long_only_weights(2, (0., 0.25), 1.0)
+        assert False
+    except ValueError:
+        assert True
+
+    try:
+        ffn.random_long_only_weights(10, (0.5, 0.25), 1.0)
+        assert False
+    except ValueError:
+        assert True
+
+    try:
+        ffn.random_long_only_weights(10, (-0.5, 0.25), 1.0)
+        assert False
+    except ValueError:
+        assert True
+
+    try:
+        ffn.random_long_only_weights(10, (0.5, 0.75), 0.2)
+        assert False
+    except ValueError:
+        assert True

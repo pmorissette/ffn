@@ -1,3 +1,4 @@
+import random
 from ffn.utils import fmtp, fmtn, fmtpn, get_period_name, as_percent
 import numpy as np
 import pandas as pd
@@ -1219,6 +1220,44 @@ def limit_weights(weights, limit=0.1):
         return limit_weights(res, limit=limit)
 
     return res
+
+
+def random_long_only_weights(n, bounds=(0., 1.), total=1.0):
+    low = bounds[0]
+    high = bounds[1]
+
+    if high < low:
+        raise ValueError('Higher bound must be greater or '
+                         'equal to lower bound')
+    if high < 0 or low < 0:
+        raise ValueError('low and high bounds must be above 0')
+
+    if n * high < total or n * low > total:
+        raise ValueError('solution not possible with given n and bounds')
+
+    w = [0] * n
+    rem = float(total)
+    for i in range(n):
+        # number of remaining after this weight
+        nrem = n - i - 1
+        # max with remain
+        maxr = nrem * high
+
+        rw = random.uniform(low, min(high, rem))
+
+        # diff - used to make sure we have enough of an allocation to be able
+        # to hit the target with the resulting random weights
+        diff = rem - rw - maxr
+
+        # save random weight
+        w[i] = rw + max(diff, 0)
+
+        # adjust rem
+        rem -= w[i]
+
+    # shuffle and return
+    random.shuffle(w)
+    return w
 
 
 def extend_pandas():
