@@ -40,6 +40,11 @@ class PerformanceStats(object):
             ['mtd', '3m', '6m', 'ytd', '1y', '3y', '5y', '10y', 'incep'])
         self.lookback_returns.name = self.name
 
+        st = self._stats()
+        self.stats = pd.Series(
+            [getattr(self, x[0]) for x in st if x[0] is not None],
+            [x[0] for x in st if x[0] is not None])
+
     def _calculate(self, obj):
         # default values
         self.daily_mean = np.nan
@@ -485,6 +490,9 @@ class GroupStats(dict):
         self.lookback_returns = pd.DataFrame(
             {x.lookback_returns.name: x.lookback_returns for x in
              self.values()})
+
+        self.stats = pd.DataFrame(
+            {x.name: x.stats for x in self.values()})
 
     def _calculate(self, data):
         self.prices = data
