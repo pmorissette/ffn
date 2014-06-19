@@ -620,6 +620,16 @@ class GroupStats(dict):
         pd.scatter_matrix(ser, figsize=figsize, **kwargs)
         plt.suptitle(title)
 
+    def plot_histograms(self, period='m', title=None,
+                        figsize=(10, 10), **kwargs):
+        if title is None:
+            title = '%s return histogram matrix' % get_period_name(period)
+
+        plt.figure()
+        ser = self._get_series(period).to_returns().dropna()
+        pd.hist(ser, figsize=figsize, **kwargs)
+        plt.suptitle(title)
+
     def _get_series(self, per):
         if per is 'd':
             return self.prices
