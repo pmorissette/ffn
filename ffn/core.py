@@ -1240,40 +1240,33 @@ def limit_weights(weights, limit=0.1):
     return res
 
 
-def random_long_only_weights(n, bounds=(0., 1.), total=1.0):
+def random_weights(n, bounds=(0., 1.), total=1.0):
     low = bounds[0]
     high = bounds[1]
 
     if high < low:
         raise ValueError('Higher bound must be greater or '
                          'equal to lower bound')
-    if high < 0 or low < 0:
-        raise ValueError('low and high bounds must be above 0')
 
     if n * high < total or n * low > total:
         raise ValueError('solution not possible with given n and bounds')
 
     w = [0] * n
-    rem = float(total)
+    tgt = -float(total)
+
     for i in range(n):
-        # number of remaining after this weight
-        nrem = n - i - 1
-        # max with remain
-        maxr = nrem * high
+        rn = n - i - 1
+        rhigh = rn * high
+        rlow = rn * low
 
-        rw = random.uniform(low, min(high, rem))
+        lowb = max(-rhigh - tgt, low)
+        highb = min(-rlow - tgt, high)
 
-        # diff - used to make sure we have enough of an allocation to be able
-        # to hit the target with the resulting random weights
-        diff = rem - rw - maxr
+        rw = random.uniform(lowb, highb)
+        w[i] = rw
 
-        # save random weight
-        w[i] = rw + max(diff, 0)
+        tgt += rw
 
-        # adjust rem
-        rem -= w[i]
-
-    # shuffle and return
     random.shuffle(w)
     return w
 
