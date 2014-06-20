@@ -4,7 +4,7 @@ import pandas.io.data as pdata
 
 
 @utils.memoize
-def get(tickers, provider=None, common_dates=True, forward_fill=True,
+def get(tickers, provider=None, common_dates=True, forward_fill=False,
         clean_tickers=True, column_names=None, ticker_field_sep=':',
         mrefresh=False, existing=None, **kwargs):
     """
@@ -15,7 +15,9 @@ def get(tickers, provider=None, common_dates=True, forward_fill=True,
         provider (function): Provider to use for downloading data.
             By default it will be ffn.DEFAULT_PROVIDER if not provided.
         common_dates (bool): Keep common dates only? Drop na's.
-        forward_fill (bool): forward fill values if missing.
+        forward_fill (bool): forward fill values if missing. Only works
+            if common_dates is False, since common_dates will remove
+            all nan's, so no filling forward necessary.
         clean_tickers (bool): Should the tickers be 'cleaned' using
             ffn.utils.clean_tickers? Basically remove non-standard
             characters (^VIX -> vix) and standardize to lower case.
