@@ -1,5 +1,6 @@
 import random
-from ffn.utils import fmtp, fmtn, fmtpn, get_period_name, as_percent
+import ffn.utils as utils
+from ffn.utils import fmtp, fmtn, fmtpn, get_period_name
 import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
@@ -1281,7 +1282,8 @@ def extend_pandas():
     PandasObject.calc_max_drawdown = calc_max_drawdown
     PandasObject.calc_cagr = calc_cagr
     PandasObject.calc_total_return = calc_total_return
-    PandasObject.as_percent = as_percent
+    PandasObject.as_percent = utils.as_percent
+    PandasObject.as_format = utils.as_format
     PandasObject.to_monthly = to_monthly
     PandasObject.asfreq_actual = asfreq_actual
     PandasObject.drop_duplicate_cols = drop_duplicate_cols

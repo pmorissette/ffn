@@ -1,6 +1,7 @@
 import re
 import decorator
 import numpy as np
+import pandas as pd
 import cPickle
 
 
@@ -116,8 +117,14 @@ def scale(val, src, dst):
 
 
 def as_percent(self, digits=2):
+    return as_format(self, '.%s%%' % digits)
+
+
+def as_format(item, format_str='.2f'):
     """
-    Multiply by 100 and round to digits decimal places.
-    Useful for printing to notebook.
+    Map a format string over a pandas object.
     """
-    return np.round(self * 100, digits)
+    if isinstance(item, pd.Series):
+        return item.map(lambda x: format(x, format_str))
+    elif isinstance(item, pd.DataFrame):
+        return item.applymap(lambda x: format(x, format_str))
