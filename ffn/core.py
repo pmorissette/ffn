@@ -43,7 +43,7 @@ class PerformanceStats(object):
         st = self._stats()
         self.stats = pd.Series(
             [getattr(self, x[0]) for x in st if x[0] is not None],
-            [x[0] for x in st if x[0] is not None])
+            [x[0] for x in st if x[0] is not None]).drop_duplicates()
 
     def _calculate(self, obj):
         # default values
