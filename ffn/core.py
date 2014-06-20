@@ -828,7 +828,13 @@ class GroupStats(dict):
                     raise NotImplementedError('unsupported format %s' % f)
             data.append(sep.join(row))
 
-        return '\n'.join(data)
+        res = '\n'.join(data)
+
+        if path is not None:
+            with open(path, 'w') as fl:
+                fl.write(res)
+        else:
+            return res
 
 
 def to_returns(prices):
