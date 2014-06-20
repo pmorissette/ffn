@@ -7,6 +7,29 @@ import pandas.io.data as pdata
 def get(tickers, provider=None, common_dates=True, forward_fill=True,
         clean_tickers=True, column_names=None, ticker_field_sep=':',
         mrefresh=False, existing=None, **kwargs):
+    """
+    Helper function for retrieving data as a DataFrame.
+
+    Args:
+        tickers (list, string, csv string): Tickers to download.
+        provider (function): Provider to use for downloading data.
+            By default it will be ffn.DEFAULT_PROVIDER if not provided.
+        common_dates (bool): Keep common dates only? Drop na's.
+        forward_fill (bool): forward fill values if missing.
+        clean_tickers (bool): Should the tickers be 'cleaned' using
+            ffn.utils.clean_tickers? Basically remove non-standard
+            characters (^VIX -> vix) and standardize to lower case.
+        column_names (list): List of column names if clean_tickers
+            is not satisfactory.
+        ticker_field_sep (char): separator used to determine the
+            ticker and field. This is in case we want to specify
+            particular, non-default fields. For example, we might
+            want: AAPL:Low,AAPL:High,AAPL:Close. ':' is the separator.
+        mrefresh (bool): Ignore memoization.
+        existing (DataFrame): Existing DataFrame to append returns
+            to - used when we download from multiple sources
+        kwargs: passed to provider
+    """
 
     if provider is None:
         provider = DEFAULT_PROVIDER
@@ -60,7 +83,10 @@ def get(tickers, provider=None, common_dates=True, forward_fill=True,
 @utils.memoize
 def web(ticker, field=None, start=None, end=None,
         mrefresh=False, source='yahoo'):
-
+    """
+    Data provider wrapper around pandas.io.data provider. Provides
+    memoization.
+    """
     if source == 'yahoo' and field is None:
         field = 'Adj Close'
 
@@ -86,6 +112,9 @@ def _download_web(name, **kwargs):
 
 @utils.memoize
 def csv(ticker, path='data.csv', field='', mrefresh=False, **kwargs):
+    """
+    Data provider wrapper around pandas' read_csv. Provides memoization.
+    """
     # set defaults if not specified
     if 'index_col' not in kwargs:
         kwargs['index_col'] = 0

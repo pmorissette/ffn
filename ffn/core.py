@@ -19,7 +19,27 @@ except ImportError:
 
 class PerformanceStats(object):
 
+    """
+    PerformanceStats is a convenience class used for the performance
+    evaluation of a price series. It contains various helper functions
+    to help with plotting and contains a large amount of descriptive
+    statistics.
+
+    Args:
+        prices (TimeSeries): A price series.
+
+    Attributes:
+        name (str): Name, derived from price series name
+        return_table (DataFrame): A table of monthly returns with
+            YTD figures as well.
+        lookback_returns (Series): Returns for diffrent
+            lookback periods (1m, 3m, 6m, ytd...)
+        stats (Series): A series that contains all the stats
+
+    """
+
     def __init__(self, prices):
+        super(PerformanceStats, self).__init__()
         self.prices = prices
         self.name = self.prices.name
         self._start = self.prices.index[0]
@@ -311,6 +331,15 @@ class PerformanceStats(object):
         return stats
 
     def set_date_range(self, start=None, end=None):
+        """
+        Update date range of stats, charts, etc. If None then
+        the original date is used. So to reset to the original
+        range, just call with no args.
+
+        Args:
+            start (date): start date
+            end (end): end date
+        """
         if start is None:
             start = self._start
         else:
@@ -324,6 +353,10 @@ class PerformanceStats(object):
         self._update(self.prices.ix[start:end])
 
     def display(self):
+        """
+        Displays an overview containing descriptive stats for the TimeSeries
+        provided.
+        """
         print 'Stats for %s from %s - %s' % (self.name, self.start, self.end)
         print 'Summary:'
         data = [[fmtp(self.total_return), fmtn(self.daily_sharpe),
@@ -372,6 +405,10 @@ class PerformanceStats(object):
         print tabulate(data)
 
     def display_monthly_returns(self):
+        """
+        Display a table containing monthly returns and ytd returns
+        for every year in range.
+        """
         data = [['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
                  'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'YTD']]
         for k in self.return_table.index:
@@ -383,10 +420,24 @@ class PerformanceStats(object):
         print tabulate(data, headers='firstrow')
 
     def display_lookback_returns(self):
+        """
+        Displays the current lookback returns.
+        """
         return self.lookback_returns.map('{:,.2%}'.format)
 
     def plot(self, period='m', figsize=(15, 5), title=None,
              logy=False, **kwargs):
+        """
+        Helper function for plotting the series.
+
+        Args:
+            period (str): period used for display purposes.
+                Refer to pandas docs for valid period strings.
+            figsize ((x,y)): figure size
+            title (str): Title if default not appropriate
+            logy (bool): log-scale for y axis
+            kwargs: passed to pandas' plot method
+        """
         if title is None:
             title = '%s %s price series' % (self.name, get_period_name(period))
 
@@ -395,6 +446,19 @@ class PerformanceStats(object):
 
     def plot_histogram(self, period='m', figsize=(15, 5), title=None,
                        bins=20, **kwargs):
+        """
+        Plots a histogram of returns given a return period (frequency).
+
+        Args:
+            period (str): period used for display purposes.
+                This will dictate the type of returns
+                (daily returns, monthly, ...)
+                Refer to pandas docs for valid period strings.
+            figsize ((x,y)): figure size
+            title (str): Title if default not appropriate
+            bins (int): number of bins for the histogram
+            kwargs: passed to pandas' hist method
+        """
         if title is None:
             title = '%s %s return histogram' % (
                 self.name, get_period_name(period))
@@ -415,7 +479,17 @@ class PerformanceStats(object):
         elif per is 'y':
             return self.yearly_prices
 
-    def to_csv(self, sep=','):
+    def to_csv(self, sep=',', path=None):
+        """
+        Returns a CSV string with appropriate formatting.
+        If path is not None, the string will be saved to file
+        at path.
+
+        Args:
+            sep (char): Separator
+            path (str): If None, CSV string returned. Else file written
+                to specified path.
+        """
         stats = self._stats()
 
         data = []
@@ -446,10 +520,37 @@ class PerformanceStats(object):
 
             data.append(sep.join(row))
 
-        return '\n'.join(data)
+        res = '\n'.join(data)
+
+        if path is not None:
+            with open(path, 'w') as fl:
+                fl.write(res)
+        else:
+            return res
 
 
 class GroupStats(dict):
+
+    """
+    GroupStats enables one to compare multiple series side by side.
+    It is a wrapper around a dict of {price.name: PerformanceStats} and
+    provides many convenience methods.
+
+    The order of the series passed in will be preserved.
+    Individual PerformanceStats objects can be accessed via index
+    position or name via the [] accessor.
+
+    Args:
+        *prices (Series): Multiple price series to be compared.
+
+    Attributes:
+        stats (DataFrame): Dataframe containing stats for each series provided.
+            Stats in rows, series in columns.
+        lookback_returns (DataFrame): Returns for diffrent
+            lookback periods (1m, 3m, 6m, ytd...)
+            Period in rows, series in columns.
+        prices (DataFrame): The merged and rebased prices.
+    """
 
     def __init__(self, *prices):
         names = []
@@ -554,6 +655,15 @@ class GroupStats(dict):
         return stats
 
     def set_date_range(self, start=None, end=None):
+        """
+        Update date range of stats, charts, etc. If None then
+        the original date range is used. So to reset to the original
+        range, just call with no args.
+
+        Args:
+            start (date): start date
+            end (end): end date
+        """
         if start is None:
             start = self._start
         else:
@@ -567,6 +677,9 @@ class GroupStats(dict):
         self._update(self._prices.ix[start:end])
 
     def display(self):
+        """
+        Display summary stats table.
+        """
         data = []
         first_row = ['Stat']
         first_row.extend(self._names)
@@ -600,11 +713,26 @@ class GroupStats(dict):
         print tabulate(data, headers='firstrow')
 
     def display_lookback_returns(self):
+        """
+        Displays the current lookback returns for each series.
+        """
         return self.lookback_returns.apply(
             lambda x: x.map('{:,.2%}'.format), axis=1)
 
     def plot(self, period='m', figsize=(15, 5), title=None,
              logy=False, **kwargs):
+        """
+        Helper function for plotting the series.
+
+        Args:
+            period (str): period used for display purposes.
+                Refer to pandas docs for valid period strings.
+            figsize ((x,y)): figure size
+            title (str): Title if default not appropriate
+            logy (bool): log-scale for y axis
+            kwargs: passed to pandas' plot method
+        """
+
         if title is None:
             title = '%s equity progression' % get_period_name(period)
         ser = self._get_series(period).rebase()
@@ -613,6 +741,16 @@ class GroupStats(dict):
 
     def plot_scatter_matrix(self, period='m', title=None,
                             figsize=(10, 10), **kwargs):
+        """
+        Wrapper around pandas' scatter_matrix.
+
+        Args:
+            period (str): period used for display purposes.
+                Refer to pandas docs for valid period strings.
+            figsize ((x,y)): figure size
+            title (str): Title if default not appropriate
+            kwargs: passed to pandas' scatter_matrix method
+        """
         if title is None:
             title = '%s return scatter matrix' % get_period_name(period)
 
@@ -623,6 +761,16 @@ class GroupStats(dict):
 
     def plot_histograms(self, period='m', title=None,
                         figsize=(10, 10), **kwargs):
+        """
+        Wrapper around pandas' hist.
+
+        Args:
+            period (str): period used for display purposes.
+                Refer to pandas docs for valid period strings.
+            figsize ((x,y)): figure size
+            title (str): Title if default not appropriate
+            kwargs: passed to pandas' hist method
+        """
         if title is None:
             title = '%s return histogram matrix' % get_period_name(period)
 
@@ -639,7 +787,17 @@ class GroupStats(dict):
         elif per is 'y':
             return self.prices.resample('A', 'last')
 
-    def to_csv(self, sep=','):
+    def to_csv(self, sep=',', path=None):
+        """
+        Returns a CSV string with appropriate formatting.
+        If path is not None, the string will be saved to file
+        at path.
+
+        Args:
+            sep (char): Separator
+            path (str): If None, CSV string returned. Else file written
+                to specified path.
+        """
         data = []
         first_row = ['Stat']
         first_row.extend(self._names)
@@ -852,7 +1010,8 @@ def calc_cagr(prices):
 
 def calc_risk_return_ratio(self):
     """
-    Calculates sharpe ratio
+    Calculates the return / risk ratio. Basically the
+    Sharpe ratio without factoring in the risk-free rate.
     """
     return self.mean() / self.std()
 
@@ -870,15 +1029,26 @@ def calc_information_ratio(returns, benchmark_returns):
     return diff_rets.mean() / diff_std
 
 
-def calc_prob_mom(returns, other):
+def calc_prob_mom(returns, other_returns):
     """
     Probabilistic momentum
-    http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/ # NOQA
+
+    Basically the "probability or confidence that one asset
+    is going to outperform the other".
+
+    Source:
+        http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/ # NOQA
     """
-    return t.cdf(returns.calc_information_ratio(other), len(returns) - 1)
+    return t.cdf(returns.calc_information_ratio(other_returns),
+                 len(returns) - 1)
 
 
 def calc_total_return(prices):
+    """
+    Calculates the total return of a series.
+
+    last / first - 1
+    """
     return (prices.ix[-1] / prices.ix[0]) - 1
 
 
@@ -902,6 +1072,11 @@ def year_frac(start, end):
 
 
 def merge(*series):
+    """
+    Merge Series and/or DataFrames together.
+
+    Returns a DataFrame.
+    """
     dfs = []
     for s in series:
         if isinstance(s, pd.DataFrame):
@@ -939,7 +1114,8 @@ def drop_duplicate_cols(df):
 
 def to_monthly(series, method='ffill', how='end'):
     """
-    Wraps asfreq_actual.
+    Convenience method that wraps asfreq_actual
+    with 'M' param (method='ffill', how='end').
     """
     return series.asfreq_actual('M', method=method, how=how)
 
@@ -947,7 +1123,7 @@ def to_monthly(series, method='ffill', how='end'):
 def asfreq_actual(series, freq, method=None, how=None, normalize=False):
     """
     Similar to pandas' asfreq but keeps the actual dates.
-    For example, if last datapoint in Jan is on the 29th,
+    For example, if last data point in Jan is on the 29th,
     that date will be used instead of the 31st.
     """
     orig = series
@@ -981,7 +1157,7 @@ def calc_inv_vol_weights(returns):
     has the same level of volatility.
 
     Returns:
-        dict {col_name: weight}
+        Series {col_name: weight}
     """
     # calc vols
     vol = 1.0 / returns.std()
@@ -992,6 +1168,22 @@ def calc_inv_vol_weights(returns):
 def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
                           rf=0.,
                           covar_method='ledoit-wolf'):
+    """
+    Calculates the mean-variance weights given a DataFrame of returns.
+
+    Args:
+        returns (DataFrame): Returns for multiple securities.
+        weight_bounds ((low, high)): Weigh limits for optimization.
+        rf (float): Risk-free rate used in utility calculation
+        covar_method (str): Covariance matrix estimation method.
+            Currently supported:
+                - ledoit-wolf
+                - standard
+
+    Returns:
+        Series {col_name: weight}
+
+    """
     def fitness(weights, exp_rets, covar, rf):
         # portfolio mean
         mean = sum(exp_rets * weights)
@@ -1032,6 +1224,17 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
 
 
 def get_num_days_required(offset, period='d', perc_required=0.90):
+    """
+    Estimates the number of days required to assume that data is OK.
+
+    Helper function used to determine if there are enough "good" data
+    days over a given period.
+
+    Args:
+        offset (DateOffset): Offset (lookback) period.
+        period (str): Period string.
+        perc_required (float): percentage of number of days expected required.
+    """
     x = pd.to_datetime('2010-01-01')
     delta = x - (x - offset)
     # convert to 'trading days' - rough guestimate
@@ -1056,9 +1259,11 @@ def calc_clusters(returns, n=None, plot=False):
     clustering.
 
     Args:
-        * returns (pd.DataFrame): DataFrame of returns
-        * n (int): Specify # of clusters. If None, this
+        returns (pd.DataFrame): DataFrame of returns
+        n (int): Specify # of clusters. If None, this
             will be automatically determined
+        plot (bool): Show plot?
+
     Returns:
         dict with structure: {cluster# : [col names]}
     """
@@ -1133,10 +1338,12 @@ def calc_ftca(returns, threshold=0.5):
     More stable than k-means for clustering purposes.
     If you want more clusters, use a higher threshold.
 
-
     Args:
         returns - expects a pandas dataframe of returns where
             each column is the name of a given security.
+        threshold (float): Threshold parameter - use higher value
+            for more clusters. Basically controls how similar
+            (correlated) series have to be.
     Returns:
         dict of cluster name (a number) and list of securities in cluster
     """
@@ -1216,6 +1423,21 @@ def calc_ftca(returns, threshold=0.5):
 
 
 def limit_weights(weights, limit=0.1):
+    """
+    Limits weights and redistributes excedent amount
+    proportionally.
+
+    ex:
+        - weights are {a: 0.7, b: 0.2, c: 0.1}
+        - call with limit=0.5
+        - excess 0.2 in a is ditributed to b and c
+            proportionally.
+            - result is {a: 0.5, b: 0.33, c: 0.167}
+
+    Args:
+        weights (Series): A series describing the weights
+        limit (float): Maximum weight allowed
+    """
     if 1.0 / limit > len(weights):
         raise ValueError('invalid limit -> 1 / limit must be <= len(weights)')
 
@@ -1242,6 +1464,20 @@ def limit_weights(weights, limit=0.1):
 
 
 def random_weights(n, bounds=(0., 1.), total=1.0):
+    """
+    Generate pseudo-random weights.
+
+    Returns a list of random weights that is of length
+    n, where each weight is in the range bounds, and
+    where the weights sum up to total.
+
+    Useful for creating random portfolios when benchmarking.
+
+    Args:
+        n (int): number of random weights
+        bounds ((low, high)): bounds for each weight
+        total (float): total sum of the weights
+    """
     low = bounds[0]
     high = bounds[1]
 
@@ -1273,6 +1509,17 @@ def random_weights(n, bounds=(0., 1.), total=1.0):
 
 
 def extend_pandas():
+    """
+    Extends pandas' PandasObject (Series, TimeSeries,
+    DataFrame) with some functions defined in this file.
+
+    This facilitates common functional composition used in quant
+    finance.
+
+    Ex:
+        prices.to_returns().dropna().calc_clusters()
+        (where prices would be a DataFrame)
+    """
     PandasObject.to_returns = to_returns
     PandasObject.to_log_returns = to_log_returns
     PandasObject.to_price_index = to_price_index

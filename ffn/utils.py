@@ -31,12 +31,22 @@ def _memoize(func, *args, **kw):
 
 
 def memoize(f, refresh_keyword='mrefresh'):
+    """
+    Memoize decorator. The refresh keyword is the keyword
+    used to bypass the cache (in the function call).
+    """
     f.mcache = {}
     f.mrefresh_keyword = refresh_keyword
     return decorator.decorator(_memoize, f)
 
 
 def parse_arg(arg):
+    """
+    Parses arguments for convenience. Argument can be a
+    csv list ('a,b,c'), a string, a list, a tuple.
+
+    Returns a list.
+    """
     # handle string input
     if type(arg) == str:
         arg = arg.strip()
@@ -69,22 +79,34 @@ def clean_ticker(ticker):
 
 
 def clean_tickers(tickers):
+    """
+    Maps clean_ticker over tickers.
+    """
     return [clean_ticker(x) for x in tickers]
 
 
 def fmtp(number):
+    """
+    Formatting helper - percent
+    """
     if np.isnan(number):
         return '-'
     return format(number, '.2%')
 
 
 def fmtpn(number):
+    """
+    Formatting helper - percent no % sign
+    """
     if np.isnan(number):
         return '-'
     return format(number * 100, '.2f')
 
 
 def fmtn(number):
+    """
+    Formatting helper - float
+    """
     if np.isnan(number):
         return '-'
     return format(number, '.2f')
