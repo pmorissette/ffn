@@ -26,15 +26,15 @@ class PerformanceStats(object):
     statistics.
 
     Args:
-        prices (TimeSeries): A price series.
+        * prices (TimeSeries): A price series.
 
     Attributes:
-        name (str): Name, derived from price series name
-        return_table (DataFrame): A table of monthly returns with
+        * name (str): Name, derived from price series name
+        * return_table (DataFrame): A table of monthly returns with
             YTD figures as well.
-        lookback_returns (Series): Returns for diffrent
+        * lookback_returns (Series): Returns for diffrent
             lookback periods (1m, 3m, 6m, ytd...)
-        stats (Series): A series that contains all the stats
+        * stats (Series): A series that contains all the stats
 
     """
 
@@ -337,8 +337,9 @@ class PerformanceStats(object):
         range, just call with no args.
 
         Args:
-            start (date): start date
-            end (end): end date
+            * start (date): start date
+            * end (end): end date
+
         """
         if start is None:
             start = self._start
@@ -431,12 +432,12 @@ class PerformanceStats(object):
         Helper function for plotting the series.
 
         Args:
-            period (str): period used for display purposes.
+            * period (str): period used for display purposes.
                 Refer to pandas docs for valid period strings.
-            figsize ((x,y)): figure size
-            title (str): Title if default not appropriate
-            logy (bool): log-scale for y axis
-            kwargs: passed to pandas' plot method
+            * figsize ((x,y)): figure size
+            * title (str): Title if default not appropriate
+            * logy (bool): log-scale for y axis
+            * kwargs: passed to pandas' plot method
         """
         if title is None:
             title = '%s %s price series' % (self.name, get_period_name(period))
@@ -450,14 +451,14 @@ class PerformanceStats(object):
         Plots a histogram of returns given a return period (frequency).
 
         Args:
-            period (str): period used for display purposes.
+            * period (str): period used for display purposes.
                 This will dictate the type of returns
                 (daily returns, monthly, ...)
                 Refer to pandas docs for valid period strings.
-            figsize ((x,y)): figure size
-            title (str): Title if default not appropriate
-            bins (int): number of bins for the histogram
-            kwargs: passed to pandas' hist method
+            * figsize ((x,y)): figure size
+            * title (str): Title if default not appropriate
+            * bins (int): number of bins for the histogram
+            * kwargs: passed to pandas' hist method
         """
         if title is None:
             title = '%s %s return histogram' % (
@@ -486,8 +487,8 @@ class PerformanceStats(object):
         at path.
 
         Args:
-            sep (char): Separator
-            path (str): If None, CSV string returned. Else file written
+            * sep (char): Separator
+            * path (str): If None, CSV string returned. Else file written
                 to specified path.
         """
         stats = self._stats()
@@ -541,15 +542,16 @@ class GroupStats(dict):
     position or name via the [] accessor.
 
     Args:
-        *prices (Series): Multiple price series to be compared.
+        * prices (Series): Multiple price series to be compared.
 
     Attributes:
-        stats (DataFrame): Dataframe containing stats for each series provided.
-            Stats in rows, series in columns.
-        lookback_returns (DataFrame): Returns for diffrent
+        * stats (DataFrame): Dataframe containing stats for each
+            series provided.  Stats in rows, series in columns.
+        * lookback_returns (DataFrame): Returns for diffrent
             lookback periods (1m, 3m, 6m, ytd...)
             Period in rows, series in columns.
-        prices (DataFrame): The merged and rebased prices.
+        * prices (DataFrame): The merged and rebased prices.
+
     """
 
     def __init__(self, *prices):
@@ -661,8 +663,8 @@ class GroupStats(dict):
         range, just call with no args.
 
         Args:
-            start (date): start date
-            end (end): end date
+            * start (date): start date
+            * end (end): end date
         """
         if start is None:
             start = self._start
@@ -725,12 +727,13 @@ class GroupStats(dict):
         Helper function for plotting the series.
 
         Args:
-            period (str): period used for display purposes.
+            * period (str): period used for display purposes.
                 Refer to pandas docs for valid period strings.
-            figsize ((x,y)): figure size
-            title (str): Title if default not appropriate
-            logy (bool): log-scale for y axis
-            kwargs: passed to pandas' plot method
+            * figsize ((x,y)): figure size
+            * title (str): Title if default not appropriate
+            * logy (bool): log-scale for y axis
+            * kwargs: passed to pandas' plot method
+
         """
 
         if title is None:
@@ -745,11 +748,12 @@ class GroupStats(dict):
         Wrapper around pandas' scatter_matrix.
 
         Args:
-            period (str): period used for display purposes.
+            * period (str): period used for display purposes.
                 Refer to pandas docs for valid period strings.
-            figsize ((x,y)): figure size
-            title (str): Title if default not appropriate
-            kwargs: passed to pandas' scatter_matrix method
+            * figsize ((x,y)): figure size
+            * title (str): Title if default not appropriate
+            * kwargs: passed to pandas' scatter_matrix method
+
         """
         if title is None:
             title = '%s return scatter matrix' % get_period_name(period)
@@ -794,9 +798,10 @@ class GroupStats(dict):
         at path.
 
         Args:
-            sep (char): Separator
-            path (str): If None, CSV string returned. Else file written
-                to specified path.
+            * sep (char): Separator
+            * path (str): If None, CSV string returned. Else file
+                written to specified path.
+
         """
         data = []
         first_row = ['Stat']
@@ -844,7 +849,8 @@ def to_returns(prices):
     Formula is: (t1 / t0) - 1
 
     Args:
-        prices: Expects a price series
+        * prices: Expects a price series
+
     """
     return prices / prices.shift(1) - 1
 
@@ -856,7 +862,8 @@ def to_log_returns(prices):
     Formula is: ln(p1/p0)
 
     Args:
-        prices: Expects a price series
+        * prices: Expects a price series
+
     """
     return np.log(prices / prices.shift(1))
 
@@ -886,6 +893,7 @@ def rebase(prices, value=100):
     Args:
         * prices: Expects a price series
         * value (number): starting value for all series.
+
     """
     return prices / prices.ix[0] * value
 
@@ -917,6 +925,7 @@ def to_drawdown_series(prices):
 
     Args:
         * prices (TimeSeries or DataFrame): Series of prices.
+
     """
     # make a copy so that we don't modify original data
     drawdown = prices.copy()
@@ -962,6 +971,7 @@ def drawdown_details(drawdown):
     Returns:
         * pandas.DataFrame -- A data frame with the following
             columns: start, end, days, drawdown.
+
     """
     is_zero = drawdown == 0
     # find start dates (first day where dd is non-zero after a zero)
@@ -1008,6 +1018,7 @@ def calc_cagr(prices):
         * prices (pandas.TimeSeries): A TimeSeries of prices.
     Returns:
         * float -- cagr.
+
     """
     start = prices.index[0]
     end = prices.index[-1]
@@ -1069,6 +1080,7 @@ def year_frac(start, end):
     Args:
         * start (datetime): start date
         * end (datetime): end date
+
     """
     if start > end:
         raise ValueError('start cannot be larger than end')
@@ -1178,10 +1190,10 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
     Calculates the mean-variance weights given a DataFrame of returns.
 
     Args:
-        returns (DataFrame): Returns for multiple securities.
-        weight_bounds ((low, high)): Weigh limits for optimization.
-        rf (float): Risk-free rate used in utility calculation
-        covar_method (str): Covariance matrix estimation method.
+        * returns (DataFrame): Returns for multiple securities.
+        * weight_bounds ((low, high)): Weigh limits for optimization.
+        * rf (float): Risk-free rate used in utility calculation
+        * covar_method (str): Covariance matrix estimation method.
             Currently supported:
                 - ledoit-wolf
                 - standard
@@ -1237,9 +1249,11 @@ def get_num_days_required(offset, period='d', perc_required=0.90):
     days over a given period.
 
     Args:
-        offset (DateOffset): Offset (lookback) period.
-        period (str): Period string.
-        perc_required (float): percentage of number of days expected required.
+        * offset (DateOffset): Offset (lookback) period.
+        * period (str): Period string.
+        * perc_required (float): percentage of number of days
+            expected required.
+
     """
     x = pd.to_datetime('2010-01-01')
     delta = x - (x - offset)
@@ -1265,13 +1279,13 @@ def calc_clusters(returns, n=None, plot=False):
     clustering.
 
     Args:
-        returns (pd.DataFrame): DataFrame of returns
-        n (int): Specify # of clusters. If None, this
+        * returns (pd.DataFrame): DataFrame of returns
+        * n (int): Specify # of clusters. If None, this
             will be automatically determined
-        plot (bool): Show plot?
+        * plot (bool): Show plot?
 
     Returns:
-        dict with structure: {cluster# : [col names]}
+        * dict with structure: {cluster# : [col names]}
     """
     # calculate correlation
     corr = returns.corr()
@@ -1345,13 +1359,14 @@ def calc_ftca(returns, threshold=0.5):
     If you want more clusters, use a higher threshold.
 
     Args:
-        returns - expects a pandas dataframe of returns where
+        * returns - expects a pandas dataframe of returns where
             each column is the name of a given security.
-        threshold (float): Threshold parameter - use higher value
+        * threshold (float): Threshold parameter - use higher value
             for more clusters. Basically controls how similar
             (correlated) series have to be.
     Returns:
         dict of cluster name (a number) and list of securities in cluster
+
     """
     # cluster index (name)
     i = 0
@@ -1441,8 +1456,8 @@ def limit_weights(weights, limit=0.1):
             - result is {a: 0.5, b: 0.33, c: 0.167}
 
     Args:
-        weights (Series): A series describing the weights
-        limit (float): Maximum weight allowed
+        * weights (Series): A series describing the weights
+        * limit (float): Maximum weight allowed
     """
     if 1.0 / limit > len(weights):
         raise ValueError('invalid limit -> 1 / limit must be <= len(weights)')
@@ -1480,9 +1495,10 @@ def random_weights(n, bounds=(0., 1.), total=1.0):
     Useful for creating random portfolios when benchmarking.
 
     Args:
-        n (int): number of random weights
-        bounds ((low, high)): bounds for each weight
-        total (float): total sum of the weights
+        * n (int): number of random weights
+        * bounds ((low, high)): bounds for each weight
+        * total (float): total sum of the weights
+
     """
     low = bounds[0]
     high = bounds[1]
