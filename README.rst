@@ -1,7 +1,7 @@
 ffn
 ===
 
-ffn - a financial function library written in Python.
+ffn - a financial function library for Python.
 
 Alpha software - use at your own risk!
 
