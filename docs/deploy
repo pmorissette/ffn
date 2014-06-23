@@ -1,0 +1,18 @@
+#!/bin/bash
+
+TMPREPO=/tmp/docs/ffn
+
+rm -rf $TMPREPO
+git clone -b gh-pages git@github.com:pmorissette/ffn.git $TMPREPO
+rm -rf $TMPREPO/*
+
+make clean
+make html
+cp source/custom.css build/html/
+cp -r build/html/* $TMPREPO/
+
+cd $TMPREPO
+git add -A
+git push
+
+rm -rf $TMPREPO
