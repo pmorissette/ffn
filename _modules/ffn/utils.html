@@ -1,0 +1,315 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>ffn.utils &mdash; ffn 0.1 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="ffn 0.1 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../index.html" class="fa fa-home"> ffn</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ffn.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../ffn.html#id1"><tt class="docutils literal"><span class="pre">ffn</span></tt> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ffn.html#module-ffn.core"><tt class="docutils literal"><span class="pre">core</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ffn.html#module-ffn.data"><tt class="docutils literal"><span class="pre">data</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ffn.html#module-ffn.utils"><tt class="docutils literal"><span class="pre">utils</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">ffn</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>ffn.utils</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for ffn.utils</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">decorator</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">cPickle</span>
+
+
+<span class="k">def</span> <span class="nf">_memoize</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="c"># should we refresh the cache?</span>
+    <span class="n">refresh</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">refresh_kw</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">mrefresh_keyword</span>
+
+    <span class="c"># kw is not always set - check args</span>
+    <span class="k">if</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">func_code</span><span class="o">.</span><span class="n">co_varnames</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">func_code</span><span class="o">.</span><span class="n">co_varnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">refresh_kw</span><span class="p">)]:</span>
+            <span class="n">refresh</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="c"># check in kw if not already set above</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">refresh</span> <span class="ow">and</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">kw</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">kw</span><span class="p">[</span><span class="n">refresh_kw</span><span class="p">]:</span>
+            <span class="n">refresh</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">key</span> <span class="o">=</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">mcache</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">refresh</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+
+<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../ffn.html#ffn.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">refresh_keyword</span><span class="o">=</span><span class="s">&#39;mrefresh&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Memoize decorator. The refresh keyword is the keyword</span>
+<span class="sd">    used to bypass the cache (in the function call).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">mcache</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">mrefresh_keyword</span> <span class="o">=</span> <span class="n">refresh_keyword</span>
+    <span class="k">return</span> <span class="n">decorator</span><span class="o">.</span><span class="n">decorator</span><span class="p">(</span><span class="n">_memoize</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="parse_arg"><a class="viewcode-back" href="../../ffn.html#ffn.utils.parse_arg">[docs]</a><span class="k">def</span> <span class="nf">parse_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parses arguments for convenience. Argument can be a</span>
+<span class="sd">    csv list (&#39;a,b,c&#39;), a string, a list, a tuple.</span>
+
+<span class="sd">    Returns a list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c"># handle string input</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="c"># parse csv as tickers and create children</span>
+        <span class="k">if</span> <span class="s">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">]</span>
+        <span class="c"># assume single string - create single item list</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">arg</span>
+
+</div>
+<div class="viewcode-block" id="clean_ticker"><a class="viewcode-back" href="../../ffn.html#ffn.utils.clean_ticker">[docs]</a><span class="k">def</span> <span class="nf">clean_ticker</span><span class="p">(</span><span class="n">ticker</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cleans a ticker for easier use throughout MoneyTree</span>
+
+<span class="sd">    Splits by space and only keeps first bit. Also removes</span>
+<span class="sd">    any characters that are not letters. Returns as lowercase.</span>
+
+<span class="sd">    &gt;&gt;&gt; clean_ticker(&#39;^VIX&#39;)</span>
+<span class="sd">    &#39;vix&#39;</span>
+<span class="sd">    &gt;&gt;&gt; clean_ticker(&#39;SPX Index&#39;)</span>
+<span class="sd">    &#39;spx&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;[\W_]+&#39;</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">ticker</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="clean_tickers"><a class="viewcode-back" href="../../ffn.html#ffn.utils.clean_tickers">[docs]</a><span class="k">def</span> <span class="nf">clean_tickers</span><span class="p">(</span><span class="n">tickers</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Maps clean_ticker over tickers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">clean_ticker</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tickers</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="fmtp"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtp">[docs]</a><span class="k">def</span> <span class="nf">fmtp</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formatting helper - percent</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;-&#39;</span>
+    <span class="k">return</span> <span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s">&#39;.2%&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="fmtpn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtpn">[docs]</a><span class="k">def</span> <span class="nf">fmtpn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formatting helper - percent no % sign</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;-&#39;</span>
+    <span class="k">return</span> <span class="n">format</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="s">&#39;.2f&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="fmtn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtn">[docs]</a><span class="k">def</span> <span class="nf">fmtn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Formatting helper - float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;-&#39;</span>
+    <span class="k">return</span> <span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s">&#39;.2f&#39;</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="get_period_name"><a class="viewcode-back" href="../../ffn.html#ffn.utils.get_period_name">[docs]</a><span class="k">def</span> <span class="nf">get_period_name</span><span class="p">(</span><span class="n">period</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">period</span> <span class="ow">is</span> <span class="s">&#39;d&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;daily&#39;</span>
+    <span class="k">elif</span> <span class="n">period</span> <span class="ow">is</span> <span class="s">&#39;m&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;monthly&#39;</span>
+    <span class="k">elif</span> <span class="n">period</span> <span class="ow">is</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s">&#39;yearly&#39;</span>
+
+</div>
+<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../ffn.html#ffn.utils.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Scale value from src range to dst range.</span>
+<span class="sd">    If value outside bounds, it is clipped and set to</span>
+<span class="sd">    the low or high bound of dst.</span>
+
+<span class="sd">    Ex:</span>
+<span class="sd">        scale(0, (0.0, 99.0), (-1.0, 1.0)) == -1.0</span>
+<span class="sd">        scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">((</span><span class="n">val</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">*</span> <span class="p">(</span><span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+</div>
+<div class="viewcode-block" id="as_percent"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_percent">[docs]</a><span class="k">def</span> <span class="nf">as_percent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">as_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;.</span><span class="si">%s%%</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">digits</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="as_format"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_format">[docs]</a><span class="k">def</span> <span class="nf">as_format</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s">&#39;.2f&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Map a format string over a pandas object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Philippe Morissette.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,16 @@
+a:hover, a:focus {
+    color: #b3b3b3;
+    text-decoration: none;
+}
+
+form {
+    margin: inherit;
+}
+
+ul, ol {
+    margin: inherit;
+}
+
+li {
+    line-height: inherit;
+}
