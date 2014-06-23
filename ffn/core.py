@@ -769,18 +769,19 @@ class GroupStats(dict):
         Wrapper around pandas' hist.
 
         Args:
-            period (str): period used for display purposes.
+            * period (str): period used for display purposes.
                 Refer to pandas docs for valid period strings.
-            figsize ((x,y)): figure size
-            title (str): Title if default not appropriate
-            kwargs: passed to pandas' hist method
+            * figsize ((x,y)): figure size
+            * title (str): Title if default not appropriate
+            * kwargs: passed to pandas' hist method
+
         """
         if title is None:
             title = '%s return histogram matrix' % get_period_name(period)
 
         plt.figure()
         ser = self._get_series(period).to_returns().dropna()
-        pd.hist(ser, figsize=figsize, **kwargs)
+        ser.hist(figsize=figsize, **kwargs)
         plt.suptitle(title)
 
     def _get_series(self, per):
@@ -907,8 +908,25 @@ def calc_perf_stats(obj):
 
     Args:
         * obj: A Pandas TimeSeries representing a series of prices.
+
     """
     return PerformanceStats(obj)
+
+
+def calc_stats(obj):
+    """
+    Calculates performance stats of a given object.
+
+    If object is TimeSeries, a PerformanceStats object is
+    returned. If object is DataFrame, a GroupStats object
+    is returned.
+    """
+    if isinstance(obj, pd.TimeSeries):
+        return PerformanceStats(obj)
+    elif isinstance(obj, pd.DataFrame):
+        return GroupStats(*[obj[x] for x in obj.columns])
+    else:
+        raise NotImplementedError('Unsupported type')
 
 
 def to_drawdown_series(prices):
@@ -1563,3 +1581,4 @@ def extend_pandas():
     PandasObject.calc_mean_var_weights = calc_mean_var_weights
     PandasObject.calc_clusters = calc_clusters
     PandasObject.calc_ftca = calc_ftca
+    PandasObject.calc_stats = calc_stats

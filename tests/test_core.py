@@ -237,15 +237,6 @@ def test_get_num_days_required():
     assert actual >= 3
 
 
-def test_as_percent():
-    ser = pd.Series([0.01, -0.02, 0.0532])
-    actual = ser.as_percent()
-
-    assert actual[0] == 1.00
-    assert actual[1] == -2.00
-    assert actual[2] == 5.32
-
-
 def test_asfreq_actual():
     a = pd.TimeSeries({pd.to_datetime('2010-02-27'): 100,
                        pd.to_datetime('2010-03-25'): 200})
