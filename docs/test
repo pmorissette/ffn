@@ -1,0 +1,6 @@
+#!/bin/bash
+make clean
+make html
+cp source/custom.css build/html/
+cd build/html
+python -m SimpleHTTPServer 8001
