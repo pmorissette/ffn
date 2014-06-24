@@ -13,6 +13,7 @@ cp -r build/html/* $TMPREPO/
 
 cd $TMPREPO
 git add -A
+git commit -a -m 'auto-updating docs'
 git push
 
 rm -rf $TMPREPO
