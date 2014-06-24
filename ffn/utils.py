@@ -113,12 +113,37 @@ def fmtn(number):
 
 
 def get_period_name(period):
-    if period is 'd':
-        return 'daily'
-    elif period is 'm':
-        return 'monthly'
-    elif period is 'y':
-        return 'yearly'
+    period = period.upper()
+    periods = {
+        'B': 'business day',
+        'C': 'custom business day',
+        'D': 'daily',
+        'W': 'weekly',
+        'M': 'monthly',
+        'BM': 'business month end',
+        'CBM': 'custom business month end',
+        'MS': 'month start',
+        'BMS': 'business month start',
+        'CBMS': 'custom business month start',
+        'Q': 'quarterly',
+        'BQ': 'business quarter end',
+        'QS': 'quarter start',
+        'BQS': 'business quarter start',
+        'Y': 'yearly',
+        'A': 'yearly',
+        'BA': 'business year end',
+        'AS': 'year start',
+        'BAS': 'business year start',
+        'H': 'hourly',
+        'T': 'minutely',
+        'S': 'secondly',
+        'L': 'milliseonds',
+        'U': 'microseconds'}
+
+    if period in periods:
+        return periods[period]
+    else:
+        return None
 
 
 def scale(val, src, dst):

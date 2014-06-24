@@ -473,12 +473,9 @@ class PerformanceStats(object):
         ser.plot(kind='kde')
 
     def _get_series(self, per):
-        if per is 'd':
-            return self.daily_prices
-        elif per is 'm':
-            return self.monthly_prices
-        elif per is 'y':
-            return self.yearly_prices
+        if per == 'y':
+            per = 'a'
+        return self.daily_prices.asfreq(per, 'ffill')
 
     def to_csv(self, sep=',', path=None):
         """
@@ -784,13 +781,18 @@ class GroupStats(dict):
         ser.hist(figsize=figsize, **kwargs)
         plt.suptitle(title)
 
+    def plot_correlation(self, period='m', title=None,
+                         figsize=(12, 6), **kwargs):
+        if title is None:
+            title = '%s return correlation matrix' % get_period_name(period)
+
+        rets = self._get_series(period).to_returrns().dropna()
+        return rets.plot_corr_heatmap(title=title, figsize=figsize, **kwargs)
+
     def _get_series(self, per):
-        if per is 'd':
-            return self.prices
-        elif per is 'm':
-            return self.prices.resample('M', 'last')
-        elif per is 'y':
-            return self.prices.resample('A', 'last')
+        if per == 'y':
+            per = 'a'
+        return self.prices.asfreq(per, 'ffill')
 
     def to_csv(self, sep=',', path=None):
         """
