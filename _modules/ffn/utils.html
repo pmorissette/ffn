@@ -59,6 +59,7 @@
         
             <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../ffn.html">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../ffn.html#id1"><tt class="docutils literal"><span class="pre">ffn</span></tt> Package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../ffn.html#module-ffn.core"><tt class="docutils literal"><span class="pre">core</span></tt> Module</a></li>
@@ -216,12 +217,37 @@
 
 </div>
 <div class="viewcode-block" id="get_period_name"><a class="viewcode-back" href="../../ffn.html#ffn.utils.get_period_name">[docs]</a><span class="k">def</span> <span class="nf">get_period_name</span><span class="p">(</span><span class="n">period</span><span class="p">):</span>
-    <span class="k">if</span> <span class="n">period</span> <span class="ow">is</span> <span class="s">&#39;d&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s">&#39;daily&#39;</span>
-    <span class="k">elif</span> <span class="n">period</span> <span class="ow">is</span> <span class="s">&#39;m&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s">&#39;monthly&#39;</span>
-    <span class="k">elif</span> <span class="n">period</span> <span class="ow">is</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s">&#39;yearly&#39;</span>
+    <span class="n">period</span> <span class="o">=</span> <span class="n">period</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="n">periods</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="s">&#39;business day&#39;</span><span class="p">,</span>
+        <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="s">&#39;custom business day&#39;</span><span class="p">,</span>
+        <span class="s">&#39;D&#39;</span><span class="p">:</span> <span class="s">&#39;daily&#39;</span><span class="p">,</span>
+        <span class="s">&#39;W&#39;</span><span class="p">:</span> <span class="s">&#39;weekly&#39;</span><span class="p">,</span>
+        <span class="s">&#39;M&#39;</span><span class="p">:</span> <span class="s">&#39;monthly&#39;</span><span class="p">,</span>
+        <span class="s">&#39;BM&#39;</span><span class="p">:</span> <span class="s">&#39;business month end&#39;</span><span class="p">,</span>
+        <span class="s">&#39;CBM&#39;</span><span class="p">:</span> <span class="s">&#39;custom business month end&#39;</span><span class="p">,</span>
+        <span class="s">&#39;MS&#39;</span><span class="p">:</span> <span class="s">&#39;month start&#39;</span><span class="p">,</span>
+        <span class="s">&#39;BMS&#39;</span><span class="p">:</span> <span class="s">&#39;business month start&#39;</span><span class="p">,</span>
+        <span class="s">&#39;CBMS&#39;</span><span class="p">:</span> <span class="s">&#39;custom business month start&#39;</span><span class="p">,</span>
+        <span class="s">&#39;Q&#39;</span><span class="p">:</span> <span class="s">&#39;quarterly&#39;</span><span class="p">,</span>
+        <span class="s">&#39;BQ&#39;</span><span class="p">:</span> <span class="s">&#39;business quarter end&#39;</span><span class="p">,</span>
+        <span class="s">&#39;QS&#39;</span><span class="p">:</span> <span class="s">&#39;quarter start&#39;</span><span class="p">,</span>
+        <span class="s">&#39;BQS&#39;</span><span class="p">:</span> <span class="s">&#39;business quarter start&#39;</span><span class="p">,</span>
+        <span class="s">&#39;Y&#39;</span><span class="p">:</span> <span class="s">&#39;yearly&#39;</span><span class="p">,</span>
+        <span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="s">&#39;yearly&#39;</span><span class="p">,</span>
+        <span class="s">&#39;BA&#39;</span><span class="p">:</span> <span class="s">&#39;business year end&#39;</span><span class="p">,</span>
+        <span class="s">&#39;AS&#39;</span><span class="p">:</span> <span class="s">&#39;year start&#39;</span><span class="p">,</span>
+        <span class="s">&#39;BAS&#39;</span><span class="p">:</span> <span class="s">&#39;business year start&#39;</span><span class="p">,</span>
+        <span class="s">&#39;H&#39;</span><span class="p">:</span> <span class="s">&#39;hourly&#39;</span><span class="p">,</span>
+        <span class="s">&#39;T&#39;</span><span class="p">:</span> <span class="s">&#39;minutely&#39;</span><span class="p">,</span>
+        <span class="s">&#39;S&#39;</span><span class="p">:</span> <span class="s">&#39;secondly&#39;</span><span class="p">,</span>
+        <span class="s">&#39;L&#39;</span><span class="p">:</span> <span class="s">&#39;milliseonds&#39;</span><span class="p">,</span>
+        <span class="s">&#39;U&#39;</span><span class="p">:</span> <span class="s">&#39;microseconds&#39;</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">period</span> <span class="ow">in</span> <span class="n">periods</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">periods</span><span class="p">[</span><span class="n">period</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
 
 </div>
 <div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../ffn.html#ffn.utils.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span>

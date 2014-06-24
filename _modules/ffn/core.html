@@ -59,6 +59,7 @@
         
             <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../ffn.html">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../ffn.html#id1"><tt class="docutils literal"><span class="pre">ffn</span></tt> Package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../ffn.html#module-ffn.core"><tt class="docutils literal"><span class="pre">core</span></tt> Module</a></li>
@@ -576,12 +577,9 @@
         <span class="n">ser</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s">&#39;kde&#39;</span><span class="p">)</span>
 </div>
     <span class="k">def</span> <span class="nf">_get_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">per</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">per</span> <span class="ow">is</span> <span class="s">&#39;d&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">daily_prices</span>
-        <span class="k">elif</span> <span class="n">per</span> <span class="ow">is</span> <span class="s">&#39;m&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">monthly_prices</span>
-        <span class="k">elif</span> <span class="n">per</span> <span class="ow">is</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">yearly_prices</span>
+        <span class="k">if</span> <span class="n">per</span> <span class="o">==</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
+            <span class="n">per</span> <span class="o">=</span> <span class="s">&#39;a&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">daily_prices</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">per</span><span class="p">,</span> <span class="s">&#39;ffill&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PerformanceStats.to_csv"><a class="viewcode-back" href="../../ffn.html#ffn.core.PerformanceStats.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&#39;,&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -887,13 +885,18 @@
         <span class="n">ser</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
 </div>
+<div class="viewcode-block" id="GroupStats.plot_correlation"><a class="viewcode-back" href="../../ffn.html#ffn.core.GroupStats.plot_correlation">[docs]</a>    <span class="k">def</span> <span class="nf">plot_correlation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="s">&#39;m&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                         <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> return correlation matrix&#39;</span> <span class="o">%</span> <span class="n">get_period_name</span><span class="p">(</span><span class="n">period</span><span class="p">)</span>
+
+        <span class="n">rets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_series</span><span class="p">(</span><span class="n">period</span><span class="p">)</span><span class="o">.</span><span class="n">to_returrns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">rets</span><span class="o">.</span><span class="n">plot_corr_heatmap</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
     <span class="k">def</span> <span class="nf">_get_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">per</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">per</span> <span class="ow">is</span> <span class="s">&#39;d&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span>
-        <span class="k">elif</span> <span class="n">per</span> <span class="ow">is</span> <span class="s">&#39;m&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="s">&#39;last&#39;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">per</span> <span class="ow">is</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s">&#39;A&#39;</span><span class="p">,</span> <span class="s">&#39;last&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">per</span> <span class="o">==</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
+            <span class="n">per</span> <span class="o">=</span> <span class="s">&#39;a&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">per</span><span class="p">,</span> <span class="s">&#39;ffill&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GroupStats.to_csv"><a class="viewcode-back" href="../../ffn.html#ffn.core.GroupStats.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&#39;,&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1651,6 +1654,57 @@
     <span class="k">return</span> <span class="n">w</span>
 
 </div>
+<div class="viewcode-block" id="plot_heatmap"><a class="viewcode-back" href="../../ffn.html#ffn.core.plot_heatmap">[docs]</a><span class="k">def</span> <span class="nf">plot_heatmap</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;Heatmap&#39;</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                 <span class="n">show_labels</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">label_fmt</span><span class="o">=</span><span class="s">&#39;.2f&#39;</span><span class="p">,</span>
+                 <span class="n">vmin</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">figsize</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;RdBu&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot a heatmap using matplotlib&#39;s pcolor.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        * data (DataFrame): DataFrame to plot. Usually small matrix (ex.</span>
+<span class="sd">            correlation matrix).</span>
+<span class="sd">        * title (string): Plot title</span>
+<span class="sd">        * show_legend (bool): Show color legend</span>
+<span class="sd">        * show_labels (bool): Show value labels</span>
+<span class="sd">        * label_fmt (str): Label format string</span>
+<span class="sd">        * vmin (float): Min value for scale</span>
+<span class="sd">        * vmax (float): Max value for scale</span>
+<span class="sd">        * cmap (string): Color map</span>
+<span class="sd">        * kwargs: Passed to matplotlib&#39;s pcolor</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">)</span>
+
+    <span class="n">heatmap</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">pcolor</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show_legend</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">heatmap</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show_labels</span><span class="p">:</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">format</span><span class="p">(</span><span class="n">vals</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="n">label_fmt</span><span class="p">),</span>
+                         <span class="n">horizontalalignment</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">,</span>
+                         <span class="n">verticalalignment</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">,</span>
+                         <span class="n">color</span><span class="o">=</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="mi">1</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="plot_corr_heatmap"><a class="viewcode-back" href="../../ffn.html#ffn.core.plot_corr_heatmap">[docs]</a><span class="k">def</span> <span class="nf">plot_corr_heatmap</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plots the correlation heatmap for a given DataFrame.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">plot_heatmap</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">corr</span><span class="p">(),</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+</div>
 <div class="viewcode-block" id="extend_pandas"><a class="viewcode-back" href="../../ffn.html#ffn.core.extend_pandas">[docs]</a><span class="k">def</span> <span class="nf">extend_pandas</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extends pandas&#39; PandasObject (Series, TimeSeries,</span>
@@ -1684,7 +1738,9 @@
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_mean_var_weights</span> <span class="o">=</span> <span class="n">calc_mean_var_weights</span>
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_clusters</span> <span class="o">=</span> <span class="n">calc_clusters</span>
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_ftca</span> <span class="o">=</span> <span class="n">calc_ftca</span>
-    <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_stats</span> <span class="o">=</span> <span class="n">calc_stats</span></div>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_stats</span> <span class="o">=</span> <span class="n">calc_stats</span>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">plot_heatmap</span> <span class="o">=</span> <span class="n">plot_heatmap</span>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">plot_corr_heatmap</span> <span class="o">=</span> <span class="n">plot_corr_heatmap</span></div>
 </pre></div>
 
           </div>

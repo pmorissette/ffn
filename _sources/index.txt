@@ -20,6 +20,7 @@ Contents:
     :maxdepth: 4 
 
     Installation Guide <install>
+    Quickstart <quickstart>
     API <ffn>
 
 Indices and tables

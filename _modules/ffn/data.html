@@ -59,6 +59,7 @@
         
             <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../ffn.html">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../ffn.html#id1"><tt class="docutils literal"><span class="pre">ffn</span></tt> Package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../ffn.html#module-ffn.core"><tt class="docutils literal"><span class="pre">core</span></tt> Module</a></li>
@@ -101,6 +102,7 @@
           <div role="main">
             
   <h1>Source code for ffn.data</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">ffn</span>
 <span class="kn">import</span> <span class="nn">ffn.utils</span> <span class="kn">as</span> <span class="nn">utils</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
 <span class="kn">import</span> <span class="nn">pandas.io.data</span> <span class="kn">as</span> <span class="nn">pdata</span>
@@ -164,9 +166,8 @@
     <span class="c"># ensure same order as provided</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">tickers</span><span class="p">]</span>
 
-    <span class="k">if</span> <span class="n">existing</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">existing</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s">&#39;outer&#39;</span><span class="p">,</span>
-                      <span class="n">left_index</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">right_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">existing</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">common_dates</span><span class="p">:</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
@@ -231,7 +232,7 @@
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="n">tf</span> <span class="o">=</span> <span class="n">ticker</span>
-    <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s">&#39;&#39;</span> <span class="ow">and</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="n">tf</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">:</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tf</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
 
     <span class="c"># check that required column exists</span>

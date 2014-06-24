@@ -9,7 +9,7 @@ using ``pip`` or ``easy_insatll``:
 
     $ pip install ffn
 
-If pip is not installed, I recommend installing the `Anaconda Scientific Python
+If pip is not installed, we recommend installing the `Anaconda Scientific Python
 Distribution <https://store.continuum.io/cshop/anaconda/>`_. This distribution comes with many of the required packages pre-installed, including pip. Once Anaconda is installed, the above command should complete the installation. 
 
 ffn should be compatible with Python 2.7. 
