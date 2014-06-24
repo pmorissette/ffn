@@ -4,17 +4,10 @@ import os
 import re
 
 
-def local_file(file):
+def local_file(filename):
     return codecs.open(
-        os.path.join(os.path.dirname(__file__), file), 'r', 'utf-8'
+        os.path.join(os.path.dirname(__file__), filename), 'r', 'utf-8'
     )
-
-
-install_reqs = [
-    line.strip()
-    for line in local_file('requirements.txt').readlines()
-    if line.strip() != ''
-]
 
 
 version = re.search(
@@ -32,7 +25,15 @@ setuptools.setup(
     description='Financial functions for Python',
     keywords='python finance quant functions',
     url='https://github.com/pmorissette/ffn',
-    install_requires=install_reqs,
+    install_requires=[
+        'decorator',
+        'numpy',
+        'pandas',
+        'tabulate',
+        'matplotlib',
+        'scikit-learn',
+        'scipy'
+    ],
     packages=['ffn'],
     long_description=local_file('README.rst').read(),
     classifiers=[
