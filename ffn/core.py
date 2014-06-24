@@ -1550,6 +1550,57 @@ def random_weights(n, bounds=(0., 1.), total=1.0):
     return w
 
 
+def plot_heatmap(data, title='Heatmap', show_legend=True,
+                 show_labels=True, label_fmt='.2f',
+                 vmin=None, vmax=None,
+                 figsize=None,
+                 cmap='RdBu', **kwargs):
+    """
+    Plot a heatmap using matplotlib's pcolor.
+
+    Args:
+        * data (DataFrame): DataFrame to plot. Usually small matrix (ex.
+            correlation matrix).
+        * title (string): Plot title
+        * show_legend (bool): Show color legend
+        * show_labels (bool): Show value labels
+        * label_fmt (str): Label format string
+        * vmin (float): Min value for scale
+        * vmax (float): Max value for scale
+        * cmap (string): Color map
+        * kwargs: Passed to matplotlib's pcolor
+
+    """
+    fig, ax = plt.subplots(figsize=figsize)
+
+    heatmap = ax.pcolor(data, vmin=vmin, vmax=vmax, cmap=cmap)
+    plt.title(title)
+
+    if show_legend:
+        fig.colorbar(heatmap)
+
+    if show_labels:
+        vals = data.values
+        for x in range(data.shape[0]):
+            for y in range(data.shape[1]):
+                plt.text(x + 0.5, y + 0.5, format(vals[y, x], label_fmt),
+                         horizontalalignment='center',
+                         verticalalignment='center',
+                         color='w')
+
+    plt.yticks(np.arange(0.5, len(data.index), 1), data.index)
+    plt.xticks(np.arange(0.5, len(data.columns), 1), data.columns)
+
+    plt.show()
+
+
+def plot_corr_heatmap(data, **kwargs):
+    """
+    Plots the correlation heatmap for a given DataFrame.
+    """
+    return plot_heatmap(data.corr(), vmin=-1, vmax=1, **kwargs)
+
+
 def extend_pandas():
     """
     Extends pandas' PandasObject (Series, TimeSeries,
@@ -1584,3 +1635,5 @@ def extend_pandas():
     PandasObject.calc_clusters = calc_clusters
     PandasObject.calc_ftca = calc_ftca
     PandasObject.calc_stats = calc_stats
+    PandasObject.plot_heatmap = plot_heatmap
+    PandasObject.plot_corr_heatmap = plot_corr_heatmap

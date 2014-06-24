@@ -1,3 +1,4 @@
+import ffn
 import ffn.utils as utils
 import pandas as pd
 import pandas.io.data as pdata
@@ -61,9 +62,8 @@ def get(tickers, provider=None, common_dates=True, forward_fill=False,
     # ensure same order as provided
     df = df[tickers]
 
-    if existing:
-        df = pd.merge(df, existing, how='outer',
-                      left_index=True, right_index=True)
+    if existing is not None:
+        df = ffn.merge(existing, df)
 
     if common_dates:
         df = df.dropna()
@@ -128,7 +128,7 @@ def csv(ticker, path='data.csv', field='', mrefresh=False, **kwargs):
     df = pd.read_csv(path, **kwargs)
 
     tf = ticker
-    if field is not '':
+    if field is not '' and field is not None:
         tf = '%s:%s' % (tf, field)
 
     # check that required column exists
