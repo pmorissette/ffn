@@ -55,3 +55,6 @@ docs/_build/
 
 # vim .swp
 *.swp
+
+#ipython notebook files
+.ipynb_checkpoints/
