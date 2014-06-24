@@ -5,7 +5,7 @@ ffn - a financial function library for Python.
 
 Alpha software - use at your own risk!
 
-..code:: python
+.. code:: python
 
     >> import ffn
     >> returns = ffn.get('aapl,msft,c,gs,ge', start='2010-01-01').to_returns().dropna()
