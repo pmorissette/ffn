@@ -8,7 +8,6 @@ rm -rf $TMPREPO/*
 
 make clean
 make html
-cp source/custom.css build/html/
 cp -r build/html/* $TMPREPO/
 
 cd $TMPREPO

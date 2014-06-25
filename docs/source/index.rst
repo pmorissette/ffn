@@ -13,8 +13,8 @@ Here is a brief introduction to the capabilities of ffn:
 
 .. notebook:: intro.ipynb
 
-Contents:
-=========
+Contents
+--------
 
 .. toctree:: 
     :maxdepth: 4 
@@ -22,10 +22,3 @@ Contents:
     Installation Guide <install>
     Quickstart <quickstart>
     API <ffn>
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
