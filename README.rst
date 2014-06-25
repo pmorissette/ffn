@@ -37,4 +37,5 @@ Documentation
 
 Read the docs at http://pmorissette.github.io/ffn
 
+- `Quickstart <http://pmorissette.github.io/ffn/quickstart.html>`__
 - `Full API <http://pmorissette.github.io/ffn/ffn.html>`__
