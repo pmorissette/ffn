@@ -1,5 +1,5 @@
-ffn Package
-===========
+API
+===
 
 :mod:`ffn` Package
 ------------------
