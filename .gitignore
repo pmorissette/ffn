@@ -58,3 +58,6 @@ docs/_build/
 
 #ipython notebook files
 .ipynb_checkpoints/
+
+# css files
+docs/source/_themes/klink/static/css
