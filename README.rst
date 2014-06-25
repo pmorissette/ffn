@@ -3,8 +3,7 @@ ffn
 
 ffn - a financial function library for Python.
 
-This software is still in alpha stage so please let me know if you find any
-bugs!
+Alpha release - please let me know if you find any bugs!
 
 .. code:: python
 
