@@ -1,6 +1,10 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: dist docs css pages
+.PHONY: clean dist docs css pages
+
+clean:
+	rm -rf dist
+	rm -rf ffn.egg-info
 
 dist:
 	python setup.py sdist upload
