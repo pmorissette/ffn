@@ -16,7 +16,7 @@ docs: css
 css:
 	lessc --clean-css docs/source/_themes/klink/static/less/klink.less docs/source/_themes/klink/static/css/klink.css
 
-pages: docs
+pages: 
 	rm -rf $(TMPREPO)
 	git clone -b gh-pages git@github.com:pmorissette/ffn.git $(TMPREPO)
 	rm -rf $(TMPREPO)/*
