@@ -1,6 +1,6 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: clean dist docs css pages
+.PHONY: clean dist docs css pages serve
 
 clean:
 	rm -rf dist
@@ -25,3 +25,7 @@ pages: docs
 	git add -A ; \
 	git commit -a -m 'auto-updating docs' ; \
 	git push
+
+serve: 
+	cd docs/build/html; \
+	python -m SimpleHTTPServer
