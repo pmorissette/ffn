@@ -1,4 +1,0 @@
-#!/bin/bash
-
-lessc less/klink.less css/klink.css
-cp css/klink.css ~/python/ffn/docs/build/html/_static/css/klink.css
