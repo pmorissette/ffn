@@ -786,7 +786,7 @@ class GroupStats(dict):
         if title is None:
             title = '%s return correlation matrix' % get_period_name(period)
 
-        rets = self._get_series(period).to_returrns().dropna()
+        rets = self._get_series(period).to_returns().dropna()
         return rets.plot_corr_heatmap(title=title, figsize=figsize, **kwargs)
 
     def _get_series(self, per):
