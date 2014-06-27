@@ -18,7 +18,7 @@ docs: css
 
 css:
 	lessc --clean-css docs/source/_themes/klink/static/less/klink.less docs/source/_themes/klink/static/css/klink.css
-	- cp docs/source/_themes/klink/static/css/klink.css docs/build/html/_static/css/klink.css;
+	- cp docs/source/_themes/klink/static/css/klink.css docs/build/html/_static/css/klink.css
 
 pages: 
 	- rm -rf $(TMPREPO)
