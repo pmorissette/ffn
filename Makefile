@@ -7,7 +7,10 @@ clean:
 	- rm -rf ffn.egg-info
 
 dist:
-	python setup.py sdist upload
+	python setup.py sdist
+
+upload: dist
+	twine upload dist/*
 
 docs: css
 	$(MAKE) -C docs/ clean
