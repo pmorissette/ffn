@@ -5,6 +5,11 @@ ffn - a financial function library for Python.
 
 Alpha release - please let me know if you find any bugs!
 
+ffn is a library that contains many useful functions for those who work in **quantitative
+finance**. It stands on the shoulders of giants (Pandas, Numpy, Scipy, etc.) and provides
+a vast array of utilities, from performance measurement and evaluation to
+graphing and common data transformations.
+
 .. code:: python
 
     >> import ffn
@@ -21,14 +26,14 @@ Alpha release - please let me know if you find any bugs!
 Installation
 ------------
 
-To install ffn, simply run:
+The easiest way to install ``ffn`` is from the `Python Package Index <https://pypi.python.org/pypi/ffn/>`_
+using ``pip`` or ``easy_insatll``:
 
 .. code-block:: bash
-    
+
     $ pip install ffn
 
-If pip is not installed, I recommend installing the `Anaconda Scientific Python
-Distribution <https://store.continuum.io/cshop/anaconda/>`_. This distribution comes with many of the required packages pre-installed, including pip. Once Anaconda is installed, the above command should complete the installation. 
+Since ffn has many dependencies, we strongly recommend installing the `Anaconda Scientific Python Distribution <https://store.continuum.io/cshop/anaconda/>`_. This distribution comes with many of the required packages pre-installed, including pip. Once Anaconda is installed, the above command should complete the installation. 
 
 ffn should be compatible with Python 2.7. 
 
@@ -37,5 +42,5 @@ Documentation
 
 Read the docs at http://pmorissette.github.io/ffn
 
-- `Quickstart <http://pmorissette.github.io/ffn/quickstart.html>`__
+- `Quickstart <http://pmorissette.github.io/ffn/quick.html>`__
 - `Full API <http://pmorissette.github.io/ffn/ffn.html>`__
