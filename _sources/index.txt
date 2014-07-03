@@ -11,14 +11,13 @@ A Brief Introduction
 
 Here is a brief introduction to the capabilities of ffn:
 
-.. notebook:: intro.ipynb
-
-Contents
---------
+.. include:: intro.rst
 
 .. toctree:: 
-    :maxdepth: 4 
+    :maxdepth: 2 
+    :hidden:
 
+    Overview <index>
     Installation Guide <install>
-    Quickstart <quickstart>
+    Quickstart <quick>
     API <ffn>
