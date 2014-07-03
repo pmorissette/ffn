@@ -1,9 +1,16 @@
-ffn
-===
+.. image:: http://pmorissette.github.io/ffn/_static/logo.png
 
-ffn - a financial function library for Python.
+ffn - Financial Functions for Python
+====================================
 
 Alpha release - please let me know if you find any bugs!
+
+If you are looking for a full backtesting framework, please check out `bt
+<https://github.com/pmorissette/bt>`_. bt is built atop ffn and makes it easy
+and fast to backtest quantitative strategies.
+
+Overview
+--------
 
 ffn is a library that contains many useful functions for those who work in **quantitative
 finance**. It stands on the shoulders of giants (Pandas, Numpy, Scipy, etc.) and provides
