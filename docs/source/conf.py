@@ -24,7 +24,17 @@ import sys, os
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../../ffn'))
-sys.path.insert(0, os.path.abspath('exts/RunNotebook'))
+sys.path.insert(0, os.path.abspath('_themes/klink'))
+
+import klink
+klink.convert_notebooks()
+
+html_theme_path = ['_themes/klink']
+html_theme = 'klink'
+html_theme_options = {
+    'github': 'pmorissette/bt',
+    'analytics_id': 'UA-52308448-1'
+}
 
 # -- General configuration -----------------------------------------------------
 
@@ -33,7 +43,7 @@ sys.path.insert(0, os.path.abspath('exts/RunNotebook'))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.viewcode', 'notebook_sphinxext']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -248,7 +258,3 @@ texinfo_documents = [
 
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
-
-sys.path.append(os.path.abspath('_themes'))
-html_theme_path = ['_themes']
-html_theme = 'klink'

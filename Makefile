@@ -1,6 +1,6 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: clean dist docs css pages serve
+.PHONY: clean dist docs pages serve notebooks
 
 clean:
 	- rm -rf dist
@@ -12,13 +12,9 @@ dist:
 upload: dist
 	twine upload dist/*
 
-docs: css
+docs: 
 	$(MAKE) -C docs/ clean
 	$(MAKE) -C docs/ html
-
-css:
-	lessc --clean-css docs/source/_themes/klink/static/less/klink.less docs/source/_themes/klink/static/css/klink.css
-	- cp docs/source/_themes/klink/static/css/klink.css docs/build/html/_static/css/klink.css
 
 pages: 
 	- rm -rf $(TMPREPO)
@@ -32,4 +28,8 @@ pages:
 
 serve: 
 	cd docs/build/html; \
-	python -m SimpleHTTPServer
+	python -m SimpleHTTPServer 9087
+
+notebooks:
+	cd docs/source; \
+	ipython notebook --no-browser --ip=*
