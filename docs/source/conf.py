@@ -32,7 +32,7 @@ klink.convert_notebooks()
 html_theme_path = ['_themes/klink']
 html_theme = 'klink'
 html_theme_options = {
-    'github': 'pmorissette/bt',
+    'github': 'pmorissette/ffn',
     'analytics_id': 'UA-52308448-1'
 }
 
