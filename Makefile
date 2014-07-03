@@ -1,6 +1,6 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: clean dist docs pages serve notebooks
+.PHONY: clean dist docs pages serve notebooks klink
 
 clean:
 	- rm -rf dist
@@ -33,3 +33,6 @@ serve:
 notebooks:
 	cd docs/source; \
 	ipython notebook --no-browser --ip=*
+
+klink:
+	git subtree pull --prefix=docs/source/_themes/klink --squash klink master
