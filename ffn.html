@@ -751,6 +751,34 @@ together easier.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.rollapply">
+<tt class="descclassname">ffn.core.</tt><tt class="descname">rollapply</tt><big>(</big><em>data</em>, <em>window</em>, <em>fn</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#rollapply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rollapply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a function fn over a rolling window of size window.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last">
+<li><p class="first">data (Series or DataFrame): Series or DataFrame</p>
+</li>
+<li><p class="first">window (int): Window size</p>
+</li>
+<li><dl class="first docutils">
+<dt>fn (function): Function to apply over the rolling window.</dt>
+<dd><p class="first last">For a series, the return value is expected to be a single
+number. For a DataFrame, it shuold return a new row.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+<dt>Returns:</dt>
+<dd><ul class="first last simple">
+<li>Object of same dimensions as data</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.to_drawdown_series">
 <tt class="descclassname">ffn.core.</tt><tt class="descname">to_drawdown_series</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#to_drawdown_series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_drawdown_series" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the drawdown series.</p>

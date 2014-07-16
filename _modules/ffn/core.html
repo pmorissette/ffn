@@ -1650,6 +1650,33 @@
     <span class="k">return</span> <span class="n">plot_heatmap</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">corr</span><span class="p">(),</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 </div>
+<div class="viewcode-block" id="rollapply"><a class="viewcode-back" href="../../ffn.html#ffn.core.rollapply">[docs]</a><span class="k">def</span> <span class="nf">rollapply</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">window</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Apply a function fn over a rolling window of size window.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        * data (Series or DataFrame): Series or DataFrame</span>
+<span class="sd">        * window (int): Window size</span>
+<span class="sd">        * fn (function): Function to apply over the rolling window.</span>
+<span class="sd">            For a series, the return value is expected to be a single</span>
+<span class="sd">            number. For a DataFrame, it shuold return a new row.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        * Object of same dimensions as data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">res</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">window</span> <span class="o">&gt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">window</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">window</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">res</span>
+
+</div>
 <div class="viewcode-block" id="extend_pandas"><a class="viewcode-back" href="../../ffn.html#ffn.core.extend_pandas">[docs]</a><span class="k">def</span> <span class="nf">extend_pandas</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extends pandas&#39; PandasObject (Series, TimeSeries,</span>
@@ -1685,7 +1712,8 @@
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_ftca</span> <span class="o">=</span> <span class="n">calc_ftca</span>
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_stats</span> <span class="o">=</span> <span class="n">calc_stats</span>
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">plot_heatmap</span> <span class="o">=</span> <span class="n">plot_heatmap</span>
-    <span class="n">PandasObject</span><span class="o">.</span><span class="n">plot_corr_heatmap</span> <span class="o">=</span> <span class="n">plot_corr_heatmap</span></div>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">plot_corr_heatmap</span> <span class="o">=</span> <span class="n">plot_corr_heatmap</span>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">rollapply</span> <span class="o">=</span> <span class="n">rollapply</span></div>
 </pre></div>
 
           </div>
