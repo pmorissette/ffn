@@ -400,3 +400,25 @@ def test_random_weights_throws_error():
         assert False
     except ValueError:
         assert True
+
+
+def test_rollapply():
+    a = pd.Series([1, 2, 3, 4, 5])
+
+    actual = a.rollapply(3, np.mean)
+
+    assert np.isnan(actual[0])
+    assert np.isnan(actual[1])
+    assert actual[2] == 2
+    assert actual[3] == 3
+    assert actual[4] == 4
+
+    b = pd.DataFrame({'a': a, 'b': a})
+
+    actual = b.rollapply(3, np.mean)
+
+    assert all(np.isnan(actual.iloc[0]))
+    assert all(np.isnan(actual.iloc[1]))
+    assert all(actual.iloc[2] == 2)
+    assert all(actual.iloc[3] == 3)
+    assert all(actual.iloc[4] == 4)

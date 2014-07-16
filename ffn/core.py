@@ -1604,6 +1604,33 @@ def plot_corr_heatmap(data, **kwargs):
     return plot_heatmap(data.corr(), vmin=-1, vmax=1, **kwargs)
 
 
+def rollapply(data, window, fn):
+    """
+    Apply a function fn over a rolling window of size window.
+
+    Args:
+        * data (Series or DataFrame): Series or DataFrame
+        * window (int): Window size
+        * fn (function): Function to apply over the rolling window.
+            For a series, the return value is expected to be a single
+            number. For a DataFrame, it shuold return a new row.
+
+    Returns:
+        * Object of same dimensions as data
+    """
+    res = data.copy()
+    res[:] = np.nan
+    n = len(data)
+
+    if window > n:
+        return res
+
+    for i in range(window - 1, n):
+        res.iloc[i] = fn(data.iloc[i - window + 1:i + 1])
+
+    return res
+
+
 def extend_pandas():
     """
     Extends pandas' PandasObject (Series, TimeSeries,
@@ -1640,3 +1667,4 @@ def extend_pandas():
     PandasObject.calc_stats = calc_stats
     PandasObject.plot_heatmap = plot_heatmap
     PandasObject.plot_corr_heatmap = plot_corr_heatmap
+    PandasObject.rollapply = rollapply
