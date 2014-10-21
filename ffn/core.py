@@ -1158,7 +1158,7 @@ def to_monthly(series, method='ffill', how='end'):
     return series.asfreq_actual('M', method=method, how=how)
 
 
-def asfreq_actual(series, freq, method=None, how=None, normalize=False):
+def asfreq_actual(series, freq, method='ffill', how='end', normalize=False):
     """
     Similar to pandas' asfreq but keeps the actual dates.
     For example, if last data point in Jan is on the 29th,
