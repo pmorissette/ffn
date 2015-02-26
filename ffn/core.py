@@ -54,6 +54,11 @@ class PerformanceStats(object):
         # update derived structure
         # return table as dataframe for easier manipulation
         self.return_table = pd.DataFrame(self.return_table).T
+        # name columns
+        self.return_table.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                                     'YTD']
+
         self.lookback_returns = pd.Series(
             [self.mtd, self.three_month, self.six_month, self.ytd,
              self.one_year, self.three_year, self.five_year,
@@ -413,11 +418,8 @@ class PerformanceStats(object):
         data = [['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
                  'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'YTD']]
         for k in self.return_table.index:
-            r = self.return_table.ix[k]
-            data.append([k, fmtpn(r[1]), fmtpn(r[2]), fmtpn(r[3]), fmtpn(r[4]),
-                         fmtpn(r[5]), fmtpn(r[6]), fmtpn(r[7]), fmtpn(r[8]),
-                         fmtpn(r[9]), fmtpn(r[10]), fmtpn(r[11]), fmtpn(r[12]),
-                         fmtpn(r[13])])
+            r = self.return_table.ix[k].values
+            data.append([k] + [fmtpn(x) for x in r])
         print tabulate(data, headers='firstrow')
 
     def display_lookback_returns(self):
