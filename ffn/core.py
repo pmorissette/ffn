@@ -55,9 +55,10 @@ class PerformanceStats(object):
         # return table as dataframe for easier manipulation
         self.return_table = pd.DataFrame(self.return_table).T
         # name columns
-        self.return_table.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-                                     'YTD']
+        if len(self.return_table.columns) == 13:
+            self.return_table.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May',
+                                         'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
+                                         'Nov', 'Dec', 'YTD']
 
         self.lookback_returns = pd.Series(
             [self.mtd, self.three_month, self.six_month, self.ytd,
@@ -211,7 +212,10 @@ class PerformanceStats(object):
                 self.return_table[idx.year][idx.month] = mr[idx]
         # add first month
         fidx = mr.index[0]
-        self.return_table[fidx.year][fidx.month] = float(mp[0]) / p[0] - 1
+        try:
+            self.return_table[fidx.year][fidx.month] = float(mp[0]) / p[0] - 1
+        except ZeroDivisionError:
+            self.return_table[fidx.year][fidx.month] = 0
         # calculate the YTD values
         for idx in self.return_table:
             arr = np.array(self.return_table[idx].values())
