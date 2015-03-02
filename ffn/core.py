@@ -55,9 +55,10 @@ class PerformanceStats(object):
         # return table as dataframe for easier manipulation
         self.return_table = pd.DataFrame(self.return_table).T
         # name columns
-        self.return_table.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                                     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-                                     'YTD']
+        if len(self.return_table.columns) == 13:
+            self.return_table.columns = ['Jan', 'Feb', 'Mar', 'Apr', 'May',
+                                         'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
+                                         'Nov', 'Dec', 'YTD']
 
         self.lookback_returns = pd.Series(
             [self.mtd, self.three_month, self.six_month, self.ytd,
