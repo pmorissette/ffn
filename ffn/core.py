@@ -17,6 +17,34 @@ except ImportError:
     pass
 
 
+def set_riskfree_rate(rf, update_all=False):
+
+    """
+    Set annual risk-free rate property of the class PerformanceStats.
+    Affects all instances of the PerformanceStats, unless the default
+    risk-free rate was overwritten before.
+
+    Args:
+        * rf (float): Annual interest rate
+        * update_all (bool): If True, all instances of PerformanceStats
+            will update their values. Note, this might be very slow
+            time in case of many objects available
+
+    """
+
+    # Note that both daily and monthly rates are annualized in the same
+    # way as returns
+    PerformanceStats._yearly_rf = rf
+    PerformanceStats._monthly_rf = (np.power(1+rf, 1./12.) - 1.) * 12
+    PerformanceStats._daily_rf = (np.power(1+rf, 1./252.) - 1.) * 252
+
+    if update_all:
+        from gc import get_objects
+        for obj in get_objects():
+            if isinstance(obj, PerformanceStats):
+                obj.set_riskfree_rate(rf)
+
+
 class PerformanceStats(object):
 
     """
@@ -32,11 +60,17 @@ class PerformanceStats(object):
         * name (str): Name, derived from price series name
         * return_table (DataFrame): A table of monthly returns with
             YTD figures as well.
-        * lookback_returns (Series): Returns for diffrent
+        * lookback_returns (Series): Returns for different
             lookback periods (1m, 3m, 6m, ytd...)
         * stats (Series): A series that contains all the stats
 
     """
+
+    # Annual risk-free rate for the calculation of Sharpe ratio.
+    # By default is equal to 0%
+    _yearly_rf = 0.
+    _monthly_rf = 0.
+    _daily_rf = 0.
 
     def __init__(self, prices):
         super(PerformanceStats, self).__init__()
@@ -45,6 +79,24 @@ class PerformanceStats(object):
         self._start = self.prices.index[0]
         self._end = self.prices.index[-1]
 
+        self._update(self.prices)
+
+    def set_riskfree_rate(self, rf):
+
+        """
+        Set annual risk-free rate property and calculate properly annualized
+        monthly and daily rates. Then performance stats are recalculated.
+        Affects only this instance of the PerformanceStats.
+
+        Args:
+            * rf (float): Annual risk-free rate
+        """
+
+        self._yearly_rf = rf
+        self._monthly_rf = (np.power(1+rf, 1./12.) - 1.) * 12
+        self._daily_rf = (np.power(1+rf, 1./252.) - 1.) * 252
+
+        # Note, that we recalculate everything.
         self._update(self.prices)
 
     def _update(self, obj):
@@ -153,7 +205,7 @@ class PerformanceStats(object):
 
         self.daily_mean = r.mean() * 252
         self.daily_vol = r.std() * np.sqrt(252)
-        self.daily_sharpe = self.daily_mean / self.daily_vol
+        self.daily_sharpe = (self.daily_mean - self._daily_rf) / self.daily_vol
         self.best_day = r.max()
         self.worst_day = r.min()
 
@@ -189,7 +241,7 @@ class PerformanceStats(object):
 
         self.monthly_mean = mr.mean() * 12
         self.monthly_vol = mr.std() * np.sqrt(12)
-        self.monthly_sharpe = self.monthly_mean / self.monthly_vol
+        self.monthly_sharpe = (self.monthly_mean - self._monthly_rf) / self.monthly_vol
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -255,7 +307,7 @@ class PerformanceStats(object):
 
         self.yearly_mean = yr.mean()
         self.yearly_vol = yr.std()
-        self.yearly_sharpe = self.yearly_mean / self.yearly_vol
+        self.yearly_sharpe = (self.yearly_mean - self._yearly_rf) / self.yearly_vol
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
@@ -368,6 +420,7 @@ class PerformanceStats(object):
         provided.
         """
         print 'Stats for %s from %s - %s' % (self.name, self.start, self.end)
+        print 'Annual risk-free rate considered: %s' %(fmtp(self._yearly_rf))
         print 'Summary:'
         data = [[fmtp(self.total_return), fmtn(self.daily_sharpe),
                  fmtp(self.cagr), fmtp(self.max_drawdown)]]
