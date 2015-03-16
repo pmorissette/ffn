@@ -1018,6 +1018,8 @@ def to_drawdown_series(prices):
     The max drawdown can be obtained by simply calling .min()
     on the result (since the drawdown series is negative)
 
+    Method ignores all gaps of NaN's in the price series.
+
     Args:
         * prices (TimeSeries or DataFrame): Series of prices.
 
@@ -1025,21 +1027,15 @@ def to_drawdown_series(prices):
     # make a copy so that we don't modify original data
     drawdown = prices.copy()
 
-    # set initial hwm (copy to avoid issues w/ overwriting)
-    hwm = drawdown.ix[0].copy()
-    isdf = isinstance(drawdown, pd.DataFrame)
+    # Fill NaN's with previous values
+    drawdown = drawdown.fillna(method='ffill')
 
-    for idx in drawdown.index:
-        tmp = drawdown.ix[idx]
-        if isdf:
-            hwm[tmp > hwm] = tmp
-        else:
-            hwm = max(tmp, hwm)
+    # Ignore problems with NaN's in the beginning
+    drawdown[np.isnan(drawdown)] = -np.Inf
 
-        drawdown.ix[idx] = tmp / hwm - 1
-
-    # first row is 0 by definition
-    drawdown.ix[0] = 0
+    # Rolling maximum
+    roll_max = np.maximum.accumulate(drawdown)
+    drawdown = drawdown / roll_max - 1.
     return drawdown
 
 
