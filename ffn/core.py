@@ -342,6 +342,7 @@ class PerformanceStats(object):
     def _stats(self):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
+                 ('_yearly_rf', 'Risk-free rate', 'p'),
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
@@ -663,6 +664,7 @@ class GroupStats(dict):
     def _stats(self):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
+                 ('_yearly_rf', 'Risk-free rate', 'p'),
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
@@ -711,6 +713,20 @@ class GroupStats(dict):
                  ('twelve_month_win_perc', 'Win 12m %', 'p')]
 
         return stats
+
+    def set_riskfree_rate(self, rf):
+
+        """
+        Set annual risk-free rate property and calculate properly annualized
+        monthly and daily rates. Then performance stats are recalculated.
+        Affects only those instances of PerformanceStats that are children of
+        this GroupStats object.
+
+        Args:
+            * rf (float): Annual risk-free rate
+        """
+        for key in self._names:
+            self[key].set_riskfree_rate(rf)
 
     def set_date_range(self, start=None, end=None):
         """
