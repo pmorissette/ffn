@@ -958,7 +958,7 @@ def to_price_index(returns, start=100):
 
     Formula is: cumprod (1+r)
     """
-    return (returns.replace(to_replace=np.nan, value=0) + 1).cumprod() * 100
+    return (returns.replace(to_replace=np.nan, value=0) + 1).cumprod() * start
 
 
 def rebase(prices, value=100):

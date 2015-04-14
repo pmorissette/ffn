@@ -69,6 +69,16 @@ def test_to_price_index():
     aae(actual['MSFT'][9], 95.191, 3)
     aae(actual['C'][9], 101.199, 3)
 
+    actual = rets.to_price_index(start=1)
+
+    assert len(actual) == len(data)
+    aae(actual['AAPL'][0], 1, 3)
+    aae(actual['MSFT'][0], 1, 3)
+    aae(actual['C'][0], 1, 3)
+    aae(actual['AAPL'][9], 0.914, 3)
+    aae(actual['MSFT'][9], 0.952, 3)
+    aae(actual['C'][9], 1.012, 3)
+
 
 def test_rebase():
     data = df
