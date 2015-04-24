@@ -858,6 +858,16 @@ class GroupStats(dict):
 
     def plot_correlation(self, period='m', title=None,
                          figsize=(12, 6), **kwargs):
+        """
+        Utility function to plot correlations.
+
+        Args:
+            * period (str): Pandas offset alias string
+            * title (str): Plot title
+            * figsize (tuple (x,y)): figure size
+            * kwargs: passed to Pandas' plot_corr_heatmap function
+
+        """
         if title is None:
             title = '%s return correlation matrix' % get_period_name(period)
 
