@@ -10,6 +10,7 @@ import sklearn.manifold
 import sklearn.cluster
 import sklearn.covariance
 from scipy.optimize import minimize
+import scipy.stats
 from scipy.stats import t
 try:
     import prettyplotlib  # NOQA
@@ -241,7 +242,8 @@ class PerformanceStats(object):
 
         self.monthly_mean = mr.mean() * 12
         self.monthly_vol = mr.std() * np.sqrt(12)
-        self.monthly_sharpe = (self.monthly_mean - self._monthly_rf) / self.monthly_vol
+        self.monthly_sharpe = ((self.monthly_mean - self._monthly_rf) /
+                               self.monthly_vol)
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -307,7 +309,8 @@ class PerformanceStats(object):
 
         self.yearly_mean = yr.mean()
         self.yearly_vol = yr.std()
-        self.yearly_sharpe = (self.yearly_mean - self._yearly_rf) / self.yearly_vol
+        self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
+                              self.yearly_vol)
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
@@ -421,7 +424,7 @@ class PerformanceStats(object):
         provided.
         """
         print 'Stats for %s from %s - %s' % (self.name, self.start, self.end)
-        print 'Annual risk-free rate considered: %s' %(fmtp(self._yearly_rf))
+        print 'Annual risk-free rate considered: %s' % (fmtp(self._yearly_rf))
         print 'Summary:'
         data = [[fmtp(self.total_return), fmtn(self.daily_sharpe),
                  fmtp(self.cagr), fmtp(self.max_drawdown)]]
@@ -1706,6 +1709,17 @@ def rollapply(data, window, fn):
     return res
 
 
+def winsorize(x, axis=0, limits=0.01):
+    """
+    Winsorize values based on limits
+    """
+    if isinstance(x, pd.DataFrame):
+        return x.apply(scipy.stats.mstats.winsorize, axis=axis, args=(limits, ))
+    else:
+        return pd.Series(scipy.stats.mstats.winsorize(x, limits=limits).data,
+                         index=x.index)
+
+
 def extend_pandas():
     """
     Extends pandas' PandasObject (Series, TimeSeries,
@@ -1743,3 +1757,4 @@ def extend_pandas():
     PandasObject.plot_heatmap = plot_heatmap
     PandasObject.plot_corr_heatmap = plot_corr_heatmap
     PandasObject.rollapply = rollapply
+    PandasObject.winsorize = winsorize
