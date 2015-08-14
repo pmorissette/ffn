@@ -1,6 +1,8 @@
+from __future__ import print_function
+from future.utils import listvalues
 import random
-import ffn.utils as utils
-from ffn.utils import fmtp, fmtn, fmtpn, get_period_name
+from . import utils
+from .utils import fmtp, fmtn, fmtpn, get_period_name
 import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
@@ -272,7 +274,7 @@ class PerformanceStats(object):
             self.return_table[fidx.year][fidx.month] = 0
         # calculate the YTD values
         for idx in self.return_table:
-            arr = np.array(self.return_table[idx].values())
+            arr = np.array(listvalues(self.return_table[idx]))
             self.return_table[idx][13] = np.prod(arr + 1) - 1
 
         if len(mr) < 3:
@@ -423,24 +425,24 @@ class PerformanceStats(object):
         Displays an overview containing descriptive stats for the TimeSeries
         provided.
         """
-        print 'Stats for %s from %s - %s' % (self.name, self.start, self.end)
-        print 'Annual risk-free rate considered: %s' % (fmtp(self._yearly_rf))
-        print 'Summary:'
+        print('Stats for %s from %s - %s' % (self.name, self.start, self.end))
+        print('Annual risk-free rate considered: %s' % (fmtp(self._yearly_rf)))
+        print('Summary:')
         data = [[fmtp(self.total_return), fmtn(self.daily_sharpe),
                  fmtp(self.cagr), fmtp(self.max_drawdown)]]
-        print tabulate(data, headers=['Total Return', 'Sharpe',
-                                      'CAGR', 'Max Drawdown'])
+        print(tabulate(data, headers=['Total Return', 'Sharpe',
+                                      'CAGR', 'Max Drawdown']))
 
-        print '\nAnnualized Returns:'
+        print('\nAnnualized Returns:')
         data = [[fmtp(self.mtd), fmtp(self.three_month), fmtp(self.six_month),
                  fmtp(self.ytd), fmtp(self.one_year), fmtp(self.three_year),
                  fmtp(self.five_year), fmtp(self.ten_year),
                  fmtp(self.incep)]]
-        print tabulate(data,
+        print(tabulate(data,
                        headers=['mtd', '3m', '6m', 'ytd', '1y',
-                                '3y', '5y', '10y', 'incep.'])
+                                '3y', '5y', '10y', 'incep.']))
 
-        print '\nPeriodic:'
+        print('\nPeriodic:')
         data = [
             ['sharpe', fmtn(self.daily_sharpe), fmtn(self.monthly_sharpe),
              fmtn(self.yearly_sharpe)],
@@ -456,20 +458,20 @@ class PerformanceStats(object):
              fmtp(self.best_year)],
             ['worst', fmtp(self.worst_day), fmtp(self.worst_month),
              fmtp(self.worst_year)]]
-        print tabulate(data, headers=['daily', 'monthly', 'yearly'])
+        print(tabulate(data, headers=['daily', 'monthly', 'yearly']))
 
-        print '\nDrawdowns:'
+        print('\nDrawdowns:')
         data = [
             [fmtp(self.max_drawdown), fmtp(self.avg_drawdown),
              fmtn(self.avg_drawdown_days)]]
-        print tabulate(data, headers=['max', 'avg', '# days'])
+        print(tabulate(data, headers=['max', 'avg', '# days']))
 
-        print '\nMisc:'
+        print('\nMisc:')
         data = [['avg. up month', fmtp(self.avg_up_month)],
                 ['avg. down month', fmtp(self.avg_down_month)],
                 ['up year %', fmtp(self.win_year_perc)],
                 ['12m up %', fmtp(self.twelve_month_win_perc)]]
-        print tabulate(data)
+        print(tabulate(data))
 
     def display_monthly_returns(self):
         """
@@ -481,7 +483,7 @@ class PerformanceStats(object):
         for k in self.return_table.index:
             r = self.return_table.ix[k].values
             data.append([k] + [fmtpn(x) for x in r])
-        print tabulate(data, headers='firstrow')
+        print(tabulate(data, headers='firstrow'))
 
     def display_lookback_returns(self):
         """
@@ -622,7 +624,7 @@ class GroupStats(dict):
             elif isinstance(p, pd.Series):
                 names.append(p.name)
             else:
-                print 'else'
+                print('else')
                 names.append(getattr(p, 'name', 'n/a'))
         self._names = names
 
@@ -787,7 +789,7 @@ class GroupStats(dict):
                     raise NotImplementedError('unsupported format %s' % f)
             data.append(row)
 
-        print tabulate(data, headers='firstrow')
+        print(tabulate(data, headers='firstrow'))
 
     def display_lookback_returns(self):
         """
@@ -861,6 +863,16 @@ class GroupStats(dict):
 
     def plot_correlation(self, period='m', title=None,
                          figsize=(12, 6), **kwargs):
+        """
+        Utility function to plot correlations.
+
+        Args:
+            * period (str): Pandas offset alias string
+            * title (str): Plot title
+            * figsize (tuple (x,y)): figure size
+            * kwargs: passed to Pandas' plot_corr_heatmap function
+
+        """
         if title is None:
             title = '%s return correlation matrix' % get_period_name(period)
 

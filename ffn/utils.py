@@ -2,7 +2,10 @@ import re
 import decorator
 import numpy as np
 import pandas as pd
-import cPickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 
 def _memoize(func, *args, **kw):
@@ -11,8 +14,8 @@ def _memoize(func, *args, **kw):
     refresh_kw = func.mrefresh_keyword
 
     # kw is not always set - check args
-    if refresh_kw in func.func_code.co_varnames:
-        if args[func.func_code.co_varnames.index(refresh_kw)]:
+    if refresh_kw in func.__code__.co_varnames:
+        if args[func.__code__.co_varnames.index(refresh_kw)]:
             refresh = True
 
     # check in kw if not already set above
@@ -20,7 +23,7 @@ def _memoize(func, *args, **kw):
         if kw[refresh_kw]:
             refresh = True
 
-    key = cPickle.dumps(args, 1) + cPickle.dumps(kw, 1)
+    key = pickle.dumps(args, 1) + pickle.dumps(kw, 1)
 
     cache = func.mcache
     if not refresh and key in cache:
