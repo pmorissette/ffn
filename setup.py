@@ -32,7 +32,8 @@ setuptools.setup(
         'tabulate',
         'matplotlib',
         'scikit-learn',
-        'scipy'
+        'scipy',
+        'future'
     ],
     packages=['ffn'],
     long_description=local_file('README.rst').read(),
