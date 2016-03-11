@@ -1,7 +1,7 @@
 import ffn
 import ffn.utils as utils
 import pandas as pd
-import pandas.io.data as pdata
+from pandas_datareader import data as pdata
 
 
 @utils.memoize

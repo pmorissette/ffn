@@ -29,6 +29,7 @@ setuptools.setup(
         'decorator',
         'numpy',
         'pandas',
+        'pandas_datareader',
         'tabulate',
         'matplotlib',
         'scikit-learn',
