@@ -432,3 +432,30 @@ def test_rollapply():
     assert all(actual.iloc[2] == 2)
     assert all(actual.iloc[3] == 3)
     assert all(actual.iloc[4] == 4)
+
+
+def test_winsorize():
+    x = pd.Series(range(20), dtype='float')
+    res = x.winsorize(limits=0.05)
+    assert res.iloc[0] == 1
+    assert res.iloc[-1] == 18
+
+    # make sure initial values still intact
+    assert x.iloc[0] == 0
+    assert x.iloc[-1] == 19
+
+    x = pd.DataFrame({
+        'a': pd.Series(range(20), dtype='float'),
+        'b': pd.Series(range(20), dtype='float')
+    })
+    res = x.winsorize(axis=0, limits=0.05)
+
+    assert res['a'].iloc[0] == 1
+    assert res['b'].iloc[0] == 1
+    assert res['a'].iloc[-1] == 18
+    assert res['b'].iloc[-1] == 18
+
+    assert x['a'].iloc[0] == 0
+    assert x['b'].iloc[0] == 0
+    assert x['a'].iloc[-1] == 19
+    assert x['b'].iloc[-1] == 19

@@ -1721,14 +1721,32 @@ def rollapply(data, window, fn):
     return res
 
 
+def _winsorize_wrapper(x, limits):
+    """
+    Wraps scipy winsorize function to drop na's
+    """
+    if hasattr(x, 'dropna'):
+        if len(x.dropna()) == 0:
+            return x
+
+        x[~np.isnan(x)] = scipy.stats.mstats.winsorize(x[~np.isnan(x)],
+                                                       limits=limits)
+        return x
+    else:
+        return scipy.stats.mstats.winsorize(x, limits=limits)
+
+
 def winsorize(x, axis=0, limits=0.01):
     """
     Winsorize values based on limits
     """
+    # operate on copy
+    x = x.copy()
+
     if isinstance(x, pd.DataFrame):
-        return x.apply(scipy.stats.mstats.winsorize, axis=axis, args=(limits, ))
+        return x.apply(_winsorize_wrapper, axis=axis, args=(limits, ))
     else:
-        return pd.Series(scipy.stats.mstats.winsorize(x, limits=limits).data,
+        return pd.Series(_winsorize_wrapper(x, limits).values,
                          index=x.index)
 
 
