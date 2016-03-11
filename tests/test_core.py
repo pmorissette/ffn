@@ -161,9 +161,9 @@ def test_cagr_df():
 
 def test_merge():
     a = pd.Series(index=pd.date_range('2010-01-01', periods=5),
-                      data=100, name='a')
+                  data=100, name='a')
     b = pd.Series(index=pd.date_range('2010-01-02', periods=5),
-                      data=200, name='b')
+                  data=200, name='b')
     actual = ffn.merge(a, b)
 
     assert 'a' in actual
@@ -249,7 +249,7 @@ def test_get_num_days_required():
 
 def test_asfreq_actual():
     a = pd.Series({pd.to_datetime('2010-02-27'): 100,
-                       pd.to_datetime('2010-03-25'): 200})
+                   pd.to_datetime('2010-03-25'): 200})
     actual = a.asfreq_actual(freq='M', method='ffill')
 
     assert len(actual) == 1
@@ -257,8 +257,8 @@ def test_asfreq_actual():
 
 
 def test_to_monthly():
-    a = pd.Series(range(100), index=pd.date_range('2010-01-01',
-                                                      periods=100))
+    a = pd.Series(range(100), index=pd.date_range(
+        '2010-01-01', periods=100))
     # to test for actual dates
     a['2010-01-31'] = np.nan
     a = a.dropna()
@@ -272,12 +272,12 @@ def test_to_monthly():
 
 def test_drop_duplicate_cols():
     a = pd.Series(index=pd.date_range('2010-01-01', periods=5),
-                      data=100, name='a')
+                  data=100, name='a')
     # second version of a w/ less data
     a2 = pd.Series(index=pd.date_range('2010-01-02', periods=4),
-                       data=900, name='a')
+                   data=900, name='a')
     b = pd.Series(index=pd.date_range('2010-01-02', periods=5),
-                      data=200, name='b')
+                  data=200, name='b')
     actual = ffn.merge(a, a2, b)
 
     assert actual['a'].shape[1] == 2
@@ -459,3 +459,40 @@ def test_winsorize():
     assert x['b'].iloc[0] == 0
     assert x['a'].iloc[-1] == 19
     assert x['b'].iloc[-1] == 19
+
+
+def test_rescale():
+    x = pd.Series(range(10), dtype='float')
+    res = x.rescale()
+
+    assert res.iloc[0] == 0
+    assert res.iloc[4] == (4. - 0.) / (9. - 0.)
+    assert res.iloc[-1] == 1
+
+    assert x.iloc[0] == 0
+    assert x.iloc[4] == 4
+    assert x.iloc[-1] == 9
+
+    x = pd.DataFrame({
+        'a': pd.Series(range(10), dtype='float'),
+        'b': pd.Series(range(10), dtype='float')
+    })
+    res = x.rescale(axis=0)
+
+    assert res['a'].iloc[0] == 0
+    assert res['a'].iloc[4] == (4. - 0.) / (9. - 0.)
+    assert res['a'].iloc[-1] == 1
+    assert res['b'].iloc[0] == 0
+    assert res['b'].iloc[4] == (4. - 0.) / (9. - 0.)
+    assert res['b'].iloc[-1] == 1
+
+    assert x['a'].iloc[0] == 0
+    assert x['a'].iloc[4] == 4
+    assert x['a'].iloc[-1] == 9
+    assert x['b'].iloc[0] == 0
+    assert x['b'].iloc[4] == 4
+    assert x['b'].iloc[-1] == 9
+
+
+def test_annualize():
+    assert ffn.annualize(0.1, 60) == (1.1 ** (1. / (60. / 365)) - 1)

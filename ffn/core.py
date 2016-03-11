@@ -1750,6 +1750,30 @@ def winsorize(x, axis=0, limits=0.01):
                          index=x.index)
 
 
+def rescale(x, min=0., max=1., axis=0):
+    """
+    Rescale values to fit a certain range [min, max]
+    """
+    def innerfn(x, min, max):
+        return np.interp(x, [np.min(x), np.max(x)], [min, max])
+
+    if isinstance(x, pd.DataFrame):
+        return x.apply(innerfn, axis=axis, args=(min, max,))
+    else:
+        return pd.Series(innerfn(x, min, max), index=x.index)
+
+
+def annualize(returns, durations, one_year=365.):
+    """
+    Annualize returns using their respective durations.
+
+    Formula used is:
+        (1 + returns) ** (1 / (durations / one_year)) - 1
+
+    """
+    return (1. + returns) ** (1. / (durations / one_year)) - 1.
+
+
 def extend_pandas():
     """
     Extends pandas' PandasObject (Series, Series,
@@ -1788,3 +1812,4 @@ def extend_pandas():
     PandasObject.plot_corr_heatmap = plot_corr_heatmap
     PandasObject.rollapply = rollapply
     PandasObject.winsorize = winsorize
+    PandasObject.rescale = rescale
