@@ -57,7 +57,7 @@ class PerformanceStats(object):
     statistics.
 
     Args:
-        * prices (TimeSeries): A price series.
+        * prices (Series): A price series.
 
     Attributes:
         * name (str): Name, derived from price series name
@@ -422,7 +422,7 @@ class PerformanceStats(object):
 
     def display(self):
         """
-        Displays an overview containing descriptive stats for the TimeSeries
+        Displays an overview containing descriptive stats for the Series
         provided.
         """
         print('Stats for %s from %s - %s' % (self.name, self.start, self.end))
@@ -994,12 +994,12 @@ def rebase(prices, value=100):
 def calc_perf_stats(obj):
     """
     Calculates the performance statistics given an object.
-    The object should be a TimeSeries of prices.
+    The object should be a Series of prices.
 
     A PerformanceStats object will be returned containing all the stats.
 
     Args:
-        * obj: A Pandas TimeSeries representing a series of prices.
+        * obj: A Pandas Series representing a series of prices.
 
     """
     return PerformanceStats(obj)
@@ -1009,11 +1009,11 @@ def calc_stats(obj):
     """
     Calculates performance stats of a given object.
 
-    If object is TimeSeries, a PerformanceStats object is
+    If object is Series, a PerformanceStats object is
     returned. If object is DataFrame, a GroupStats object
     is returned.
     """
-    if isinstance(obj, pd.TimeSeries):
+    if isinstance(obj, pd.Series):
         return PerformanceStats(obj)
     elif isinstance(obj, pd.DataFrame):
         return GroupStats(*[obj[x] for x in obj.columns])
@@ -1036,7 +1036,7 @@ def to_drawdown_series(prices):
     Method ignores all gaps of NaN's in the price series.
 
     Args:
-        * prices (TimeSeries or DataFrame): Series of prices.
+        * prices (Series or DataFrame): Series of prices.
 
     """
     # make a copy so that we don't modify original data
@@ -1072,7 +1072,7 @@ def drawdown_details(drawdown):
         days are actual calendar days, not trading days
 
     Args:
-        * drawdown (pandas.TimeSeries): A drawdown TimeSeries
+        * drawdown (pandas.Series): A drawdown Series
             (can be obtained w/ drawdown(prices).
     Returns:
         * pandas.DataFrame -- A data frame with the following
@@ -1121,7 +1121,7 @@ def calc_cagr(prices):
     Calculates the CAGR (compound annual growth rate) for a given price series.
 
     Args:
-        * prices (pandas.TimeSeries): A TimeSeries of prices.
+        * prices (pandas.Series): A Series of prices.
     Returns:
         * float -- cagr.
 
@@ -1734,7 +1734,7 @@ def winsorize(x, axis=0, limits=0.01):
 
 def extend_pandas():
     """
-    Extends pandas' PandasObject (Series, TimeSeries,
+    Extends pandas' PandasObject (Series, Series,
     DataFrame) with some functions defined in this file.
 
     This facilitates common functional composition used in quant

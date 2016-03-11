@@ -160,9 +160,9 @@ def test_cagr_df():
 
 
 def test_merge():
-    a = pd.TimeSeries(index=pd.date_range('2010-01-01', periods=5),
+    a = pd.Series(index=pd.date_range('2010-01-01', periods=5),
                       data=100, name='a')
-    b = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=5),
+    b = pd.Series(index=pd.date_range('2010-01-02', periods=5),
                       data=200, name='b')
     actual = ffn.merge(a, b)
 
@@ -248,7 +248,7 @@ def test_get_num_days_required():
 
 
 def test_asfreq_actual():
-    a = pd.TimeSeries({pd.to_datetime('2010-02-27'): 100,
+    a = pd.Series({pd.to_datetime('2010-02-27'): 100,
                        pd.to_datetime('2010-03-25'): 200})
     actual = a.asfreq_actual(freq='M', method='ffill')
 
@@ -257,7 +257,7 @@ def test_asfreq_actual():
 
 
 def test_to_monthly():
-    a = pd.TimeSeries(range(100), index=pd.date_range('2010-01-01',
+    a = pd.Series(range(100), index=pd.date_range('2010-01-01',
                                                       periods=100))
     # to test for actual dates
     a['2010-01-31'] = np.nan
@@ -271,12 +271,12 @@ def test_to_monthly():
 
 
 def test_drop_duplicate_cols():
-    a = pd.TimeSeries(index=pd.date_range('2010-01-01', periods=5),
+    a = pd.Series(index=pd.date_range('2010-01-01', periods=5),
                       data=100, name='a')
     # second version of a w/ less data
-    a2 = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=4),
+    a2 = pd.Series(index=pd.date_range('2010-01-02', periods=4),
                        data=900, name='a')
-    b = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=5),
+    b = pd.Series(index=pd.date_range('2010-01-02', periods=5),
                       data=200, name='b')
     actual = ffn.merge(a, a2, b)
 
