@@ -1463,7 +1463,7 @@ def calc_ftca(returns, threshold=0.5):
     Implementation of David Varadi's Fast Threshold
     Clustering Algorithm (FTCA).
 
-    http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/  #NOQA
+    http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/  # NOQA
 
     More stable than k-means for clustering purposes.
     If you want more clusters, use a higher threshold.
