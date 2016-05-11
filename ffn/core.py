@@ -207,7 +207,7 @@ class PerformanceStats(object):
         self.log_returns = p.to_log_returns()
         r = self.returns
         # Replace all positive returns with nan so that downside volatility can be calculated
-        r_downside = r.to_frame(name='downside').query("x < 0")
+        r_downside = r.to_frame(name='returns').query("returns < 0")
 
         if len(r) < 2:
             return
@@ -247,7 +247,7 @@ class PerformanceStats(object):
         # stats using monthly data
         self.monthly_returns = self.monthly_prices.to_returns()
         mr = self.monthly_returns
-        mr_downside = mr.to_frame(name='downside').query("x < 0")
+        mr_downside = mr.to_frame(name='returns').query("returns < 0")
 
         if len(mr) < 2:
             return
@@ -311,7 +311,7 @@ class PerformanceStats(object):
 
         self.yearly_returns = self.yearly_prices.to_returns()
         yr = self.yearly_returns
-        yr_downside = yr.to_frame(name='downside').query("x < 0")
+        yr_downside = yr.to_frame(name='returns').query("returns < 0")
 
         if len(yr) < 2:
             return
