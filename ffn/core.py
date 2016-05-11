@@ -132,6 +132,7 @@ class PerformanceStats(object):
         self.daily_mean = np.nan
         self.daily_vol = np.nan
         self.daily_sharpe = np.nan
+        self.daily_sortino = np.nan
         self.best_day = np.nan
         self.worst_day = np.nan
         self.total_return = np.nan
@@ -148,6 +149,7 @@ class PerformanceStats(object):
         self.monthly_mean = np.nan
         self.monthly_vol = np.nan
         self.monthly_sharpe = np.nan
+        self.monthly_sortino = np.nan
         self.best_month = np.nan
         self.worst_month = np.nan
         self.mtd = np.nan
@@ -164,6 +166,7 @@ class PerformanceStats(object):
         self.yearly_mean = np.nan
         self.yearly_vol = np.nan
         self.yearly_sharpe = np.nan
+        self.yearly_sortino = np.nan
         self.best_year = np.nan
         self.worst_year = np.nan
         self.three_year = np.nan
@@ -173,6 +176,7 @@ class PerformanceStats(object):
         self.yearly_kurt = np.nan
         self.five_year = np.nan
         self.ten_year = np.nan
+        self.calmar = np.nan
 
         self.return_table = {}
         # end default values
@@ -203,12 +207,17 @@ class PerformanceStats(object):
         self.log_returns = p.to_log_returns()
         r = self.returns
 
+        # Replace all positive returns with nan so that downside volatility can be calculated
+        r_downside = r
+        r_downside[r_downside >= 0] = np.nan
+
         if len(r) < 2:
             return
 
         self.daily_mean = r.mean() * 252
         self.daily_vol = r.std() * np.sqrt(252)
         self.daily_sharpe = (self.daily_mean - self._daily_rf) / self.daily_vol
+        self.daily_sortino = (self.daily_mean - self._daily_rf) / (r_downside.std(numeric_only=True) * np.sqrt(252))
         self.best_day = r.max()
         self.worst_day = r.min()
 
@@ -226,6 +235,8 @@ class PerformanceStats(object):
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
             self.avg_drawdown_days = self.drawdown_details['days'].mean()
 
+        self.calmar = self.cagr/abs(self.max_drawdown)
+
         if len(r) < 4:
             return
 
@@ -239,6 +250,9 @@ class PerformanceStats(object):
         self.monthly_returns = self.monthly_prices.to_returns()
         mr = self.monthly_returns
 
+        mr_downside = mr
+        mr_downside[mr_downside >= 0] = np.nan
+
         if len(mr) < 2:
             return
 
@@ -246,6 +260,8 @@ class PerformanceStats(object):
         self.monthly_vol = mr.std() * np.sqrt(12)
         self.monthly_sharpe = ((self.monthly_mean - self._monthly_rf) /
                                self.monthly_vol)
+        self.monthly_sortino = (self.monthly_mean - self._monthly_rf) / \
+                               (mr_downside.std(numeric_only=True) * np.sqrt(12))
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -300,6 +316,9 @@ class PerformanceStats(object):
         self.yearly_returns = self.yearly_prices.to_returns()
         yr = self.yearly_returns
 
+        yr_downside = yr
+        yr_downside[yr_downside >= 0] = np.nan
+
         if len(yr) < 2:
             return
 
@@ -313,6 +332,7 @@ class PerformanceStats(object):
         self.yearly_vol = yr.std()
         self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
                               self.yearly_vol)
+        self.yearly_sortino = ((self.yearly_mean - self._yearly_rf) / yr_downside.std(numeric_only=True))
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
@@ -353,6 +373,8 @@ class PerformanceStats(object):
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
                  ('cagr', 'CAGR', 'p'),
                  ('max_drawdown', 'Max Drawdown', 'p'),
+                 ('calmar', 'Calmar Ratio', 'n'),
+                 ('daily_sortino', 'Daily Sortino', 'n'),
                  (None, None, None),
                  ('mtd', 'MTD', 'p'),
                  ('three_month', '3m', 'p'),
@@ -365,6 +387,7 @@ class PerformanceStats(object):
                  ('incep', 'Since Incep. (ann.)', 'p'),
                  (None, None, None),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('daily_sortino', 'Daily Sortino', 'n'),
                  ('daily_mean', 'Daily Mean (ann.)', 'p'),
                  ('daily_vol', 'Daily Vol (ann.)', 'p'),
                  ('daily_skew', 'Daily Skew', 'n'),
@@ -373,6 +396,7 @@ class PerformanceStats(object):
                  ('worst_day', 'Worst Day', 'p'),
                  (None, None, None),
                  ('monthly_sharpe', 'Monthly Sharpe', 'n'),
+                 ('monthly_sortino', 'Monthly Sortino', 'n'),
                  ('monthly_mean', 'Monthly Mean (ann.)', 'p'),
                  ('monthly_vol', 'Monthly Vol (ann.)', 'p'),
                  ('monthly_skew', 'Monthly Skew', 'n'),
@@ -381,6 +405,7 @@ class PerformanceStats(object):
                  ('worst_month', 'Worst Month', 'p'),
                  (None, None, None),
                  ('yearly_sharpe', 'Yearly Sharpe', 'n'),
+                 ('yearly_sharpe', 'Yearly Sortino', 'n'),
                  ('yearly_mean', 'Yearly Mean', 'p'),
                  ('yearly_vol', 'Yearly Vol', 'p'),
                  ('yearly_skew', 'Yearly Skew', 'n'),
@@ -675,6 +700,8 @@ class GroupStats(dict):
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
                  ('cagr', 'CAGR', 'p'),
                  ('max_drawdown', 'Max Drawdown', 'p'),
+                 ('calmar', 'Calmar Ratio', 'n'),
+                 ('daily_sortino', 'Daily Sortino', 'n'),
                  (None, None, None),
                  ('mtd', 'MTD', 'p'),
                  ('three_month', '3m', 'p'),
@@ -687,6 +714,7 @@ class GroupStats(dict):
                  ('incep', 'Since Incep. (ann.)', 'p'),
                  (None, None, None),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('daily_sortino', 'Daily Sortino', 'n'),
                  ('daily_mean', 'Daily Mean (ann.)', 'p'),
                  ('daily_vol', 'Daily Vol (ann.)', 'p'),
                  ('daily_skew', 'Daily Skew', 'n'),
@@ -703,6 +731,7 @@ class GroupStats(dict):
                  ('worst_month', 'Worst Month', 'p'),
                  (None, None, None),
                  ('yearly_sharpe', 'Yearly Sharpe', 'n'),
+                 ('yearly_sortino', 'Yearly Sortino', 'n'),
                  ('yearly_mean', 'Yearly Mean', 'p'),
                  ('yearly_vol', 'Yearly Vol', 'p'),
                  ('yearly_skew', 'Yearly Skew', 'n'),
