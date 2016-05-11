@@ -717,6 +717,7 @@ class GroupStats(dict):
                  ('worst_day', 'Worst Day', 'p'),
                  (None, None, None),
                  ('monthly_sharpe', 'Monthly Sharpe', 'n'),
+                 ('monthly_sortino', 'Monthly Sortino', 'n'),
                  ('monthly_mean', 'Monthly Mean (ann.)', 'p'),
                  ('monthly_vol', 'Monthly Vol (ann.)', 'p'),
                  ('monthly_skew', 'Monthly Skew', 'n'),
