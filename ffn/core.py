@@ -215,7 +215,7 @@ class PerformanceStats(object):
         self.daily_mean = r.mean() * 252
         self.daily_vol = r.std() * np.sqrt(252)
         self.daily_sharpe = (self.daily_mean - self._daily_rf) / self.daily_vol
-        self.daily_sortino = (self.daily_mean - self._daily_rf) / (r_downside.std() * np.sqrt(252))
+        self.daily_sortino = (self.daily_mean - self._daily_rf) / (r_downside.std()[0] * np.sqrt(252))
         self.best_day = r.max()
         self.worst_day = r.min()
 
@@ -257,7 +257,7 @@ class PerformanceStats(object):
         self.monthly_sharpe = ((self.monthly_mean - self._monthly_rf) /
                                self.monthly_vol)
         self.monthly_sortino = (self.monthly_mean - self._monthly_rf) / \
-                               (mr_downside.std() * np.sqrt(12))
+                               (mr_downside.std()[0] * np.sqrt(12))
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -326,7 +326,7 @@ class PerformanceStats(object):
         self.yearly_vol = yr.std()
         self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
                               self.yearly_vol)
-        self.yearly_sortino = ((self.yearly_mean - self._yearly_rf) / yr_downside.std(numeric_only=True))
+        self.yearly_sortino = ((self.yearly_mean - self._yearly_rf) / yr_downside.std(numeric_only=True)[0])
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
