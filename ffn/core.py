@@ -207,7 +207,8 @@ class PerformanceStats(object):
         self.log_returns = p.to_log_returns()
         r = self.returns
         # Replace all positive returns with nan so that downside volatility can be calculated
-        r_downside = r.to_frame(name='returns').query("returns < 0")
+        r_downside = r
+        r_downside[r_downside >= self._daily_rf] = 0
 
         if len(r) < 2:
             return
@@ -215,7 +216,7 @@ class PerformanceStats(object):
         self.daily_mean = r.mean() * 252
         self.daily_vol = r.std() * np.sqrt(252)
         self.daily_sharpe = (self.daily_mean - self._daily_rf) / self.daily_vol
-        self.daily_sortino = (self.daily_mean - self._daily_rf) / (r_downside.std()[0] * np.sqrt(252))
+        self.daily_sortino = (self.daily_mean - self._daily_rf) / (r_downside.std() * np.sqrt(252))
         self.best_day = r.max()
         self.worst_day = r.min()
 
@@ -247,7 +248,8 @@ class PerformanceStats(object):
         # stats using monthly data
         self.monthly_returns = self.monthly_prices.to_returns()
         mr = self.monthly_returns
-        mr_downside = mr.to_frame(name='returns').query("returns < 0")
+        mr_downside = mr
+        mr_downside[mr_downside >= self._monthly_rf] = 0
 
         if len(mr) < 2:
             return
@@ -257,7 +259,7 @@ class PerformanceStats(object):
         self.monthly_sharpe = ((self.monthly_mean - self._monthly_rf) /
                                self.monthly_vol)
         self.monthly_sortino = (self.monthly_mean - self._monthly_rf) / \
-                               (mr_downside.std()[0] * np.sqrt(12))
+                               (mr_downside.std() * np.sqrt(12))
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -311,7 +313,8 @@ class PerformanceStats(object):
 
         self.yearly_returns = self.yearly_prices.to_returns()
         yr = self.yearly_returns
-        yr_downside = yr.to_frame(name='returns').query("returns < 0")
+        yr_downside = yr
+        yr_downside[yr_downside >= self._yearly_rf] = 0
 
         if len(yr) < 2:
             return
@@ -326,7 +329,7 @@ class PerformanceStats(object):
         self.yearly_vol = yr.std()
         self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
                               self.yearly_vol)
-        self.yearly_sortino = ((self.yearly_mean - self._yearly_rf) / yr_downside.std(numeric_only=True)[0])
+        self.yearly_sortino = ((self.yearly_mean - self._yearly_rf) / yr_downside.std())
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
