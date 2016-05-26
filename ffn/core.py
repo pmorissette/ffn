@@ -186,9 +186,9 @@ class PerformanceStats(object):
         # save daily prices for future use
         self.daily_prices = obj
         # M = month end frequency
-        self.monthly_prices = obj.resample('M', 'last')
+        self.monthly_prices = obj.resample('M').last()
         # A == year end frequency
-        self.yearly_prices = obj.resample('A', 'last')
+        self.yearly_prices = obj.resample('A').last()
 
         # let's save some typing
         p = obj
@@ -1059,7 +1059,7 @@ def calc_max_drawdown(prices):
     Calculates the max drawdown of a price series. If you want the
     actual drawdown series, please use to_drawdown_series.
     """
-    return (prices / pd.expanding_max(prices)).min() - 1
+    return (prices / prices.expanding(min_periods=1).max()).min() - 1
 
 
 def drawdown_details(drawdown):
