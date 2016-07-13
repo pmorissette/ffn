@@ -186,9 +186,9 @@ class PerformanceStats(object):
         # save daily prices for future use
         self.daily_prices = obj
         # M = month end frequency
-        self.monthly_prices = obj.resample('M', 'last')
+        self.monthly_prices = obj.resample('M').last()
         # A == year end frequency
-        self.yearly_prices = obj.resample('A', 'last')
+        self.yearly_prices = obj.resample('A').last()
 
         # let's save some typing
         p = obj
@@ -1059,7 +1059,7 @@ def calc_max_drawdown(prices):
     Calculates the max drawdown of a price series. If you want the
     actual drawdown series, please use to_drawdown_series.
     """
-    return (prices / pd.expanding_max(prices)).min() - 1
+    return (prices / prices.expanding(min_periods=1).max()).min() - 1
 
 
 def drawdown_details(drawdown):
@@ -1463,7 +1463,7 @@ def calc_ftca(returns, threshold=0.5):
     Implementation of David Varadi's Fast Threshold
     Clustering Algorithm (FTCA).
 
-    http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/  #NOQA
+    http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/  # NOQA
 
     More stable than k-means for clustering purposes.
     If you want more clusters, use a higher threshold.
@@ -1721,15 +1721,57 @@ def rollapply(data, window, fn):
     return res
 
 
+def _winsorize_wrapper(x, limits):
+    """
+    Wraps scipy winsorize function to drop na's
+    """
+    if hasattr(x, 'dropna'):
+        if len(x.dropna()) == 0:
+            return x
+
+        x[~np.isnan(x)] = scipy.stats.mstats.winsorize(x[~np.isnan(x)],
+                                                       limits=limits)
+        return x
+    else:
+        return scipy.stats.mstats.winsorize(x, limits=limits)
+
+
 def winsorize(x, axis=0, limits=0.01):
     """
     Winsorize values based on limits
     """
+    # operate on copy
+    x = x.copy()
+
     if isinstance(x, pd.DataFrame):
-        return x.apply(scipy.stats.mstats.winsorize, axis=axis, args=(limits, ))
+        return x.apply(_winsorize_wrapper, axis=axis, args=(limits, ))
     else:
-        return pd.Series(scipy.stats.mstats.winsorize(x, limits=limits).data,
+        return pd.Series(_winsorize_wrapper(x, limits).values,
                          index=x.index)
+
+
+def rescale(x, min=0., max=1., axis=0):
+    """
+    Rescale values to fit a certain range [min, max]
+    """
+    def innerfn(x, min, max):
+        return np.interp(x, [np.min(x), np.max(x)], [min, max])
+
+    if isinstance(x, pd.DataFrame):
+        return x.apply(innerfn, axis=axis, args=(min, max,))
+    else:
+        return pd.Series(innerfn(x, min, max), index=x.index)
+
+
+def annualize(returns, durations, one_year=365.):
+    """
+    Annualize returns using their respective durations.
+
+    Formula used is:
+        (1 + returns) ** (1 / (durations / one_year)) - 1
+
+    """
+    return (1. + returns) ** (1. / (durations / one_year)) - 1.
 
 
 def extend_pandas():
@@ -1770,3 +1812,4 @@ def extend_pandas():
     PandasObject.plot_corr_heatmap = plot_corr_heatmap
     PandasObject.rollapply = rollapply
     PandasObject.winsorize = winsorize
+    PandasObject.rescale = rescale
