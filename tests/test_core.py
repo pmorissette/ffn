@@ -496,3 +496,13 @@ def test_rescale():
 
 def test_annualize():
     assert ffn.annualize(0.1, 60) == (1.1 ** (1. / (60. / 365)) - 1)
+
+
+def test_calc_stats():
+    prices = df.C['2010-10-01':'2011-08-01']
+    stats = ffn.calc_stats(prices).stats
+    print(stats.index)
+    assert 'twelve_month_win_perc' not in stats.index
+    prices = df.C['2009-10-01':'2011-08-01']
+    stats = ffn.calc_stats(prices).stats
+    assert 'twelve_month_win_perc' in stats.index

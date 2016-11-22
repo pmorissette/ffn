@@ -322,13 +322,15 @@ class PerformanceStats(object):
         # -1 here to account for first return that will be nan
         self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
 
-        tot = 0
-        win = 0
-        for i in range(11, len(mr)):
-            tot = tot + 1
-            if mp[i] / mp[i - 11] > 1:
-                win = win + 1
-        self.twelve_month_win_perc = float(win) / tot
+        # need at least 1 year of monthly returns
+        if mr.size > 11:
+            tot = 0
+            win = 0
+            for i in range(11, len(mr)):
+                tot += 1
+                if mp[i] / mp[i - 11] > 1:
+                    win += 1
+            self.twelve_month_win_perc = float(win) / tot
 
         if len(yr) < 4:
             return
