@@ -311,8 +311,9 @@ class PerformanceStats(object):
 
         self.yearly_mean = yr.mean()
         self.yearly_vol = yr.std()
-        self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
-                              self.yearly_vol)
+        if self.yearly_vol > 0:
+            self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
+                                  self.yearly_vol)
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
