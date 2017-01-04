@@ -328,7 +328,8 @@ class PerformanceStats(object):
             tot = tot + 1
             if mp[i] / mp[i - 11] > 1:
                 win = win + 1
-        self.twelve_month_win_perc = float(win) / tot
+        if tot != 0:
+            self.twelve_month_win_perc = float(win) / tot
 
         if len(yr) < 4:
             return
