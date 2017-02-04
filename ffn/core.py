@@ -140,6 +140,8 @@ class PerformanceStats(object):
         self.drawdown = np.nan
         self.max_drawdown = np.nan
         self.drawdown_details = np.nan
+        self.ulcer_index = np.nan
+        self.ulcer_performance_index = np.nan
         self.daily_skew = np.nan
         self.daily_kurt = np.nan
         self.monthly_returns = np.nan
@@ -222,6 +224,8 @@ class PerformanceStats(object):
         self.drawdown = p.to_drawdown_series()
         self.max_drawdown = self.drawdown.min()
         self.drawdown_details = drawdown_details(self.drawdown)
+        self.ulcer_index = np.sqrt(np.sum(np.square(self.drawdown))/self.drawdown.count())
+        self.ulcer_performance_index = self.daily_mean / self.ulcer_index
         if self.drawdown_details is not None:
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
             self.avg_drawdown_days = self.drawdown_details['days'].mean()
@@ -351,6 +355,8 @@ class PerformanceStats(object):
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('ulcer_index', 'Ulcer index', 'p'),
+                 ('ulcer_performance_index', 'Ulcer Performance Index', 'n'),
                  ('cagr', 'CAGR', 'p'),
                  ('max_drawdown', 'Max Drawdown', 'p'),
                  (None, None, None),
@@ -673,6 +679,8 @@ class GroupStats(dict):
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
+                 ('ulcer_index', 'Ulcer index', 'p'),
+                 ('ulcer_performance_index', 'Ulcer Performance Index', 'n'),
                  ('cagr', 'CAGR', 'p'),
                  ('max_drawdown', 'Max Drawdown', 'p'),
                  (None, None, None),
