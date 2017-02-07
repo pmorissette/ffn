@@ -1,5 +1,5 @@
 from __future__ import print_function
-from future.utils import listvalues
+from future.utils import listvalues, iteritems
 import random
 from . import utils
 from .utils import fmtp, fmtn, fmtpn, get_period_name
@@ -1475,7 +1475,7 @@ def calc_clusters(returns, n=None, plot=False):
     tmp = result[0]
     # map as such {cluster: [list of tickers], cluster2: [...]}
     inv_map = {}
-    for k, v in tmp.iteritems():
+    for k, v in iteritems(tmp):
         inv_map[v] = inv_map.get(v, [])
         inv_map[v].append(k)
 
