@@ -518,3 +518,21 @@ def test_calmar_ratio():
 
     a = df.calc_calmar_ratio()
     assert np.allclose(a, cagr / abs(mdd))
+
+
+def test_calc_stats():
+    # test twelve_month_win_perc divide by zero
+    prices = df.C['2010-10-01':'2011-08-01']
+    stats = ffn.calc_stats(prices).stats
+    assert 'twelve_month_win_perc' not in stats.index
+    prices = df.C['2009-10-01':'2011-08-01']
+    stats = ffn.calc_stats(prices).stats
+    assert 'twelve_month_win_perc' in stats.index
+
+    # test yearly_sharpe divide by zero
+    prices = df.C['2009-01-01':'2012-01-01']
+    stats = ffn.calc_stats(prices).stats
+    assert 'yearly_sharpe' in stats.index
+    prices[prices > 0.0] = 1.0
+    stats = ffn.calc_stats(prices).stats
+    assert 'yearly_sharpe' not in stats.index
