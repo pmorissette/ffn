@@ -206,9 +206,6 @@ class PerformanceStats(object):
         self.returns = p.to_returns()
         self.log_returns = p.to_log_returns()
         r = self.returns
-        # Replace all positive returns with nan so that downside volatility can be calculated
-        r_downside = r.copy()
-        r_downside[r_downside >= self._daily_rf] = 0
 
         if len(r) < 2:
             return
@@ -216,7 +213,8 @@ class PerformanceStats(object):
         self.daily_mean = r.mean() * 252
         self.daily_vol = r.std() * np.sqrt(252)
         self.daily_sharpe = (self.daily_mean - self._daily_rf) / self.daily_vol
-        self.daily_sortino = (self.daily_mean - self._daily_rf) / (r_downside.std() * np.sqrt(252))
+        self.daily_sortino = calc_sortino_ratio(
+            r, rf=self._daily_rf, annualize=252)
         self.best_day = r.max()
         self.worst_day = r.min()
 
@@ -234,7 +232,7 @@ class PerformanceStats(object):
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
             self.avg_drawdown_days = self.drawdown_details['days'].mean()
 
-        self.calmar = self.cagr/abs(self.max_drawdown)
+        self.calmar = self.cagr / abs(self.max_drawdown)
 
         if len(r) < 4:
             return
@@ -248,8 +246,6 @@ class PerformanceStats(object):
         # stats using monthly data
         self.monthly_returns = self.monthly_prices.to_returns()
         mr = self.monthly_returns
-        mr_downside = mr.copy()
-        mr_downside[mr_downside >= self._monthly_rf] = 0
 
         if len(mr) < 2:
             return
@@ -258,8 +254,8 @@ class PerformanceStats(object):
         self.monthly_vol = mr.std() * np.sqrt(12)
         self.monthly_sharpe = ((self.monthly_mean - self._monthly_rf) /
                                self.monthly_vol)
-        self.monthly_sortino = (self.monthly_mean - self._monthly_rf) / \
-                               (mr_downside.std() * np.sqrt(12))
+        self.monthly_sortino = calc_sortino_ratio(
+            mr, rf=self._monthly_rf, annualize=12)
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -313,8 +309,6 @@ class PerformanceStats(object):
 
         self.yearly_returns = self.yearly_prices.to_returns()
         yr = self.yearly_returns
-        yr_downside = yr.copy()
-        yr_downside[yr_downside >= self._yearly_rf] = 0
 
         if len(yr) < 2:
             return
@@ -329,7 +323,7 @@ class PerformanceStats(object):
         self.yearly_vol = yr.std()
         self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
                               self.yearly_vol)
-        self.yearly_sortino = ((self.yearly_mean - self._yearly_rf) / yr_downside.std())
+        self.yearly_sortino = calc_sortino_ratio(yr, rf=self._yearly_rf)
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
@@ -1802,6 +1796,35 @@ def annualize(returns, durations, one_year=365.):
     return (1. + returns) ** (1. / (durations / one_year)) - 1.
 
 
+def calc_sortino_ratio(returns, rf=0, annualize=1):
+    """
+    Calculates the sortino ratio given a series of returns
+
+    Args:
+        * returns (Series or DataFrame): Returns
+        * rf (float): Risk-free rate
+        * annualize (int): Annualization factor. For daily data, you would
+            typically set to 252. Multiples the ratio by sqrt(annualize)
+
+    """
+    try:
+        return ((returns.mean() - rf) / returns[returns < rf].std() *
+                np.sqrt(annualize))
+    except ZeroDivisionError:
+        return np.nan
+
+
+def calc_calmar_ratio(prices):
+    """
+    Calculates the Calmar Ratio given a series of prices
+
+    Args:
+        * prices (Series, DataFrame): Price series
+
+    """
+    return prices.calc_cagr() / abs(prices.calc_max_drawdown())
+
+
 def extend_pandas():
     """
     Extends pandas' PandasObject (Series, Series,
@@ -1841,3 +1864,5 @@ def extend_pandas():
     PandasObject.rollapply = rollapply
     PandasObject.winsorize = winsorize
     PandasObject.rescale = rescale
+    PandasObject.calc_sortino_ratio = calc_sortino_ratio
+    PandasObject.calc_calmar_ratio = calc_calmar_ratio

@@ -496,3 +496,25 @@ def test_rescale():
 
 def test_annualize():
     assert ffn.annualize(0.1, 60) == (1.1 ** (1. / (60. / 365)) - 1)
+
+
+def test_calc_sortino_ratio():
+    rf = 0
+    p = 1
+    r = df.to_returns()
+    a = r.calc_sortino_ratio(rf=rf, annualize=p)
+    assert np.allclose(a, (r.mean() - rf) / r[r < rf].std() * np.sqrt(p))
+
+    rf = 0.02
+    p = 252
+    r = df.to_returns()
+    a = r.calc_sortino_ratio(rf=rf, annualize=p)
+    assert np.allclose(a, (r.mean() - rf) / r[r < rf].std() * np.sqrt(p))
+
+
+def test_calmar_ratio():
+    cagr = df.calc_cagr()
+    mdd = df.calc_max_drawdown()
+
+    a = df.calc_calmar_ratio()
+    assert np.allclose(a, cagr / abs(mdd))
