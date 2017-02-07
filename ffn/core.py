@@ -1475,9 +1475,14 @@ def calc_clusters(returns, n=None, plot=False):
     tmp = result[0]
     # map as such {cluster: [list of tickers], cluster2: [...]}
     inv_map = {}
-    for k, v in tmp.iteritems():
-        inv_map[v] = inv_map.get(v, [])
-        inv_map[v].append(k)
+    try:
+        for k, v in tmp.iteritems():
+            inv_map[v] = inv_map.get(v, [])
+            inv_map[v].append(k)
+    except AttributeError:
+        for k, v in tmp.items():
+            inv_map[v] = inv_map.get(v, [])
+            inv_map[v].append(k)
 
     return inv_map
 
