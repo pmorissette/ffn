@@ -1,4 +1,3 @@
-
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
@@ -7,25 +6,27 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>API &mdash; ffn 0.1 documentation</title>
+    <title>API &#8212; ffn 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '',
+        URL_ROOT:    './',
         VERSION:     '0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="ffn 0.1 documentation" href="index.html" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Quickstart" href="quick.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
@@ -36,24 +37,24 @@
         <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,500,700' rel='stylesheet' type='text/css'>
     
   </head>
-  <body>  
+  <body role="document">  
 
     <div class="document">
       <div class="documentwrapper">
         <div class="bodywrapper">
-          <div class="body">
+          <div class="body" role="main">
             
   <div class="section" id="api">
 <h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="module-ffn.__init__">
-<span id="ffn-package"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ffn</span></tt> Package<a class="headerlink" href="#module-ffn.__init__" title="Permalink to this headline">¶</a></h2>
+<span id="ffn-package"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">ffn</span></code> Package<a class="headerlink" href="#module-ffn.__init__" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-ffn.core">
-<span id="core-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">core</span></tt> Module<a class="headerlink" href="#module-ffn.core" title="Permalink to this headline">¶</a></h2>
+<span id="core-module"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">core</span></code> Module<a class="headerlink" href="#module-ffn.core" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="ffn.core.GroupStats">
-<em class="property">class </em><tt class="descclassname">ffn.core.</tt><tt class="descname">GroupStats</tt><big>(</big><em>*prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">dict</span></tt></p>
+<em class="property">class </em><code class="descclassname">ffn.core.</code><code class="descname">GroupStats</code><span class="sig-paren">(</span><em>*prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">dict</span></code></p>
 <p>GroupStats enables one to compare multiple series side by side.
 It is a wrapper around a dict of {price.name: PerformanceStats} and
 provides many convenience methods.</p>
@@ -67,58 +68,50 @@ position or name via the [] accessor.</p>
 </ul>
 </dd>
 <dt>Attributes:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>stats (DataFrame): Dataframe containing stats for each</dt>
-<dd><p class="first last">series provided.  Stats in rows, series in columns.</p>
-</dd>
+<dd>series provided.  Stats in rows, series in columns.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>lookback_returns (DataFrame): Returns for diffrent</dt>
-<dd><p class="first last">lookback periods (1m, 3m, 6m, ytd...)
-Period in rows, series in columns.</p>
-</dd>
+<dd>lookback periods (1m, 3m, 6m, ytd...)
+Period in rows, series in columns.</dd>
 </dl>
 </li>
-<li><p class="first">prices (DataFrame): The merged and rebased prices.</p>
-</li>
+<li>prices (DataFrame): The merged and rebased prices.</li>
 </ul>
 </dd>
 </dl>
 <dl class="method">
 <dt id="ffn.core.GroupStats.display">
-<tt class="descname">display</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.display" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.display" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display summary stats table.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.display_lookback_returns">
-<tt class="descname">display_lookback_returns</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display_lookback_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display_lookback_returns</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display_lookback_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays the current lookback returns for each series.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot">
-<tt class="descname">plot</tt><big>(</big><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot</code><span class="sig-paren">(</span><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for plotting the series.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>period (str): period used for display purposes.</dt>
-<dd><p class="first last">Refer to pandas docs for valid period strings.</p>
-</dd>
+<dd>Refer to pandas docs for valid period strings.</dd>
 </dl>
 </li>
-<li><p class="first">figsize ((x,y)): figure size</p>
-</li>
-<li><p class="first">title (str): Title if default not appropriate</p>
-</li>
-<li><p class="first">logy (bool): log-scale for y axis</p>
-</li>
-<li><p class="first">kwargs: passed to pandas&#8217; plot method</p>
-</li>
+<li>figsize ((x,y)): figure size</li>
+<li>title (str): Title if default not appropriate</li>
+<li>logy (bool): log-scale for y axis</li>
+<li>kwargs: passed to pandas&#8217; plot method</li>
 </ul>
 </dd>
 </dl>
@@ -126,28 +119,35 @@ Period in rows, series in columns.</p>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot_correlation">
-<tt class="descname">plot_correlation</tt><big>(</big><em>period='m'</em>, <em>title=None</em>, <em>figsize=(12</em>, <em>6)</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_correlation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_correlation" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="descname">plot_correlation</code><span class="sig-paren">(</span><em>period='m'</em>, <em>title=None</em>, <em>figsize=(12</em>, <em>6)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_correlation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_correlation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility function to plot correlations.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last simple">
+<li>period (str): Pandas offset alias string</li>
+<li>title (str): Plot title</li>
+<li>figsize (tuple (x,y)): figure size</li>
+<li>kwargs: passed to Pandas&#8217; plot_corr_heatmap function</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot_histograms">
-<tt class="descname">plot_histograms</tt><big>(</big><em>period='m'</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_histograms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_histograms" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_histograms</code><span class="sig-paren">(</span><em>period='m'</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_histograms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_histograms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper around pandas&#8217; hist.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>period (str): period used for display purposes.</dt>
-<dd><p class="first last">Refer to pandas docs for valid period strings.</p>
-</dd>
+<dd>Refer to pandas docs for valid period strings.</dd>
 </dl>
 </li>
-<li><p class="first">figsize ((x,y)): figure size</p>
-</li>
-<li><p class="first">title (str): Title if default not appropriate</p>
-</li>
-<li><p class="first">kwargs: passed to pandas&#8217; hist method</p>
-</li>
+<li>figsize ((x,y)): figure size</li>
+<li>title (str): Title if default not appropriate</li>
+<li>kwargs: passed to pandas&#8217; hist method</li>
 </ul>
 </dd>
 </dl>
@@ -155,23 +155,19 @@ Period in rows, series in columns.</p>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot_scatter_matrix">
-<tt class="descname">plot_scatter_matrix</tt><big>(</big><em>period='m'</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_scatter_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_scatter_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_scatter_matrix</code><span class="sig-paren">(</span><em>period='m'</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_scatter_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_scatter_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper around pandas&#8217; scatter_matrix.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>period (str): period used for display purposes.</dt>
-<dd><p class="first last">Refer to pandas docs for valid period strings.</p>
-</dd>
+<dd>Refer to pandas docs for valid period strings.</dd>
 </dl>
 </li>
-<li><p class="first">figsize ((x,y)): figure size</p>
-</li>
-<li><p class="first">title (str): Title if default not appropriate</p>
-</li>
-<li><p class="first">kwargs: passed to pandas&#8217; scatter_matrix method</p>
-</li>
+<li>figsize ((x,y)): figure size</li>
+<li>title (str): Title if default not appropriate</li>
+<li>kwargs: passed to pandas&#8217; scatter_matrix method</li>
 </ul>
 </dd>
 </dl>
@@ -179,7 +175,7 @@ Period in rows, series in columns.</p>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.set_date_range">
-<tt class="descname">set_date_range</tt><big>(</big><em>start=None</em>, <em>end=None</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.set_date_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.set_date_range" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_date_range</code><span class="sig-paren">(</span><em>start=None</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.set_date_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.set_date_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update date range of stats, charts, etc. If None then
 the original date range is used. So to reset to the original
 range, just call with no args.</p>
@@ -194,20 +190,34 @@ range, just call with no args.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="ffn.core.GroupStats.set_riskfree_rate">
+<code class="descname">set_riskfree_rate</code><span class="sig-paren">(</span><em>rf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.set_riskfree_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set annual risk-free rate property and calculate properly annualized
+monthly and daily rates. Then performance stats are recalculated.
+Affects only those instances of PerformanceStats that are children of
+this GroupStats object.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last simple">
+<li>rf (float): Annual risk-free rate</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="ffn.core.GroupStats.to_csv">
-<tt class="descname">to_csv</tt><big>(</big><em>sep='</em>, <em>'</em>, <em>path=None</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#GroupStats.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.to_csv" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_csv</code><span class="sig-paren">(</span><em>sep='</em>, <em>'</em>, <em>path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.to_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CSV string with appropriate formatting.
 If path is not None, the string will be saved to file
 at path.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
-<li><p class="first">sep (char): Separator</p>
-</li>
+<dd><ul class="first last simple">
+<li>sep (char): Separator</li>
 <li><dl class="first docutils">
 <dt>path (str): If None, CSV string returned. Else file</dt>
-<dd><p class="first last">written to specified path.</p>
-</dd>
+<dd>written to specified path.</dd>
 </dl>
 </li>
 </ul>
@@ -219,8 +229,8 @@ at path.</p>
 
 <dl class="class">
 <dt id="ffn.core.PerformanceStats">
-<em class="property">class </em><tt class="descclassname">ffn.core.</tt><tt class="descname">PerformanceStats</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<em class="property">class </em><code class="descclassname">ffn.core.</code><code class="descname">PerformanceStats</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>PerformanceStats is a convenience class used for the performance
 evaluation of a price series. It contains various helper functions
 to help with plotting and contains a large amount of descriptive
@@ -228,71 +238,62 @@ statistics.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd><ul class="first last simple">
-<li>prices (TimeSeries): A price series.</li>
+<li>prices (Series): A price series.</li>
 </ul>
 </dd>
 <dt>Attributes:</dt>
-<dd><ul class="first last">
-<li><p class="first">name (str): Name, derived from price series name</p>
-</li>
+<dd><ul class="first last simple">
+<li>name (str): Name, derived from price series name</li>
 <li><dl class="first docutils">
 <dt>return_table (DataFrame): A table of monthly returns with</dt>
-<dd><p class="first last">YTD figures as well.</p>
-</dd>
+<dd>YTD figures as well.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
-<dt>lookback_returns (Series): Returns for diffrent</dt>
-<dd><p class="first last">lookback periods (1m, 3m, 6m, ytd...)</p>
-</dd>
+<dt>lookback_returns (Series): Returns for different</dt>
+<dd>lookback periods (1m, 3m, 6m, ytd...)</dd>
 </dl>
 </li>
-<li><p class="first">stats (Series): A series that contains all the stats</p>
-</li>
+<li>stats (Series): A series that contains all the stats</li>
 </ul>
 </dd>
 </dl>
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.display">
-<tt class="descname">display</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display" title="Permalink to this definition">¶</a></dt>
-<dd><p>Displays an overview containing descriptive stats for the TimeSeries
+<code class="descname">display</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display" title="Permalink to this definition">¶</a></dt>
+<dd><p>Displays an overview containing descriptive stats for the Series
 provided.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.display_lookback_returns">
-<tt class="descname">display_lookback_returns</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_lookback_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display_lookback_returns</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_lookback_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays the current lookback returns.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.display_monthly_returns">
-<tt class="descname">display_monthly_returns</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_monthly_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_monthly_returns" title="Permalink to this definition">¶</a></dt>
+<code class="descname">display_monthly_returns</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_monthly_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_monthly_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display a table containing monthly returns and ytd returns
 for every year in range.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.plot">
-<tt class="descname">plot</tt><big>(</big><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot</code><span class="sig-paren">(</span><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for plotting the series.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>period (str): period used for display purposes.</dt>
-<dd><p class="first last">Refer to pandas docs for valid period strings.</p>
-</dd>
+<dd>Refer to pandas docs for valid period strings.</dd>
 </dl>
 </li>
-<li><p class="first">figsize ((x,y)): figure size</p>
-</li>
-<li><p class="first">title (str): Title if default not appropriate</p>
-</li>
-<li><p class="first">logy (bool): log-scale for y axis</p>
-</li>
-<li><p class="first">kwargs: passed to pandas&#8217; plot method</p>
-</li>
+<li>figsize ((x,y)): figure size</li>
+<li>title (str): Title if default not appropriate</li>
+<li>logy (bool): log-scale for y axis</li>
+<li>kwargs: passed to pandas&#8217; plot method</li>
 </ul>
 </dd>
 </dl>
@@ -300,27 +301,22 @@ for every year in range.</p>
 
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.plot_histogram">
-<tt class="descname">plot_histogram</tt><big>(</big><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>bins=20</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot_histogram" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_histogram</code><span class="sig-paren">(</span><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>bins=20</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot_histogram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots a histogram of returns given a return period (frequency).</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>period (str): period used for display purposes.</dt>
-<dd><p class="first last">This will dictate the type of returns
+<dd>This will dictate the type of returns
 (daily returns, monthly, ...)
-Refer to pandas docs for valid period strings.</p>
-</dd>
+Refer to pandas docs for valid period strings.</dd>
 </dl>
 </li>
-<li><p class="first">figsize ((x,y)): figure size</p>
-</li>
-<li><p class="first">title (str): Title if default not appropriate</p>
-</li>
-<li><p class="first">bins (int): number of bins for the histogram</p>
-</li>
-<li><p class="first">kwargs: passed to pandas&#8217; hist method</p>
-</li>
+<li>figsize ((x,y)): figure size</li>
+<li>title (str): Title if default not appropriate</li>
+<li>bins (int): number of bins for the histogram</li>
+<li>kwargs: passed to pandas&#8217; hist method</li>
 </ul>
 </dd>
 </dl>
@@ -328,7 +324,7 @@ Refer to pandas docs for valid period strings.</p>
 
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.set_date_range">
-<tt class="descname">set_date_range</tt><big>(</big><em>start=None</em>, <em>end=None</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.set_date_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_date_range" title="Permalink to this definition">¶</a></dt>
+<code class="descname">set_date_range</code><span class="sig-paren">(</span><em>start=None</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.set_date_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_date_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update date range of stats, charts, etc. If None then
 the original date is used. So to reset to the original
 range, just call with no args.</p>
@@ -343,20 +339,33 @@ range, just call with no args.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="ffn.core.PerformanceStats.set_riskfree_rate">
+<code class="descname">set_riskfree_rate</code><span class="sig-paren">(</span><em>rf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.set_riskfree_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set annual risk-free rate property and calculate properly annualized
+monthly and daily rates. Then performance stats are recalculated.
+Affects only this instance of the PerformanceStats.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last simple">
+<li>rf (float): Annual risk-free rate</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="ffn.core.PerformanceStats.to_csv">
-<tt class="descname">to_csv</tt><big>(</big><em>sep='</em>, <em>'</em>, <em>path=None</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.to_csv" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_csv</code><span class="sig-paren">(</span><em>sep='</em>, <em>'</em>, <em>path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.to_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CSV string with appropriate formatting.
 If path is not None, the string will be saved to file
 at path.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
-<li><p class="first">sep (char): Separator</p>
-</li>
+<dd><ul class="first last simple">
+<li>sep (char): Separator</li>
 <li><dl class="first docutils">
 <dt>path (str): If None, CSV string returned. Else file written</dt>
-<dd><p class="first last">to specified path.</p>
-</dd>
+<dd>to specified path.</dd>
 </dl>
 </li>
 </ul>
@@ -367,8 +376,18 @@ at path.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.annualize">
+<code class="descclassname">ffn.core.</code><code class="descname">annualize</code><span class="sig-paren">(</span><em>returns</em>, <em>durations</em>, <em>one_year=365.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#annualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.annualize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annualize returns using their respective durations.</p>
+<dl class="docutils">
+<dt>Formula used is:</dt>
+<dd>(1 + returns) ** (1 / (durations / one_year)) - 1</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.asfreq_actual">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">asfreq_actual</tt><big>(</big><em>series</em>, <em>freq</em>, <em>method=None</em>, <em>how=None</em>, <em>normalize=False</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#asfreq_actual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.asfreq_actual" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">asfreq_actual</code><span class="sig-paren">(</span><em>series</em>, <em>freq</em>, <em>method='ffill'</em>, <em>how='end'</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#asfreq_actual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.asfreq_actual" title="Permalink to this definition">¶</a></dt>
 <dd><p>Similar to pandas&#8217; asfreq but keeps the actual dates.
 For example, if last data point in Jan is on the 29th,
 that date will be used instead of the 31st.</p>
@@ -376,12 +395,12 @@ that date will be used instead of the 31st.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_cagr">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_cagr</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_cagr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_cagr" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_cagr</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_cagr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_cagr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the CAGR (compound annual growth rate) for a given price series.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd><ul class="first last simple">
-<li>prices (pandas.TimeSeries): A TimeSeries of prices.</li>
+<li>prices (pandas.Series): A Series of prices.</li>
 </ul>
 </dd>
 <dt>Returns:</dt>
@@ -394,22 +413,19 @@ that date will be used instead of the 31st.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_clusters">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_clusters</tt><big>(</big><em>returns</em>, <em>n=None</em>, <em>plot=False</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_clusters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_clusters" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_clusters</code><span class="sig-paren">(</span><em>returns</em>, <em>n=None</em>, <em>plot=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_clusters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_clusters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the clusters based on k-means
 clustering.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
-<li><p class="first">returns (pd.DataFrame): DataFrame of returns</p>
-</li>
+<dd><ul class="first last simple">
+<li>returns (pd.DataFrame): DataFrame of returns</li>
 <li><dl class="first docutils">
 <dt>n (int): Specify # of clusters. If None, this</dt>
-<dd><p class="first last">will be automatically determined</p>
-</dd>
+<dd>will be automatically determined</dd>
 </dl>
 </li>
-<li><p class="first">plot (bool): Show plot?</p>
-</li>
+<li>plot (bool): Show plot?</li>
 </ul>
 </dd>
 <dt>Returns:</dt>
@@ -422,26 +438,24 @@ clustering.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_ftca">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_ftca</tt><big>(</big><em>returns</em>, <em>threshold=0.5</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_ftca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_ftca" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_ftca</code><span class="sig-paren">(</span><em>returns</em>, <em>threshold=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_ftca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_ftca" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implementation of David Varadi&#8217;s Fast Threshold
 Clustering Algorithm (FTCA).</p>
-<p><a class="reference external" href="http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/">http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/</a>  #NOQA</p>
+<p><a class="reference external" href="http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/">http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/</a>  # NOQA</p>
 <p>More stable than k-means for clustering purposes.
 If you want more clusters, use a higher threshold.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>returns - expects a pandas dataframe of returns where</dt>
-<dd><p class="first last">each column is the name of a given security.</p>
-</dd>
+<dd>each column is the name of a given security.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>threshold (float): Threshold parameter - use higher value</dt>
-<dd><p class="first last">for more clusters. Basically controls how similar
-(correlated) series have to be.</p>
-</dd>
+<dd>for more clusters. Basically controls how similar
+(correlated) series have to be.</dd>
 </dl>
 </li>
 </ul>
@@ -453,17 +467,19 @@ If you want more clusters, use a higher threshold.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_information_ratio">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_information_ratio</tt><big>(</big><em>returns</em>, <em>benchmark_returns</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_information_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_information_ratio" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_information_ratio</code><span class="sig-paren">(</span><em>returns</em>, <em>benchmark_returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_information_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_information_ratio" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="http://en.wikipedia.org/wiki/Information_ratio">http://en.wikipedia.org/wiki/Information_ratio</a></p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.calc_inv_vol_weights">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_inv_vol_weights</tt><big>(</big><em>returns</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_inv_vol_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_inv_vol_weights" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_inv_vol_weights</code><span class="sig-paren">(</span><em>returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_inv_vol_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_inv_vol_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates weights proportional to inverse volatility of each column.</p>
 <p>Returns weights that are inversely proportional to the column&#8217;s
 volatility resulting in a set of portfolio weights where each position
 has the same level of volatility.</p>
+<p>Note, that assets with returns all equal to NaN or 0 are excluded from
+the portfolio (their weight is set to NaN).</p>
 <dl class="docutils">
 <dt>Returns:</dt>
 <dd>Series {col_name: weight}</dd>
@@ -472,29 +488,26 @@ has the same level of volatility.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_max_drawdown">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_max_drawdown</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_max_drawdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_max_drawdown" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_max_drawdown</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_max_drawdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_max_drawdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the max drawdown of a price series. If you want the
 actual drawdown series, please use to_drawdown_series.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.calc_mean_var_weights">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_mean_var_weights</tt><big>(</big><em>returns</em>, <em>weight_bounds=(0.0</em>, <em>1.0)</em>, <em>rf=0.0</em>, <em>covar_method='ledoit-wolf'</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_mean_var_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_mean_var_weights" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_mean_var_weights</code><span class="sig-paren">(</span><em>returns</em>, <em>weight_bounds=(0.0</em>, <em>1.0)</em>, <em>rf=0.0</em>, <em>covar_method='ledoit-wolf'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_mean_var_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_mean_var_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the mean-variance weights given a DataFrame of returns.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
-<li><p class="first">returns (DataFrame): Returns for multiple securities.</p>
-</li>
-<li><p class="first">weight_bounds ((low, high)): Weigh limits for optimization.</p>
-</li>
-<li><p class="first">rf (float): Risk-free rate used in utility calculation</p>
-</li>
+<dd><ul class="first last simple">
+<li>returns (DataFrame): Returns for multiple securities.</li>
+<li>weight_bounds ((low, high)): Weigh limits for optimization.</li>
+<li>rf (float): Risk-free rate used in utility calculation</li>
 <li><dl class="first docutils">
 <dt>covar_method (str): Covariance matrix estimation method.</dt>
 <dd><dl class="first last docutils">
 <dt>Currently supported:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li>ledoit-wolf</li>
 <li>standard</li>
 </ul>
@@ -512,14 +525,14 @@ actual drawdown series, please use to_drawdown_series.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_perf_stats">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_perf_stats</tt><big>(</big><em>obj</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_perf_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_perf_stats" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_perf_stats</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_perf_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_perf_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the performance statistics given an object.
-The object should be a TimeSeries of prices.</p>
+The object should be a Series of prices.</p>
 <p>A PerformanceStats object will be returned containing all the stats.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd><ul class="first last simple">
-<li>obj: A Pandas TimeSeries representing a series of prices.</li>
+<li>obj: A Pandas Series representing a series of prices.</li>
 </ul>
 </dd>
 </dl>
@@ -527,7 +540,7 @@ The object should be a TimeSeries of prices.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_prob_mom">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_prob_mom</tt><big>(</big><em>returns</em>, <em>other_returns</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_prob_mom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_prob_mom" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_prob_mom</code><span class="sig-paren">(</span><em>returns</em>, <em>other_returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_prob_mom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_prob_mom" title="Permalink to this definition">¶</a></dt>
 <dd><p>Probabilistic momentum</p>
 <p>Basically the &#8220;probability or confidence that one asset
 is going to outperform the other&#8221;.</p>
@@ -539,30 +552,30 @@ is going to outperform the other&#8221;.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_risk_return_ratio">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_risk_return_ratio</tt><big>(</big><em>self</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_risk_return_ratio</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the return / risk ratio. Basically the
 Sharpe ratio without factoring in the risk-free rate.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.calc_stats">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_stats</tt><big>(</big><em>obj</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_stats" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_stats</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates performance stats of a given object.</p>
-<p>If object is TimeSeries, a PerformanceStats object is
+<p>If object is Series, a PerformanceStats object is
 returned. If object is DataFrame, a GroupStats object
 is returned.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.calc_total_return">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">calc_total_return</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#calc_total_return"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_total_return" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_total_return</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_total_return"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_total_return" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the total return of a series.</p>
 <p>last / first - 1</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.drawdown_details">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">drawdown_details</tt><big>(</big><em>drawdown</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#drawdown_details"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.drawdown_details" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">drawdown_details</code><span class="sig-paren">(</span><em>drawdown</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#drawdown_details"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.drawdown_details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a data frame with start, end, days (duration) and
 drawdown for each drawdown in a drawdown series.</p>
 <div class="admonition note">
@@ -571,21 +584,19 @@ drawdown for each drawdown in a drawdown series.</p>
 </div>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
-<dt>drawdown (pandas.TimeSeries): A drawdown TimeSeries</dt>
-<dd><p class="first last">(can be obtained w/ drawdown(prices).</p>
-</dd>
+<dt>drawdown (pandas.Series): A drawdown Series</dt>
+<dd>(can be obtained w/ drawdown(prices).</dd>
 </dl>
 </li>
 </ul>
 </dd>
 <dt>Returns:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>pandas.DataFrame &#8211; A data frame with the following</dt>
-<dd><p class="first last">columns: start, end, days, drawdown.</p>
-</dd>
+<dd>columns: start, end, days, drawdown.</dd>
 </dl>
 </li>
 </ul>
@@ -595,15 +606,15 @@ drawdown for each drawdown in a drawdown series.</p>
 
 <dl class="function">
 <dt id="ffn.core.drop_duplicate_cols">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">drop_duplicate_cols</tt><big>(</big><em>df</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#drop_duplicate_cols"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.drop_duplicate_cols" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">drop_duplicate_cols</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#drop_duplicate_cols"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.drop_duplicate_cols" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes duplicate columns from a dataframe
 and keeps column w/ longest history</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.extend_pandas">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">extend_pandas</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/ffn/core.html#extend_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.extend_pandas" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extends pandas&#8217; PandasObject (Series, TimeSeries,
+<code class="descclassname">ffn.core.</code><code class="descname">extend_pandas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#extend_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.extend_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extends pandas&#8217; PandasObject (Series, Series,
 DataFrame) with some functions defined in this file.</p>
 <p>This facilitates common functional composition used in quant
 finance.</p>
@@ -616,21 +627,18 @@ finance.</p>
 
 <dl class="function">
 <dt id="ffn.core.get_num_days_required">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">get_num_days_required</tt><big>(</big><em>offset</em>, <em>period='d'</em>, <em>perc_required=0.9</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#get_num_days_required"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.get_num_days_required" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">get_num_days_required</code><span class="sig-paren">(</span><em>offset</em>, <em>period='d'</em>, <em>perc_required=0.9</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#get_num_days_required"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.get_num_days_required" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimates the number of days required to assume that data is OK.</p>
 <p>Helper function used to determine if there are enough &#8220;good&#8221; data
 days over a given period.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
-<li><p class="first">offset (DateOffset): Offset (lookback) period.</p>
-</li>
-<li><p class="first">period (str): Period string.</p>
-</li>
+<dd><ul class="first last simple">
+<li>offset (DateOffset): Offset (lookback) period.</li>
+<li>period (str): Period string.</li>
 <li><dl class="first docutils">
 <dt>perc_required (float): percentage of number of days</dt>
-<dd><p class="first last">expected required.</p>
-</dd>
+<dd>expected required.</dd>
 </dl>
 </li>
 </ul>
@@ -640,21 +648,18 @@ days over a given period.</p>
 
 <dl class="function">
 <dt id="ffn.core.limit_weights">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">limit_weights</tt><big>(</big><em>weights</em>, <em>limit=0.1</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#limit_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.limit_weights" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">limit_weights</code><span class="sig-paren">(</span><em>weights</em>, <em>limit=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#limit_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.limit_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Limits weights and redistributes excedent amount
 proportionally.</p>
 <dl class="docutils">
 <dt>ex:</dt>
-<dd><ul class="first last">
-<li><p class="first">weights are {a: 0.7, b: 0.2, c: 0.1}</p>
-</li>
-<li><p class="first">call with limit=0.5</p>
-</li>
+<dd><ul class="first last simple">
+<li>weights are {a: 0.7, b: 0.2, c: 0.1}</li>
+<li>call with limit=0.5</li>
 <li><dl class="first docutils">
 <dt>excess 0.2 in a is ditributed to b and c</dt>
-<dd><p class="first last">proportionally.
-- result is {a: 0.5, b: 0.33, c: 0.167}</p>
-</dd>
+<dd>proportionally.
+- result is {a: 0.5, b: 0.33, c: 0.167}</dd>
 </dl>
 </li>
 </ul>
@@ -670,46 +675,37 @@ proportionally.</p>
 
 <dl class="function">
 <dt id="ffn.core.merge">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">merge</tt><big>(</big><em>*series</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.merge" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">merge</code><span class="sig-paren">(</span><em>*series</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.merge" title="Permalink to this definition">¶</a></dt>
 <dd><p>Merge Series and/or DataFrames together.</p>
 <p>Returns a DataFrame.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.plot_corr_heatmap">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">plot_corr_heatmap</tt><big>(</big><em>data</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#plot_corr_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_corr_heatmap" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">plot_corr_heatmap</code><span class="sig-paren">(</span><em>data</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_corr_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_corr_heatmap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots the correlation heatmap for a given DataFrame.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.plot_heatmap">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">plot_heatmap</tt><big>(</big><em>data</em>, <em>title='Heatmap'</em>, <em>show_legend=True</em>, <em>show_labels=True</em>, <em>label_fmt='.2f'</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>figsize=None</em>, <em>cmap='RdBu'</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#plot_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_heatmap" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">plot_heatmap</code><span class="sig-paren">(</span><em>data</em>, <em>title='Heatmap'</em>, <em>show_legend=True</em>, <em>show_labels=True</em>, <em>label_fmt='.2f'</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>figsize=None</em>, <em>cmap='RdBu'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_heatmap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a heatmap using matplotlib&#8217;s pcolor.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li><dl class="first docutils">
 <dt>data (DataFrame): DataFrame to plot. Usually small matrix (ex.</dt>
-<dd><p class="first last">correlation matrix).</p>
-</dd>
+<dd>correlation matrix).</dd>
 </dl>
 </li>
-<li><p class="first">title (string): Plot title</p>
-</li>
-<li><p class="first">show_legend (bool): Show color legend</p>
-</li>
-<li><p class="first">show_labels (bool): Show value labels</p>
-</li>
-<li><p class="first">label_fmt (str): Label format string</p>
-</li>
-<li><p class="first">vmin (float): Min value for scale</p>
-</li>
-<li><p class="first">vmax (float): Max value for scale</p>
-</li>
-<li><p class="first">cmap (string): Color map</p>
-</li>
-<li><p class="first">kwargs: Passed to matplotlib&#8217;s pcolor</p>
-</li>
+<li>title (string): Plot title</li>
+<li>show_legend (bool): Show color legend</li>
+<li>show_labels (bool): Show value labels</li>
+<li>label_fmt (str): Label format string</li>
+<li>vmin (float): Min value for scale</li>
+<li>vmax (float): Max value for scale</li>
+<li>cmap (string): Color map</li>
+<li>kwargs: Passed to matplotlib&#8217;s pcolor</li>
 </ul>
 </dd>
 </dl>
@@ -717,7 +713,7 @@ proportionally.</p>
 
 <dl class="function">
 <dt id="ffn.core.random_weights">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">random_weights</tt><big>(</big><em>n</em>, <em>bounds=(0.0</em>, <em>1.0)</em>, <em>total=1.0</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#random_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.random_weights" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">random_weights</code><span class="sig-paren">(</span><em>n</em>, <em>bounds=(0.0</em>, <em>1.0)</em>, <em>total=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#random_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.random_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate pseudo-random weights.</p>
 <p>Returns a list of random weights that is of length
 n, where each weight is in the range bounds, and
@@ -736,7 +732,7 @@ where the weights sum up to total.</p>
 
 <dl class="function">
 <dt id="ffn.core.rebase">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">rebase</tt><big>(</big><em>prices</em>, <em>value=100</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#rebase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rebase" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">rebase</code><span class="sig-paren">(</span><em>prices</em>, <em>value=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rebase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rebase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rebase all series to a given intial value.</p>
 <p>This makes comparing/plotting different series
 together easier.</p>
@@ -751,21 +747,24 @@ together easier.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.rescale">
+<code class="descclassname">ffn.core.</code><code class="descname">rescale</code><span class="sig-paren">(</span><em>x</em>, <em>min=0.0</em>, <em>max=1.0</em>, <em>axis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rescale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rescale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescale values to fit a certain range [min, max]</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.rollapply">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">rollapply</tt><big>(</big><em>data</em>, <em>window</em>, <em>fn</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#rollapply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rollapply" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">rollapply</code><span class="sig-paren">(</span><em>data</em>, <em>window</em>, <em>fn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rollapply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rollapply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply a function fn over a rolling window of size window.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
-<li><p class="first">data (Series or DataFrame): Series or DataFrame</p>
-</li>
-<li><p class="first">window (int): Window size</p>
-</li>
+<dd><ul class="first last simple">
+<li>data (Series or DataFrame): Series or DataFrame</li>
+<li>window (int): Window size</li>
 <li><dl class="first docutils">
 <dt>fn (function): Function to apply over the rolling window.</dt>
-<dd><p class="first last">For a series, the return value is expected to be a single
-number. For a DataFrame, it shuold return a new row.</p>
-</dd>
+<dd>For a series, the return value is expected to be a single
+number. For a DataFrame, it shuold return a new row.</dd>
 </dl>
 </li>
 </ul>
@@ -779,8 +778,29 @@ number. For a DataFrame, it shuold return a new row.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.set_riskfree_rate">
+<code class="descclassname">ffn.core.</code><code class="descname">set_riskfree_rate</code><span class="sig-paren">(</span><em>rf</em>, <em>update_all=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#set_riskfree_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set annual risk-free rate property of the class PerformanceStats.
+Affects all instances of the PerformanceStats, unless the default
+risk-free rate was overwritten before.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last simple">
+<li>rf (float): Annual interest rate</li>
+<li><dl class="first docutils">
+<dt>update_all (bool): If True, all instances of PerformanceStats</dt>
+<dd>will update their values. Note, this might be very slow
+time in case of many objects available</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.to_drawdown_series">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">to_drawdown_series</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#to_drawdown_series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_drawdown_series" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">to_drawdown_series</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_drawdown_series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_drawdown_series" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the drawdown series.</p>
 <p>This returns a series representing a drawdown.
 When the price is at all time highs, the drawdown
@@ -788,10 +808,11 @@ is 0. However, when prices are below high water marks,
 the drawdown series = current / hwm - 1</p>
 <p>The max drawdown can be obtained by simply calling .min()
 on the result (since the drawdown series is negative)</p>
+<p>Method ignores all gaps of NaN&#8217;s in the price series.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd><ul class="first last simple">
-<li>prices (TimeSeries or DataFrame): Series of prices.</li>
+<li>prices (Series or DataFrame): Series of prices.</li>
 </ul>
 </dd>
 </dl>
@@ -799,7 +820,7 @@ on the result (since the drawdown series is negative)</p>
 
 <dl class="function">
 <dt id="ffn.core.to_log_returns">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">to_log_returns</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#to_log_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_log_returns" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">to_log_returns</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_log_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_log_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the log returns of a price series.</p>
 <p>Formula is: ln(p1/p0)</p>
 <dl class="docutils">
@@ -813,14 +834,14 @@ on the result (since the drawdown series is negative)</p>
 
 <dl class="function">
 <dt id="ffn.core.to_monthly">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">to_monthly</tt><big>(</big><em>series</em>, <em>method='ffill'</em>, <em>how='end'</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#to_monthly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_monthly" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">to_monthly</code><span class="sig-paren">(</span><em>series</em>, <em>method='ffill'</em>, <em>how='end'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_monthly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_monthly" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience method that wraps asfreq_actual
 with &#8216;M&#8217; param (method=&#8217;ffill&#8217;, how=&#8217;end&#8217;).</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.core.to_price_index">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">to_price_index</tt><big>(</big><em>returns</em>, <em>start=100</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#to_price_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_price_index" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">to_price_index</code><span class="sig-paren">(</span><em>returns</em>, <em>start=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_price_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_price_index" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a price index given a series of returns.</p>
 <dl class="docutils">
 <dt>Args:</dt>
@@ -836,7 +857,7 @@ with &#8216;M&#8217; param (method=&#8217;ffill&#8217;, how=&#8217;end&#8217;).<
 
 <dl class="function">
 <dt id="ffn.core.to_returns">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">to_returns</tt><big>(</big><em>prices</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#to_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_returns" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">to_returns</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the simple arithmetic returns of a price series.</p>
 <p>Formula is: (t1 / t0) - 1</p>
 <dl class="docutils">
@@ -849,8 +870,14 @@ with &#8216;M&#8217; param (method=&#8217;ffill&#8217;, how=&#8217;end&#8217;).<
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.winsorize">
+<code class="descclassname">ffn.core.</code><code class="descname">winsorize</code><span class="sig-paren">(</span><em>x</em>, <em>axis=0</em>, <em>limits=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#winsorize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.winsorize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Winsorize values based on limits</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.year_frac">
-<tt class="descclassname">ffn.core.</tt><tt class="descname">year_frac</tt><big>(</big><em>start</em>, <em>end</em><big>)</big><a class="reference internal" href="_modules/ffn/core.html#year_frac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.year_frac" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">year_frac</code><span class="sig-paren">(</span><em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#year_frac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.year_frac" title="Permalink to this definition">¶</a></dt>
 <dd><p>Similar to excel&#8217;s yearfrac function. Returns
 a year fraction between two dates (i.e. 1.53 years).</p>
 <p>Approximation using the average number of seconds
@@ -867,75 +894,65 @@ in a year.</p>
 
 </div>
 <div class="section" id="module-ffn.data">
-<span id="data-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">data</span></tt> Module<a class="headerlink" href="#module-ffn.data" title="Permalink to this headline">¶</a></h2>
+<span id="data-module"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">data</span></code> Module<a class="headerlink" href="#module-ffn.data" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="ffn.data.DEFAULT_PROVIDER">
-<tt class="descclassname">ffn.data.</tt><tt class="descname">DEFAULT_PROVIDER</tt><big>(</big><em>ticker</em>, <em>field=None</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em>, <em>source='yahoo'</em><big>)</big><a class="headerlink" href="#ffn.data.DEFAULT_PROVIDER" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.data.</code><code class="descname">DEFAULT_PROVIDER</code><span class="sig-paren">(</span><em>ticker</em>, <em>field=None</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em>, <em>source='yahoo'</em><span class="sig-paren">)</span><a class="headerlink" href="#ffn.data.DEFAULT_PROVIDER" title="Permalink to this definition">¶</a></dt>
 <dd><p>Data provider wrapper around pandas.io.data provider. Provides
 memoization.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.data.csv">
-<tt class="descclassname">ffn.data.</tt><tt class="descname">csv</tt><big>(</big><em>ticker</em>, <em>path='data.csv'</em>, <em>field=''</em>, <em>mrefresh=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/data.html#csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.csv" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.data.</code><code class="descname">csv</code><span class="sig-paren">(</span><em>ticker</em>, <em>path='data.csv'</em>, <em>field=''</em>, <em>mrefresh=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Data provider wrapper around pandas&#8217; read_csv. Provides memoization.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.data.get">
-<tt class="descclassname">ffn.data.</tt><tt class="descname">get</tt><big>(</big><em>tickers</em>, <em>provider=None</em>, <em>common_dates=True</em>, <em>forward_fill=False</em>, <em>clean_tickers=True</em>, <em>column_names=None</em>, <em>ticker_field_sep=':'</em>, <em>mrefresh=False</em>, <em>existing=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/ffn/data.html#get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.get" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.data.</code><code class="descname">get</code><span class="sig-paren">(</span><em>tickers</em>, <em>provider=None</em>, <em>common_dates=True</em>, <em>forward_fill=False</em>, <em>clean_tickers=True</em>, <em>column_names=None</em>, <em>ticker_field_sep=':'</em>, <em>mrefresh=False</em>, <em>existing=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for retrieving data as a DataFrame.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last">
-<li><p class="first">tickers (list, string, csv string): Tickers to download.</p>
-</li>
+<dd><ul class="first last simple">
+<li>tickers (list, string, csv string): Tickers to download.</li>
 <li><dl class="first docutils">
 <dt>provider (function): Provider to use for downloading data.</dt>
-<dd><p class="first last">By default it will be ffn.DEFAULT_PROVIDER if not provided.</p>
-</dd>
+<dd>By default it will be ffn.DEFAULT_PROVIDER if not provided.</dd>
 </dl>
 </li>
-<li><p class="first">common_dates (bool): Keep common dates only? Drop na&#8217;s.</p>
-</li>
+<li>common_dates (bool): Keep common dates only? Drop na&#8217;s.</li>
 <li><dl class="first docutils">
 <dt>forward_fill (bool): forward fill values if missing. Only works</dt>
-<dd><p class="first last">if common_dates is False, since common_dates will remove
-all nan&#8217;s, so no filling forward necessary.</p>
-</dd>
+<dd>if common_dates is False, since common_dates will remove
+all nan&#8217;s, so no filling forward necessary.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>clean_tickers (bool): Should the tickers be &#8216;cleaned&#8217; using</dt>
-<dd><p class="first last">ffn.utils.clean_tickers? Basically remove non-standard
-characters (^VIX -&gt; vix) and standardize to lower case.</p>
-</dd>
+<dd>ffn.utils.clean_tickers? Basically remove non-standard
+characters (^VIX -&gt; vix) and standardize to lower case.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>column_names (list): List of column names if clean_tickers</dt>
-<dd><p class="first last">is not satisfactory.</p>
-</dd>
+<dd>is not satisfactory.</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>ticker_field_sep (char): separator used to determine the</dt>
-<dd><p class="first last">ticker and field. This is in case we want to specify
+<dd>ticker and field. This is in case we want to specify
 particular, non-default fields. For example, we might
-want: AAPL:Low,AAPL:High,AAPL:Close. &#8216;:&#8217; is the separator.</p>
-</dd>
+want: AAPL:Low,AAPL:High,AAPL:Close. &#8216;:&#8217; is the separator.</dd>
 </dl>
 </li>
-<li><p class="first">mrefresh (bool): Ignore memoization.</p>
-</li>
+<li>mrefresh (bool): Ignore memoization.</li>
 <li><dl class="first docutils">
 <dt>existing (DataFrame): Existing DataFrame to append returns</dt>
-<dd><p class="first last">to - used when we download from multiple sources</p>
-</dd>
+<dd>to - used when we download from multiple sources</dd>
 </dl>
 </li>
-<li><p class="first">kwargs: passed to provider</p>
-</li>
+<li>kwargs: passed to provider</li>
 </ul>
 </dd>
 </dl>
@@ -943,34 +960,34 @@ want: AAPL:Low,AAPL:High,AAPL:Close. &#8216;:&#8217; is the separator.</p>
 
 <dl class="function">
 <dt id="ffn.data.web">
-<tt class="descclassname">ffn.data.</tt><tt class="descname">web</tt><big>(</big><em>ticker</em>, <em>field=None</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em>, <em>source='yahoo'</em><big>)</big><a class="reference internal" href="_modules/ffn/data.html#web"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.web" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.data.</code><code class="descname">web</code><span class="sig-paren">(</span><em>ticker</em>, <em>field=None</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em>, <em>source='yahoo'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#web"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.web" title="Permalink to this definition">¶</a></dt>
 <dd><p>Data provider wrapper around pandas.io.data provider. Provides
 memoization.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="module-ffn.utils">
-<span id="utils-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">utils</span></tt> Module<a class="headerlink" href="#module-ffn.utils" title="Permalink to this headline">¶</a></h2>
+<span id="utils-module"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">utils</span></code> Module<a class="headerlink" href="#module-ffn.utils" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="ffn.utils.as_format">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">as_format</tt><big>(</big><em>item</em>, <em>format_str='.2f'</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#as_format"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.as_format" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">as_format</code><span class="sig-paren">(</span><em>item</em>, <em>format_str='.2f'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#as_format"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.as_format" title="Permalink to this definition">¶</a></dt>
 <dd><p>Map a format string over a pandas object.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.as_percent">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">as_percent</tt><big>(</big><em>self</em>, <em>digits=2</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#as_percent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.as_percent" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">as_percent</code><span class="sig-paren">(</span><em>self</em>, <em>digits=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#as_percent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.as_percent" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.clean_ticker">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">clean_ticker</tt><big>(</big><em>ticker</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#clean_ticker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.clean_ticker" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">clean_ticker</code><span class="sig-paren">(</span><em>ticker</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#clean_ticker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.clean_ticker" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cleans a ticker for easier use throughout MoneyTree</p>
 <p>Splits by space and only keeps first bit. Also removes
 any characters that are not letters. Returns as lowercase.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s">&#39;^VIX&#39;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s1">&#39;^VIX&#39;</span><span class="p">)</span>
 <span class="go">&#39;vix&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s">&#39;SPX Index&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s1">&#39;SPX Index&#39;</span><span class="p">)</span>
 <span class="go">&#39;spx&#39;</span>
 </pre></div>
 </div>
@@ -978,43 +995,43 @@ any characters that are not letters. Returns as lowercase.</p>
 
 <dl class="function">
 <dt id="ffn.utils.clean_tickers">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">clean_tickers</tt><big>(</big><em>tickers</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#clean_tickers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.clean_tickers" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">clean_tickers</code><span class="sig-paren">(</span><em>tickers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#clean_tickers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.clean_tickers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maps clean_ticker over tickers.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.fmtn">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">fmtn</tt><big>(</big><em>number</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#fmtn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtn" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">fmtn</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatting helper - float</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.fmtp">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">fmtp</tt><big>(</big><em>number</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#fmtp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtp" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">fmtp</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatting helper - percent</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.fmtpn">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">fmtpn</tt><big>(</big><em>number</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#fmtpn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtpn" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">fmtpn</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtpn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtpn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatting helper - percent no % sign</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.get_period_name">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">get_period_name</tt><big>(</big><em>period</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#get_period_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.get_period_name" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">get_period_name</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#get_period_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.get_period_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.memoize">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">memoize</tt><big>(</big><em>f</em>, <em>refresh_keyword='mrefresh'</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#memoize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.memoize" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">memoize</code><span class="sig-paren">(</span><em>f</em>, <em>refresh_keyword='mrefresh'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#memoize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.memoize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Memoize decorator. The refresh keyword is the keyword
 used to bypass the cache (in the function call).</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="ffn.utils.parse_arg">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">parse_arg</tt><big>(</big><em>arg</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#parse_arg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.parse_arg" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">parse_arg</code><span class="sig-paren">(</span><em>arg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#parse_arg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.parse_arg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parses arguments for convenience. Argument can be a
 csv list (&#8216;a,b,c&#8217;), a string, a list, a tuple.</p>
 <p>Returns a list.</p>
@@ -1022,7 +1039,7 @@ csv list (&#8216;a,b,c&#8217;), a string, a list, a tuple.</p>
 
 <dl class="function">
 <dt id="ffn.utils.scale">
-<tt class="descclassname">ffn.utils.</tt><tt class="descname">scale</tt><big>(</big><em>val</em>, <em>src</em>, <em>dst</em><big>)</big><a class="reference internal" href="_modules/ffn/utils.html#scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.scale" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.utils.</code><code class="descname">scale</code><span class="sig-paren">(</span><em>val</em>, <em>src</em>, <em>dst</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.scale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scale value from src range to dst range.
 If value outside bounds, it is clipped and set to
 the low or high bound of dst.</p>
@@ -1046,36 +1063,21 @@ scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</dd>
             <a href="index.html" id="logo" title=ffn><img class="logo" src="_static/logo.png" width="150px" height="150px" title=ffn /></a>
             
             
-            <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="index.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.__init__"><tt class="docutils literal"><span class="pre">ffn</span></tt> Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.core"><tt class="docutils literal"><span class="pre">core</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.data"><tt class="docutils literal"><span class="pre">data</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.utils"><tt class="docutils literal"><span class="pre">utils</span></tt> Module</a></li>
-</ul>
-</li>
-</ul>
-
+            
 
             
             <ul>
                 <li><a href="https://github.com/pmorissette/ffn">Github</a></li>
             </ul>
             
-<div id="searchbox" style="display: none">
+<div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </aside>
