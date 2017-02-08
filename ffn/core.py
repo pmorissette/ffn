@@ -1147,14 +1147,12 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
     if rf != 0 and nperiods is None:
         raise Exception('Must provide nperiods if rf != 0')
 
-    if nperiods is None:
-        nperiods = 1
-
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-
     res = er.mean() / er.std()
 
     if annualize:
+        if nperiods is None:
+            nperiods = 1
         return res * np.sqrt(nperiods)
     else:
         return res
@@ -1823,14 +1821,12 @@ def calc_sortino_ratio(returns, rf=0, nperiods=None, annualize=True):
     if rf != 0 and nperiods is None:
         raise Exception('nperiods must be set if rf != 0')
 
-    if nperiods is None:
-        nperiods = 1
-
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-
     res = er.mean() / er[er < 0].std()
 
     if annualize:
+        if nperiods is None:
+            nperiods = 1
         return res * np.sqrt(nperiods)
 
     return res
@@ -1866,6 +1862,41 @@ def calc_calmar_ratio(prices):
 
     """
     return prices.calc_cagr() / abs(prices.calc_max_drawdown())
+
+
+def to_ulcer_index(prices):
+    """
+    Converts from prices -> Ulcer index
+
+    See https://en.wikipedia.org/wiki/Ulcer_index
+
+    Args:
+        * prices (Series, DataFrame): Prices
+
+    """
+    dd = prices.to_drawdown_series()
+    return np.sqrt(np.sum(dd ** 2)) / dd.count()
+
+
+def to_ulcer_performance_index(prices, rf=0., nperiods=None):
+    """
+    Converts from prices -> ulcer performance index.
+
+    See https://en.wikipedia.org/wiki/Ulcer_index
+
+    Args:
+        * prices (Series, DataFrame): Prices
+        * rf (float): Risk-free rate of return. Assumed to be expressed in
+            yearly (annualized) terms
+        * nperiods (int): Used to deannualize rf if rf is provided (non-zero)
+
+    """
+    if rf != 0 and nperiods is None:
+        raise Exception('nperiods must be set if rf != 0')
+
+    er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
+
+    return er.mean() / prices.to_ulcer_index()
 
 
 def extend_pandas():
@@ -1911,3 +1942,5 @@ def extend_pandas():
     PandasObject.calc_calmar_ratio = calc_calmar_ratio
     PandasObject.calc_sharpe = calc_sharpe
     PandasObject.to_excess_returns = to_excess_returns
+    PandasObject.to_ulcer_index = to_ulcer_index
+    PandasObject.to_ulcer_performance_index = to_ulcer_performance_index
