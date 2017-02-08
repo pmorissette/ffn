@@ -502,14 +502,19 @@ def test_calc_sortino_ratio():
     rf = 0
     p = 1
     r = df.to_returns()
-    a = r.calc_sortino_ratio(rf=rf, annualize=p)
+    a = r.calc_sortino_ratio(rf=rf, nperiods=p)
+    assert np.allclose(a, (r.mean() - rf) / r[r < rf].std() * np.sqrt(p))
+
+    a = r.calc_sortino_ratio()
     assert np.allclose(a, (r.mean() - rf) / r[r < rf].std() * np.sqrt(p))
 
     rf = 0.02
     p = 252
     r = df.to_returns()
-    a = r.calc_sortino_ratio(rf=rf, annualize=p)
-    assert np.allclose(a, (r.mean() - rf) / r[r < rf].std() * np.sqrt(p))
+    er = r.to_excess_returns(rf, nperiods=p)
+
+    a = r.calc_sortino_ratio(rf=rf, nperiods=p)
+    assert np.allclose(a, er.mean() / er[er < 0].std() * np.sqrt(p))
 
 
 def test_calmar_ratio():
@@ -536,3 +541,35 @@ def test_calc_stats():
     prices[prices > 0.0] = 1.0
     stats = ffn.calc_stats(prices).stats
     assert 'yearly_sharpe' not in stats.index
+
+
+def test_calc_sharpe():
+    x = pd.Series()
+    assert np.isnan(x.calc_sharpe())
+
+    r = df.to_returns()
+
+    res = r.calc_sharpe()
+    assert np.allclose(res, r.mean() / r.std())
+
+    res = r.calc_sharpe(rf=0.05, nperiods=252)
+    drf = ffn.deannualize(0.05, 252)
+    ar = r - drf
+    assert np.allclose(res, ar.mean() / ar.std() * np.sqrt(252))
+
+
+def test_deannualize():
+    res = ffn.deannualize(0.05, 252)
+    assert np.allclose(res, np.power(1.05, 1 / 252.) - 1)
+
+
+def test_to_excess_returns():
+    rf = 0.05
+    r = df.to_returns()
+
+    np.allclose(r.to_excess_returns(0), r)
+
+    np.allclose(r.to_excess_returns(rf, nperiods=252),
+                r.to_excess_returns(ffn.deannualize(rf, 252)))
+
+    np.allclose(r.to_excess_returns(rf), r - rf)

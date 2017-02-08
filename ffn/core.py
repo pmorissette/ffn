@@ -20,34 +20,6 @@ except ImportError:
     pass
 
 
-def set_riskfree_rate(rf, update_all=False):
-
-    """
-    Set annual risk-free rate property of the class PerformanceStats.
-    Affects all instances of the PerformanceStats, unless the default
-    risk-free rate was overwritten before.
-
-    Args:
-        * rf (float): Annual interest rate
-        * update_all (bool): If True, all instances of PerformanceStats
-            will update their values. Note, this might be very slow
-            time in case of many objects available
-
-    """
-
-    # Note that both daily and monthly rates are annualized in the same
-    # way as returns
-    PerformanceStats._yearly_rf = rf
-    PerformanceStats._monthly_rf = (np.power(1+rf, 1./12.) - 1.) * 12
-    PerformanceStats._daily_rf = (np.power(1+rf, 1./252.) - 1.) * 252
-
-    if update_all:
-        from gc import get_objects
-        for obj in get_objects():
-            if isinstance(obj, PerformanceStats):
-                obj.set_riskfree_rate(rf)
-
-
 class PerformanceStats(object):
 
     """
@@ -58,6 +30,8 @@ class PerformanceStats(object):
 
     Args:
         * prices (Series): A price series.
+        * rf (float): Risk-free rate used in various calculation. Should be
+            expressed as a yearly (annualized) return
 
     Attributes:
         * name (str): Name, derived from price series name
@@ -69,18 +43,14 @@ class PerformanceStats(object):
 
     """
 
-    # Annual risk-free rate for the calculation of Sharpe ratio.
-    # By default is equal to 0%
-    _yearly_rf = 0.
-    _monthly_rf = 0.
-    _daily_rf = 0.
-
-    def __init__(self, prices):
+    def __init__(self, prices, rf=0.):
         super(PerformanceStats, self).__init__()
         self.prices = prices
         self.name = self.prices.name
         self._start = self.prices.index[0]
         self._end = self.prices.index[-1]
+
+        self.rf = rf
 
         self._update(self.prices)
 
@@ -94,10 +64,7 @@ class PerformanceStats(object):
         Args:
             * rf (float): Annual risk-free rate
         """
-
-        self._yearly_rf = rf
-        self._monthly_rf = (np.power(1+rf, 1./12.) - 1.) * 12
-        self._daily_rf = (np.power(1+rf, 1./252.) - 1.) * 252
+        self.rf = rf
 
         # Note, that we recalculate everything.
         self._update(self.prices)
@@ -212,9 +179,8 @@ class PerformanceStats(object):
 
         self.daily_mean = r.mean() * 252
         self.daily_vol = r.std() * np.sqrt(252)
-        self.daily_sharpe = (self.daily_mean - self._daily_rf) / self.daily_vol
-        self.daily_sortino = calc_sortino_ratio(
-            r, rf=self._daily_rf, annualize=252)
+        self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
+        self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
         self.best_day = r.max()
         self.worst_day = r.min()
 
@@ -252,10 +218,8 @@ class PerformanceStats(object):
 
         self.monthly_mean = mr.mean() * 12
         self.monthly_vol = mr.std() * np.sqrt(12)
-        self.monthly_sharpe = ((self.monthly_mean - self._monthly_rf) /
-                               self.monthly_vol)
-        self.monthly_sortino = calc_sortino_ratio(
-            mr, rf=self._monthly_rf, annualize=12)
+        self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
+        self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -321,10 +285,10 @@ class PerformanceStats(object):
 
         self.yearly_mean = yr.mean()
         self.yearly_vol = yr.std()
-        self.yearly_sortino = calc_sortino_ratio(yr, rf=self._yearly_rf)
+        self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
         if self.yearly_vol > 0:
-            self.yearly_sharpe = ((self.yearly_mean - self._yearly_rf) /
-                                  self.yearly_vol)
+            self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
+
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
@@ -361,7 +325,7 @@ class PerformanceStats(object):
     def _stats(self):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
-                 ('_yearly_rf', 'Risk-free rate', 'p'),
+                 ('rf', 'Risk-free rate', 'p'),
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
@@ -445,7 +409,7 @@ class PerformanceStats(object):
         provided.
         """
         print('Stats for %s from %s - %s' % (self.name, self.start, self.end))
-        print('Annual risk-free rate considered: %s' % (fmtp(self._yearly_rf)))
+        print('Annual risk-free rate considered: %s' % (fmtp(self.rf)))
         print('Summary:')
         data = [[fmtp(self.total_return), fmtn(self.daily_sharpe),
                  fmtp(self.cagr), fmtp(self.max_drawdown)]]
@@ -688,7 +652,7 @@ class GroupStats(dict):
     def _stats(self):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
-                 ('_yearly_rf', 'Risk-free rate', 'p'),
+                 ('rf', 'Risk-free rate', 'p'),
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
@@ -1015,7 +979,7 @@ def rebase(prices, value=100):
     return prices / prices.ix[0] * value
 
 
-def calc_perf_stats(obj):
+def calc_perf_stats(prices):
     """
     Calculates the performance statistics given an object.
     The object should be a Series of prices.
@@ -1023,24 +987,27 @@ def calc_perf_stats(obj):
     A PerformanceStats object will be returned containing all the stats.
 
     Args:
-        * obj: A Pandas Series representing a series of prices.
+        * prices (Series): Series of prices
 
     """
-    return PerformanceStats(obj)
+    return PerformanceStats(prices)
 
 
-def calc_stats(obj):
+def calc_stats(prices):
     """
     Calculates performance stats of a given object.
 
     If object is Series, a PerformanceStats object is
     returned. If object is DataFrame, a GroupStats object
     is returned.
+
+    Args:
+        * prices (Series, DataFrame): Set of prices
     """
-    if isinstance(obj, pd.Series):
-        return PerformanceStats(obj)
-    elif isinstance(obj, pd.DataFrame):
-        return GroupStats(*[obj[x] for x in obj.columns])
+    if isinstance(prices, pd.Series):
+        return PerformanceStats(prices)
+    elif isinstance(prices, pd.DataFrame):
+        return GroupStats(*[prices[x] for x in prices.columns])
     else:
         raise NotImplementedError('Unsupported type')
 
@@ -1155,12 +1122,42 @@ def calc_cagr(prices):
     return (prices.ix[-1] / prices.ix[0]) ** (1 / year_frac(start, end)) - 1
 
 
-def calc_risk_return_ratio(self):
+def calc_risk_return_ratio(returns):
     """
     Calculates the return / risk ratio. Basically the
     Sharpe ratio without factoring in the risk-free rate.
     """
-    return self.mean() / self.std()
+    return calc_sharpe(returns)
+
+
+def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
+    """
+    Calculates the Sharpe ratio.
+
+    If rf is non-zero, you must specify nperiods. In this case, rf is assumed
+    to be expressed in yearly (annualized) terms.
+
+    Args:
+        * returns (Series, DataFrame): Input return series
+        * rf (float): Risk-free rate expressed as a yearly (annualized) return
+        * nperiods (int): Frequency of returns (252 for daily, 12 for monthly,
+            etc.)
+
+    """
+    if rf != 0 and nperiods is None:
+        raise Exception('Must provide nperiods if rf != 0')
+
+    if nperiods is None:
+        nperiods = 1
+
+    er = returns.to_excess_returns(rf, nperiods=nperiods)
+
+    res = er.mean() / er.std()
+
+    if annualize:
+        return res * np.sqrt(nperiods)
+    else:
+        return res
 
 
 def calc_information_ratio(returns, benchmark_returns):
@@ -1799,22 +1796,65 @@ def annualize(returns, durations, one_year=365.):
     return (1. + returns) ** (1. / (durations / one_year)) - 1.
 
 
-def calc_sortino_ratio(returns, rf=0, annualize=1):
+def deannualize(returns, nperiods):
+    """
+    Convert return expressed in annual terms on a different basis.
+
+    Args:
+        * returns (float, Series, DataFrame): Return(s)
+        * nperiods (int): Target basis, typically 252 for daily, 12 for
+            monthly, etc.
+
+    """
+    return np.power(1 + returns, 1. / nperiods) - 1.
+
+
+def calc_sortino_ratio(returns, rf=0, nperiods=None, annualize=True):
     """
     Calculates the sortino ratio given a series of returns
 
     Args:
         * returns (Series or DataFrame): Returns
-        * rf (float): Risk-free rate
-        * annualize (int): Annualization factor. For daily data, you would
-            typically set to 252. Multiples the ratio by sqrt(annualize)
+        * rf (float): Risk-free rate expressed in yearly (annualized) terms.
+        * nperiods (int): Number of periods used for annualization. Must be
+            provided if rf is non-zero
 
     """
-    try:
-        return ((returns.mean() - rf) / returns[returns < rf].std() *
-                np.sqrt(annualize))
-    except ZeroDivisionError:
-        return np.nan
+    if rf != 0 and nperiods is None:
+        raise Exception('nperiods must be set if rf != 0')
+
+    if nperiods is None:
+        nperiods = 1
+
+    er = returns.to_excess_returns(rf, nperiods=nperiods)
+
+    res = er.mean() / er[er < 0].std()
+
+    if annualize:
+        return res * np.sqrt(nperiods)
+
+    return res
+
+
+def to_excess_returns(returns, rf, nperiods=None):
+    """
+    Given a series of returns, it will return the excess returns over rf.
+
+    Args:
+        * returns (Series, DataFrame): Returns
+        * rf (float, Series, DataFrame): Risk-Free rate(s)
+        * nperiods (int): Optional. If provided, will convert rf to different
+            frequency using deannualize
+    Returns:
+        * excess_returns (Series, DataFrame): Returns - rf
+
+    """
+    if nperiods is not None:
+        _rf = deannualize(rf, nperiods)
+    else:
+        _rf = rf
+
+    return returns - _rf
 
 
 def calc_calmar_ratio(prices):
@@ -1869,3 +1909,5 @@ def extend_pandas():
     PandasObject.rescale = rescale
     PandasObject.calc_sortino_ratio = calc_sortino_ratio
     PandasObject.calc_calmar_ratio = calc_calmar_ratio
+    PandasObject.calc_sharpe = calc_sharpe
+    PandasObject.to_excess_returns = to_excess_returns
