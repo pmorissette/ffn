@@ -26,14 +26,14 @@ setuptools.setup(
     keywords='python finance quant functions',
     url='https://github.com/pmorissette/ffn',
     install_requires=[
-        'decorator',
-        'numpy',
-        'pandas',
-        'tabulate',
-        'matplotlib',
-        'scikit-learn',
-        'scipy',
-        'future'
+        'decorator>=4',
+        'numpy>=1.5',
+        'pandas>=0.19',
+        'tabulate>=0.7.5',
+        'matplotlib>=1',
+        'scikit-learn>=0.15',
+        'scipy>=0.15',
+        'future>=0.15'
     ],
     packages=['ffn'],
     long_description=local_file('README.rst').read(),
