@@ -160,10 +160,10 @@ def test_cagr_df():
 
 
 def test_merge():
-    a = pd.TimeSeries(index=pd.date_range('2010-01-01', periods=5),
-                      data=100, name='a')
-    b = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=5),
-                      data=200, name='b')
+    a = pd.Series(index=pd.date_range('2010-01-01', periods=5),
+                  data=100, name='a')
+    b = pd.Series(index=pd.date_range('2010-01-02', periods=5),
+                  data=200, name='b')
     actual = ffn.merge(a, b)
 
     assert 'a' in actual
@@ -248,8 +248,8 @@ def test_get_num_days_required():
 
 
 def test_asfreq_actual():
-    a = pd.TimeSeries({pd.to_datetime('2010-02-27'): 100,
-                       pd.to_datetime('2010-03-25'): 200})
+    a = pd.Series({pd.to_datetime('2010-02-27'): 100,
+                   pd.to_datetime('2010-03-25'): 200})
     actual = a.asfreq_actual(freq='M', method='ffill')
 
     assert len(actual) == 1
@@ -257,8 +257,8 @@ def test_asfreq_actual():
 
 
 def test_to_monthly():
-    a = pd.TimeSeries(range(100), index=pd.date_range('2010-01-01',
-                                                      periods=100))
+    a = pd.Series(range(100), index=pd.date_range(
+        '2010-01-01', periods=100))
     # to test for actual dates
     a['2010-01-31'] = np.nan
     a = a.dropna()
@@ -271,13 +271,13 @@ def test_to_monthly():
 
 
 def test_drop_duplicate_cols():
-    a = pd.TimeSeries(index=pd.date_range('2010-01-01', periods=5),
-                      data=100, name='a')
+    a = pd.Series(index=pd.date_range('2010-01-01', periods=5),
+                  data=100, name='a')
     # second version of a w/ less data
-    a2 = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=4),
-                       data=900, name='a')
-    b = pd.TimeSeries(index=pd.date_range('2010-01-02', periods=5),
-                      data=200, name='b')
+    a2 = pd.Series(index=pd.date_range('2010-01-02', periods=4),
+                   data=900, name='a')
+    b = pd.Series(index=pd.date_range('2010-01-02', periods=5),
+                  data=200, name='b')
     actual = ffn.merge(a, a2, b)
 
     assert actual['a'].shape[1] == 2
@@ -432,3 +432,144 @@ def test_rollapply():
     assert all(actual.iloc[2] == 2)
     assert all(actual.iloc[3] == 3)
     assert all(actual.iloc[4] == 4)
+
+
+def test_winsorize():
+    x = pd.Series(range(20), dtype='float')
+    res = x.winsorize(limits=0.05)
+    assert res.iloc[0] == 1
+    assert res.iloc[-1] == 18
+
+    # make sure initial values still intact
+    assert x.iloc[0] == 0
+    assert x.iloc[-1] == 19
+
+    x = pd.DataFrame({
+        'a': pd.Series(range(20), dtype='float'),
+        'b': pd.Series(range(20), dtype='float')
+    })
+    res = x.winsorize(axis=0, limits=0.05)
+
+    assert res['a'].iloc[0] == 1
+    assert res['b'].iloc[0] == 1
+    assert res['a'].iloc[-1] == 18
+    assert res['b'].iloc[-1] == 18
+
+    assert x['a'].iloc[0] == 0
+    assert x['b'].iloc[0] == 0
+    assert x['a'].iloc[-1] == 19
+    assert x['b'].iloc[-1] == 19
+
+
+def test_rescale():
+    x = pd.Series(range(10), dtype='float')
+    res = x.rescale()
+
+    assert res.iloc[0] == 0
+    assert res.iloc[4] == (4. - 0.) / (9. - 0.)
+    assert res.iloc[-1] == 1
+
+    assert x.iloc[0] == 0
+    assert x.iloc[4] == 4
+    assert x.iloc[-1] == 9
+
+    x = pd.DataFrame({
+        'a': pd.Series(range(10), dtype='float'),
+        'b': pd.Series(range(10), dtype='float')
+    })
+    res = x.rescale(axis=0)
+
+    assert res['a'].iloc[0] == 0
+    assert res['a'].iloc[4] == (4. - 0.) / (9. - 0.)
+    assert res['a'].iloc[-1] == 1
+    assert res['b'].iloc[0] == 0
+    assert res['b'].iloc[4] == (4. - 0.) / (9. - 0.)
+    assert res['b'].iloc[-1] == 1
+
+    assert x['a'].iloc[0] == 0
+    assert x['a'].iloc[4] == 4
+    assert x['a'].iloc[-1] == 9
+    assert x['b'].iloc[0] == 0
+    assert x['b'].iloc[4] == 4
+    assert x['b'].iloc[-1] == 9
+
+
+def test_annualize():
+    assert ffn.annualize(0.1, 60) == (1.1 ** (1. / (60. / 365)) - 1)
+
+
+def test_calc_sortino_ratio():
+    rf = 0
+    p = 1
+    r = df.to_returns()
+    a = r.calc_sortino_ratio(rf=rf, nperiods=p)
+    assert np.allclose(a, (r.mean() - rf) / r[r < rf].std() * np.sqrt(p))
+
+    a = r.calc_sortino_ratio()
+    assert np.allclose(a, (r.mean() - rf) / r[r < rf].std() * np.sqrt(p))
+
+    rf = 0.02
+    p = 252
+    r = df.to_returns()
+    er = r.to_excess_returns(rf, nperiods=p)
+
+    a = r.calc_sortino_ratio(rf=rf, nperiods=p)
+    assert np.allclose(a, er.mean() / er[er < 0].std() * np.sqrt(p))
+
+
+def test_calmar_ratio():
+    cagr = df.calc_cagr()
+    mdd = df.calc_max_drawdown()
+
+    a = df.calc_calmar_ratio()
+    assert np.allclose(a, cagr / abs(mdd))
+
+
+def test_calc_stats():
+    # test twelve_month_win_perc divide by zero
+    prices = df.C['2010-10-01':'2011-08-01']
+    stats = ffn.calc_stats(prices).stats
+    assert 'twelve_month_win_perc' not in stats.index
+    prices = df.C['2009-10-01':'2011-08-01']
+    stats = ffn.calc_stats(prices).stats
+    assert 'twelve_month_win_perc' in stats.index
+
+    # test yearly_sharpe divide by zero
+    prices = df.C['2009-01-01':'2012-01-01']
+    stats = ffn.calc_stats(prices).stats
+    assert 'yearly_sharpe' in stats.index
+    prices[prices > 0.0] = 1.0
+    stats = ffn.calc_stats(prices).stats
+    assert 'yearly_sharpe' not in stats.index
+
+
+def test_calc_sharpe():
+    x = pd.Series()
+    assert np.isnan(x.calc_sharpe())
+
+    r = df.to_returns()
+
+    res = r.calc_sharpe()
+    assert np.allclose(res, r.mean() / r.std())
+
+    res = r.calc_sharpe(rf=0.05, nperiods=252)
+    drf = ffn.deannualize(0.05, 252)
+    ar = r - drf
+    assert np.allclose(res, ar.mean() / ar.std() * np.sqrt(252))
+
+
+def test_deannualize():
+    res = ffn.deannualize(0.05, 252)
+    assert np.allclose(res, np.power(1.05, 1 / 252.) - 1)
+
+
+def test_to_excess_returns():
+    rf = 0.05
+    r = df.to_returns()
+
+    np.allclose(r.to_excess_returns(0), r)
+
+    np.allclose(r.to_excess_returns(rf, nperiods=252),
+                r.to_excess_returns(ffn.deannualize(rf, 252)))
+
+    np.allclose(r.to_excess_returns(rf), r - rf)

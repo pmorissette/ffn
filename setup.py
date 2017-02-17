@@ -29,6 +29,7 @@ setuptools.setup(
         'decorator>=4',
         'numpy>=1.5',
         'pandas>=0.19',
+        'pandas_datareader>=0.2',
         'tabulate>=0.7.5',
         'matplotlib>=1',
         'scikit-learn>=0.15',
