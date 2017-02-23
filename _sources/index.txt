@@ -20,7 +20,6 @@ Here is a brief introduction to the capabilities of ffn:
 
 .. toctree:: 
     :maxdepth: 2 
-    :hidden:
 
     Overview <index>
     Installation Guide <install>
