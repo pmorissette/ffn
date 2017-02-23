@@ -9,7 +9,7 @@ clean:
 dist:
 	python setup.py sdist
 
-upload: dist
+upload: clean dist
 	twine upload dist/*
 
 docs: 
@@ -18,7 +18,7 @@ docs:
 
 pages: 
 	- rm -rf $(TMPREPO)
-	git clone -b gh-pages git@github.com:pmorissette/ffn.git $(TMPREPO)
+	git clone -b gh-pages https://github.com/pmorissette/ffn.git $(TMPREPO)
 	rm -rf $(TMPREPO)/*
 	cp -r docs/build/html/* $(TMPREPO)
 	cd $(TMPREPO); \
