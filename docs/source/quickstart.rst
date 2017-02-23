@@ -3,16 +3,18 @@
 
     import ffn
     #%pylab inline
-                
+
+
 Data Retrieval
 --------------
 
 The main method for data retrieval is the :func:`get <ffn.get>` function. The get function uses a data provider to download data from an external service and packs that data into a pandas DataFrame for further manipulation.
-                
+
 .. code:: python
 
     data = ffn.get('agg,hyg,spy,eem,efa', start='2010-01-01', end='2014-01-01')
     print data.head()
+
 
 .. parsed-literal::
     :class: pynb-result
@@ -38,6 +40,7 @@ the Open, High, Low, Close for aapl, we would do the following:
 
     print ffn.get('aapl:Open,aapl:High,aapl:Low,aapl:Close', start='2010-01-01', end='2014-01-01').head()
 
+
 .. parsed-literal::
     :class: pynb-result
 
@@ -52,13 +55,14 @@ the Open, High, Low, Close for aapl, we would do the following:
     [5 rows x 4 columns]
 
 
-                
+
 The default data provider is :func:`ffn.data.web`. This is basically just a thin wrapper around pandas' pandas.io.data provider. Please refer to the appropriate docs for more info (data sources, etc.). The :func:`ffn.data.csv` provider is also available when we want to load data from a local file. In this case, we can tell :func:`ffn.data.get` to use the csv provider. In this case, we also want to merge this new data with the existing data we downloaded earlier. Therefore, we will provide the **data** object as the *existing* argument, and the new data will be merged into the existing DataFrame.
-                
+
 .. code:: python
 
     data = ffn.get('dbc', provider=ffn.data.csv, path='test_data.csv', existing=data)
     print data.head()
+
 
 .. parsed-literal::
     :class: pynb-result
@@ -74,18 +78,19 @@ The default data provider is :func:`ffn.data.web`. This is basically just a thin
     [5 rows x 6 columns]
 
 
-                
+
 As we can see above, the dbc column was added to the DataFrame. Internally, get is using the function ffn.merge, which is useful when you want to merge TimeSeries and DataFrames together. We plan on adding many more data sources over time. If you know your way with Python and would like to contribute a data provider, please feel free to submit a pull request - contributions are always welcome!
 
 Data Manipulation
 -----------------
 
 Now that we have some data, let's start manipulating it. In quantitative finance, we are often interested in the returns of a given time series. Let's calculate the returns by simply calling the :func:`to_returns <ffn.core.to_returns>` or :func:`to_log_returns <ffn.core.to_log_returns>` extension methods.
-                
+
 .. code:: python
 
     returns = data.to_log_returns().dropna()
     print returns.head()
+
 
 .. parsed-literal::
     :class: pynb-result
@@ -108,6 +113,7 @@ Let's look at the different distributions to see how they look.
     ax = returns.hist(figsize=(12, 5))
 
 
+
 .. image:: _static/quickstart_10_0.png
     :class: pynb
 
@@ -119,6 +125,7 @@ function to get the pairwise correlations between assets.
 .. code:: python
 
     returns.corr().as_format('.2f')
+
 
 
 
@@ -207,33 +214,36 @@ output. We could also plot a heatmap to better visualize the results.
     returns.plot_corr_heatmap()
 
 
+
 .. image:: _static/quickstart_14_0.png
     :class: pynb
 
 
-                
+
 We used the :func:`ffn.core.plot_corr_heatmap`, which is a convenience method that simply calls ffn's :func:`ffn.core.plot_heatmap` with sane arguments.
 
 Let's start looking at how all these securities performed over the period. To achieve this, we will plot rebased time series so that we can see how they each performed relative to eachother.
-                
+
 .. code:: python
 
     ax = data.rebase().plot(figsize=(12,5))
+
 
 
 .. image:: _static/quickstart_16_0.png
     :class: pynb
 
 
-                
+
 Performance Measurement
 -----------------------
 
 For a more complete view of each asset's performance over the period, we can use the :func:`ffn.core.calc_stats` method which will create a :class:`ffn.core.GroupStats` object. A GroupStats object wraps a bunch of :class:`ffn.core.PerformanceStats` objects in a dict with some added convenience methods.
-                
+
 .. code:: python
 
     perf = data.calc_stats()
+
 Now that we have our GroupStats object, we can analyze the performance
 in greater detail. For example, the **plot** method yields a graph
 similar to the one above.
@@ -241,6 +251,7 @@ similar to the one above.
 .. code:: python
 
     perf.plot()
+
 
 
 .. image:: _static/quickstart_20_0.png
@@ -255,6 +266,7 @@ the way we display this wide array of stats.
 .. code:: python
 
     print perf.display()
+
 
 .. parsed-literal::
     :class: pynb-result
@@ -320,6 +332,7 @@ for each series, either by index or name.
     # we can also use perf[2] in this case
     perf['spy'].display_monthly_returns()
 
+
 .. parsed-literal::
     :class: pynb-result
 
@@ -336,6 +349,7 @@ for each series, either by index or name.
     perf[2].plot_histogram()
 
 
+
 .. image:: _static/quickstart_25_0.png
     :class: pynb
 
@@ -346,6 +360,7 @@ Most of the stats are also available as pandas objects - see the
 .. code:: python
 
     perf['spy'].stats
+
 
 
 
@@ -392,15 +407,16 @@ Most of the stats are also available as pandas objects - see the
 
 
 
-                
+
 Numerical Routines and Financial Functions
 ------------------------------------------
 
 ffn also provides commonly used numerical routines and plans to add many more in the future. One can easily determine the proper weights using a mean-variance approach using the :func:`ffn.core.calc_mean_var_weights` function.
-                
+
 .. code:: python
 
     returns.calc_mean_var_weights().as_format('.2%')
+
 
 
 
@@ -424,6 +440,7 @@ Algorithm (FTCA)
 .. code:: python
 
     returns.calc_ftca(threshold=0.8)
+
 
 
 
