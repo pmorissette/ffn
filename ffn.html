@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>API &#8212; ffn 0.1 documentation</title>
+    <title>API &mdash; ffn 0.1 documentation</title>
     
     <link rel="stylesheet" href="_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -17,16 +17,14 @@
         VERSION:     '0.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
+        HAS_SOURCE:  true
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="ffn 0.1 documentation" href="index.html" />
     <link rel="prev" title="Quickstart" href="quick.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
@@ -68,19 +66,22 @@ position or name via the [] accessor.</p>
 </ul>
 </dd>
 <dt>Attributes:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
 <dt>stats (DataFrame): Dataframe containing stats for each</dt>
-<dd>series provided.  Stats in rows, series in columns.</dd>
+<dd><p class="first last">series provided.  Stats in rows, series in columns.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>lookback_returns (DataFrame): Returns for diffrent</dt>
-<dd>lookback periods (1m, 3m, 6m, ytd...)
-Period in rows, series in columns.</dd>
+<dd><p class="first last">lookback periods (1m, 3m, 6m, ytd...)
+Period in rows, series in columns.</p>
+</dd>
 </dl>
 </li>
-<li>prices (DataFrame): The merged and rebased prices.</li>
+<li><p class="first">prices (DataFrame): The merged and rebased prices.</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -98,20 +99,25 @@ Period in rows, series in columns.</dd>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot">
-<code class="descname">plot</code><span class="sig-paren">(</span><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot</code><span class="sig-paren">(</span><em>freq=None</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for plotting the series.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
-<dt>period (str): period used for display purposes.</dt>
-<dd>Refer to pandas docs for valid period strings.</dd>
+<dt>freq (str): Data frequency used for display purposes.</dt>
+<dd><p class="first last">Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>logy (bool): log-scale for y axis</li>
-<li>kwargs: passed to pandas&#8217; plot method</li>
+<li><p class="first">figsize ((x,y)): figure size</p>
+</li>
+<li><p class="first">title (str): Title if default not appropriate</p>
+</li>
+<li><p class="first">logy (bool): log-scale for y axis</p>
+</li>
+<li><p class="first">kwargs: passed to pandas&#8217; plot method</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -119,12 +125,12 @@ Period in rows, series in columns.</dd>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot_correlation">
-<code class="descname">plot_correlation</code><span class="sig-paren">(</span><em>period='m'</em>, <em>title=None</em>, <em>figsize=(12</em>, <em>6)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_correlation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_correlation" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_correlation</code><span class="sig-paren">(</span><em>freq=None</em>, <em>title=None</em>, <em>figsize=(12</em>, <em>6)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_correlation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_correlation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Utility function to plot correlations.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd><ul class="first last simple">
-<li>period (str): Pandas offset alias string</li>
+<li>freq (str): Pandas data frequency alias string</li>
 <li>title (str): Plot title</li>
 <li>figsize (tuple (x,y)): figure size</li>
 <li>kwargs: passed to Pandas&#8217; plot_corr_heatmap function</li>
@@ -135,19 +141,23 @@ Period in rows, series in columns.</dd>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot_histograms">
-<code class="descname">plot_histograms</code><span class="sig-paren">(</span><em>period='m'</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_histograms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_histograms" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_histograms</code><span class="sig-paren">(</span><em>freq=None</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_histograms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_histograms" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper around pandas&#8217; hist.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
-<dt>period (str): period used for display purposes.</dt>
-<dd>Refer to pandas docs for valid period strings.</dd>
+<dt>freq (str): Data frequency used for display purposes.</dt>
+<dd><p class="first last">Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>kwargs: passed to pandas&#8217; hist method</li>
+<li><p class="first">figsize ((x,y)): figure size</p>
+</li>
+<li><p class="first">title (str): Title if default not appropriate</p>
+</li>
+<li><p class="first">kwargs: passed to pandas&#8217; hist method</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -155,19 +165,23 @@ Period in rows, series in columns.</dd>
 
 <dl class="method">
 <dt id="ffn.core.GroupStats.plot_scatter_matrix">
-<code class="descname">plot_scatter_matrix</code><span class="sig-paren">(</span><em>period='m'</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_scatter_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_scatter_matrix" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_scatter_matrix</code><span class="sig-paren">(</span><em>freq=None</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_scatter_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_scatter_matrix" title="Permalink to this definition">¶</a></dt>
 <dd><p>Wrapper around pandas&#8217; scatter_matrix.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
-<dt>period (str): period used for display purposes.</dt>
-<dd>Refer to pandas docs for valid period strings.</dd>
+<dt>freq (str): Data frequency used for display purposes.</dt>
+<dd><p class="first last">Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>kwargs: passed to pandas&#8217; scatter_matrix method</li>
+<li><p class="first">figsize ((x,y)): figure size</p>
+</li>
+<li><p class="first">title (str): Title if default not appropriate</p>
+</li>
+<li><p class="first">kwargs: passed to pandas&#8217; scatter_matrix method</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -213,11 +227,13 @@ If path is not None, the string will be saved to file
 at path.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>sep (char): Separator</li>
+<dd><ul class="first last">
+<li><p class="first">sep (char): Separator</p>
+</li>
 <li><dl class="first docutils">
 <dt>path (str): If None, CSV string returned. Else file</dt>
-<dd>written to specified path.</dd>
+<dd><p class="first last">written to specified path.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -229,7 +245,7 @@ at path.</p>
 
 <dl class="class">
 <dt id="ffn.core.PerformanceStats">
-<em class="property">class </em><code class="descclassname">ffn.core.</code><code class="descname">PerformanceStats</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">ffn.core.</code><code class="descname">PerformanceStats</code><span class="sig-paren">(</span><em>prices</em>, <em>rf=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
 <p>PerformanceStats is a convenience class used for the performance
 evaluation of a price series. It contains various helper functions
@@ -237,24 +253,35 @@ to help with plotting and contains a large amount of descriptive
 statistics.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series): A price series.</li>
+<dd><ul class="first last">
+<li><p class="first">prices (Series): A price series.</p>
+</li>
+<li><dl class="first docutils">
+<dt>rf (float): Risk-free rate used in various calculation. Should be</dt>
+<dd><p class="first last">expressed as a yearly (annualized) return</p>
+</dd>
+</dl>
+</li>
 </ul>
 </dd>
 <dt>Attributes:</dt>
-<dd><ul class="first last simple">
-<li>name (str): Name, derived from price series name</li>
+<dd><ul class="first last">
+<li><p class="first">name (str): Name, derived from price series name</p>
+</li>
 <li><dl class="first docutils">
 <dt>return_table (DataFrame): A table of monthly returns with</dt>
-<dd>YTD figures as well.</dd>
+<dd><p class="first last">YTD figures as well.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>lookback_returns (Series): Returns for different</dt>
-<dd>lookback periods (1m, 3m, 6m, ytd...)</dd>
+<dd><p class="first last">lookback periods (1m, 3m, 6m, ytd...)</p>
+</dd>
 </dl>
 </li>
-<li>stats (Series): A series that contains all the stats</li>
+<li><p class="first">stats (Series): A series that contains all the stats</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -280,20 +307,25 @@ for every year in range.</p>
 
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.plot">
-<code class="descname">plot</code><span class="sig-paren">(</span><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot</code><span class="sig-paren">(</span><em>freq=None</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for plotting the series.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
-<dt>period (str): period used for display purposes.</dt>
-<dd>Refer to pandas docs for valid period strings.</dd>
+<dt>freq (str): Data frequency used for display purposes.</dt>
+<dd><p class="first last">Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>logy (bool): log-scale for y axis</li>
-<li>kwargs: passed to pandas&#8217; plot method</li>
+<li><p class="first">figsize ((x,y)): figure size</p>
+</li>
+<li><p class="first">title (str): Title if default not appropriate</p>
+</li>
+<li><p class="first">logy (bool): log-scale for y axis</p>
+</li>
+<li><p class="first">kwargs: passed to pandas&#8217; plot method</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -301,22 +333,27 @@ for every year in range.</p>
 
 <dl class="method">
 <dt id="ffn.core.PerformanceStats.plot_histogram">
-<code class="descname">plot_histogram</code><span class="sig-paren">(</span><em>period='m'</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>bins=20</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot_histogram" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plots a histogram of returns given a return period (frequency).</p>
+<code class="descname">plot_histogram</code><span class="sig-paren">(</span><em>freq=None</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>bins=20</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots a histogram of returns given a return frequency.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
-<dt>period (str): period used for display purposes.</dt>
-<dd>This will dictate the type of returns
+<dt>freq (str): Data frequency used for display purposes.</dt>
+<dd><p class="first last">This will dictate the type of returns
 (daily returns, monthly, ...)
-Refer to pandas docs for valid period strings.</dd>
+Refer to pandas docs for valid period strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>bins (int): number of bins for the histogram</li>
-<li>kwargs: passed to pandas&#8217; hist method</li>
+<li><p class="first">figsize ((x,y)): figure size</p>
+</li>
+<li><p class="first">title (str): Title if default not appropriate</p>
+</li>
+<li><p class="first">bins (int): number of bins for the histogram</p>
+</li>
+<li><p class="first">kwargs: passed to pandas&#8217; hist method</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -361,11 +398,13 @@ If path is not None, the string will be saved to file
 at path.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>sep (char): Separator</li>
+<dd><ul class="first last">
+<li><p class="first">sep (char): Separator</p>
+</li>
 <li><dl class="first docutils">
 <dt>path (str): If None, CSV string returned. Else file written</dt>
-<dd>to specified path.</dd>
+<dd><p class="first last">to specified path.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -412,20 +451,36 @@ that date will be used instead of the 31st.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.calc_calmar_ratio">
+<code class="descclassname">ffn.core.</code><code class="descname">calc_calmar_ratio</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_calmar_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_calmar_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Calmar Ratio given a series of prices</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last simple">
+<li>prices (Series, DataFrame): Price series</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.calc_clusters">
 <code class="descclassname">ffn.core.</code><code class="descname">calc_clusters</code><span class="sig-paren">(</span><em>returns</em>, <em>n=None</em>, <em>plot=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_clusters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_clusters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the clusters based on k-means
 clustering.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (pd.DataFrame): DataFrame of returns</li>
+<dd><ul class="first last">
+<li><p class="first">returns (pd.DataFrame): DataFrame of returns</p>
+</li>
 <li><dl class="first docutils">
 <dt>n (int): Specify # of clusters. If None, this</dt>
-<dd>will be automatically determined</dd>
+<dd><p class="first last">will be automatically determined</p>
+</dd>
 </dl>
 </li>
-<li>plot (bool): Show plot?</li>
+<li><p class="first">plot (bool): Show plot?</p>
+</li>
 </ul>
 </dd>
 <dt>Returns:</dt>
@@ -446,16 +501,18 @@ Clustering Algorithm (FTCA).</p>
 If you want more clusters, use a higher threshold.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
 <dt>returns - expects a pandas dataframe of returns where</dt>
-<dd>each column is the name of a given security.</dd>
+<dd><p class="first last">each column is the name of a given security.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>threshold (float): Threshold parameter - use higher value</dt>
-<dd>for more clusters. Basically controls how similar
-(correlated) series have to be.</dd>
+<dd><p class="first last">for more clusters. Basically controls how similar
+(correlated) series have to be.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -499,15 +556,18 @@ actual drawdown series, please use to_drawdown_series.</p>
 <dd><p>Calculates the mean-variance weights given a DataFrame of returns.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (DataFrame): Returns for multiple securities.</li>
-<li>weight_bounds ((low, high)): Weigh limits for optimization.</li>
-<li>rf (float): Risk-free rate used in utility calculation</li>
+<dd><ul class="first last">
+<li><p class="first">returns (DataFrame): Returns for multiple securities.</p>
+</li>
+<li><p class="first">weight_bounds ((low, high)): Weigh limits for optimization.</p>
+</li>
+<li><p class="first">rf (float): Risk-free rate used in utility calculation</p>
+</li>
 <li><dl class="first docutils">
 <dt>covar_method (str): Covariance matrix estimation method.</dt>
 <dd><dl class="first last docutils">
 <dt>Currently supported:</dt>
-<dd><ul class="first last">
+<dd><ul class="first last simple">
 <li>ledoit-wolf</li>
 <li>standard</li>
 </ul>
@@ -525,14 +585,14 @@ actual drawdown series, please use to_drawdown_series.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_perf_stats">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_perf_stats</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_perf_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_perf_stats" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_perf_stats</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_perf_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_perf_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the performance statistics given an object.
 The object should be a Series of prices.</p>
 <p>A PerformanceStats object will be returned containing all the stats.</p>
 <dl class="docutils">
 <dt>Args:</dt>
 <dd><ul class="first last simple">
-<li>obj: A Pandas Series representing a series of prices.</li>
+<li>prices (Series): Series of prices</li>
 </ul>
 </dd>
 </dl>
@@ -552,18 +612,71 @@ is going to outperform the other&#8221;.</p>
 
 <dl class="function">
 <dt id="ffn.core.calc_risk_return_ratio">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_risk_return_ratio</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_risk_return_ratio</code><span class="sig-paren">(</span><em>returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the return / risk ratio. Basically the
 Sharpe ratio without factoring in the risk-free rate.</p>
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.calc_sharpe">
+<code class="descclassname">ffn.core.</code><code class="descname">calc_sharpe</code><span class="sig-paren">(</span><em>returns</em>, <em>rf=0.0</em>, <em>nperiods=None</em>, <em>annualize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_sharpe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_sharpe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the Sharpe ratio.</p>
+<p>If rf is non-zero, you must specify nperiods. In this case, rf is assumed
+to be expressed in yearly (annualized) terms.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last">
+<li><p class="first">returns (Series, DataFrame): Input return series</p>
+</li>
+<li><p class="first">rf (float): Risk-free rate expressed as a yearly (annualized) return</p>
+</li>
+<li><dl class="first docutils">
+<dt>nperiods (int): Frequency of returns (252 for daily, 12 for monthly,</dt>
+<dd><p class="first last">etc.)</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="ffn.core.calc_sortino_ratio">
+<code class="descclassname">ffn.core.</code><code class="descname">calc_sortino_ratio</code><span class="sig-paren">(</span><em>returns</em>, <em>rf=0</em>, <em>nperiods=None</em>, <em>annualize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_sortino_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_sortino_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the sortino ratio given a series of returns</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last">
+<li><p class="first">returns (Series or DataFrame): Returns</p>
+</li>
+<li><p class="first">rf (float): Risk-free rate expressed in yearly (annualized) terms.</p>
+</li>
+<li><dl class="first docutils">
+<dt>nperiods (int): Number of periods used for annualization. Must be</dt>
+<dd><p class="first last">provided if rf is non-zero</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.calc_stats">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_stats</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_stats" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">calc_stats</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates performance stats of a given object.</p>
 <p>If object is Series, a PerformanceStats object is
 returned. If object is DataFrame, a GroupStats object
 is returned.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last simple">
+<li>prices (Series, DataFrame): Set of prices</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -571,6 +684,26 @@ is returned.</p>
 <code class="descclassname">ffn.core.</code><code class="descname">calc_total_return</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_total_return"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_total_return" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the total return of a series.</p>
 <p>last / first - 1</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="ffn.core.deannualize">
+<code class="descclassname">ffn.core.</code><code class="descname">deannualize</code><span class="sig-paren">(</span><em>returns</em>, <em>nperiods</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#deannualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.deannualize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert return expressed in annual terms on a different basis.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last">
+<li><p class="first">returns (float, Series, DataFrame): Return(s)</p>
+</li>
+<li><dl class="first docutils">
+<dt>nperiods (int): Target basis, typically 252 for daily, 12 for</dt>
+<dd><p class="first last">monthly, etc.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="function">
@@ -584,19 +717,21 @@ drawdown for each drawdown in a drawdown series.</p>
 </div>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
 <dt>drawdown (pandas.Series): A drawdown Series</dt>
-<dd>(can be obtained w/ drawdown(prices).</dd>
+<dd><p class="first last">(can be obtained w/ drawdown(prices).</p>
+</dd>
 </dl>
 </li>
 </ul>
 </dd>
 <dt>Returns:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
 <dt>pandas.DataFrame &#8211; A data frame with the following</dt>
-<dd>columns: start, end, days, drawdown.</dd>
+<dd><p class="first last">columns: start, end, days, drawdown.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -633,12 +768,15 @@ finance.</p>
 days over a given period.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>offset (DateOffset): Offset (lookback) period.</li>
-<li>period (str): Period string.</li>
+<dd><ul class="first last">
+<li><p class="first">offset (DateOffset): Offset (lookback) period.</p>
+</li>
+<li><p class="first">period (str): Period string.</p>
+</li>
 <li><dl class="first docutils">
 <dt>perc_required (float): percentage of number of days</dt>
-<dd>expected required.</dd>
+<dd><p class="first last">expected required.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -653,13 +791,16 @@ days over a given period.</p>
 proportionally.</p>
 <dl class="docutils">
 <dt>ex:</dt>
-<dd><ul class="first last simple">
-<li>weights are {a: 0.7, b: 0.2, c: 0.1}</li>
-<li>call with limit=0.5</li>
+<dd><ul class="first last">
+<li><p class="first">weights are {a: 0.7, b: 0.2, c: 0.1}</p>
+</li>
+<li><p class="first">call with limit=0.5</p>
+</li>
 <li><dl class="first docutils">
 <dt>excess 0.2 in a is ditributed to b and c</dt>
-<dd>proportionally.
-- result is {a: 0.5, b: 0.33, c: 0.167}</dd>
+<dd><p class="first last">proportionally.
+- result is {a: 0.5, b: 0.33, c: 0.167}</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -688,24 +829,33 @@ proportionally.</p>
 
 <dl class="function">
 <dt id="ffn.core.plot_heatmap">
-<code class="descclassname">ffn.core.</code><code class="descname">plot_heatmap</code><span class="sig-paren">(</span><em>data</em>, <em>title='Heatmap'</em>, <em>show_legend=True</em>, <em>show_labels=True</em>, <em>label_fmt='.2f'</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>figsize=None</em>, <em>cmap='RdBu'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_heatmap" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">ffn.core.</code><code class="descname">plot_heatmap</code><span class="sig-paren">(</span><em>data</em>, <em>title='Heatmap'</em>, <em>show_legend=True</em>, <em>show_labels=True</em>, <em>label_fmt='.2f'</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>figsize=None</em>, <em>label_color='w'</em>, <em>cmap='RdBu'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_heatmap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot a heatmap using matplotlib&#8217;s pcolor.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
+<dd><ul class="first last">
 <li><dl class="first docutils">
 <dt>data (DataFrame): DataFrame to plot. Usually small matrix (ex.</dt>
-<dd>correlation matrix).</dd>
+<dd><p class="first last">correlation matrix).</p>
+</dd>
 </dl>
 </li>
-<li>title (string): Plot title</li>
-<li>show_legend (bool): Show color legend</li>
-<li>show_labels (bool): Show value labels</li>
-<li>label_fmt (str): Label format string</li>
-<li>vmin (float): Min value for scale</li>
-<li>vmax (float): Max value for scale</li>
-<li>cmap (string): Color map</li>
-<li>kwargs: Passed to matplotlib&#8217;s pcolor</li>
+<li><p class="first">title (string): Plot title</p>
+</li>
+<li><p class="first">show_legend (bool): Show color legend</p>
+</li>
+<li><p class="first">show_labels (bool): Show value labels</p>
+</li>
+<li><p class="first">label_fmt (str): Label format string</p>
+</li>
+<li><p class="first">vmin (float): Min value for scale</p>
+</li>
+<li><p class="first">vmax (float): Max value for scale</p>
+</li>
+<li><p class="first">cmap (string): Color map</p>
+</li>
+<li><p class="first">kwargs: Passed to matplotlib&#8217;s pcolor</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -758,13 +908,16 @@ together easier.</p>
 <dd><p>Apply a function fn over a rolling window of size window.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>data (Series or DataFrame): Series or DataFrame</li>
-<li>window (int): Window size</li>
+<dd><ul class="first last">
+<li><p class="first">data (Series or DataFrame): Series or DataFrame</p>
+</li>
+<li><p class="first">window (int): Window size</p>
+</li>
 <li><dl class="first docutils">
 <dt>fn (function): Function to apply over the rolling window.</dt>
-<dd>For a series, the return value is expected to be a single
-number. For a DataFrame, it shuold return a new row.</dd>
+<dd><p class="first last">For a series, the return value is expected to be a single
+number. For a DataFrame, it shuold return a new row.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -772,27 +925,6 @@ number. For a DataFrame, it shuold return a new row.</dd>
 <dt>Returns:</dt>
 <dd><ul class="first last simple">
 <li>Object of same dimensions as data</li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="ffn.core.set_riskfree_rate">
-<code class="descclassname">ffn.core.</code><code class="descname">set_riskfree_rate</code><span class="sig-paren">(</span><em>rf</em>, <em>update_all=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#set_riskfree_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set annual risk-free rate property of the class PerformanceStats.
-Affects all instances of the PerformanceStats, unless the default
-risk-free rate was overwritten before.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>rf (float): Annual interest rate</li>
-<li><dl class="first docutils">
-<dt>update_all (bool): If True, all instances of PerformanceStats</dt>
-<dd>will update their values. Note, this might be very slow
-time in case of many objects available</dd>
-</dl>
-</li>
 </ul>
 </dd>
 </dl>
@@ -813,6 +945,33 @@ on the result (since the drawdown series is negative)</p>
 <dt>Args:</dt>
 <dd><ul class="first last simple">
 <li>prices (Series or DataFrame): Series of prices.</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="ffn.core.to_excess_returns">
+<code class="descclassname">ffn.core.</code><code class="descname">to_excess_returns</code><span class="sig-paren">(</span><em>returns</em>, <em>rf</em>, <em>nperiods=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_excess_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_excess_returns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a series of returns, it will return the excess returns over rf.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last">
+<li><p class="first">returns (Series, DataFrame): Returns</p>
+</li>
+<li><p class="first">rf (float, Series, DataFrame): Risk-Free rate(s)</p>
+</li>
+<li><dl class="first docutils">
+<dt>nperiods (int): Optional. If provided, will convert rf to different</dt>
+<dd><p class="first last">frequency using deannualize</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+<dt>Returns:</dt>
+<dd><ul class="first last simple">
+<li>excess_returns (Series, DataFrame): Returns - rf</li>
 </ul>
 </dd>
 </dl>
@@ -870,6 +1029,43 @@ with &#8216;M&#8217; param (method=&#8217;ffill&#8217;, how=&#8217;end&#8217;).<
 </dd></dl>
 
 <dl class="function">
+<dt id="ffn.core.to_ulcer_index">
+<code class="descclassname">ffn.core.</code><code class="descname">to_ulcer_index</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_ulcer_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_ulcer_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts from prices -&gt; Ulcer index</p>
+<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Ulcer_index">https://en.wikipedia.org/wiki/Ulcer_index</a></p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last simple">
+<li>prices (Series, DataFrame): Prices</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="ffn.core.to_ulcer_performance_index">
+<code class="descclassname">ffn.core.</code><code class="descname">to_ulcer_performance_index</code><span class="sig-paren">(</span><em>prices</em>, <em>rf=0.0</em>, <em>nperiods=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_ulcer_performance_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_ulcer_performance_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts from prices -&gt; ulcer performance index.</p>
+<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Ulcer_index">https://en.wikipedia.org/wiki/Ulcer_index</a></p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd><ul class="first last">
+<li><p class="first">prices (Series, DataFrame): Prices</p>
+</li>
+<li><dl class="first docutils">
+<dt>rf (float): Risk-free rate of return. Assumed to be expressed in</dt>
+<dd><p class="first last">yearly (annualized) terms</p>
+</dd>
+</dl>
+</li>
+<li><p class="first">nperiods (int): Used to deannualize rf if rf is provided (non-zero)</p>
+</li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
 <dt id="ffn.core.winsorize">
 <code class="descclassname">ffn.core.</code><code class="descname">winsorize</code><span class="sig-paren">(</span><em>x</em>, <em>axis=0</em>, <em>limits=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#winsorize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.winsorize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Winsorize values based on limits</p>
@@ -914,45 +1110,55 @@ memoization.</p>
 <dd><p>Helper function for retrieving data as a DataFrame.</p>
 <dl class="docutils">
 <dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>tickers (list, string, csv string): Tickers to download.</li>
+<dd><ul class="first last">
+<li><p class="first">tickers (list, string, csv string): Tickers to download.</p>
+</li>
 <li><dl class="first docutils">
 <dt>provider (function): Provider to use for downloading data.</dt>
-<dd>By default it will be ffn.DEFAULT_PROVIDER if not provided.</dd>
+<dd><p class="first last">By default it will be ffn.DEFAULT_PROVIDER if not provided.</p>
+</dd>
 </dl>
 </li>
-<li>common_dates (bool): Keep common dates only? Drop na&#8217;s.</li>
+<li><p class="first">common_dates (bool): Keep common dates only? Drop na&#8217;s.</p>
+</li>
 <li><dl class="first docutils">
 <dt>forward_fill (bool): forward fill values if missing. Only works</dt>
-<dd>if common_dates is False, since common_dates will remove
-all nan&#8217;s, so no filling forward necessary.</dd>
+<dd><p class="first last">if common_dates is False, since common_dates will remove
+all nan&#8217;s, so no filling forward necessary.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>clean_tickers (bool): Should the tickers be &#8216;cleaned&#8217; using</dt>
-<dd>ffn.utils.clean_tickers? Basically remove non-standard
-characters (^VIX -&gt; vix) and standardize to lower case.</dd>
+<dd><p class="first last">ffn.utils.clean_tickers? Basically remove non-standard
+characters (^VIX -&gt; vix) and standardize to lower case.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>column_names (list): List of column names if clean_tickers</dt>
-<dd>is not satisfactory.</dd>
+<dd><p class="first last">is not satisfactory.</p>
+</dd>
 </dl>
 </li>
 <li><dl class="first docutils">
 <dt>ticker_field_sep (char): separator used to determine the</dt>
-<dd>ticker and field. This is in case we want to specify
+<dd><p class="first last">ticker and field. This is in case we want to specify
 particular, non-default fields. For example, we might
-want: AAPL:Low,AAPL:High,AAPL:Close. &#8216;:&#8217; is the separator.</dd>
+want: AAPL:Low,AAPL:High,AAPL:Close. &#8216;:&#8217; is the separator.</p>
+</dd>
 </dl>
 </li>
-<li>mrefresh (bool): Ignore memoization.</li>
+<li><p class="first">mrefresh (bool): Ignore memoization.</p>
+</li>
 <li><dl class="first docutils">
 <dt>existing (DataFrame): Existing DataFrame to append returns</dt>
-<dd>to - used when we download from multiple sources</dd>
+<dd><p class="first last">to - used when we download from multiple sources</p>
+</dd>
 </dl>
 </li>
-<li>kwargs: passed to provider</li>
+<li><p class="first">kwargs: passed to provider</p>
+</li>
 </ul>
 </dd>
 </dl>
@@ -985,9 +1191,9 @@ memoization.</p>
 <dd><p>Cleans a ticker for easier use throughout MoneyTree</p>
 <p>Splits by space and only keeps first bit. Also removes
 any characters that are not letters. Returns as lowercase.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s1">&#39;^VIX&#39;</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s">&#39;^VIX&#39;</span><span class="p">)</span>
 <span class="go">&#39;vix&#39;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s1">&#39;SPX Index&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s">&#39;SPX Index&#39;</span><span class="p">)</span>
 <span class="go">&#39;spx&#39;</span>
 </pre></div>
 </div>
@@ -1018,8 +1224,8 @@ any characters that are not letters. Returns as lowercase.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="ffn.utils.get_period_name">
-<code class="descclassname">ffn.utils.</code><code class="descname">get_period_name</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#get_period_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.get_period_name" title="Permalink to this definition">¶</a></dt>
+<dt id="ffn.utils.get_freq_name">
+<code class="descclassname">ffn.utils.</code><code class="descname">get_freq_name</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#get_freq_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.get_freq_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -1073,11 +1279,14 @@ scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</dd>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </aside>
