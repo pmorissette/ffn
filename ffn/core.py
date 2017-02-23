@@ -495,7 +495,7 @@ class PerformanceStats(object):
         """
         if title is None:
             title = self._get_default_plot_title(
-                self.name, freq, 'price series')
+                self.name, freq, 'Price Series')
 
         ser = self._get_series(freq)
         ser.plot(figsize=figsize, title=title, logy=logy, **kwargs)
@@ -517,7 +517,7 @@ class PerformanceStats(object):
         """
         if title is None:
             title = self._get_default_plot_title(
-                self.name, freq, 'return histogram')
+                self.name, freq, 'Return Histogram')
 
         ser = self._get_series(freq).to_returns().dropna()
 
@@ -717,6 +717,12 @@ class GroupStats(dict):
 
         return stats
 
+    def _get_default_plot_title(self, freq, kind):
+        if freq is None:
+            return '%s' % kind
+        else:
+            return '%s %s' % (get_freq_name(freq), kind)
+
     def set_riskfree_rate(self, rf):
 
         """
@@ -813,7 +819,7 @@ class GroupStats(dict):
 
         if title is None:
             title = self._get_default_plot_title(
-                self.name, freq, 'equity progression')
+                freq, 'Equity Progression')
 
         ser = self._get_series(freq).rebase()
         ser.plot(figsize=figsize, logy=logy,
@@ -834,7 +840,7 @@ class GroupStats(dict):
         """
         if title is None:
             title = self._get_default_plot_title(
-                self.name, freq, 'return scatter matrix')
+                freq, 'Return Scatter Matrix')
 
         plt.figure()
         ser = self._get_series(freq).to_returns().dropna()
@@ -856,7 +862,7 @@ class GroupStats(dict):
         """
         if title is None:
             title = self._get_default_plot_title(
-                self.name, freq, 'return histogram matrix')
+                freq, 'Return Histogram Matrix')
 
         plt.figure()
         ser = self._get_series(freq).to_returns().dropna()
@@ -877,15 +883,18 @@ class GroupStats(dict):
         """
         if title is None:
             title = self._get_default_plot_title(
-                self.name, freq, 'return correlation matrix')
+                freq, 'Return Correlation Matrix')
 
         rets = self._get_series(freq).to_returns().dropna()
         return rets.plot_corr_heatmap(title=title, figsize=figsize, **kwargs)
 
-    def _get_series(self, per):
-        if per == 'y':
-            per = 'a'
-        return self.prices.asfreq(per, 'ffill')
+    def _get_series(self, freq):
+        if freq is None:
+            return self.prices
+
+        if freq == 'y':
+            freq = 'a'
+        return self.prices.asfreq(freq, 'ffill')
 
     def to_csv(self, sep=',', path=None):
         """
