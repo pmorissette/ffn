@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ffn.core &mdash; ffn 0.2.0 documentation</title>
+    <title>ffn.core &mdash; ffn 0.2.1 documentation</title>
     
     <link rel="stylesheet" href="../../_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.0',
+        VERSION:     '0.2.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
-    <link rel="top" title="ffn 0.2.0 documentation" href="../../index.html" />
+    <link rel="top" title="ffn 0.2.1 documentation" href="../../index.html" />
     <link rel="up" title="Module code" href="../index.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
@@ -540,7 +540,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_plot_title</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;price series&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;Price Series&#39;</span><span class="p">)</span>
 
         <span class="n">ser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_series</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
         <span class="n">ser</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">logy</span><span class="o">=</span><span class="n">logy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -562,7 +562,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_plot_title</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;return histogram&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;Return Histogram&#39;</span><span class="p">)</span>
 
         <span class="n">ser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_series</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 
@@ -762,6 +762,12 @@
 
         <span class="k">return</span> <span class="n">stats</span>
 
+    <span class="k">def</span> <span class="nf">_get_default_plot_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="n">kind</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">freq</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kind</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">get_freq_name</span><span class="p">(</span><span class="n">freq</span><span class="p">),</span> <span class="n">kind</span><span class="p">)</span>
+
 <div class="viewcode-block" id="GroupStats.set_riskfree_rate"><a class="viewcode-back" href="../../ffn.html#ffn.core.GroupStats.set_riskfree_rate">[docs]</a>    <span class="k">def</span> <span class="nf">set_riskfree_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rf</span><span class="p">):</span>
 
         <span class="sd">&quot;&quot;&quot;</span>
@@ -858,7 +864,7 @@
 
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_plot_title</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;equity progression&#39;</span><span class="p">)</span>
+                <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;Equity Progression&#39;</span><span class="p">)</span>
 
         <span class="n">ser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_series</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span><span class="o">.</span><span class="n">rebase</span><span class="p">()</span>
         <span class="n">ser</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="n">logy</span><span class="o">=</span><span class="n">logy</span><span class="p">,</span>
@@ -879,7 +885,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_plot_title</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;return scatter matrix&#39;</span><span class="p">)</span>
+                <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;Return Scatter Matrix&#39;</span><span class="p">)</span>
 
         <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
         <span class="n">ser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_series</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
@@ -901,7 +907,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_plot_title</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;return histogram matrix&#39;</span><span class="p">)</span>
+                <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;Return Histogram Matrix&#39;</span><span class="p">)</span>
 
         <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
         <span class="n">ser</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_series</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
@@ -922,15 +928,18 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_default_plot_title</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;return correlation matrix&#39;</span><span class="p">)</span>
+                <span class="n">freq</span><span class="p">,</span> <span class="s">&#39;Return Correlation Matrix&#39;</span><span class="p">)</span>
 
         <span class="n">rets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_series</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">rets</span><span class="o">.</span><span class="n">plot_corr_heatmap</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="n">figsize</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">_get_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">per</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">per</span> <span class="o">==</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
-            <span class="n">per</span> <span class="o">=</span> <span class="s">&#39;a&#39;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">per</span><span class="p">,</span> <span class="s">&#39;ffill&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_get_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">freq</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">freq</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span>
+
+        <span class="k">if</span> <span class="n">freq</span> <span class="o">==</span> <span class="s">&#39;y&#39;</span><span class="p">:</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="s">&#39;a&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="s">&#39;ffill&#39;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GroupStats.to_csv"><a class="viewcode-back" href="../../ffn.html#ffn.core.GroupStats.to_csv">[docs]</a>    <span class="k">def</span> <span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s">&#39;,&#39;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
