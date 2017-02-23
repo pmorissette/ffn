@@ -115,7 +115,7 @@ def fmtn(number):
     return format(number, '.2f')
 
 
-def get_period_name(period):
+def get_freq_name(period):
     period = period.upper()
     periods = {
         'B': 'business day',

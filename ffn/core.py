@@ -2,7 +2,7 @@ from __future__ import print_function
 from future.utils import listvalues, iteritems
 import random
 from . import utils
-from .utils import fmtp, fmtn, fmtpn, get_period_name
+from .utils import fmtp, fmtn, fmtpn, get_freq_name
 import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
@@ -474,32 +474,39 @@ class PerformanceStats(object):
         """
         return self.lookback_returns.map('{:,.2%}'.format)
 
-    def plot(self, period='m', figsize=(15, 5), title=None,
+    def _get_default_plot_title(self, name, freq, kind):
+        if freq is None:
+            return '%s %s' % (name, kind)
+        else:
+            return '%s %s %s' % (name, get_freq_name(freq), kind)
+
+    def plot(self, freq=None, figsize=(15, 5), title=None,
              logy=False, **kwargs):
         """
         Helper function for plotting the series.
 
         Args:
-            * period (str): period used for display purposes.
-                Refer to pandas docs for valid period strings.
+            * freq (str): Data frequency used for display purposes.
+                Refer to pandas docs for valid freq strings.
             * figsize ((x,y)): figure size
             * title (str): Title if default not appropriate
             * logy (bool): log-scale for y axis
             * kwargs: passed to pandas' plot method
         """
         if title is None:
-            title = '%s %s price series' % (self.name, get_period_name(period))
+            title = self._get_default_plot_title(
+                self.name, freq, 'price series')
 
-        ser = self._get_series(period)
+        ser = self._get_series(freq)
         ser.plot(figsize=figsize, title=title, logy=logy, **kwargs)
 
-    def plot_histogram(self, period='m', figsize=(15, 5), title=None,
+    def plot_histogram(self, freq=None, figsize=(15, 5), title=None,
                        bins=20, **kwargs):
         """
-        Plots a histogram of returns given a return period (frequency).
+        Plots a histogram of returns given a return frequency.
 
         Args:
-            * period (str): period used for display purposes.
+            * freq (str): Data frequency used for display purposes.
                 This will dictate the type of returns
                 (daily returns, monthly, ...)
                 Refer to pandas docs for valid period strings.
@@ -509,10 +516,10 @@ class PerformanceStats(object):
             * kwargs: passed to pandas' hist method
         """
         if title is None:
-            title = '%s %s return histogram' % (
-                self.name, get_period_name(period))
+            title = self._get_default_plot_title(
+                self.name, freq, 'return histogram')
 
-        ser = self._get_series(period).to_returns().dropna()
+        ser = self._get_series(freq).to_returns().dropna()
 
         plt.figure(figsize=figsize)
         ax = ser.hist(bins=bins, figsize=figsize, normed=True, **kwargs)
@@ -520,10 +527,13 @@ class PerformanceStats(object):
         plt.axvline(0, linewidth=4)
         ser.plot(kind='kde')
 
-    def _get_series(self, per):
-        if per == 'y':
-            per = 'a'
-        return self.daily_prices.asfreq(per, 'ffill')
+    def _get_series(self, freq):
+        if freq is None:
+            return self.daily_prices
+
+        if freq == 'y':
+            freq = 'a'
+        return self.daily_prices.asfreq(freq, 'ffill')
 
     def to_csv(self, sep=',', path=None):
         """
@@ -786,14 +796,14 @@ class GroupStats(dict):
         return self.lookback_returns.apply(
             lambda x: x.map('{:,.2%}'.format), axis=1)
 
-    def plot(self, period='m', figsize=(15, 5), title=None,
+    def plot(self, freq=None, figsize=(15, 5), title=None,
              logy=False, **kwargs):
         """
         Helper function for plotting the series.
 
         Args:
-            * period (str): period used for display purposes.
-                Refer to pandas docs for valid period strings.
+            * freq (str): Data frequency used for display purposes.
+                Refer to pandas docs for valid freq strings.
             * figsize ((x,y)): figure size
             * title (str): Title if default not appropriate
             * logy (bool): log-scale for y axis
@@ -802,69 +812,74 @@ class GroupStats(dict):
         """
 
         if title is None:
-            title = '%s equity progression' % get_period_name(period)
-        ser = self._get_series(period).rebase()
+            title = self._get_default_plot_title(
+                self.name, freq, 'equity progression')
+
+        ser = self._get_series(freq).rebase()
         ser.plot(figsize=figsize, logy=logy,
                  title=title, **kwargs)
 
-    def plot_scatter_matrix(self, period='m', title=None,
+    def plot_scatter_matrix(self, freq=None, title=None,
                             figsize=(10, 10), **kwargs):
         """
         Wrapper around pandas' scatter_matrix.
 
         Args:
-            * period (str): period used for display purposes.
-                Refer to pandas docs for valid period strings.
+            * freq (str): Data frequency used for display purposes.
+                Refer to pandas docs for valid freq strings.
             * figsize ((x,y)): figure size
             * title (str): Title if default not appropriate
             * kwargs: passed to pandas' scatter_matrix method
 
         """
         if title is None:
-            title = '%s return scatter matrix' % get_period_name(period)
+            title = self._get_default_plot_title(
+                self.name, freq, 'return scatter matrix')
 
         plt.figure()
-        ser = self._get_series(period).to_returns().dropna()
+        ser = self._get_series(freq).to_returns().dropna()
         pd.scatter_matrix(ser, figsize=figsize, **kwargs)
         plt.suptitle(title)
 
-    def plot_histograms(self, period='m', title=None,
+    def plot_histograms(self, freq=None, title=None,
                         figsize=(10, 10), **kwargs):
         """
         Wrapper around pandas' hist.
 
         Args:
-            * period (str): period used for display purposes.
-                Refer to pandas docs for valid period strings.
+            * freq (str): Data frequency used for display purposes.
+                Refer to pandas docs for valid freq strings.
             * figsize ((x,y)): figure size
             * title (str): Title if default not appropriate
             * kwargs: passed to pandas' hist method
 
         """
         if title is None:
-            title = '%s return histogram matrix' % get_period_name(period)
+            title = self._get_default_plot_title(
+                self.name, freq, 'return histogram matrix')
 
         plt.figure()
-        ser = self._get_series(period).to_returns().dropna()
+        ser = self._get_series(freq).to_returns().dropna()
         ser.hist(figsize=figsize, **kwargs)
         plt.suptitle(title)
 
-    def plot_correlation(self, period='m', title=None,
+    def plot_correlation(self, freq=None, title=None,
                          figsize=(12, 6), **kwargs):
         """
         Utility function to plot correlations.
 
         Args:
-            * period (str): Pandas offset alias string
+            * freq (str): Pandas data frequency alias string
             * title (str): Plot title
             * figsize (tuple (x,y)): figure size
             * kwargs: passed to Pandas' plot_corr_heatmap function
 
         """
         if title is None:
-            title = '%s return correlation matrix' % get_period_name(period)
+            title = self._get_default_plot_title(
+                self.name, freq, 'return correlation matrix')
 
-        rets = self._get_series(period).to_returns().dropna()
+        rets = self._get_series(freq).to_returns().dropna()
         return rets.plot_corr_heatmap(title=title, figsize=figsize, **kwargs)
 
     def _get_series(self, per):
