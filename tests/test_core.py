@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal as aae
 
-
 df = pd.read_csv('tests/data/test_data.csv', index_col=0, parse_dates=True)
 ts = df['AAPL'][0:10]
 
@@ -224,6 +223,21 @@ def test_calc_mean_var_weights():
     aae(actual['AAPL'], 0.000, 3)
     aae(actual['MSFT'], 0.000, 3)
     aae(actual['C'], 1.000, 3)
+
+
+def test_calc_erc_weights():
+    prc = df.ix[0:11]
+    rets = prc.to_returns().dropna()
+    actual = ffn.core.calc_erc_weights(rets)
+
+    assert len(actual) == 3
+    assert 'AAPL' in actual
+    assert 'MSFT' in actual
+    assert 'C' in actual
+
+    aae(actual['AAPL'], 0.270, 3)
+    aae(actual['MSFT'], 0.374, 3)
+    aae(actual['C'], 0.356, 3)
 
 
 def test_calc_total_return():

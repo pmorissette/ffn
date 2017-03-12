@@ -1394,6 +1394,125 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
     return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
 
 
+def _erc_weights_ccd(x0,
+                     cov,
+                     b,
+                     maximum_iterations,
+                     tolerance):
+    """
+    Calculates the equal risk contribution / risk parity weights given a DataFrame
+    of returns.
+
+    Args:
+        * x0 (np.array): Starting asset weights.
+        * cov (np.array): covariance matrix.
+        * b (np.array): Risk target weights.
+        * maximum_iterations (int): Maximum iterations in iterative solutions.
+        * tolerance (float): Tolerance level in iterative solutions.
+
+    Returns:
+        np.array {weight}
+
+    Reference:
+        Griveau-Billion, Théophile and Richard, Jean-Charles and Roncalli, Thierry,
+        A Fast Algorithm for Computing High-Dimensional Risk Parity Portfolios (2013).
+        Available at SSRN: https://ssrn.com/abstract=2325255
+
+    """
+    n = len(x0)
+    x = x0.copy()
+    var = np.diagonal(cov)
+    ctr = cov.dot(x)
+    sigma_x = x.T.dot(ctr)
+
+    for iteration in range(maximum_iterations):
+
+        for i in range(n):
+            alpha = var[i]
+            beta = ctr[i] - x[i] * alpha
+            gamma = -b[i] * sigma_x
+
+            x_tilde = (-beta + np.sqrt(beta * beta - 4 * alpha * gamma)) / (2 * alpha)
+            x_i = x[i]
+
+            ctr = ctr - cov[i] * x_i + cov[i] * x_tilde
+            sigma_x = sigma_x * sigma_x - 2 * x_i * cov[i].dot(x) + x_i * x_i * var[i]
+            x[i] = x_tilde
+            sigma_x = np.sqrt(sigma_x + 2 * x_tilde * cov[i].dot(x) - x_tilde * x_tilde * var[i])
+
+        # check convergence
+        if np.power((x - x0) / x.sum(), 2).sum() < tolerance:
+            return x / x.sum()
+
+        x0 = x.copy()
+
+    # no solution found
+    raise ValueError('No solution found after {0} iterations.'.format(maximum_iterations))
+
+
+def calc_erc_weights(returns,
+                     initial_weights=None,
+                     risk_weights=None,
+                     covar_method='ledoit-wolf',
+                     risk_parity_method='ccd',
+                     maximum_iterations=100,
+                     tolerance=1E-8):
+    """
+    Calculates the equal risk contribution / risk parity weights given a DataFrame
+    of returns.
+
+    Args:
+        * returns (DataFrame): Returns for multiple securities.
+        * initial_weights (list): Starting asset weights [default inverse vol].
+        * risk_weights (list): Risk target weights [default equal weight].
+        * covar_method (str): Covariance matrix estimation method.
+            Currently supported:
+                - ledoit-wolf [default]
+                - standard
+        * risk_parity_method (str): Risk parity estimation method.
+            Currently supported:
+                - ccd (cyclical coordinate descent)[default]
+        * maximum_iterations (int): Maximum iterations in iterative solutions.
+        * tolerance (float): Tolerance level in iterative solutions.
+
+    Returns:
+        Series {col_name: weight}
+
+    """
+    n = len(returns.columns)
+
+    # calc covariance matrix
+    if covar_method == 'ledoit-wolf':
+        covar = sklearn.covariance.ledoit_wolf(returns)[0]
+    elif covar_method == 'standard':
+        covar = returns.cov().values
+    else:
+        raise NotImplementedError('covar_method not implemented')
+
+    # initial weights (default to inverse vol)
+    if initial_weights is None:
+        inv_vol = 1. / np.sqrt(np.diagonal(covar))
+        initial_weights = inv_vol / inv_vol.sum()
+
+    # default to equal risk weight
+    if risk_weights is None:
+        risk_weights = np.ones(n) / n
+
+    # calc risk parity weights matrix
+    if risk_parity_method == 'ccd':
+        # cyclical coordinate descent implementation
+        erc_weights = _erc_weights_ccd(initial_weights,
+                                       covar,
+                                       risk_weights,
+                                       maximum_iterations,
+                                       tolerance)
+    else:
+        raise NotImplementedError('risk_parity_method not implemented')
+
+    # return erc weights vector
+    return pd.Series(erc_weights, index=returns.columns, name='erc')
+
+
 def get_num_days_required(offset, period='d', perc_required=0.90):
     """
     Estimates the number of days required to assume that data is OK.
@@ -1952,6 +2071,7 @@ def extend_pandas():
     PandasObject.calc_information_ratio = calc_information_ratio
     PandasObject.calc_prob_mom = calc_prob_mom
     PandasObject.calc_risk_return_ratio = calc_risk_return_ratio
+    PandasObject.calc_erc_weights = calc_erc_weights
     PandasObject.calc_inv_vol_weights = calc_inv_vol_weights
     PandasObject.calc_mean_var_weights = calc_mean_var_weights
     PandasObject.calc_clusters = calc_clusters
