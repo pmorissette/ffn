@@ -1423,7 +1423,7 @@ def _erc_weights_ccd(x0,
     x = x0.copy()
     var = np.diagonal(cov)
     ctr = cov.dot(x)
-    sigma_x = x.T.dot(ctr)
+    sigma_x = np.sqrt(x.T.dot(ctr))
 
     for iteration in range(maximum_iterations):
 
