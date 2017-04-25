@@ -1400,8 +1400,8 @@ def _erc_weights_ccd(x0,
                      maximum_iterations,
                      tolerance):
     """
-    Calculates the equal risk contribution / risk parity weights given a DataFrame
-    of returns.
+    Calculates the equal risk contribution / risk parity weights given
+    a DataFrame of returns.
 
     Args:
         * x0 (np.array): Starting asset weights.
@@ -1414,8 +1414,9 @@ def _erc_weights_ccd(x0,
         np.array {weight}
 
     Reference:
-        Griveau-Billion, Théophile and Richard, Jean-Charles and Roncalli, Thierry,
-        A Fast Algorithm for Computing High-Dimensional Risk Parity Portfolios (2013).
+        Griveau-Billion, Theophile and Richard, Jean-Charles and Roncalli,
+        Thierry, A Fast Algorithm for Computing High-Dimensional Risk Parity
+        Portfolios (2013).
         Available at SSRN: https://ssrn.com/abstract=2325255
 
     """
@@ -1432,13 +1433,16 @@ def _erc_weights_ccd(x0,
             beta = ctr[i] - x[i] * alpha
             gamma = -b[i] * sigma_x
 
-            x_tilde = (-beta + np.sqrt(beta * beta - 4 * alpha * gamma)) / (2 * alpha)
+            x_tilde = (-beta + np.sqrt(
+                beta * beta - 4 * alpha * gamma)) / (2 * alpha)
             x_i = x[i]
 
             ctr = ctr - cov[i] * x_i + cov[i] * x_tilde
-            sigma_x = sigma_x * sigma_x - 2 * x_i * cov[i].dot(x) + x_i * x_i * var[i]
+            sigma_x = sigma_x * sigma_x - 2 * x_i * cov[i].dot(
+                x) + x_i * x_i * var[i]
             x[i] = x_tilde
-            sigma_x = np.sqrt(sigma_x + 2 * x_tilde * cov[i].dot(x) - x_tilde * x_tilde * var[i])
+            sigma_x = np.sqrt(sigma_x + 2 * x_tilde * cov[i].dot(
+                x) - x_tilde * x_tilde * var[i])
 
         # check convergence
         if np.power((x - x0) / x.sum(), 2).sum() < tolerance:
@@ -1447,7 +1451,8 @@ def _erc_weights_ccd(x0,
         x0 = x.copy()
 
     # no solution found
-    raise ValueError('No solution found after {0} iterations.'.format(maximum_iterations))
+    raise ValueError('No solution found after {0} iterations.'.format(
+        maximum_iterations))
 
 
 def calc_erc_weights(returns,
@@ -1458,8 +1463,8 @@ def calc_erc_weights(returns,
                      maximum_iterations=100,
                      tolerance=1E-8):
     """
-    Calculates the equal risk contribution / risk parity weights given a DataFrame
-    of returns.
+    Calculates the equal risk contribution / risk parity weights given a
+    DataFrame of returns.
 
     Args:
         * returns (DataFrame): Returns for multiple securities.
