@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ffn.utils &mdash; ffn 0.2.1 documentation</title>
+    <title>ffn.utils &#8212; ffn 0.2.2 documentation</title>
     
     <link rel="stylesheet" href="../../_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,18 +14,19 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.1',
+        VERSION:     '0.2.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../../_static/jquery.js"></script>
     <script type="text/javascript" src="../../_static/underscore.js"></script>
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
-    <link rel="top" title="ffn 0.2.1 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
         
@@ -43,30 +44,30 @@
           <div class="body" role="main">
             
   <h1>Source code for ffn.utils</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">re</span>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">decorator</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">cPickle</span> <span class="kn">as</span> <span class="nn">pickle</span>
+    <span class="kn">import</span> <span class="nn">cPickle</span> <span class="k">as</span> <span class="nn">pickle</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pickle</span>
 
 
 <span class="k">def</span> <span class="nf">_memoize</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
-    <span class="c"># should we refresh the cache?</span>
-    <span class="n">refresh</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="c1"># should we refresh the cache?</span>
+    <span class="n">refresh</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">refresh_kw</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">mrefresh_keyword</span>
 
-    <span class="c"># kw is not always set - check args</span>
-    <span class="k">if</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="n">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">refresh_kw</span><span class="p">)]:</span>
-            <span class="n">refresh</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="c1"># kw is not always set - check args</span>
+    <span class="k">if</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">refresh_kw</span><span class="p">)]:</span>
+            <span class="n">refresh</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="c"># check in kw if not already set above</span>
+    <span class="c1"># check in kw if not already set above</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">refresh</span> <span class="ow">and</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">kw</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">kw</span><span class="p">[</span><span class="n">refresh_kw</span><span class="p">]:</span>
-            <span class="n">refresh</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">refresh</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">key</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -78,16 +79,16 @@
         <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../ffn.html#ffn.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">refresh_keyword</span><span class="o">=</span><span class="s">&#39;mrefresh&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../ffn.html#ffn.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">refresh_keyword</span><span class="o">=</span><span class="s1">&#39;mrefresh&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Memoize decorator. The refresh keyword is the keyword</span>
 <span class="sd">    used to bypass the cache (in the function call).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">f</span><span class="o">.</span><span class="n">mcache</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">f</span><span class="o">.</span><span class="n">mrefresh_keyword</span> <span class="o">=</span> <span class="n">refresh_keyword</span>
-    <span class="k">return</span> <span class="n">decorator</span><span class="o">.</span><span class="n">decorator</span><span class="p">(</span><span class="n">_memoize</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decorator</span><span class="o">.</span><span class="n">decorator</span><span class="p">(</span><span class="n">_memoize</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="parse_arg"><a class="viewcode-back" href="../../ffn.html#ffn.utils.parse_arg">[docs]</a><span class="k">def</span> <span class="nf">parse_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Parses arguments for convenience. Argument can be a</span>
@@ -95,20 +96,20 @@
 
 <span class="sd">    Returns a list.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c"># handle string input</span>
+    <span class="c1"># handle string input</span>
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="c"># parse csv as tickers and create children</span>
-        <span class="k">if</span> <span class="s">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
-            <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">)</span>
+        <span class="c1"># parse csv as tickers and create children</span>
+        <span class="k">if</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
             <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">]</span>
-        <span class="c"># assume single string - create single item list</span>
+        <span class="c1"># assume single string - create single item list</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">arg</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="n">arg</span>
+    <span class="k">return</span> <span class="n">arg</span></div>
 
-</div>
+
 <div class="viewcode-block" id="clean_ticker"><a class="viewcode-back" href="../../ffn.html#ffn.utils.clean_ticker">[docs]</a><span class="k">def</span> <span class="nf">clean_ticker</span><span class="p">(</span><span class="n">ticker</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Cleans a ticker for easier use throughout MoneyTree</span>
@@ -121,79 +122,79 @@
 <span class="sd">    &gt;&gt;&gt; clean_ticker(&#39;SPX Index&#39;)</span>
 <span class="sd">    &#39;spx&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">&#39;[\W_]+&#39;</span><span class="p">)</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">ticker</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;[\W_]+&#39;</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">ticker</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
 
-</div>
+
 <div class="viewcode-block" id="clean_tickers"><a class="viewcode-back" href="../../ffn.html#ffn.utils.clean_tickers">[docs]</a><span class="k">def</span> <span class="nf">clean_tickers</span><span class="p">(</span><span class="n">tickers</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Maps clean_ticker over tickers.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">clean_ticker</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tickers</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">clean_ticker</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tickers</span><span class="p">]</span></div>
 
-</div>
+
 <div class="viewcode-block" id="fmtp"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtp">[docs]</a><span class="k">def</span> <span class="nf">fmtp</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Formatting helper - percent</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;-&#39;</span>
-    <span class="k">return</span> <span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s">&#39;.2%&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;-&#39;</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s1">&#39;.2%&#39;</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="fmtpn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtpn">[docs]</a><span class="k">def</span> <span class="nf">fmtpn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Formatting helper - percent no % sign</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;-&#39;</span>
-    <span class="k">return</span> <span class="n">format</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="s">&#39;.2f&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;-&#39;</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;.2f&#39;</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="fmtn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtn">[docs]</a><span class="k">def</span> <span class="nf">fmtn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Formatting helper - float</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;-&#39;</span>
-    <span class="k">return</span> <span class="n">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s">&#39;.2f&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;-&#39;</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s1">&#39;.2f&#39;</span><span class="p">)</span></div>
 
-</div>
+
 <div class="viewcode-block" id="get_freq_name"><a class="viewcode-back" href="../../ffn.html#ffn.utils.get_freq_name">[docs]</a><span class="k">def</span> <span class="nf">get_freq_name</span><span class="p">(</span><span class="n">period</span><span class="p">):</span>
     <span class="n">period</span> <span class="o">=</span> <span class="n">period</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
     <span class="n">periods</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s">&#39;B&#39;</span><span class="p">:</span> <span class="s">&#39;business day&#39;</span><span class="p">,</span>
-        <span class="s">&#39;C&#39;</span><span class="p">:</span> <span class="s">&#39;custom business day&#39;</span><span class="p">,</span>
-        <span class="s">&#39;D&#39;</span><span class="p">:</span> <span class="s">&#39;daily&#39;</span><span class="p">,</span>
-        <span class="s">&#39;W&#39;</span><span class="p">:</span> <span class="s">&#39;weekly&#39;</span><span class="p">,</span>
-        <span class="s">&#39;M&#39;</span><span class="p">:</span> <span class="s">&#39;monthly&#39;</span><span class="p">,</span>
-        <span class="s">&#39;BM&#39;</span><span class="p">:</span> <span class="s">&#39;business month end&#39;</span><span class="p">,</span>
-        <span class="s">&#39;CBM&#39;</span><span class="p">:</span> <span class="s">&#39;custom business month end&#39;</span><span class="p">,</span>
-        <span class="s">&#39;MS&#39;</span><span class="p">:</span> <span class="s">&#39;month start&#39;</span><span class="p">,</span>
-        <span class="s">&#39;BMS&#39;</span><span class="p">:</span> <span class="s">&#39;business month start&#39;</span><span class="p">,</span>
-        <span class="s">&#39;CBMS&#39;</span><span class="p">:</span> <span class="s">&#39;custom business month start&#39;</span><span class="p">,</span>
-        <span class="s">&#39;Q&#39;</span><span class="p">:</span> <span class="s">&#39;quarterly&#39;</span><span class="p">,</span>
-        <span class="s">&#39;BQ&#39;</span><span class="p">:</span> <span class="s">&#39;business quarter end&#39;</span><span class="p">,</span>
-        <span class="s">&#39;QS&#39;</span><span class="p">:</span> <span class="s">&#39;quarter start&#39;</span><span class="p">,</span>
-        <span class="s">&#39;BQS&#39;</span><span class="p">:</span> <span class="s">&#39;business quarter start&#39;</span><span class="p">,</span>
-        <span class="s">&#39;Y&#39;</span><span class="p">:</span> <span class="s">&#39;yearly&#39;</span><span class="p">,</span>
-        <span class="s">&#39;A&#39;</span><span class="p">:</span> <span class="s">&#39;yearly&#39;</span><span class="p">,</span>
-        <span class="s">&#39;BA&#39;</span><span class="p">:</span> <span class="s">&#39;business year end&#39;</span><span class="p">,</span>
-        <span class="s">&#39;AS&#39;</span><span class="p">:</span> <span class="s">&#39;year start&#39;</span><span class="p">,</span>
-        <span class="s">&#39;BAS&#39;</span><span class="p">:</span> <span class="s">&#39;business year start&#39;</span><span class="p">,</span>
-        <span class="s">&#39;H&#39;</span><span class="p">:</span> <span class="s">&#39;hourly&#39;</span><span class="p">,</span>
-        <span class="s">&#39;T&#39;</span><span class="p">:</span> <span class="s">&#39;minutely&#39;</span><span class="p">,</span>
-        <span class="s">&#39;S&#39;</span><span class="p">:</span> <span class="s">&#39;secondly&#39;</span><span class="p">,</span>
-        <span class="s">&#39;L&#39;</span><span class="p">:</span> <span class="s">&#39;milliseonds&#39;</span><span class="p">,</span>
-        <span class="s">&#39;U&#39;</span><span class="p">:</span> <span class="s">&#39;microseconds&#39;</span><span class="p">}</span>
+        <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="s1">&#39;business day&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="s1">&#39;custom business day&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;W&#39;</span><span class="p">:</span> <span class="s1">&#39;weekly&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;monthly&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;BM&#39;</span><span class="p">:</span> <span class="s1">&#39;business month end&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CBM&#39;</span><span class="p">:</span> <span class="s1">&#39;custom business month end&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;MS&#39;</span><span class="p">:</span> <span class="s1">&#39;month start&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;BMS&#39;</span><span class="p">:</span> <span class="s1">&#39;business month start&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CBMS&#39;</span><span class="p">:</span> <span class="s1">&#39;custom business month start&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="s1">&#39;quarterly&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;BQ&#39;</span><span class="p">:</span> <span class="s1">&#39;business quarter end&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;QS&#39;</span><span class="p">:</span> <span class="s1">&#39;quarter start&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;BQS&#39;</span><span class="p">:</span> <span class="s1">&#39;business quarter start&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="s1">&#39;yearly&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="s1">&#39;yearly&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;BA&#39;</span><span class="p">:</span> <span class="s1">&#39;business year end&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;AS&#39;</span><span class="p">:</span> <span class="s1">&#39;year start&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;BAS&#39;</span><span class="p">:</span> <span class="s1">&#39;business year start&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="s1">&#39;minutely&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="s1">&#39;secondly&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;L&#39;</span><span class="p">:</span> <span class="s1">&#39;milliseonds&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;microseconds&#39;</span><span class="p">}</span>
 
     <span class="k">if</span> <span class="n">period</span> <span class="ow">in</span> <span class="n">periods</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">periods</span><span class="p">[</span><span class="n">period</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
 
-</div>
+
 <div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../ffn.html#ffn.utils.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Scale value from src range to dst range.</span>
@@ -210,21 +211,21 @@
     <span class="k">if</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
-    <span class="k">return</span> <span class="p">((</span><span class="n">val</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">*</span> <span class="p">(</span><span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">((</span><span class="n">val</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">*</span> <span class="p">(</span><span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
-</div>
+
 <div class="viewcode-block" id="as_percent"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_percent">[docs]</a><span class="k">def</span> <span class="nf">as_percent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">as_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;.</span><span class="si">%s%%</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">digits</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">as_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;.</span><span class="si">%s%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">digits</span><span class="p">)</span></div>
 
-</div>
-<div class="viewcode-block" id="as_format"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_format">[docs]</a><span class="k">def</span> <span class="nf">as_format</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s">&#39;.2f&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="as_format"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_format">[docs]</a><span class="k">def</span> <span class="nf">as_format</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s1">&#39;.2f&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Map a format string over a pandas object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span></div>
 </pre></div>
 
           </div>
@@ -252,14 +253,11 @@
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="../../search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </aside>

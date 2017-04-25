@@ -1,16 +1,16 @@
 
-.. code:: python
+.. code:: 
 
     import ffn
     #%pylab inline
 
-.. code:: python
+.. code:: 
 
     # download price data from Yahoo! Finance. By default, 
     # the Adj. Close will be used. 
     prices = ffn.get('aapl,msft', start='2010-01-01')
 
-.. code:: python
+.. code:: 
 
     # let's compare the relative performance of each stock 
     # we will rebase here to get a common starting point for both securities
@@ -22,7 +22,7 @@
     :class: pynb
 
 
-.. code:: python
+.. code:: 
 
     # now what do the return distributions look like?
     returns = prices.to_returns().dropna()
@@ -34,7 +34,7 @@
     :class: pynb
 
 
-.. code:: python
+.. code:: 
 
     # ok now what about some performance metrics?
     stats = prices.calc_stats()
@@ -96,7 +96,7 @@
     Win 12m %            76.74%      76.74%
 
 
-.. code:: python
+.. code:: 
 
     # what about the drawdowns?
     ax = stats.prices.to_drawdown_series().plot()

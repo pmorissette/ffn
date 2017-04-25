@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ffn - Financial Functions for Python &mdash; ffn 0.2.1 documentation</title>
+    <title>ffn - Financial Functions for Python &#8212; ffn 0.2.2 documentation</title>
     
     <link rel="stylesheet" href="_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,18 +14,20 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.1',
+        VERSION:     '0.2.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="shortcut icon" href="_static/favicon.ico"/>
-    <link rel="top" title="ffn 0.2.1 documentation" href="#" />
-    <link rel="next" title="ffn - Financial Functions for Python" href="" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation Guide" href="install.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
         
@@ -53,92 +55,92 @@ and fast to backtest quantitative strategies.</p>
 <div class="section" id="a-brief-introduction">
 <h2>A Brief Introduction<a class="headerlink" href="#a-brief-introduction" title="Permalink to this headline">¶</a></h2>
 <p>Here is a brief introduction to the capabilities of ffn:</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">ffn</span>
-<span class="c">#%pylab inline</span>
+<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ffn</span>
+<span class="c1">#%pylab inline</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># download price data from Yahoo! Finance. By default,</span>
-<span class="c"># the Adj. Close will be used.</span>
-<span class="n">prices</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;aapl,msft&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s">&#39;2010-01-01&#39;</span><span class="p">)</span>
+<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="c1"># download price data from Yahoo! Finance. By default,</span>
+<span class="c1"># the Adj. Close will be used.</span>
+<span class="n">prices</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;aapl,msft&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">&#39;2010-01-01&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># let&#39;s compare the relative performance of each stock</span>
-<span class="c"># we will rebase here to get a common starting point for both securities</span>
+<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s compare the relative performance of each stock</span>
+<span class="c1"># we will rebase here to get a common starting point for both securities</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">rebase</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="_images/intro_2_0.png" class="pynb" src="_images/intro_2_0.png" />
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># now what do the return distributions look like?</span>
+<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="c1"># now what do the return distributions look like?</span>
 <span class="n">returns</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">figsize</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 </pre></div>
 </div>
 <img alt="_images/intro_3_0.png" class="pynb" src="_images/intro_3_0.png" />
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># ok now what about some performance metrics?</span>
+<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="c1"># ok now what about some performance metrics?</span>
 <span class="n">stats</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">calc_stats</span><span class="p">()</span>
 <span class="n">stats</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-python"><div class="highlight"><pre>Stat                 aapl        msft
--------------------  ----------  ----------
-Start                2010-01-04  2010-01-04
-End                  2014-06-19  2014-06-19
+<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span><span class="n">Stat</span>                 <span class="n">aapl</span>        <span class="n">msft</span>
+<span class="o">-------------------</span>  <span class="o">----------</span>  <span class="o">----------</span>
+<span class="n">Start</span>                <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>
+<span class="n">End</span>                  <span class="mi">2014</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">19</span>  <span class="mi">2014</span><span class="o">-</span><span class="mi">06</span><span class="o">-</span><span class="mi">19</span>
 
-Total Return         214.37%     51.06%
-Daily Sharpe         1.08        0.52
-CAGR                 29.32%      9.70%
-Max Drawdown         -43.80%     -26.36%
+<span class="n">Total</span> <span class="n">Return</span>         <span class="mf">214.37</span><span class="o">%</span>     <span class="mf">51.06</span><span class="o">%</span>
+<span class="n">Daily</span> <span class="n">Sharpe</span>         <span class="mf">1.08</span>        <span class="mf">0.52</span>
+<span class="n">CAGR</span>                 <span class="mf">29.32</span><span class="o">%</span>      <span class="mf">9.70</span><span class="o">%</span>
+<span class="n">Max</span> <span class="n">Drawdown</span>         <span class="o">-</span><span class="mf">43.80</span><span class="o">%</span>     <span class="o">-</span><span class="mf">26.36</span><span class="o">%</span>
 
-MTD                  1.58%       1.39%
-3m                   21.72%      6.46%
-6m                   19.47%      16.18%
-YTD                  15.94%      12.58%
-1Y                   55.69%      23.54%
-3Y (ann.)            28.75%      22.76%
-5Y (ann.)            29.32%      9.70%
-10Y (ann.)           29.32%      9.70%
-Since Incep. (ann.)  29.32%      9.70%
+<span class="n">MTD</span>                  <span class="mf">1.58</span><span class="o">%</span>       <span class="mf">1.39</span><span class="o">%</span>
+<span class="mi">3</span><span class="n">m</span>                   <span class="mf">21.72</span><span class="o">%</span>      <span class="mf">6.46</span><span class="o">%</span>
+<span class="mi">6</span><span class="n">m</span>                   <span class="mf">19.47</span><span class="o">%</span>      <span class="mf">16.18</span><span class="o">%</span>
+<span class="n">YTD</span>                  <span class="mf">15.94</span><span class="o">%</span>      <span class="mf">12.58</span><span class="o">%</span>
+<span class="mi">1</span><span class="n">Y</span>                   <span class="mf">55.69</span><span class="o">%</span>      <span class="mf">23.54</span><span class="o">%</span>
+<span class="mi">3</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>            <span class="mf">28.75</span><span class="o">%</span>      <span class="mf">22.76</span><span class="o">%</span>
+<span class="mi">5</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>            <span class="mf">29.32</span><span class="o">%</span>      <span class="mf">9.70</span><span class="o">%</span>
+<span class="mi">10</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>           <span class="mf">29.32</span><span class="o">%</span>      <span class="mf">9.70</span><span class="o">%</span>
+<span class="n">Since</span> <span class="n">Incep</span><span class="o">.</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>  <span class="mf">29.32</span><span class="o">%</span>      <span class="mf">9.70</span><span class="o">%</span>
 
-Daily Sharpe         1.08        0.52
-Daily Mean (ann.)    29.48%      11.81%
-Daily Vol (ann.)     27.35%      22.54%
-Daily Skew           -0.12       -0.21
-Daily Kurt           4.76        5.21
-Best Day             8.88%       7.29%
-Worst Day            -12.36%     -11.39%
+<span class="n">Daily</span> <span class="n">Sharpe</span>         <span class="mf">1.08</span>        <span class="mf">0.52</span>
+<span class="n">Daily</span> <span class="n">Mean</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>    <span class="mf">29.48</span><span class="o">%</span>      <span class="mf">11.81</span><span class="o">%</span>
+<span class="n">Daily</span> <span class="n">Vol</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>     <span class="mf">27.35</span><span class="o">%</span>      <span class="mf">22.54</span><span class="o">%</span>
+<span class="n">Daily</span> <span class="n">Skew</span>           <span class="o">-</span><span class="mf">0.12</span>       <span class="o">-</span><span class="mf">0.21</span>
+<span class="n">Daily</span> <span class="n">Kurt</span>           <span class="mf">4.76</span>        <span class="mf">5.21</span>
+<span class="n">Best</span> <span class="n">Day</span>             <span class="mf">8.88</span><span class="o">%</span>       <span class="mf">7.29</span><span class="o">%</span>
+<span class="n">Worst</span> <span class="n">Day</span>            <span class="o">-</span><span class="mf">12.36</span><span class="o">%</span>     <span class="o">-</span><span class="mf">11.39</span><span class="o">%</span>
 
-Monthly Sharpe       1.24        0.64
-Monthly Mean (ann.)  31.91%      13.76%
-Monthly Vol (ann.)   25.72%      21.41%
-Monthly Skew         -0.00       -0.08
-Monthly Kurt         -0.06       0.24
-Best Month           18.84%      15.69%
-Worst Month          -14.40%     -15.12%
+<span class="n">Monthly</span> <span class="n">Sharpe</span>       <span class="mf">1.24</span>        <span class="mf">0.64</span>
+<span class="n">Monthly</span> <span class="n">Mean</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>  <span class="mf">31.91</span><span class="o">%</span>      <span class="mf">13.76</span><span class="o">%</span>
+<span class="n">Monthly</span> <span class="n">Vol</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>   <span class="mf">25.72</span><span class="o">%</span>      <span class="mf">21.41</span><span class="o">%</span>
+<span class="n">Monthly</span> <span class="n">Skew</span>         <span class="o">-</span><span class="mf">0.00</span>       <span class="o">-</span><span class="mf">0.08</span>
+<span class="n">Monthly</span> <span class="n">Kurt</span>         <span class="o">-</span><span class="mf">0.06</span>       <span class="mf">0.24</span>
+<span class="n">Best</span> <span class="n">Month</span>           <span class="mf">18.84</span><span class="o">%</span>      <span class="mf">15.69</span><span class="o">%</span>
+<span class="n">Worst</span> <span class="n">Month</span>          <span class="o">-</span><span class="mf">14.40</span><span class="o">%</span>     <span class="o">-</span><span class="mf">15.12</span><span class="o">%</span>
 
-Yearly Sharpe        1.91        0.69
-Yearly Mean          20.54%      14.54%
-Yearly Vol           10.75%      21.05%
-Yearly Skew          -0.09       1.34
-Yearly Kurt          -1.97       2.16
-Best Year            32.57%      44.31%
-Worst Year           8.08%       -4.51%
+<span class="n">Yearly</span> <span class="n">Sharpe</span>        <span class="mf">1.91</span>        <span class="mf">0.69</span>
+<span class="n">Yearly</span> <span class="n">Mean</span>          <span class="mf">20.54</span><span class="o">%</span>      <span class="mf">14.54</span><span class="o">%</span>
+<span class="n">Yearly</span> <span class="n">Vol</span>           <span class="mf">10.75</span><span class="o">%</span>      <span class="mf">21.05</span><span class="o">%</span>
+<span class="n">Yearly</span> <span class="n">Skew</span>          <span class="o">-</span><span class="mf">0.09</span>       <span class="mf">1.34</span>
+<span class="n">Yearly</span> <span class="n">Kurt</span>          <span class="o">-</span><span class="mf">1.97</span>       <span class="mf">2.16</span>
+<span class="n">Best</span> <span class="n">Year</span>            <span class="mf">32.57</span><span class="o">%</span>      <span class="mf">44.31</span><span class="o">%</span>
+<span class="n">Worst</span> <span class="n">Year</span>           <span class="mf">8.08</span><span class="o">%</span>       <span class="o">-</span><span class="mf">4.51</span><span class="o">%</span>
 
-Avg. Drawdown        -4.47%      -4.00%
-Avg. Drawdown Days   31.46       52.13
-Avg. Up Month        6.76%       5.23%
-Avg. Down Month      -4.69%      -4.61%
-Win Year %           100.00%     75.00%
-Win 12m %            76.74%      76.74%
+<span class="n">Avg</span><span class="o">.</span> <span class="n">Drawdown</span>        <span class="o">-</span><span class="mf">4.47</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.00</span><span class="o">%</span>
+<span class="n">Avg</span><span class="o">.</span> <span class="n">Drawdown</span> <span class="n">Days</span>   <span class="mf">31.46</span>       <span class="mf">52.13</span>
+<span class="n">Avg</span><span class="o">.</span> <span class="n">Up</span> <span class="n">Month</span>        <span class="mf">6.76</span><span class="o">%</span>       <span class="mf">5.23</span><span class="o">%</span>
+<span class="n">Avg</span><span class="o">.</span> <span class="n">Down</span> <span class="n">Month</span>      <span class="o">-</span><span class="mf">4.69</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.61</span><span class="o">%</span>
+<span class="n">Win</span> <span class="n">Year</span> <span class="o">%</span>           <span class="mf">100.00</span><span class="o">%</span>     <span class="mf">75.00</span><span class="o">%</span>
+<span class="n">Win</span> <span class="mi">12</span><span class="n">m</span> <span class="o">%</span>            <span class="mf">76.74</span><span class="o">%</span>      <span class="mf">76.74</span><span class="o">%</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># what about the drawdowns?</span>
+<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="c1"># what about the drawdowns?</span>
 <span class="n">ax</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">to_drawdown_series</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="_images/intro_5_0.png" class="pynb" src="_images/intro_5_0.png" />
 <div class="toctree-wrapper compound">
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Overview</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#a-brief-introduction">A Brief Introduction</a></li>
 </ul>
 </li>
@@ -173,7 +175,7 @@ Win 12m %            76.74%      76.74%
             
             
             <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Overview</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#a-brief-introduction">A Brief Introduction</a></li>
 </ul>
 </li>
@@ -191,14 +193,11 @@ Win 12m %            76.74%      76.74%
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
-    Enter search terms or a module, class or function name.
-    </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </aside>
