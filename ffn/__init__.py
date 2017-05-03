@@ -7,4 +7,4 @@ from .core import *
 
 core.extend_pandas()
 
-__version__ = (0, 2, 2)
+__version__ = (0, 2, 3)

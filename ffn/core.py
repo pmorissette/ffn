@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from pandas.core.base import PandasObject
 from tabulate import tabulate
-from matplotlib import pyplot as plt
 import sklearn.manifold
 import sklearn.cluster
 import sklearn.covariance
@@ -18,6 +17,15 @@ try:
     import prettyplotlib  # NOQA
 except ImportError:
     pass
+
+# avoid pyplot import failure in headless environment
+import os
+import matplotlib
+
+if 'DISPLAY' not in os.environ:
+    matplotlib.use('agg')
+
+from matplotlib import pyplot as plt  # noqa
 
 
 class PerformanceStats(object):
