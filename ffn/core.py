@@ -23,7 +23,7 @@ import os
 import matplotlib
 
 if 'DISPLAY' not in os.environ:
-    matplotlib.use('agg')
+    matplotlib.use('agg', warn=False)
 
 from matplotlib import pyplot as plt  # noqa
 
