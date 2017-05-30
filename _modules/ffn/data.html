@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ffn.data &#8212; ffn 0.2.2 documentation</title>
+    <title>ffn.data &#8212; ffn 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.2',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -48,6 +48,7 @@
 <span class="kn">import</span> <span class="nn">ffn.utils</span> <span class="k">as</span> <span class="nn">utils</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">pandas_datareader</span> <span class="k">import</span> <span class="n">data</span> <span class="k">as</span> <span class="n">pdata</span>
+<span class="kn">import</span> <span class="nn">fix_yahoo_finance</span>  <span class="c1"># noqa</span>
 
 
 <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
@@ -160,6 +161,22 @@
 
 
 <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+<div class="viewcode-block" id="yf"><a class="viewcode-back" href="../../ffn.html#ffn.data.yf">[docs]</a><span class="k">def</span> <span class="nf">yf</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="s1">&#39;Adj Close&#39;</span>
+
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">pdata</span><span class="o">.</span><span class="n">get_data_yahoo</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tmp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;failed to retrieve data for </span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tmp</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tmp</span></div>
+
+
+<span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
 <div class="viewcode-block" id="csv"><a class="viewcode-back" href="../../ffn.html#ffn.data.csv">[docs]</a><span class="k">def</span> <span class="nf">csv</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;data.csv&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Data provider wrapper around pandas&#39; read_csv. Provides memoization.</span>
@@ -184,7 +201,7 @@
     <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">tf</span><span class="p">]</span></div>
 
 
-<span class="n">DEFAULT_PROVIDER</span> <span class="o">=</span> <span class="n">web</span>
+<span class="n">DEFAULT_PROVIDER</span> <span class="o">=</span> <span class="n">yf</span>
 </pre></div>
 
           </div>

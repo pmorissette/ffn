@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>API &#8212; ffn 0.2.2 documentation</title>
+    <title>API &#8212; ffn 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     '0.2.2',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -1062,10 +1062,8 @@ in a year.</p>
 <span id="data-module"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">data</span></code> Module<a class="headerlink" href="#module-ffn.data" title="Permalink to this headline">¶</a></h2>
 <dl class="function">
 <dt id="ffn.data.DEFAULT_PROVIDER">
-<code class="descclassname">ffn.data.</code><code class="descname">DEFAULT_PROVIDER</code><span class="sig-paren">(</span><em>ticker</em>, <em>field=None</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em>, <em>source='yahoo'</em><span class="sig-paren">)</span><a class="headerlink" href="#ffn.data.DEFAULT_PROVIDER" title="Permalink to this definition">¶</a></dt>
-<dd><p>Data provider wrapper around pandas.io.data provider. Provides
-memoization.</p>
-</dd></dl>
+<code class="descclassname">ffn.data.</code><code class="descname">DEFAULT_PROVIDER</code><span class="sig-paren">(</span><em>ticker</em>, <em>field</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ffn.data.DEFAULT_PROVIDER" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="function">
 <dt id="ffn.data.csv">
@@ -1129,6 +1127,11 @@ want: AAPL:Low,AAPL:High,AAPL:Close. &#8216;:&#8217; is the separator.</dd>
 <dd><p>Data provider wrapper around pandas.io.data provider. Provides
 memoization.</p>
 </dd></dl>
+
+<dl class="function">
+<dt id="ffn.data.yf">
+<code class="descclassname">ffn.data.</code><code class="descname">yf</code><span class="sig-paren">(</span><em>ticker</em>, <em>field</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#yf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.yf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 <div class="section" id="module-ffn.utils">

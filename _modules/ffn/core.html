@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>ffn.core &#8212; ffn 0.2.2 documentation</title>
+    <title>ffn.core &#8212; ffn 0.3.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/css/klink.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.2.2',
+        VERSION:     '0.3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true,
@@ -53,7 +53,6 @@
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="kn">from</span> <span class="nn">pandas.core.base</span> <span class="k">import</span> <span class="n">PandasObject</span>
 <span class="kn">from</span> <span class="nn">tabulate</span> <span class="k">import</span> <span class="n">tabulate</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 <span class="kn">import</span> <span class="nn">sklearn.manifold</span>
 <span class="kn">import</span> <span class="nn">sklearn.cluster</span>
 <span class="kn">import</span> <span class="nn">sklearn.covariance</span>
@@ -64,6 +63,15 @@
     <span class="kn">import</span> <span class="nn">prettyplotlib</span>  <span class="c1"># NOQA</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="k">pass</span>
+
+<span class="c1"># avoid pyplot import failure in headless environment</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+
+<span class="k">if</span> <span class="s1">&#39;DISPLAY&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+    <span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;agg&#39;</span><span class="p">,</span> <span class="n">warn</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>  <span class="c1"># noqa</span>
 
 
 <div class="viewcode-block" id="PerformanceStats"><a class="viewcode-back" href="../../ffn.html#ffn.core.PerformanceStats">[docs]</a><span class="k">class</span> <span class="nc">PerformanceStats</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
