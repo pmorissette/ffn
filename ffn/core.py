@@ -1346,7 +1346,8 @@ def calc_inv_vol_weights(returns):
 
 def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
                           rf=0.,
-                          covar_method='ledoit-wolf'):
+                          covar_method='ledoit-wolf',
+                          options=None):
     """
     Calculates the mean-variance weights given a DataFrame of returns.
 
@@ -1358,6 +1359,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
             Currently supported:
                 - ledoit-wolf
                 - standard
+        * options (dict): options for minimizing, e.g. {'maxiter': 10000 }
 
     Returns:
         Series {col_name: weight}
@@ -1393,7 +1395,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
     constraints = ({'type': 'eq', 'fun': lambda W: sum(W) - 1.})
     optimized = minimize(fitness, weights, (exp_rets, covar, rf),
                          method='SLSQP', constraints=constraints,
-                         bounds=bounds)
+                         bounds=bounds, options=options)
     # check if success
     if not optimized.success:
         raise Exception(optimized.message)
