@@ -2,6 +2,7 @@ import ffn
 import ffn.utils as utils
 import pandas as pd
 from pandas_datareader import data as pdata
+import fix_yahoo_finance  # noqa
 
 
 @utils.memoize
@@ -114,6 +115,22 @@ def _download_web(name, **kwargs):
 
 
 @utils.memoize
+def yf(ticker, field, start=None, end=None, mrefresh=False):
+    if field is None:
+        field = 'Adj Close'
+
+    tmp = pdata.get_data_yahoo(ticker, start=start, end=end)
+
+    if tmp is None:
+        raise ValueError('failed to retrieve data for %s:%s' % (ticker, field))
+
+    if field:
+        return tmp[field]
+    else:
+        return tmp
+
+
+@utils.memoize
 def csv(ticker, path='data.csv', field='', mrefresh=False, **kwargs):
     """
     Data provider wrapper around pandas' read_csv. Provides memoization.
@@ -138,4 +155,4 @@ def csv(ticker, path='data.csv', field='', mrefresh=False, **kwargs):
     return df[tf]
 
 
-DEFAULT_PROVIDER = web
+DEFAULT_PROVIDER = yf
