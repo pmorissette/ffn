@@ -1735,6 +1735,8 @@ def limit_weights(weights, limit=0.1):
     Limits weights and redistributes excedent amount
     proportionally.
 
+    Note that the method works only for positive weights.
+
     ex:
         - weights are {a: 0.7, b: 0.2, c: 0.1}
         - call with limit=0.5
@@ -1760,7 +1762,10 @@ def limit_weights(weights, limit=0.1):
     to_rebalance = (res[res > limit] - limit).sum()
 
     ok = res[res < limit]
-    ok += (ok / ok.sum()) * to_rebalance
+    if all(ok == 0):
+        ok += to_rebalance / float(len(ok))
+    else:
+        ok += (ok / ok.sum()) * to_rebalance
 
     res[res > limit] = limit
     res[res < limit] = ok
