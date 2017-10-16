@@ -2,7 +2,6 @@ import ffn
 import ffn.utils as utils
 import pandas as pd
 from pandas_datareader import data as pdata
-import fix_yahoo_finance  # noqa
 
 
 @utils.memoize
