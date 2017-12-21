@@ -1,9 +1,12 @@
 import ffn
 import pandas as pd
 import numpy as np
+import os.path
 from numpy.testing import assert_almost_equal as aae
 
-df = pd.read_csv('tests/data/test_data.csv', index_col=0, parse_dates=True)
+data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data')
+data_path = os.path.join(data_dir, 'test_data.csv')
+df = pd.read_csv(data_path, index_col=0, parse_dates=True)
 ts = df['AAPL'][0:10]
 
 
