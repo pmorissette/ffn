@@ -1,4 +1,4 @@
-import setuptools
+from setuptools import setup
 import codecs
 import os
 import re
@@ -11,13 +11,13 @@ def local_file(filename):
 
 
 version = re.search(
-    "^__version__ = \((\d+), (\d+), (\d+)\)$",
-    local_file('ffn/__init__.py').read(),
+    "^__version__ = \((\d+), (\d+), (\d+)\)",
+    local_file(os.path.join('ffn', '__init__.py')).read(),
     re.MULTILINE
 ).groups()
 
 
-setuptools.setup(
+setup(
     name="ffn",
     version='.'.join(version),
     author='Philippe Morissette',
