@@ -1180,7 +1180,11 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
         raise Exception('Must provide nperiods if rf != 0')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-    res = er.mean() / er.std()
+
+    try:
+        res = er.mean() / er.std()
+    except ZeroDivisionError:
+        return np.nan
 
     if annualize:
         if nperiods is None:

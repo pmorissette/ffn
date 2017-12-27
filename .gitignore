@@ -56,8 +56,11 @@ docs/_build/
 # vim .swp
 *.swp
 
-#ipython notebook files
+# ipython notebook files
 .ipynb_checkpoints/
 
 # css files
 docs/source/_themes/klink/static/css
+
+# ignore PyCharm and IntelliJ project metadata
+/.idea/
