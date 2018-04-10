@@ -187,7 +187,8 @@ class PerformanceStats(object):
 
         self.daily_mean = r.mean() * 252
         self.daily_vol = r.std() * np.sqrt(252)
-        self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
+        if self.daily_vol != 0:
+            self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
         self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
         self.best_day = r.max()
         self.worst_day = r.min()
@@ -226,7 +227,8 @@ class PerformanceStats(object):
 
         self.monthly_mean = mr.mean() * 12
         self.monthly_vol = mr.std() * np.sqrt(12)
-        self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
+        if self.monthly_vol != 0:
+            self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
         self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
         self.best_month = mr.max()
         self.worst_month = mr.min()
