@@ -1795,7 +1795,7 @@ def limit_weights(weights, limit=0.1):
     res[res > limit] = limit
     res[res < limit] = ok
 
-    if not np.all([x <= limit for x in res]):
+    if any(x > limit for x in res):
         return limit_weights(res, limit=limit)
 
     return res

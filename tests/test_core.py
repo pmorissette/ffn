@@ -308,29 +308,20 @@ def test_drop_duplicate_cols():
 def test_limit_weights():
     w = {'a': 0.3, 'b': 0.1,
          'c': 0.05, 'd': 0.05, 'e': 0.5}
-
+    actual_exp = {'a': 0.3, 'b': 0.2, 'c': 0.1,
+                  'd': 0.1, 'e': 0.3}
     actual = ffn.core.limit_weights(w, 0.3)
 
     assert actual.sum() == 1.0
+    for k in actual_exp:
+        assert actual[k] == actual_exp[k]
 
-    assert actual['a'] == 0.3
-    assert actual['b'] == 0.2
-    assert actual['c'] == 0.1
-    assert actual['d'] == 0.1
-    assert actual['e'] == 0.3
-
-    w = pd.Series({'a': 0.3, 'b': 0.1,
-                   'c': 0.05, 'd': 0.05, 'e': 0.5})
-
+    w = pd.Series(w)
     actual = ffn.core.limit_weights(w, 0.3)
 
     assert actual.sum() == 1.0
-
-    assert actual['a'] == 0.3
-    assert actual['b'] == 0.2
-    assert actual['c'] == 0.1
-    assert actual['d'] == 0.1
-    assert actual['e'] == 0.3
+    for k in actual_exp:
+        assert actual[k] == actual_exp[k]
 
     w = pd.Series({'a': 0.29, 'b': 0.1,
                    'c': 0.06, 'd': 0.05, 'e': 0.5})
