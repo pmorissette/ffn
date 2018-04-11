@@ -40,7 +40,7 @@ class PerformanceStats(object):
         * prices (Series): A price series.
         * rf (float, Series): Risk-free rate used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a float. Otherwise
-            rf should a price series.
+            rf should be a price series.
 
     Attributes:
         * name (str): Name, derived from price series name
@@ -314,7 +314,7 @@ class PerformanceStats(object):
             if self.yearly_vol > 0:
                 self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
             self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
-        #rf is a price series
+        # rf is a price series
         else:
             _rf_yearly_price_returns = self.rf.resample('A').last().to_returns()
             if self.yearly_vol > 0:
@@ -357,6 +357,7 @@ class PerformanceStats(object):
     def _stats(self):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
+                 ('rf', 'Risk-free rate', 'p'),
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
@@ -440,7 +441,7 @@ class PerformanceStats(object):
         provided.
         """
         print('Stats for %s from %s - %s' % (self.name, self.start, self.end))
-        if type(rf) is float:
+        if type(self.rf) is float:
             print('Annual risk-free rate considered: %s' % (fmtp(self.rf)))
         print('Summary:')
         data = [[fmtp(self.total_return), fmtn(self.daily_sharpe),
@@ -592,6 +593,8 @@ class PerformanceStats(object):
                 row = [''] * len(data[0])
                 data.append(sep.join(row))
                 continue
+            elif k == 'rf' and not type(self.rf) == float:
+                continue
 
             row = [n]
             raw = getattr(self, k)
@@ -694,6 +697,7 @@ class GroupStats(dict):
     def _stats(self):
         stats = [('start', 'Start', 'dt'),
                  ('end', 'End', 'dt'),
+                 ('rf', 'Risk-free rate', 'p'),
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
                  ('daily_sharpe', 'Daily Sharpe', 'n'),
@@ -807,6 +811,8 @@ class GroupStats(dict):
             if k is None:
                 row = [''] * len(data[0])
                 data.append(row)
+                continue
+            elif k == 'rf' and not type(self.rf) == float:
                 continue
 
             row = [n]
