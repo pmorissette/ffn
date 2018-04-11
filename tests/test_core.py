@@ -665,6 +665,8 @@ def test_set_riskfree_rate():
     )
 
 
+def test_group_stats_calc_stats():
+    stats = df.calc_stats()
 
 
 
