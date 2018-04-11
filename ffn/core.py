@@ -1203,7 +1203,12 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
         raise Exception('Must provide nperiods if rf != 0')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-    res = er.mean() / er.std()
+
+    std = er.std()
+    if std == 0.:
+        return np.NaN
+
+    res = er.mean() / std
 
     if annualize:
         if nperiods is None:
@@ -2003,7 +2008,12 @@ def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
         raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-    res = er.mean() / er[er < 0].std()
+
+    std = er[er < 0].std()
+    if std == 0.:
+        return np.NaN
+
+    res = er.mean() / std
 
     if annualize:
         if nperiods is None:
