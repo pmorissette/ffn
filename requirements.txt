@@ -1,0 +1,10 @@
+future
+ipython
+numpy
+pandas
+tabulate
+pandas_datareader
+decorator
+scikit-learn
+scipy
+coverage
