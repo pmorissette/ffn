@@ -587,3 +587,91 @@ def test_to_excess_returns():
                 r.to_excess_returns(ffn.deannualize(rf, 252)))
 
     np.allclose(r.to_excess_returns(rf), r - rf)
+
+def test_set_riskfree_rate():
+    r = df.to_returns()
+
+    performanceStats = ffn.PerformanceStats(df['MSFT'])
+
+    daily_returns = df['MSFT'].pct_change()
+    aae(
+        performanceStats.daily_sharpe,
+        daily_returns.dropna().mean() / (daily_returns.dropna().std()) * (np.sqrt(252)),
+        3
+    )
+
+    monthly_returns = df['MSFT'].resample('M').last().pct_change()
+    aae(
+        performanceStats.monthly_sharpe,
+        monthly_returns.dropna().mean() / (monthly_returns.dropna().std()) * (np.sqrt(12)),
+        3
+    )
+
+    yearly_returns = df['MSFT'].resample('A').last().pct_change()
+    aae(
+        performanceStats.yearly_sharpe,
+        yearly_returns.dropna().mean() / (yearly_returns.dropna().std()) * (np.sqrt(1)),
+        3
+    )
+
+    performanceStats.set_riskfree_rate(0.02)
+
+    daily_returns = df['MSFT'].pct_change()
+    aae(
+        performanceStats.daily_sharpe,
+        np.mean(daily_returns.dropna() - 0.02/252)/ (daily_returns.dropna().std()) * (np.sqrt(252)),
+        3
+    )
+
+    monthly_returns = df['MSFT'].resample('M').last().pct_change()
+    aae(
+        performanceStats.monthly_sharpe,
+        np.mean(monthly_returns.dropna() - 0.02/12) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
+        3
+    )
+
+    yearly_returns = df['MSFT'].resample('A').last().pct_change()
+    aae(
+        performanceStats.yearly_sharpe,
+        np.mean(yearly_returns.dropna() - 0.02/1) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
+        3
+    )
+
+    rf = np.zeros(df.shape[0])
+    #annual rf is 2%
+    rf[1:] = 0.02/252
+    rf[0] = 0.
+    #convert to price series
+    rf = 100*np.cumprod(1+pd.Series(data=rf, index=df.index, name='rf'))
+
+    performanceStats.set_riskfree_rate(rf)
+
+    daily_returns = df['MSFT'].pct_change()
+    rf_daily_returns = rf.pct_change()
+    aae(
+        performanceStats.daily_sharpe,
+        np.mean(daily_returns-rf_daily_returns) / (daily_returns.dropna().std()) * (np.sqrt(252)),
+        3
+    )
+
+    monthly_returns = df['MSFT'].resample('M').last().pct_change()
+    rf_monthly_returns = rf.resample('M').last().pct_change()
+    aae(
+        performanceStats.monthly_sharpe,
+        np.mean(monthly_returns-rf_monthly_returns) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
+        3
+    )
+
+    yearly_returns = df['MSFT'].resample('A').last().pct_change()
+    rf_yearly_returns = rf.resample('A').last().pct_change()
+    aae(
+        performanceStats.yearly_sharpe,
+        np.mean(yearly_returns-rf_yearly_returns) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
+        3
+    )
+
+
+
+
+
+
