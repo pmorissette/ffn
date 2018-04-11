@@ -812,13 +812,15 @@ class GroupStats(dict):
                 row = [''] * len(data[0])
                 data.append(row)
                 continue
-            elif k == 'rf' and not type(self.rf) == float:
-                continue
 
             row = [n]
             for key in self._names:
                 raw = getattr(self[key], k)
-                if f is None:
+
+                # if rf is a series print nan
+                if k == 'rf' and not type(raw) == float:
+                    row.append(np.nan)
+                elif f is None:
                     row.append(raw)
                 elif f == 'p':
                     row.append(fmtp(raw))
