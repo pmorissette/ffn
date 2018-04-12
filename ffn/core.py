@@ -98,10 +98,7 @@ class PerformanceStats(object):
             ['mtd', '3m', '6m', 'ytd', '1y', '3y', '5y', '10y', 'incep'])
         self.lookback_returns.name = self.name
 
-        st = self._stats()
-        self.stats = pd.Series(
-            [getattr(self, x[0]) for x in st if x[0] is not None],
-            [x[0] for x in st if x[0] is not None]).drop_duplicates()
+        self.stats = self._create_stats_series()
 
     def _calculate(self, obj):
         # default values
@@ -567,6 +564,26 @@ class PerformanceStats(object):
         if freq == 'y':
             freq = 'a'
         return self.daily_prices.asfreq(freq, 'ffill')
+
+    def _create_stats_series(self):
+        stats = self._stats()
+
+        short_names = []
+        values = []
+
+        for stat in stats:
+            k, n, f = stat
+
+            # blank row
+            if k is None:
+                continue
+            elif k == 'rf' and not type(self.rf) == float:
+                continue
+
+            short_names.append(k)
+            raw = getattr(self, k)
+            values.append(raw)
+        return pd.Series(values, short_names).drop_duplicates()
 
     def to_csv(self, sep=',', path=None):
         """
