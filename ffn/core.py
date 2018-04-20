@@ -2071,7 +2071,7 @@ def calc_calmar_ratio(prices):
         * prices (Series, DataFrame): Price series
 
     """
-    return prices.calc_cagr() / abs(prices.calc_max_drawdown())
+    return np.divide(prices.calc_cagr(), abs(prices.calc_max_drawdown()))
 
 
 def to_ulcer_index(prices):
@@ -2085,7 +2085,7 @@ def to_ulcer_index(prices):
 
     """
     dd = prices.to_drawdown_series()
-    return np.sqrt(np.sum(dd ** 2)) / dd.count()
+    return np.divide(np.sqrt(np.sum(np.power(dd, 2))),dd.count())
 
 
 def to_ulcer_performance_index(prices, rf=0., nperiods=None):
@@ -2106,7 +2106,7 @@ def to_ulcer_performance_index(prices, rf=0., nperiods=None):
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
 
-    return er.mean() / prices.to_ulcer_index()
+    return np.divide(er.mean(), prices.to_ulcer_index())
 
 
 def extend_pandas():
