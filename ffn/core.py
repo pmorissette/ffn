@@ -392,7 +392,7 @@ class PerformanceStats(object):
                  ('worst_month', 'Worst Month', 'p'),
                  (None, None, None),
                  ('yearly_sharpe', 'Yearly Sharpe', 'n'),
-                 ('yearly_sharpe', 'Yearly Sortino', 'n'),
+                 ('yearly_sortino', 'Yearly Sortino', 'n'),
                  ('yearly_mean', 'Yearly Mean', 'p'),
                  ('yearly_vol', 'Yearly Vol', 'p'),
                  ('yearly_skew', 'Yearly Skew', 'n'),
@@ -580,10 +580,13 @@ class PerformanceStats(object):
             elif k == 'rf' and not type(self.rf) == float:
                 continue
 
+            if n in short_names:
+                continue
+
             short_names.append(k)
             raw = getattr(self, k)
             values.append(raw)
-        return pd.Series(values, short_names).drop_duplicates()
+        return pd.Series(values, short_names)
 
     def to_csv(self, sep=',', path=None):
         """
