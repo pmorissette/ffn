@@ -3,7 +3,14 @@ import pandas as pd
 import numpy as np
 from numpy.testing import assert_almost_equal as aae
 
-df = pd.read_csv('tests/data/test_data.csv', index_col=0, parse_dates=True)
+try:
+    df = pd.read_csv('tests/data/test_data.csv', index_col=0, parse_dates=True)
+except FileNotFoundError as e:
+    try:
+        df = pd.read_csv('data/test_data.csv', index_col=0, parse_dates=True)
+    except FileNotFoundError as e2:
+        raise(str(e2))
+
 ts = df['AAPL'][0:10]
 
 
@@ -509,11 +516,11 @@ def test_calc_sortino_ratio():
     r = df.to_returns()
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
     negative_returns = np.minimum(r,0)
-    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns)) * np.sqrt(p))
+    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns,ddof=1)) * np.sqrt(p))
 
     a = r.calc_sortino_ratio()
     negative_returns = np.minimum(r, 0)
-    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns)) * np.sqrt(p))
+    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns,ddof=1)) * np.sqrt(p))
 
     rf = 0.02
     p = 252
@@ -522,7 +529,7 @@ def test_calc_sortino_ratio():
 
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
     negative_returns = np.minimum(r, 0)
-    assert np.allclose(a, np.divide(er.mean(), np.std(negative_returns)) * np.sqrt(p))
+    assert np.allclose(a, np.divide(er.mean(), np.std(negative_returns,ddof=1)) * np.sqrt(p))
 
 
 def test_calmar_ratio():
