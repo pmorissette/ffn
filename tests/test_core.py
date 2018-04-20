@@ -544,18 +544,19 @@ def test_calc_stats():
     # test twelve_month_win_perc divide by zero
     prices = df.C['2010-10-01':'2011-08-01']
     stats = ffn.calc_stats(prices).stats
-    assert 'twelve_month_win_perc' not in stats.index
+    assert pd.isnull(stats['twelve_month_win_perc'])
     prices = df.C['2009-10-01':'2011-08-01']
     stats = ffn.calc_stats(prices).stats
-    assert 'twelve_month_win_perc' in stats.index
+    assert not pd.isnull(stats['twelve_month_win_perc'])
 
     # test yearly_sharpe divide by zero
     prices = df.C['2009-01-01':'2012-01-01']
     stats = ffn.calc_stats(prices).stats
     assert 'yearly_sharpe' in stats.index
+
     prices[prices > 0.0] = 1.0
     stats = ffn.calc_stats(prices).stats
-    assert 'yearly_sharpe' not in stats.index
+    assert pd.isnull(stats['yearly_sharpe'])
 
 
 def test_calc_sharpe():
