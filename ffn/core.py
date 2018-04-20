@@ -528,7 +528,7 @@ class PerformanceStats(object):
                 self.name, freq, 'Price Series')
 
         ser = self._get_series(freq)
-        ser.plot(figsize=figsize, title=title, logy=logy, **kwargs)
+        return ser.plot(figsize=figsize, title=title, logy=logy, **kwargs)
 
     def plot_histogram(self, freq=None, figsize=(15, 5), title=None,
                        bins=20, **kwargs):
@@ -555,7 +555,7 @@ class PerformanceStats(object):
         ax = ser.hist(bins=bins, figsize=figsize, normed=True, **kwargs)
         ax.set_title(title)
         plt.axvline(0, linewidth=4)
-        ser.plot(kind='kde')
+        return ser.plot(kind='kde')
 
     def _get_series(self, freq):
         if freq is None:
@@ -878,8 +878,8 @@ class GroupStats(dict):
                 freq, 'Equity Progression')
 
         ser = self._get_series(freq).rebase()
-        ser.plot(figsize=figsize, logy=logy,
-                 title=title, **kwargs)
+        return ser.plot(figsize=figsize, logy=logy,
+                        title=title, **kwargs)
 
     def plot_scatter_matrix(self, freq=None, title=None,
                             figsize=(10, 10), **kwargs):
@@ -901,7 +901,7 @@ class GroupStats(dict):
         plt.figure()
         ser = self._get_series(freq).to_returns().dropna()
         pd.scatter_matrix(ser, figsize=figsize, **kwargs)
-        plt.suptitle(title)
+        return plt.suptitle(title)
 
     def plot_histograms(self, freq=None, title=None,
                         figsize=(10, 10), **kwargs):
@@ -923,7 +923,7 @@ class GroupStats(dict):
         plt.figure()
         ser = self._get_series(freq).to_returns().dropna()
         ser.hist(figsize=figsize, **kwargs)
-        plt.suptitle(title)
+        return plt.suptitle(title)
 
     def plot_correlation(self, freq=None, title=None,
                          figsize=(12, 6), **kwargs):
