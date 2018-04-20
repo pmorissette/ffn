@@ -671,9 +671,12 @@ def test_set_riskfree_rate():
         3
     )
 
+def test_performance_stats():
+    ps = ffn.PerformanceStats(df['AAPL'])
 
 def test_group_stats_calc_stats():
     stats = df.calc_stats()
+
 
 
 
