@@ -184,7 +184,7 @@ class PerformanceStats(object):
             return
 
         self.daily_mean = r.mean() * 252
-        self.daily_vol = r.std() * np.sqrt(252)
+        self.daily_vol = np.std(r,ddof=1) * np.sqrt(252)
 
         if type(self.rf) is float:
             self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
@@ -212,7 +212,7 @@ class PerformanceStats(object):
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
             self.avg_drawdown_days = self.drawdown_details['days'].mean()
 
-        self.calmar = self.cagr / abs(self.max_drawdown)
+        self.calmar = np.divide(self.cagr , np.abs(self.max_drawdown) )
 
         if len(r) < 4:
             return
@@ -231,7 +231,7 @@ class PerformanceStats(object):
             return
 
         self.monthly_mean = mr.mean() * 12
-        self.monthly_vol = mr.std() * np.sqrt(12)
+        self.monthly_vol = np.std(mr,ddof=1) * np.sqrt(12)
 
         if type(self.rf) is float:
             self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
@@ -305,7 +305,7 @@ class PerformanceStats(object):
             self.one_year = p[-1] / denom[-1] - 1
 
         self.yearly_mean = yr.mean()
-        self.yearly_vol = yr.std()
+        self.yearly_vol = np.std(yr,ddof=1)
 
         if type(self.rf) is float:
             if self.yearly_vol > 0:
@@ -1228,7 +1228,7 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
         raise Exception('Must provide nperiods if rf != 0')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-    std = er.std()
+    std = np.std(er,ddof=1)
     res = np.divide(er.mean(), std)
 
     if annualize:
@@ -1244,12 +1244,12 @@ def calc_information_ratio(returns, benchmark_returns):
     http://en.wikipedia.org/wiki/Information_ratio
     """
     diff_rets = returns - benchmark_returns
-    diff_std = diff_rets.std()
+    diff_std = np.std(diff_rets,ddof=1)
 
     if np.isnan(diff_std) or diff_std == 0:
         return 0.0
 
-    return diff_rets.mean() / diff_std
+    return np.divide(diff_rets.mean(),diff_std)
 
 
 def calc_prob_mom(returns, other_returns):
@@ -1387,10 +1387,10 @@ def calc_inv_vol_weights(returns):
         Series {col_name: weight}
     """
     # calc vols
-    vol = 1.0 / returns.std()
+    vol = np.divide(1. , np.std(returns,ddof=1) )
     vol[np.isinf(vol)] = np.NaN
-    vols = vol.sum()
-    return vol / vols
+    volsum = vol.sum()
+    return np.divide(vol,volsum)
 
 
 def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
@@ -1998,7 +1998,7 @@ def annualize(returns, durations, one_year=365.):
         (1 + returns) ** (1 / (durations / one_year)) - 1
 
     """
-    return (1. + returns) ** (1. / (durations / one_year)) - 1.
+    return np.power(1. + returns, 1. / (durations / one_year)) - 1.
 
 
 def deannualize(returns, nperiods):
@@ -2031,7 +2031,7 @@ def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
     negative_returns = np.minimum(returns, 0.)
-    std = np.std(negative_returns)
+    std = np.std(negative_returns,ddof=1)
     res = np.divide(er.mean(), std)
 
     if annualize:
