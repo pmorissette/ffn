@@ -594,11 +594,18 @@ def test_set_riskfree_rate():
     r = df.to_returns()
 
     performanceStats = ffn.PerformanceStats(df['MSFT'])
-
+    groupStats = ffn.GroupStats(df)
     daily_returns = df['MSFT'].pct_change()
+
     aae(
         performanceStats.daily_sharpe,
         daily_returns.dropna().mean() / (daily_returns.dropna().std()) * (np.sqrt(252)),
+        3
+    )
+
+    aae(
+        performanceStats.daily_sharpe,
+        groupStats['MSFT'].daily_sharpe,
         3
     )
 
@@ -608,6 +615,11 @@ def test_set_riskfree_rate():
         monthly_returns.dropna().mean() / (monthly_returns.dropna().std()) * (np.sqrt(12)),
         3
     )
+    aae(
+        performanceStats.monthly_sharpe,
+        groupStats['MSFT'].monthly_sharpe,
+        3
+    )
 
     yearly_returns = df['MSFT'].resample('A').last().pct_change()
     aae(
@@ -615,8 +627,14 @@ def test_set_riskfree_rate():
         yearly_returns.dropna().mean() / (yearly_returns.dropna().std()) * (np.sqrt(1)),
         3
     )
+    aae(
+        performanceStats.yearly_sharpe,
+        groupStats['MSFT'].yearly_sharpe,
+        3
+    )
 
     performanceStats.set_riskfree_rate(0.02)
+    groupStats.set_riskfree_rate(0.02)
 
     daily_returns = df['MSFT'].pct_change()
     aae(
@@ -624,6 +642,12 @@ def test_set_riskfree_rate():
         np.mean(daily_returns.dropna() - 0.02/252)/ (daily_returns.dropna().std()) * (np.sqrt(252)),
         3
     )
+    aae(
+        performanceStats.daily_sharpe,
+        groupStats['MSFT'].daily_sharpe,
+        3
+    )
+
 
     monthly_returns = df['MSFT'].resample('M').last().pct_change()
     aae(
@@ -631,11 +655,21 @@ def test_set_riskfree_rate():
         np.mean(monthly_returns.dropna() - 0.02/12) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
         3
     )
+    aae(
+        performanceStats.monthly_sharpe,
+        groupStats['MSFT'].monthly_sharpe,
+        3
+    )
 
     yearly_returns = df['MSFT'].resample('A').last().pct_change()
     aae(
         performanceStats.yearly_sharpe,
         np.mean(yearly_returns.dropna() - 0.02/1) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
+        3
+    )
+    aae(
+        performanceStats.yearly_sharpe,
+        groupStats['MSFT'].yearly_sharpe,
         3
     )
 
@@ -647,12 +681,18 @@ def test_set_riskfree_rate():
     rf = 100*np.cumprod(1+pd.Series(data=rf, index=df.index, name='rf'))
 
     performanceStats.set_riskfree_rate(rf)
+    groupStats.set_riskfree_rate(rf)
 
     daily_returns = df['MSFT'].pct_change()
     rf_daily_returns = rf.pct_change()
     aae(
         performanceStats.daily_sharpe,
         np.mean(daily_returns-rf_daily_returns) / (daily_returns.dropna().std()) * (np.sqrt(252)),
+        3
+    )
+    aae(
+        performanceStats.daily_sharpe,
+        groupStats['MSFT'].daily_sharpe,
         3
     )
 
@@ -663,12 +703,22 @@ def test_set_riskfree_rate():
         np.mean(monthly_returns-rf_monthly_returns) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
         3
     )
+    aae(
+        performanceStats.monthly_sharpe,
+        groupStats['MSFT'].monthly_sharpe,
+        3
+    )
 
     yearly_returns = df['MSFT'].resample('A').last().pct_change()
     rf_yearly_returns = rf.resample('A').last().pct_change()
     aae(
         performanceStats.yearly_sharpe,
         np.mean(yearly_returns-rf_yearly_returns) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
+        3
+    )
+    aae(
+        performanceStats.yearly_sharpe,
+        groupStats['MSFT'].yearly_sharpe,
         3
     )
 

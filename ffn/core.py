@@ -789,8 +789,18 @@ class GroupStats(dict):
         Args:
             * rf (float, Series): Annual risk-free rate or risk-free rate price series
         """
+
         for key in self._names:
             self[key].set_riskfree_rate(rf)
+
+        # calculate stats for entire series
+        # lookback returns dataframe
+        self.lookback_returns = pd.DataFrame(
+            {x.lookback_returns.name: x.lookback_returns for x in
+            self.values()})
+
+        self.stats = pd.DataFrame(
+            {x.name: x.stats for x in self.values()})
 
     def set_date_range(self, start=None, end=None):
         """
