@@ -1241,7 +1241,7 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
         raise Exception('Must provide nperiods if rf != 0')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-    std = np.std(er,ddof=1)
+    std = np.std(returns,ddof=1)
     res = np.divide(er.mean(), std)
 
     if annualize:
