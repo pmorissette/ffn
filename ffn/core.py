@@ -357,8 +357,6 @@ class PerformanceStats(object):
                  ('rf', 'Risk-free rate', 'p'),
                  (None, None, None),
                  ('total_return', 'Total Return', 'p'),
-                 ('daily_sharpe', 'Daily Sharpe', 'n'),
-                 ('daily_sortino', 'Daily Sortino', 'n'),
                  ('cagr', 'CAGR', 'p'),
                  ('max_drawdown', 'Max Drawdown', 'p'),
                  ('calmar', 'Calmar Ratio', 'n'),
@@ -700,13 +698,7 @@ class GroupStats(dict):
 
     def _update(self, data):
         self._calculate(data)
-        # lookback returns dataframe
-        self.lookback_returns = pd.DataFrame(
-            {x.lookback_returns.name: x.lookback_returns for x in
-             self.values()})
-
-        self.stats = pd.DataFrame(
-            {x.name: x.stats for x in self.values()})
+        self._update_stats()
 
     def _calculate(self, data):
         self.prices = data
@@ -772,6 +764,15 @@ class GroupStats(dict):
 
         return stats
 
+    def _update_stats(self):
+        # lookback returns dataframe
+        self.lookback_returns = pd.DataFrame(
+            {x.lookback_returns.name: x.lookback_returns for x in
+             self.values()})
+
+        self.stats = pd.DataFrame(
+            {x.name: x.stats for x in self.values()})
+
     def _get_default_plot_title(self, freq, kind):
         if freq is None:
             return '%s' % kind
@@ -794,13 +795,7 @@ class GroupStats(dict):
             self[key].set_riskfree_rate(rf)
 
         # calculate stats for entire series
-        # lookback returns dataframe
-        self.lookback_returns = pd.DataFrame(
-            {x.lookback_returns.name: x.lookback_returns for x in
-            self.values()})
-
-        self.stats = pd.DataFrame(
-            {x.name: x.stats for x in self.values()})
+        self._update_stats()
 
     def set_date_range(self, start=None, end=None):
         """
