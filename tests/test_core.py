@@ -725,8 +725,17 @@ def test_set_riskfree_rate():
 def test_performance_stats():
     ps = ffn.PerformanceStats(df['AAPL'])
 
+    num_stats = len(ps.stats.keys())
+    num_unique_stats = len(ps.stats.keys().drop_duplicates())
+    assert(num_stats == num_unique_stats)
+
 def test_group_stats_calc_stats():
-    stats = df.calc_stats()
+    gs = df.calc_stats()
+
+    num_stats = len(gs.stats.index)
+    num_unique_stats = len(gs.stats.index.drop_duplicates())
+    assert (num_stats == num_unique_stats)
+
 
 
 
