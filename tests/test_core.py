@@ -29,7 +29,7 @@ def test_to_returns_df():
     actual = data.to_returns()
 
     assert len(actual) == len(data)
-    assert all(np.isnan(actual.ix[0]))
+    assert all(np.isnan(actual.iloc[0]))
     aae(actual['AAPL'][1], -0.019, 3)
     aae(actual['AAPL'][9], -0.022, 3)
     aae(actual['MSFT'][1], -0.011, 3)
@@ -53,7 +53,7 @@ def test_to_log_returns_df():
     actual = data.to_log_returns()
 
     assert len(actual) == len(data)
-    assert all(np.isnan(actual.ix[0]))
+    assert all(np.isnan(actual.iloc[0]))
     aae(actual['AAPL'][1], -0.019, 3)
     aae(actual['AAPL'][9], -0.022, 3)
     aae(actual['MSFT'][1], -0.011, 3)
@@ -203,7 +203,7 @@ def test_merge():
 
 
 def test_calc_inv_vol_weights():
-    prc = df.ix[0:11]
+    prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
     actual = ffn.core.calc_inv_vol_weights(rets)
 
@@ -218,7 +218,7 @@ def test_calc_inv_vol_weights():
 
 
 def test_calc_mean_var_weights():
-    prc = df.ix[0:11]
+    prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
     actual = ffn.core.calc_mean_var_weights(rets)
 
@@ -233,7 +233,7 @@ def test_calc_mean_var_weights():
 
 
 def test_calc_erc_weights():
-    prc = df.ix[0:11]
+    prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
     actual = ffn.core.calc_erc_weights(rets)
 
@@ -248,7 +248,7 @@ def test_calc_erc_weights():
 
 
 def test_calc_total_return():
-    prc = df.ix[0:11]
+    prc = df.iloc[0:11]
     actual = prc.calc_total_return()
 
     assert len(actual) == 3
