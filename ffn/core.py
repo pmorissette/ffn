@@ -1069,7 +1069,7 @@ def rebase(prices, value=100):
         * value (number): starting value for all series.
 
     """
-    return prices / prices.ix[0] * value
+    return prices / prices.iloc[0] * value
 
 
 def calc_perf_stats(prices):
@@ -1195,7 +1195,7 @@ def drawdown_details(drawdown):
 
     for i in range(0, len(start)):
         dd = drawdown[start[i]:end[i]].min()
-        result.ix[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
+        result.iloc[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
 
     return result
 
@@ -1212,7 +1212,7 @@ def calc_cagr(prices):
     """
     start = prices.index[0]
     end = prices.index[-1]
-    return (prices.ix[-1] / prices.ix[0]) ** (1 / year_frac(start, end)) - 1
+    return (prices.iloc[-1] / prices.iloc[0]) ** (1 / year_frac(start, end)) - 1
 
 
 def calc_risk_return_ratio(returns):
@@ -1285,7 +1285,7 @@ def calc_total_return(prices):
 
     last / first - 1
     """
-    return (prices.ix[-1] / prices.ix[0]) - 1
+    return (prices.iloc[-1] / prices.iloc[0]) - 1
 
 
 def year_frac(start, end):
