@@ -161,23 +161,28 @@ class PerformanceStats(object):
         self.end = obj.index[-1]
 
         # save daily prices for future use
-        self.daily_prices = obj
+        self.daily_prices = obj.resample('D').last()
+        # resample('D') imputes na values for any day that didn't have a price
+        #  .dropna() removes the na values but also implies that the original
+        #  price series didn't have any na values
+        #  if months or years are missing then we will need .dropna() too
+        self.daily_prices = self.daily_prices.dropna()
         # M = month end frequency
         self.monthly_prices = obj.resample('M').last()
         # A == year end frequency
         self.yearly_prices = obj.resample('A').last()
 
         # let's save some typing
-        p = obj
+        dp = self.daily_prices
         mp = self.monthly_prices
         yp = self.yearly_prices
 
-        if len(p) is 1:
+        if len(dp) is 1:
             return
 
         # stats using daily data
-        self.returns = p.to_returns()
-        self.log_returns = p.to_log_returns()
+        self.returns = dp.to_returns()
+        self.log_returns = dp.to_log_returns()
         r = self.returns
 
         if len(r) < 2:
@@ -202,10 +207,10 @@ class PerformanceStats(object):
         # save ytd as total_return for now - if we get to real ytd
         # then it will get updated
         self.ytd = self.total_return
-        self.cagr = calc_cagr(p)
+        self.cagr = calc_cagr(dp)
         self.incep = self.cagr
 
-        self.drawdown = p.to_drawdown_series()
+        self.drawdown = dp.to_drawdown_series()
         self.max_drawdown = self.drawdown.min()
         self.drawdown_details = drawdown_details(self.drawdown)
         if self.drawdown_details is not None:
@@ -245,7 +250,7 @@ class PerformanceStats(object):
         self.worst_month = mr.min()
 
         # -2 because p[-1] will be mp[-1]
-        self.mtd = p[-1] / mp[-2] - 1
+        self.mtd = dp[-1] / mp[-2] - 1
 
         # -1 here to account for first return that will be nan
         self.pos_month_perc = len(mr[mr > 0]) / float(len(mr) - 1)
@@ -264,7 +269,7 @@ class PerformanceStats(object):
         # add first month
         fidx = mr.index[0]
         try:
-            self.return_table[fidx.year][fidx.month] = float(mp[0]) / p[0] - 1
+            self.return_table[fidx.year][fidx.month] = float(mp[0]) / dp[0] - 1
         except ZeroDivisionError:
             self.return_table[fidx.year][fidx.month] = 0
         # calculate the YTD values
@@ -275,9 +280,9 @@ class PerformanceStats(object):
         if len(mr) < 3:
             return
 
-        denom = p[:p.index[-1] - pd.DateOffset(months=3)]
+        denom = dp[:dp.index[-1] - pd.DateOffset(months=3)]
         if len(denom) > 0:
-            self.three_month = p[-1] / denom[-1] - 1
+            self.three_month = dp[-1] / denom[-1] - 1
 
         if len(mr) < 4:
             return
@@ -288,9 +293,9 @@ class PerformanceStats(object):
         if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
             self.monthly_kurt = mr.kurt()
 
-        denom = p[:p.index[-1] - pd.DateOffset(months=6)]
+        denom = dp[:dp.index[-1] - pd.DateOffset(months=6)]
         if len(denom) > 0:
-            self.six_month = p[-1] / denom[-1] - 1
+            self.six_month = dp[-1] / denom[-1] - 1
 
         self.yearly_returns = self.yearly_prices.to_returns()
         yr = self.yearly_returns
@@ -298,11 +303,11 @@ class PerformanceStats(object):
         if len(yr) < 2:
             return
 
-        self.ytd = p[-1] / yp[-2] - 1
+        self.ytd = dp[-1] / yp[-2] - 1
 
-        denom = p[:p.index[-1] - pd.DateOffset(years=1)]
+        denom = dp[:dp.index[-1] - pd.DateOffset(years=1)]
         if len(denom) > 0:
-            self.one_year = p[-1] / denom[-1] - 1
+            self.one_year = dp[-1] / denom[-1] - 1
 
         self.yearly_mean = yr.mean()
         self.yearly_vol = np.std(yr,ddof=1)
@@ -322,7 +327,7 @@ class PerformanceStats(object):
         self.worst_year = yr.min()
 
         # annualize stat for over 1 year
-        self.three_year = calc_cagr(p[p.index[-1] - pd.DateOffset(years=3):])
+        self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
 
         # -1 here to account for first return that will be nan
         self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
@@ -346,8 +351,8 @@ class PerformanceStats(object):
         if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
             self.yearly_kurt = yr.kurt()
 
-        self.five_year = calc_cagr(p[p.index[-1] - pd.DateOffset(years=5):])
-        self.ten_year = calc_cagr(p[p.index[-1] - pd.DateOffset(years=10):])
+        self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
+        self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
 
         return
 

@@ -595,7 +595,7 @@ def test_set_riskfree_rate():
 
     performanceStats = ffn.PerformanceStats(df['MSFT'])
     groupStats = ffn.GroupStats(df)
-    daily_returns = df['MSFT'].pct_change()
+    daily_returns = df['MSFT'].resample('D').last().dropna().pct_change()
 
     aae(
         performanceStats.daily_sharpe,
