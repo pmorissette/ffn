@@ -801,7 +801,20 @@ def test_resample_returns():
         ) < 3
     )
 
+def test_drawdown_details():
+    drawdown = ffn.to_drawdown_series(df['MSFT'])
+    drawdown_details = ffn.drawdown_details(drawdown)
 
+    assert (drawdown_details.loc[drawdown_details.index[1],'Length'] == 18)
+
+    num_years = 30
+    num_months = num_years * 12
+    np.random.seed(0)
+    returns = np.random.normal(loc=0.06 / 12, scale=0.20 / np.sqrt(12), size=num_months)
+    returns = pd.Series(np.cumprod(1+returns))
+
+    drawdown = ffn.to_drawdown_series(returns)
+    drawdown_details = ffn.drawdown_details(drawdown,index_type=drawdown.index)
 
 
 

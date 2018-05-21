@@ -216,7 +216,7 @@ class PerformanceStats(object):
         self.drawdown_details = drawdown_details(self.drawdown)
         if self.drawdown_details is not None:
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
-            self.avg_drawdown_days = self.drawdown_details['days'].mean()
+            self.avg_drawdown_days = self.drawdown_details['Length'].mean()
 
         self.calmar = np.divide(self.cagr , np.abs(self.max_drawdown) )
 
@@ -1147,7 +1147,7 @@ def calc_max_drawdown(prices):
     return (prices / prices.expanding(min_periods=1).max()).min() - 1
 
 
-def drawdown_details(drawdown):
+def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     """
     Returns a data frame with start, end, days (duration) and
     drawdown for each drawdown in a drawdown series.
@@ -1164,6 +1164,7 @@ def drawdown_details(drawdown):
             columns: start, end, days, drawdown.
 
     """
+
     is_zero = drawdown == 0
     # find start dates (first day where dd is non-zero after a zero)
     start = ~is_zero & is_zero.shift(1)
@@ -1191,12 +1192,18 @@ def drawdown_details(drawdown):
     if start[-1] > end[-1]:
         end.append(drawdown.index[-1])
 
-    result = pd.DataFrame(columns=('start', 'end', 'days', 'drawdown'),
-                          index=range(0, len(start)))
+    result = pd.DataFrame(
+        columns=('Start', 'End', 'Length', 'drawdown'),
+        index=range(0, len(start))
+    )
 
     for i in range(0, len(start)):
         dd = drawdown[start[i]:end[i]].min()
-        result.iloc[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
+
+        if index_type is pd.DatetimeIndex:
+            result.iloc[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
+        else:
+            result.iloc[i] = (start[i], end[i], (end[i] - start[i]), dd)
 
     return result
 
