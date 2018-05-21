@@ -737,6 +737,73 @@ def test_group_stats_calc_stats():
     assert (num_stats == num_unique_stats)
 
 
+def test_resample_returns():
+    num_years = 30
+    num_months = num_years*12
+    np.random.seed(0)
+    returns = np.random.normal(loc=0.06/12,scale=0.20/np.sqrt(12),size=num_months)
+    returns = pd.Series(returns)
+
+    sample_mean = np.mean(returns)
+
+    sample_stats = ffn.resample_returns(
+        returns,
+        np.mean,
+        seed=0,
+        num_trials=100
+    )
+
+    resampled_mean = np.mean(sample_stats)
+    std_resampled_means = np.std(sample_stats,ddof=1)
+
+    # resampled statistics should be within 3 std devs of actual
+    assert ( np.abs((sample_mean - resampled_mean)/std_resampled_means) < 3)
+
+    np.random.seed(0)
+    returns = np.random.normal(loc=0.06 / 12, scale=0.20 / np.sqrt(12), size=num_months * 3).reshape(num_months,3)
+    returns = pd.DataFrame(returns)
+
+    sample_mean = np.mean(returns, axis=0)
+
+    sample_stats = ffn.resample_returns(
+        returns,
+        lambda x: np.mean(x, axis=0),
+        seed=0,
+        num_trials=100
+    )
+
+    resampled_mean = np.mean(sample_stats)
+    std_resampled_means = np.std(sample_stats, ddof=1)
+
+    # resampled statistics should be within 3 std devs of actual
+    assert np.all(
+        np.abs(
+            (sample_mean - resampled_mean) / std_resampled_means
+        ) < 3
+    )
+
+    returns = df.to_returns().dropna()
+    sample_mean = np.mean(returns, axis=0)
+
+    sample_stats = ffn.resample_returns(
+        returns,
+        lambda x: np.mean(x, axis=0),
+        seed=0,
+        num_trials=100
+    )
+
+    resampled_mean = np.mean(sample_stats)
+    std_resampled_means = np.std(sample_stats, ddof=1)
+
+    assert np.all(
+        np.abs(
+            (sample_mean - resampled_mean) / std_resampled_means
+        ) < 3
+    )
+
+
+
+
 
 
 
