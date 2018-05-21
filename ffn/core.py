@@ -10,6 +10,7 @@ from tabulate import tabulate
 import sklearn.manifold
 import sklearn.cluster
 import sklearn.covariance
+from sklearn.utils import resample
 from scipy.optimize import minimize
 import scipy.stats
 from scipy.stats import t
@@ -2120,6 +2121,42 @@ def to_ulcer_performance_index(prices, rf=0., nperiods=None):
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
 
     return np.divide(er.mean(), prices.to_ulcer_index())
+
+def resample_returns(
+        returns,
+        func,
+        seed=0,
+        num_trials=100
+):
+    """
+    Resample the returns and calculate any statistic on every new sample.
+
+    https://en.wikipedia.org/wiki/Resampling_(statistics)
+
+    :param returns (Series, DataFrame): Returns
+    :param func: Given the resampled returns calculate a statistic
+    :param seed: Seed for random number generator
+    :param num_trials: Number of times to resample and run the experiment
+    :return: Series of resampled statistics
+    """
+
+    #stats = []
+    if type(returns) is pd.Series:
+        stats = pd.Series(index=range(num_trials))
+    elif type(returns) is pd.DataFrame:
+        stats = pd.DataFrame(
+            index=range(num_trials),
+            columns=returns.columns
+        )
+    else:
+        raise(TypeError("returns needs to be a Series or DataFrame!"))
+
+    n = returns.shape[0]
+    for i in range(num_trials):
+        random_indices = resample(returns.index, n_samples=n, random_state=seed+i)
+        stats.loc[i] = func(returns.loc[random_indices])
+
+    return stats
 
 
 def extend_pandas():
