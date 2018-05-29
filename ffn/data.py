@@ -3,6 +3,15 @@ import ffn
 from . import utils
 import pandas as pd
 from pandas_datareader import data as pdata
+import fix_yahoo_finance as yf
+
+
+def fixed_yahoo_data(*args, **kwargs):
+   kwargs.setdefault('progress', False)
+   return yf.download(*args, **kwargs)
+
+
+pdata.get_yahoo_data = fixed_yahoo_data
 
 
 @utils.memoize
