@@ -34,7 +34,8 @@ setuptools.setup(
         'matplotlib>=1',
         'scikit-learn>=0.15',
         'scipy>=0.15',
-        'future>=0.15'
+        'future>=0.15',
+        'fix_yahoo_finance',
     ],
     packages=['ffn'],
     long_description=local_file('README.rst').read(),
