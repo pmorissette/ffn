@@ -1745,7 +1745,7 @@ def calc_ftca(returns, threshold=0.5):
             # filter down correlation matrix to current remain
             cur_corr = corr[remain].ix[remain]
             # get mean correlations, ordered
-            mc = cur_corr.mean().order()
+            mc = cur_corr.mean().sort_values()
             # get lowest and highest mean correlation
             low = mc.index[0]
             high = mc.index[-1]
