@@ -9,7 +9,7 @@ def convert_notebooks():
     Converts IPython Notebooks to proper .rst files and moves static
     content to the _static directory.
     """
-    convert_status = call(['ipython', 'nbconvert', '--to', 'rst', '*.ipynb'])
+    convert_status = call(['jupyter', 'nbconvert', '--to', 'rst', '*.ipynb'])
     if convert_status != 0:
         raise SystemError('Conversion failed! Status was %s' % convert_status)
 
@@ -21,7 +21,7 @@ def convert_notebooks():
         name = names[i]
         notebook = notebooks[i]
 
-        print 'processing %s (%s)' % (name, notebook)
+        print('processing %s (%s)' % (name, notebook))
 
         # move static files
         sdir = '%s_files' % name
@@ -32,14 +32,17 @@ def convert_notebooks():
 
         # rename static dir in rst file
         rst_file = '%s.rst' % name
-        print 'REsT file is %s' % rst_file
+        print('RST file is %s' % rst_file)
         data = None
         with open(rst_file, 'r') as f:
             data = f.read()
 
         if data is not None:
             with open(rst_file, 'w') as f:
-                data = re.sub('%s' % sdir, '_static', data)
+                # On Windows, bad escape character sequences are included (%5C) in static references
+                # We remove these here and replace with forward slashes as appropriate
+                # While converting the static directory name.
+                data = re.sub('%s(%%5C|/)' % sdir, '_static/', data)
                 f.write(data)
 
         # add special tags
