@@ -39,7 +39,7 @@ class PerformanceStats(object):
 
     Args:
         * prices (Series): A price series.
-        * rf (float, Series): Risk-free rate used in various calculation. Should be
+        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a float. Otherwise
             rf should be a price series.
 
@@ -72,7 +72,7 @@ class PerformanceStats(object):
         Affects only this instance of the PerformanceStats.
 
         Args:
-            * rf (float): Annual risk-free rate
+            * rf (float): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
         """
         self.rf = rf
 
@@ -788,7 +788,7 @@ class GroupStats(dict):
     def set_riskfree_rate(self, rf):
 
         """
-        Set annual risk-free rate property and calculate properly annualized
+        Set annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ property and calculate properly annualized
         monthly and daily rates. Then performance stats are recalculated.
         Affects only those instances of PerformanceStats that are children of
         this GroupStats object.
@@ -1108,7 +1108,7 @@ def calc_stats(prices):
 
 def to_drawdown_series(prices):
     """
-    Calculates the drawdown series.
+    Calculates the `drawdown <https://www.investopedia.com/terms/d/drawdown.asp>`_ series.
 
     This returns a series representing a drawdown.
     When the price is at all time highs, the drawdown
@@ -1210,7 +1210,7 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
 
 def calc_cagr(prices):
     """
-    Calculates the CAGR (compound annual growth rate) for a given price series.
+    Calculates the `CAGR (compound annual growth rate) <https://www.investopedia.com/terms/c/cagr.asp>`_ for a given price series.
 
     Args:
         * prices (pandas.Series): A Series of prices.
@@ -1226,21 +1226,21 @@ def calc_cagr(prices):
 def calc_risk_return_ratio(returns):
     """
     Calculates the return / risk ratio. Basically the
-    Sharpe ratio without factoring in the risk-free rate.
+    `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_ without factoring in the `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_.
     """
     return calc_sharpe(returns)
 
 
 def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
     """
-    Calculates the Sharpe ratio.
+    Calculates the `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_ (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
 
     If rf is non-zero and a float, you must specify nperiods. In this case, rf is assumed
     to be expressed in yearly (annualized) terms.
 
     Args:
         * returns (Series, DataFrame): Input return series
-        * rf (float, Series): Risk-free rate expressed as a yearly (annualized) return or return series
+        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed as a yearly (annualized) return or return series
         * nperiods (int): Frequency of returns (252 for daily, 12 for monthly,
             etc.)
 
@@ -1262,7 +1262,7 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
 
 def calc_information_ratio(returns, benchmark_returns):
     """
-    http://en.wikipedia.org/wiki/Information_ratio
+    Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
     diff_rets = returns - benchmark_returns
     diff_std = np.std(diff_rets,ddof=1)
@@ -1275,7 +1275,7 @@ def calc_information_ratio(returns, benchmark_returns):
 
 def calc_prob_mom(returns, other_returns):
     """
-    Probabilistic momentum
+    `Probabilistic momentum <http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/>`_ (see `momentum investing <https://www.investopedia.com/terms/m/momentum_investing.asp>`_)
 
     Basically the "probability or confidence that one asset
     is going to outperform the other".
@@ -1424,10 +1424,10 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
     Args:
         * returns (DataFrame): Returns for multiple securities.
         * weight_bounds ((low, high)): Weigh limits for optimization.
-        * rf (float): Risk-free rate used in utility calculation
+        * rf (float): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in utility calculation
         * covar_method (str): Covariance matrix estimation method.
             Currently supported:
-                - ledoit-wolf
+                - `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_
                 - standard
         * options (dict): options for minimizing, e.g. {'maxiter': 10000 }
 
@@ -1552,7 +1552,7 @@ def calc_erc_weights(returns,
         * risk_weights (list): Risk target weights [default equal weight].
         * covar_method (str): Covariance matrix estimation method.
             Currently supported:
-                - ledoit-wolf [default]
+                - `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_ [default]
                 - standard
         * risk_parity_method (str): Risk parity estimation method.
             Currently supported:
@@ -1707,8 +1707,7 @@ def calc_clusters(returns, n=None, plot=False):
 
 def calc_ftca(returns, threshold=0.5):
     """
-    Implementation of David Varadi's Fast Threshold
-    Clustering Algorithm (FTCA).
+    Implementation of David Varadi's `Fast Threshold Clustering Algorithm (FTCA) <http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/>`_.
 
     http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/  # NOQA
 
@@ -1986,7 +1985,7 @@ def _winsorize_wrapper(x, limits):
 
 def winsorize(x, axis=0, limits=0.01):
     """
-    Winsorize values based on limits
+    `Winsorize <https://en.wikipedia.org/wiki/Winsorizing>`_ values based on limits
     """
     # operate on copy
     x = x.copy()
@@ -2037,11 +2036,11 @@ def deannualize(returns, nperiods):
 
 def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
     """
-    Calculates the sortino ratio given a series of returns
+    Calculates the `Sortino ratio <https://www.investopedia.com/terms/s/sortinoratio.asp>`_ given a series of returns (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
 
     Args:
         * returns (Series or DataFrame): Returns
-        * rf (float, Series): Risk-free rate expressed in yearly (annualized) terms or return series.
+        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in yearly (annualized) terms or return series.
         * nperiods (int): Number of periods used for annualization. Must be
             provided if rf is non-zero and rf is not a price series
 
@@ -2069,7 +2068,7 @@ def to_excess_returns(returns, rf, nperiods=None):
 
     Args:
         * returns (Series, DataFrame): Returns
-        * rf (float, Series): Risk-Free rate(s) expressed in annualized term or return series
+        * rf (float, Series): `Risk-Free rate(s) <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in annualized term or return series
         * nperiods (int): Optional. If provided, will convert rf to different
             frequency using deannualize only if rf is a float
     Returns:
@@ -2086,7 +2085,7 @@ def to_excess_returns(returns, rf, nperiods=None):
 
 def calc_calmar_ratio(prices):
     """
-    Calculates the Calmar Ratio given a series of prices
+    Calculates the `Calmar ratio <https://www.investopedia.com/terms/c/calmarratio.asp>`_ given a series of prices
 
     Args:
         * prices (Series, DataFrame): Price series
@@ -2097,7 +2096,7 @@ def calc_calmar_ratio(prices):
 
 def to_ulcer_index(prices):
     """
-    Converts from prices -> Ulcer index
+    Converts from prices -> `Ulcer index <https://www.investopedia.com/terms/u/ulcerindex.asp>`_
 
     See https://en.wikipedia.org/wiki/Ulcer_index
 
@@ -2111,13 +2110,13 @@ def to_ulcer_index(prices):
 
 def to_ulcer_performance_index(prices, rf=0., nperiods=None):
     """
-    Converts from prices -> ulcer performance index.
+    Converts from prices -> `ulcer performance index <https://www.investopedia.com/terms/u/ulcerindex.asp>`_.
 
     See https://en.wikipedia.org/wiki/Ulcer_index
 
     Args:
         * prices (Series, DataFrame): Prices
-        * rf (float, Series): Risk-free rate of return. Assumed to be expressed in
+        * rf (float, Series): `Risk-free rate of return <https://www.investopedia.com/terms/r/risk-freerate.asp>`_. Assumed to be expressed in
             yearly (annualized) terms or return series
         * nperiods (int): Used to deannualize rf if rf is provided (non-zero)
 
