@@ -2050,7 +2050,7 @@ def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
-    negative_returns = np.minimum(returns, 0.)
+    negative_returns = np.minimum(returns[1:], 0.)
     std = np.std(negative_returns,ddof=1)
     res = np.divide(er.mean(), std)
 

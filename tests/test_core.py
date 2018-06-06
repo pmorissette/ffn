@@ -515,11 +515,11 @@ def test_calc_sortino_ratio():
     p = 1
     r = df.to_returns()
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
-    negative_returns = np.minimum(r,0)
+    negative_returns = np.minimum(r[1:],0)
     assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns,ddof=1)) * np.sqrt(p))
 
     a = r.calc_sortino_ratio()
-    negative_returns = np.minimum(r, 0)
+    negative_returns = np.minimum(r[1:], 0)
     assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns,ddof=1)) * np.sqrt(p))
 
     rf = 0.02
@@ -528,7 +528,7 @@ def test_calc_sortino_ratio():
     er = r.to_excess_returns(rf, nperiods=p)
 
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
-    negative_returns = np.minimum(r, 0)
+    negative_returns = np.minimum(r[1:], 0)
     assert np.allclose(a, np.divide(er.mean(), np.std(negative_returns,ddof=1)) * np.sqrt(p))
 
 
@@ -555,6 +555,7 @@ def test_calc_stats():
     assert 'yearly_sharpe' in stats.index
 
     prices[prices > 0.0] = 1.0
+    # throws warnings
     stats = ffn.calc_stats(prices).stats
     assert pd.isnull(stats['yearly_sharpe'])
 
