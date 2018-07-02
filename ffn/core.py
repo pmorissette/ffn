@@ -294,6 +294,9 @@ class PerformanceStats(object):
         if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
             self.monthly_kurt = mr.kurt()
 
+        if len(mr) < 6:
+            return
+
         denom = dp[:dp.index[-1] - pd.DateOffset(months=6)]
         if len(denom) > 0:
             self.six_month = dp[-1] / denom[-1] - 1
@@ -327,9 +330,6 @@ class PerformanceStats(object):
         self.best_year = yr.max()
         self.worst_year = yr.min()
 
-        # annualize stat for over 1 year
-        self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
-
         # -1 here to account for first return that will be nan
         self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
 
@@ -343,6 +343,12 @@ class PerformanceStats(object):
                     win += 1
             self.twelve_month_win_perc = float(win) / tot
 
+        if len(yr) < 3:
+            return
+
+        # annualize stat for over 1 year
+        self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
+
         if len(yr) < 4:
             return
 
@@ -352,7 +358,13 @@ class PerformanceStats(object):
         if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
             self.yearly_kurt = yr.kurt()
 
+        if len(yr) < 5:
+            return
         self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
+
+
+        if len(yr) < 10:
+            return
         self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
 
         return
