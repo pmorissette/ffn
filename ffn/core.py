@@ -362,6 +362,7 @@ class PerformanceStats(object):
             return
         self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
 
+
         if len(yr) < 10:
             return
         self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
