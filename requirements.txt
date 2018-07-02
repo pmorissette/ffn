@@ -1,7 +1,7 @@
 future
 ipython
 numpy
-pandas
+pandas == 0.22.0
 tabulate
 pandas_datareader
 decorator
