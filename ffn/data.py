@@ -3,7 +3,8 @@ from distutils.version import LooseVersion
 import pandas as pd
 
 import ffn
-import ffn.utils as utils
+#import ffn.utils as utils
+from . import utils
 
 # This is a temporary fix until pandas_datareader 0.7 is released.
 # pandas 0.23 has moved is_list_like from common to api.types, hence the monkey patch
