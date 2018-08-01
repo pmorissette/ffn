@@ -339,7 +339,7 @@ def test_limit_weights():
 
     assert actual.sum() == 1.0
 
-    assert np.all([x <= 0.3 for x in actual])
+    assert all(x <= 0.3 for x in actual)
 
     aae(actual['a'], 0.300, 3)
     aae(actual['b'], 0.190, 3)
