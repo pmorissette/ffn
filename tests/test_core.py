@@ -816,9 +816,3 @@ def test_drawdown_details():
 
     drawdown = ffn.to_drawdown_series(returns)
     drawdown_details = ffn.drawdown_details(drawdown,index_type=drawdown.index)
-
-
-
-
-
-
