@@ -190,17 +190,16 @@ class PerformanceStats(object):
             return
 
         self.daily_mean = r.mean() * 252
-        self.daily_vol = np.std(r,ddof=1) * np.sqrt(252)
+        self.daily_vol = np.std(r, ddof=1) * np.sqrt(252)
 
         if type(self.rf) is float:
-            self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
-            self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
+            _rf_daily_price_returns = self.rf
         # rf is a price series
         else:
             _rf_daily_price_returns = self.rf.to_returns()
-            self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=252)
-            self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=252)
 
+        self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=252)
+        self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=252)
         self.best_day = r.max()
         self.worst_day = r.min()
 
@@ -218,7 +217,7 @@ class PerformanceStats(object):
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
             self.avg_drawdown_days = self.drawdown_details['Length'].mean()
 
-        self.calmar = np.divide(self.cagr , np.abs(self.max_drawdown) )
+        self.calmar = np.divide(self.cagr, np.abs(self.max_drawdown))
 
         if len(r) < 4:
             return
@@ -237,16 +236,16 @@ class PerformanceStats(object):
             return
 
         self.monthly_mean = mr.mean() * 12
-        self.monthly_vol = np.std(mr,ddof=1) * np.sqrt(12)
+        self.monthly_vol = np.std(mr, ddof=1) * np.sqrt(12)
 
         if type(self.rf) is float:
-            self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
-            self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
+            _rf_monthly_price_returns = self.rf
         # rf is a price series
         else:
             _rf_monthly_price_returns = self.rf.resample('M').last().to_returns()
-            self.monthly_sharpe = mr.calc_sharpe(rf=_rf_monthly_price_returns, nperiods=12)
-            self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
+        
+        self.monthly_sharpe = mr.calc_sharpe(rf=_rf_monthly_price_returns, nperiods=12)
+        self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
         self.best_month = mr.max()
         self.worst_month = mr.min()
 
@@ -314,18 +313,17 @@ class PerformanceStats(object):
             self.one_year = dp[-1] / denom[-1] - 1
 
         self.yearly_mean = yr.mean()
-        self.yearly_vol = np.std(yr,ddof=1)
+        self.yearly_vol = np.std(yr, ddof=1)
 
         if type(self.rf) is float:
-            if self.yearly_vol > 0:
-                self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
-            self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
+            _rf_yearly_price_returns = self.rf
         # rf is a price series
         else:
             _rf_yearly_price_returns = self.rf.resample('A').last().to_returns()
-            if self.yearly_vol > 0:
-                self.yearly_sharpe = yr.calc_sharpe(rf=_rf_yearly_price_returns, nperiods=1)
-            self.yearly_sortino = calc_sortino_ratio(yr, rf=_rf_yearly_price_returns, nperiods=1)
+
+        if self.yearly_vol > 0:
+            self.yearly_sharpe = yr.calc_sharpe(rf=_rf_yearly_price_returns, nperiods=1)
+        self.yearly_sortino = calc_sortino_ratio(yr, rf=_rf_yearly_price_returns, nperiods=1)
 
         self.best_year = yr.max()
         self.worst_year = yr.min()
@@ -361,7 +359,6 @@ class PerformanceStats(object):
         if len(yr) < 5:
             return
         self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
-
 
         if len(yr) < 10:
             return
@@ -436,17 +433,9 @@ class PerformanceStats(object):
             * end (end): end date
 
         """
-        if start is None:
-            start = self._start
-        else:
-            start = pd.to_datetime(start)
-
-        if end is None:
-            end = self._end
-        else:
-            end = pd.to_datetime(end)
-
-        self._update(self.prices.ix[start:end])
+        start = self._start if start is None else pd.to_datetime(start)
+        end = self._end if end is None else pd.to_datetime(end)
+        self._update(self.prices.loc[start:end])
 
     def display(self):
         """
@@ -510,7 +499,7 @@ class PerformanceStats(object):
         data = [['Year', 'Jan', 'Feb', 'Mar', 'Apr', 'May',
                  'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'YTD']]
         for k in self.return_table.index:
-            r = self.return_table.ix[k].values
+            r = self.return_table.loc[k].values
             data.append([k] + [fmtpn(x) for x in r])
         print(tabulate(data, headers='firstrow'))
 
@@ -835,7 +824,7 @@ class GroupStats(dict):
         else:
             end = pd.to_datetime(end)
 
-        self._update(self._prices.ix[start:end])
+        self._update(self._prices.loc[start:end])
 
     def display(self):
         """
@@ -1261,7 +1250,7 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
         raise Exception('Must provide nperiods if rf != 0')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-    std = np.std(returns,ddof=1)
+    std = np.std(returns, ddof=1)
     res = np.divide(er.mean(), std)
 
     if annualize:
@@ -1277,12 +1266,12 @@ def calc_information_ratio(returns, benchmark_returns):
     Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
     diff_rets = returns - benchmark_returns
-    diff_std = np.std(diff_rets,ddof=1)
+    diff_std = np.std(diff_rets, ddof=1)
 
     if np.isnan(diff_std) or diff_std == 0:
         return 0.0
 
-    return np.divide(diff_rets.mean(),diff_std)
+    return np.divide(diff_rets.mean(), diff_std)
 
 
 def calc_prob_mom(returns, other_returns):
@@ -1397,7 +1386,7 @@ def asfreq_actual(series, freq, method='ffill', how='end', normalize=False):
     dts = t.asfreq(freq=freq, method=method, how=how,
                    normalize=normalize)['dt']
 
-    res = orig.ix[dts.values]
+    res = orig.loc[dts.values]
 
     if is_series:
         return res[name]
@@ -1420,10 +1409,10 @@ def calc_inv_vol_weights(returns):
         Series {col_name: weight}
     """
     # calc vols
-    vol = np.divide(1. , np.std(returns,ddof=1) )
+    vol = np.divide(1., np.std(returns, ddof=1))
     vol[np.isinf(vol)] = np.NaN
     volsum = vol.sum()
-    return np.divide(vol,volsum)
+    return np.divide(vol, volsum)
 
 
 def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
@@ -1754,7 +1743,7 @@ def calc_ftca(returns, threshold=0.5):
         # if not then we have some work to do
         else:
             # filter down correlation matrix to current remain
-            cur_corr = corr[remain].ix[remain]
+            cur_corr = corr[remain].loc[remain]
             # get mean correlations, ordered
             mc = cur_corr.mean().sort_values()
             # get lowest and highest mean correlation
@@ -1988,8 +1977,9 @@ def _winsorize_wrapper(x, limits):
         if len(x.dropna()) == 0:
             return x
 
-        x[~np.isnan(x)] = scipy.stats.mstats.winsorize(x[~np.isnan(x)],
-                                                       limits=limits)
+        notnanx = ~np.isnan(x)
+        x[notnanx] = scipy.stats.mstats.winsorize(x[notnanx],
+                                                  limits=limits)
         return x
     else:
         return scipy.stats.mstats.winsorize(x, limits=limits)
@@ -2063,7 +2053,7 @@ def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
     negative_returns = np.minimum(returns[1:], 0.)
-    std = np.std(negative_returns,ddof=1)
+    std = np.std(negative_returns, ddof=1)
     res = np.divide(er.mean(), std)
 
     if annualize:
@@ -2117,7 +2107,7 @@ def to_ulcer_index(prices):
 
     """
     dd = prices.to_drawdown_series()
-    return np.divide(np.sqrt(np.sum(np.power(dd, 2))),dd.count())
+    return np.divide(np.sqrt(np.sum(np.power(dd, 2))), dd.count())
 
 
 def to_ulcer_performance_index(prices, rf=0., nperiods=None):
@@ -2140,6 +2130,7 @@ def to_ulcer_performance_index(prices, rf=0., nperiods=None):
 
     return np.divide(er.mean(), prices.to_ulcer_index())
 
+
 def resample_returns(
         returns,
         func,
@@ -2158,7 +2149,7 @@ def resample_returns(
     :return: Series of resampled statistics
     """
 
-    #stats = []
+    # stats = []
     if type(returns) is pd.Series:
         stats = pd.Series(index=range(num_trials))
     elif type(returns) is pd.DataFrame:
@@ -2171,7 +2162,7 @@ def resample_returns(
 
     n = returns.shape[0]
     for i in range(num_trials):
-        random_indices = resample(returns.index, n_samples=n, random_state=seed+i)
+        random_indices = resample(returns.index, n_samples=n, random_state=seed + i)
         stats.loc[i] = func(returns.loc[random_indices])
 
     return stats
