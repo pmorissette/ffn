@@ -1973,8 +1973,8 @@ def _winsorize_wrapper(x, limits):
     """
     Wraps scipy winsorize function to drop na's
     """
-    if hasattr(x, 'dropna'):
-        if len(x.dropna()) == 0:
+    if isinstance(x, pd.Series):
+        if x.count() == 0:
             return x
 
         notnanx = ~np.isnan(x)
