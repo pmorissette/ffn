@@ -814,16 +814,8 @@ class GroupStats(dict):
             * start (date): start date
             * end (end): end date
         """
-        if start is None:
-            start = self._start
-        else:
-            start = pd.to_datetime(start)
-
-        if end is None:
-            end = self._end
-        else:
-            end = pd.to_datetime(end)
-
+        start = self._start if start is None else pd.to_datetime(start)
+        end = self._end if end is None else pd.to_datetime(end)
         self._update(self._prices.loc[start:end])
 
     def display(self):
