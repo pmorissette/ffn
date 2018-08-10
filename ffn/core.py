@@ -189,20 +189,23 @@ class PerformanceStats(object):
         if len(r) < 2:
             return
 
-        self.daily_mean = r.mean() * 252
-        self.daily_vol = np.std(r,ddof=1) * np.sqrt(252)
+        # Will calculate daily figures only if the input data has at least daily frequency or higher (e.g hourly)
+        # Rather < 2 days than <= 1 days in case of data taken at different hours of the days
+        if r.index.to_series().diff().min() < pd.Timedelta('2 days'):
+            self.daily_mean = r.mean() * 252
+            self.daily_vol = np.std(r, ddof=1) * np.sqrt(252)
 
-        if type(self.rf) is float:
-            self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
-            self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
-        # rf is a price series
-        else:
-            _rf_daily_price_returns = self.rf.to_returns()
-            self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=252)
-            self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=252)
+            if type(self.rf) is float:
+                self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
+                self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
+            # rf is a price series
+            else:
+                _rf_daily_price_returns = self.rf.to_returns()
+                self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=252)
+                self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=252)
 
-        self.best_day = r.max()
-        self.worst_day = r.min()
+            self.best_day = r.max()
+            self.worst_day = r.min()
 
         self.total_return = obj[-1] / obj[0] - 1
         # save ytd as total_return for now - if we get to real ytd
@@ -218,16 +221,17 @@ class PerformanceStats(object):
             self.avg_drawdown = self.drawdown_details['drawdown'].mean()
             self.avg_drawdown_days = self.drawdown_details['Length'].mean()
 
-        self.calmar = np.divide(self.cagr , np.abs(self.max_drawdown) )
+        self.calmar = np.divide(self.cagr, np.abs(self.max_drawdown))
 
         if len(r) < 4:
             return
 
-        self.daily_skew = r.skew()
+        if r.index.to_series().diff().min() <= pd.Timedelta('1 days'):
+            self.daily_skew = r.skew()
 
-        # if all zero/nan kurt fails division by zero
-        if len(r[(~np.isnan(r)) & (r != 0)]) > 0:
-            self.daily_kurt = r.kurt()
+            # if all zero/nan kurt fails division by zero
+            if len(r[(~np.isnan(r)) & (r != 0)]) > 0:
+                self.daily_kurt = r.kurt()
 
         # stats using monthly data
         self.monthly_returns = self.monthly_prices.to_returns()
@@ -236,136 +240,141 @@ class PerformanceStats(object):
         if len(mr) < 2:
             return
 
-        self.monthly_mean = mr.mean() * 12
-        self.monthly_vol = np.std(mr,ddof=1) * np.sqrt(12)
+        # Will calculate monthly figures only if the input data has at least monthly frequency or higher (e.g daily)
+        # Rather < 32 days than <= 31 days in case of data taken at different hours of the days
+        if r.index.to_series().diff().min() < pd.Timedelta('32 days'):
+            self.monthly_mean = mr.mean() * 12
+            self.monthly_vol = np.std(mr, ddof=1) * np.sqrt(12)
 
-        if type(self.rf) is float:
-            self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
-            self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
-        # rf is a price series
-        else:
-            _rf_monthly_price_returns = self.rf.resample('M').last().to_returns()
-            self.monthly_sharpe = mr.calc_sharpe(rf=_rf_monthly_price_returns, nperiods=12)
-            self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
-        self.best_month = mr.max()
-        self.worst_month = mr.min()
+            if type(self.rf) is float:
+                self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
+                self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
+            # rf is a price series
+            else:
+                _rf_monthly_price_returns = self.rf.resample('M').last().to_returns()
+                self.monthly_sharpe = mr.calc_sharpe(rf=_rf_monthly_price_returns, nperiods=12)
+                self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
+            self.best_month = mr.max()
+            self.worst_month = mr.min()
 
-        # -2 because p[-1] will be mp[-1]
-        self.mtd = dp[-1] / mp[-2] - 1
+            # -2 because p[-1] will be mp[-1]
+            self.mtd = dp[-1] / mp[-2] - 1
 
-        # -1 here to account for first return that will be nan
-        self.pos_month_perc = len(mr[mr > 0]) / float(len(mr) - 1)
-        self.avg_up_month = mr[mr > 0].mean()
-        self.avg_down_month = mr[mr <= 0].mean()
+            # -1 here to account for first return that will be nan
+            self.pos_month_perc = len(mr[mr > 0]) / float(len(mr) - 1)
+            self.avg_up_month = mr[mr > 0].mean()
+            self.avg_down_month = mr[mr <= 0].mean()
 
-        # return_table
-        for idx in mr.index:
-            if idx.year not in self.return_table:
-                self.return_table[idx.year] = {1: 0, 2: 0, 3: 0,
+            # return_table
+            for idx in mr.index:
+                if idx.year not in self.return_table:
+                    self.return_table[idx.year] = {1: 0, 2: 0, 3: 0,
                                                4: 0, 5: 0, 6: 0,
                                                7: 0, 8: 0, 9: 0,
                                                10: 0, 11: 0, 12: 0}
-            if not np.isnan(mr[idx]):
-                self.return_table[idx.year][idx.month] = mr[idx]
-        # add first month
-        fidx = mr.index[0]
-        try:
-            self.return_table[fidx.year][fidx.month] = float(mp[0]) / dp[0] - 1
-        except ZeroDivisionError:
-            self.return_table[fidx.year][fidx.month] = 0
-        # calculate the YTD values
-        for idx in self.return_table:
-            arr = np.array(listvalues(self.return_table[idx]))
-            self.return_table[idx][13] = np.prod(arr + 1) - 1
+                if not np.isnan(mr[idx]):
+                    self.return_table[idx.year][idx.month] = mr[idx]
+            # add first month
+            fidx = mr.index[0]
+            try:
+                self.return_table[fidx.year][fidx.month] = float(mp[0]) / dp[0] - 1
+            except ZeroDivisionError:
+                self.return_table[fidx.year][fidx.month] = 0
+            # calculate the YTD values
+            for idx in self.return_table:
+                arr = np.array(listvalues(self.return_table[idx]))
+                self.return_table[idx][13] = np.prod(arr + 1) - 1
 
-        if len(mr) < 3:
-            return
+            if len(mr) < 3:
+                return
 
-        denom = dp[:dp.index[-1] - pd.DateOffset(months=3)]
-        if len(denom) > 0:
-            self.three_month = dp[-1] / denom[-1] - 1
+            denom = dp[:dp.index[-1] - pd.DateOffset(months=3)]
+            if len(denom) > 0:
+                self.three_month = dp[-1] / denom[-1] - 1
 
-        if len(mr) < 4:
-            return
+            if len(mr) < 4:
+                return
 
-        self.monthly_skew = mr.skew()
+            self.monthly_skew = mr.skew()
 
-        # if all zero/nan kurt fails division by zero
-        if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
-            self.monthly_kurt = mr.kurt()
+            # if all zero/nan kurt fails division by zero
+            if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
+                self.monthly_kurt = mr.kurt()
 
-        if len(mr) < 6:
-            return
+            if len(mr) < 6:
+                return
 
-        denom = dp[:dp.index[-1] - pd.DateOffset(months=6)]
-        if len(denom) > 0:
-            self.six_month = dp[-1] / denom[-1] - 1
+            denom = dp[:dp.index[-1] - pd.DateOffset(months=6)]
+            if len(denom) > 0:
+                self.six_month = dp[-1] / denom[-1] - 1
 
-        self.yearly_returns = self.yearly_prices.to_returns()
-        yr = self.yearly_returns
+        # Will calculate yearly figures only if the input data has at least yearly frequency or higher (e.g monthly)
+        # Rather < 367 days than <= 366 days in case of data taken at different hours of the days
+        if r.index.to_series().diff().min() < pd.Timedelta('367 days'):
+            self.yearly_returns = self.yearly_prices.to_returns()
+            yr = self.yearly_returns
 
-        if len(yr) < 2:
-            return
+            if len(yr) < 2:
+                return
 
-        self.ytd = dp[-1] / yp[-2] - 1
+            self.ytd = dp[-1] / yp[-2] - 1
 
-        denom = dp[:dp.index[-1] - pd.DateOffset(years=1)]
-        if len(denom) > 0:
-            self.one_year = dp[-1] / denom[-1] - 1
+            denom = dp[:dp.index[-1] - pd.DateOffset(years=1)]
+            if len(denom) > 0:
+                self.one_year = dp[-1] / denom[-1] - 1
 
-        self.yearly_mean = yr.mean()
-        self.yearly_vol = np.std(yr,ddof=1)
+            self.yearly_mean = yr.mean()
+            self.yearly_vol = np.std(yr, ddof=1)
 
-        if type(self.rf) is float:
-            if self.yearly_vol > 0:
-                self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
-            self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
-        # rf is a price series
-        else:
-            _rf_yearly_price_returns = self.rf.resample('A').last().to_returns()
-            if self.yearly_vol > 0:
-                self.yearly_sharpe = yr.calc_sharpe(rf=_rf_yearly_price_returns, nperiods=1)
-            self.yearly_sortino = calc_sortino_ratio(yr, rf=_rf_yearly_price_returns, nperiods=1)
+            if type(self.rf) is float:
+                if self.yearly_vol > 0:
+                    self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
+                self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
+            # rf is a price series
+            else:
+                _rf_yearly_price_returns = self.rf.resample('A').last().to_returns()
+                if self.yearly_vol > 0:
+                    self.yearly_sharpe = yr.calc_sharpe(rf=_rf_yearly_price_returns, nperiods=1)
+                self.yearly_sortino = calc_sortino_ratio(yr, rf=_rf_yearly_price_returns, nperiods=1)
 
-        self.best_year = yr.max()
-        self.worst_year = yr.min()
+            self.best_year = yr.max()
+            self.worst_year = yr.min()
 
-        # -1 here to account for first return that will be nan
-        self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
+            # -1 here to account for first return that will be nan
+            self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
 
-        # need at least 1 year of monthly returns
-        if mr.size > 11:
-            tot = 0
-            win = 0
-            for i in range(11, len(mr)):
-                tot += 1
-                if mp[i] / mp[i - 11] > 1:
-                    win += 1
-            self.twelve_month_win_perc = float(win) / tot
+            # need at least 1 year of monthly returns
+            if mr.size > 11:
+                tot = 0
+                win = 0
+                for i in range(11, len(mr)):
+                    tot += 1
+                    if mp[i] / mp[i - 11] > 1:
+                        win += 1
+                self.twelve_month_win_perc = float(win) / tot
 
-        if len(yr) < 3:
-            return
+            if len(yr) < 3:
+                return
 
-        # annualize stat for over 1 year
-        self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
+            # annualize stat for over 1 year
+            self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
 
-        if len(yr) < 4:
-            return
+            if len(yr) < 4:
+                return
 
-        self.yearly_skew = yr.skew()
+            self.yearly_skew = yr.skew()
 
-        # if all zero/nan kurt fails division by zero
-        if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
-            self.yearly_kurt = yr.kurt()
+            # if all zero/nan kurt fails division by zero
+            if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
+                self.yearly_kurt = yr.kurt()
 
-        if len(yr) < 5:
-            return
-        self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
+            if len(yr) < 5:
+                return
+            self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
 
-
-        if len(yr) < 10:
-            return
-        self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
+            if len(yr) < 10:
+                return
+            self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
 
         return
 
