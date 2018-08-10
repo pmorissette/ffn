@@ -339,7 +339,7 @@ def test_limit_weights():
 
     assert actual.sum() == 1.0
 
-    assert np.all([x <= 0.3 for x in actual])
+    assert all(x <= 0.3 for x in actual)
 
     aae(actual['a'], 0.300, 3)
     aae(actual['b'], 0.190, 3)
@@ -357,7 +357,7 @@ def test_random_weights():
 
     df = pd.DataFrame(index=range(1000), columns=range(n))
     for i in df.index:
-        df.ix[i] = ffn.random_weights(n, bounds, tot)
+        df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert df.applymap(lambda x: (x >= low and x <= high)).all().all()
 
@@ -369,7 +369,7 @@ def test_random_weights():
 
     df = pd.DataFrame(index=range(1000), columns=range(n))
     for i in df.index:
-        df.ix[i] = ffn.random_weights(n, bounds, tot)
+        df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert df.applymap(
         lambda x: (np.round(x, 2) >= low and
@@ -383,7 +383,7 @@ def test_random_weights():
 
     df = pd.DataFrame(index=range(1000), columns=range(n))
     for i in df.index:
-        df.ix[i] = ffn.random_weights(n, bounds, tot)
+        df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert df.applymap(
         lambda x: (np.round(x, 2) >= low and
@@ -397,7 +397,7 @@ def test_random_weights():
 
     df = pd.DataFrame(index=range(1000), columns=range(n))
     for i in df.index:
-        df.ix[i] = ffn.random_weights(n, bounds, tot)
+        df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert df.applymap(
         lambda x: (np.round(x, 2) >= low and
@@ -515,12 +515,12 @@ def test_calc_sortino_ratio():
     p = 1
     r = df.to_returns()
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
-    negative_returns = np.minimum(r[1:],0)
-    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns,ddof=1)) * np.sqrt(p))
+    negative_returns = np.minimum(r[1:], 0)
+    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns, ddof=1)) * np.sqrt(p))
 
     a = r.calc_sortino_ratio()
     negative_returns = np.minimum(r[1:], 0)
-    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns,ddof=1)) * np.sqrt(p))
+    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns, ddof=1)) * np.sqrt(p))
 
     rf = 0.02
     p = 252
@@ -529,7 +529,7 @@ def test_calc_sortino_ratio():
 
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
     negative_returns = np.minimum(r[1:], 0)
-    assert np.allclose(a, np.divide(er.mean(), np.std(negative_returns,ddof=1)) * np.sqrt(p))
+    assert np.allclose(a, np.divide(er.mean(), np.std(negative_returns, ddof=1)) * np.sqrt(p))
 
 
 def test_calmar_ratio():
@@ -591,6 +591,7 @@ def test_to_excess_returns():
 
     np.allclose(r.to_excess_returns(rf), r - rf)
 
+
 def test_set_riskfree_rate():
     r = df.to_returns()
 
@@ -640,7 +641,7 @@ def test_set_riskfree_rate():
     daily_returns = df['MSFT'].pct_change()
     aae(
         performanceStats.daily_sharpe,
-        np.mean(daily_returns.dropna() - 0.02/252)/ (daily_returns.dropna().std()) * (np.sqrt(252)),
+        np.mean(daily_returns.dropna() - 0.02 / 252) / (daily_returns.dropna().std()) * (np.sqrt(252)),
         3
     )
     aae(
@@ -649,11 +650,10 @@ def test_set_riskfree_rate():
         3
     )
 
-
     monthly_returns = df['MSFT'].resample('M').last().pct_change()
     aae(
         performanceStats.monthly_sharpe,
-        np.mean(monthly_returns.dropna() - 0.02/12) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
+        np.mean(monthly_returns.dropna() - 0.02 / 12) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
         3
     )
     aae(
@@ -665,7 +665,7 @@ def test_set_riskfree_rate():
     yearly_returns = df['MSFT'].resample('A').last().pct_change()
     aae(
         performanceStats.yearly_sharpe,
-        np.mean(yearly_returns.dropna() - 0.02/1) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
+        np.mean(yearly_returns.dropna() - 0.02 / 1) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
         3
     )
     aae(
@@ -675,11 +675,11 @@ def test_set_riskfree_rate():
     )
 
     rf = np.zeros(df.shape[0])
-    #annual rf is 2%
-    rf[1:] = 0.02/252
+    # annual rf is 2%
+    rf[1:] = 0.02 / 252
     rf[0] = 0.
-    #convert to price series
-    rf = 100*np.cumprod(1+pd.Series(data=rf, index=df.index, name='rf'))
+    # convert to price series
+    rf = 100 * np.cumprod(1 + pd.Series(data=rf, index=df.index, name='rf'))
 
     performanceStats.set_riskfree_rate(rf)
     groupStats.set_riskfree_rate(rf)
@@ -688,7 +688,7 @@ def test_set_riskfree_rate():
     rf_daily_returns = rf.pct_change()
     aae(
         performanceStats.daily_sharpe,
-        np.mean(daily_returns-rf_daily_returns) / (daily_returns.dropna().std()) * (np.sqrt(252)),
+        np.mean(daily_returns - rf_daily_returns) / (daily_returns.dropna().std()) * (np.sqrt(252)),
         3
     )
     aae(
@@ -701,7 +701,7 @@ def test_set_riskfree_rate():
     rf_monthly_returns = rf.resample('M').last().pct_change()
     aae(
         performanceStats.monthly_sharpe,
-        np.mean(monthly_returns-rf_monthly_returns) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
+        np.mean(monthly_returns - rf_monthly_returns) / (monthly_returns.dropna().std()) * (np.sqrt(12)),
         3
     )
     aae(
@@ -714,7 +714,7 @@ def test_set_riskfree_rate():
     rf_yearly_returns = rf.resample('A').last().pct_change()
     aae(
         performanceStats.yearly_sharpe,
-        np.mean(yearly_returns-rf_yearly_returns) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
+        np.mean(yearly_returns - rf_yearly_returns) / (yearly_returns.dropna().std()) * (np.sqrt(1)),
         3
     )
     aae(
@@ -723,12 +723,14 @@ def test_set_riskfree_rate():
         3
     )
 
+
 def test_performance_stats():
     ps = ffn.PerformanceStats(df['AAPL'])
 
     num_stats = len(ps.stats.keys())
     num_unique_stats = len(ps.stats.keys().drop_duplicates())
     assert(num_stats == num_unique_stats)
+
 
 def test_group_stats_calc_stats():
     gs = df.calc_stats()
@@ -740,9 +742,9 @@ def test_group_stats_calc_stats():
 
 def test_resample_returns():
     num_years = 30
-    num_months = num_years*12
+    num_months = num_years * 12
     np.random.seed(0)
-    returns = np.random.normal(loc=0.06/12,scale=0.20/np.sqrt(12),size=num_months)
+    returns = np.random.normal(loc=0.06 / 12, scale=0.20 / np.sqrt(12), size=num_months)
     returns = pd.Series(returns)
 
     sample_mean = np.mean(returns)
@@ -755,13 +757,13 @@ def test_resample_returns():
     )
 
     resampled_mean = np.mean(sample_stats)
-    std_resampled_means = np.std(sample_stats,ddof=1)
+    std_resampled_means = np.std(sample_stats, ddof=1)
 
     # resampled statistics should be within 3 std devs of actual
-    assert ( np.abs((sample_mean - resampled_mean)/std_resampled_means) < 3)
+    assert (np.abs((sample_mean - resampled_mean) / std_resampled_means) < 3)
 
     np.random.seed(0)
-    returns = np.random.normal(loc=0.06 / 12, scale=0.20 / np.sqrt(12), size=num_months * 3).reshape(num_months,3)
+    returns = np.random.normal(loc=0.06 / 12, scale=0.20 / np.sqrt(12), size=num_months * 3).reshape(num_months, 3)
     returns = pd.DataFrame(returns)
 
     sample_mean = np.mean(returns, axis=0)
@@ -802,23 +804,18 @@ def test_resample_returns():
         ) < 3
     )
 
+
 def test_drawdown_details():
     drawdown = ffn.to_drawdown_series(df['MSFT'])
     drawdown_details = ffn.drawdown_details(drawdown)
 
-    assert (drawdown_details.loc[drawdown_details.index[1],'Length'] == 18)
+    assert (drawdown_details.loc[drawdown_details.index[1], 'Length'] == 18)
 
     num_years = 30
     num_months = num_years * 12
     np.random.seed(0)
     returns = np.random.normal(loc=0.06 / 12, scale=0.20 / np.sqrt(12), size=num_months)
-    returns = pd.Series(np.cumprod(1+returns))
+    returns = pd.Series(np.cumprod(1 + returns))
 
     drawdown = ffn.to_drawdown_series(returns)
-    drawdown_details = ffn.drawdown_details(drawdown,index_type=drawdown.index)
-
-
-
-
-
-
+    drawdown_details = ffn.drawdown_details(drawdown, index_type=drawdown.index)
