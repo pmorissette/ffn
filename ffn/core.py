@@ -169,9 +169,9 @@ class PerformanceStats(object):
         #  if months or years are missing then we will need .dropna() too
         self.daily_prices = self.daily_prices.dropna()
         # M = month end frequency
-        self.monthly_prices = obj.resample('M').last()
+        self.monthly_prices = obj.resample('M').last() #.dropna()
         # A == year end frequency
-        self.yearly_prices = obj.resample('A').last()
+        self.yearly_prices = obj.resample('A').last() #.dropna()
 
         # let's save some typing
         dp = self.daily_prices
@@ -226,7 +226,7 @@ class PerformanceStats(object):
         if len(r) < 4:
             return
 
-        if r.index.to_series().diff().min() <= pd.Timedelta('1 days'):
+        if r.index.to_series().diff().min() <= pd.Timedelta('2 days'):
             self.daily_skew = r.skew()
 
             # if all zero/nan kurt fails division by zero
@@ -285,6 +285,7 @@ class PerformanceStats(object):
                 arr = np.array(listvalues(self.return_table[idx]))
                 self.return_table[idx][13] = np.prod(arr + 1) - 1
 
+        if r.index.to_series().diff().min() < pd.Timedelta('93 days'):
             if len(mr) < 3:
                 return
 
@@ -292,6 +293,7 @@ class PerformanceStats(object):
             if len(denom) > 0:
                 self.three_month = dp[-1] / denom[-1] - 1
 
+        if r.index.to_series().diff().min() < pd.Timedelta('32 days'):
             if len(mr) < 4:
                 return
 
@@ -301,6 +303,7 @@ class PerformanceStats(object):
             if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
                 self.monthly_kurt = mr.kurt()
 
+        if r.index.to_series().diff().min() < pd.Timedelta('185 days'):
             if len(mr) < 6:
                 return
 
@@ -353,12 +356,14 @@ class PerformanceStats(object):
                         win += 1
                 self.twelve_month_win_perc = float(win) / tot
 
+        if r.index.to_series().diff().min() < pd.Timedelta('1097 days'):
             if len(yr) < 3:
                 return
 
             # annualize stat for over 1 year
             self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
 
+        if r.index.to_series().diff().min() < pd.Timedelta('367 days'):
             if len(yr) < 4:
                 return
 
@@ -368,10 +373,12 @@ class PerformanceStats(object):
             if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
                 self.yearly_kurt = yr.kurt()
 
+        if r.index.to_series().diff().min() < pd.Timedelta('1828 days'):
             if len(yr) < 5:
                 return
             self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
 
+        if r.index.to_series().diff().min() < pd.Timedelta('3654 days'):
             if len(yr) < 10:
                 return
             self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
