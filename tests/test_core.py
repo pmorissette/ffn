@@ -235,6 +235,7 @@ def test_calc_mean_var_weights():
 def test_calc_erc_weights():
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
+
     actual = ffn.core.calc_erc_weights(rets)
 
     assert len(actual) == 3
@@ -245,6 +246,56 @@ def test_calc_erc_weights():
     aae(actual['AAPL'], 0.270, 3)
     aae(actual['MSFT'], 0.374, 3)
     aae(actual['C'], 0.356, 3)
+
+    actual = ffn.core.calc_erc_weights(
+        rets,
+        covar_method='ledoit-wolf',
+        risk_parity_method='slsqp',
+        tolerance=1e-9
+    )
+
+    assert len(actual) == 3
+    assert 'AAPL' in actual
+    assert 'MSFT' in actual
+    assert 'C' in actual
+
+    aae(actual['AAPL'], 0.270, 3)
+    aae(actual['MSFT'], 0.374, 3)
+    aae(actual['C'], 0.356, 3)
+
+    actual = ffn.core.calc_erc_weights(
+        rets,
+        covar_method='standard',
+        risk_parity_method='ccd',
+        tolerance=1e-9
+    )
+
+    assert len(actual) == 3
+    assert 'AAPL' in actual
+    assert 'MSFT' in actual
+    assert 'C' in actual
+
+    aae(actual['AAPL'], 0.234, 3)
+    aae(actual['MSFT'], 0.409, 3)
+    aae(actual['C'], 0.356, 3)
+
+    actual = ffn.core.calc_erc_weights(
+        rets,
+        covar_method='standard',
+        risk_parity_method='slsqp',
+        tolerance=1e-9
+    )
+
+    assert len(actual) == 3
+    assert 'AAPL' in actual
+    assert 'MSFT' in actual
+    assert 'C' in actual
+
+    aae(actual['AAPL'], 0.234, 3)
+    aae(actual['MSFT'], 0.409, 3)
+    aae(actual['C'], 0.356, 3)
+
+
 
 
 def test_calc_total_return():
@@ -804,6 +855,85 @@ def test_resample_returns():
         ) < 3
     )
 
+def test_monthly_returns():
+
+    dates = [
+        '31/12/2017',
+        '5/1/2018',
+        '9/1/2018',
+        '13/1/2018',
+        '17/1/2018',
+        '21/1/2018',
+        '25/1/2018',
+        '29/1/2018',
+        '2/2/2018',
+        '6/2/2018',
+        '10/2/2018',
+        '14/2/2018',
+        '18/2/2018',
+        '22/2/2018',
+        '26/2/2018',
+        '1/5/2018',
+        '5/5/2018',
+        '9/5/2018',
+        '13/5/2018',
+        '17/5/2018',
+        '21/5/2018',
+        '25/5/2018',
+        '29/5/2018',
+        '2/6/2018',
+        '6/6/2018',
+        '10/6/2018',
+        '14/6/2018',
+        '18/6/2018',
+        '22/6/2018',
+        '26/6/2018'
+    ]
+
+    prices = [
+        100,
+        98,
+        100,
+        103,
+        106,
+        106,
+        107,
+        111,
+        115,
+        115,
+        118,
+        122,
+        120,
+        119,
+        118,
+        119,
+        118,
+        120,
+        122,
+        126,
+        130,
+        131,
+        131,
+        134,
+        138,
+        139,
+        139,
+        138,
+        140,
+        140
+    ]
+
+    df1 = pd.DataFrame(
+        prices,
+        index = pd.to_datetime(dates,format = "%d/%m/%Y"),
+        columns=['Price']
+    )
+
+    obj1 = ffn.PerformanceStats(df1['Price'])
+
+    obj1.monthly_returns == df1['Price'].resample('M').last().pct_change()
+
+
 
 def test_drawdown_details():
     drawdown = ffn.to_drawdown_series(df['MSFT'])
@@ -819,3 +949,5 @@ def test_drawdown_details():
 
     drawdown = ffn.to_drawdown_series(returns)
     drawdown_details = ffn.drawdown_details(drawdown, index_type=drawdown.index)
+
+

@@ -1485,6 +1485,75 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
     # return weight vector
     return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
 
+def _erc_weights_slsqp(
+        x0,
+        cov,
+        b,
+        maximum_iterations,
+        tolerance
+):
+    """
+    Calculates the equal risk contribution / risk parity weights given
+        a DataFrame of returns.
+
+    Args:
+    * x0 (np.array): Starting asset weights.
+    * cov (np.array): covariance matrix.
+    * b (np.array): Risk target weights. By definition target total risk contributions are all equal which makes this redundant.
+    * maximum_iterations (int): Maximum iterations in iterative solutions.
+    * tolerance (float): Tolerance level in iterative solutions.
+
+    Returns:
+    np.array {weight}
+
+    You can read more about ERC at
+    http://thierry-roncalli.com/download/erc.pdf
+
+    """
+
+    def fitness(weights, covar):
+        # total risk contributions
+        trc = weights*np.matmul(covar,weights)/np.matmul(weights.T,np.matmul(covar,weights))
+        n = len(trc)
+        # sum of squared differences of total risk contributions
+        sse = 0.
+        for i in range(n):
+            for j in range(n):
+                #switched from squared deviations to absolute deviations to avoid numerical instability
+                sse += np.abs(trc[i] - trc[j])
+        # minimizes metric
+        return sse
+
+    #nonnegative
+    bounds = [(0,None) for i in range(len(x0))]
+    # sum of weights must be equal to 1
+    constraints = (
+        {
+            'type': 'eq',
+            'fun': lambda W: sum(W) - 1.
+        }
+    )
+    options = {
+        'maxiter':maximum_iterations
+    }
+
+    optimized = minimize(
+        fitness,
+        x0,
+        (cov),
+        method='SLSQP',
+        constraints=constraints,
+        bounds=bounds,
+        options=options,
+        tol=tolerance
+    )
+    # check if success
+    if not optimized.success:
+        raise Exception(optimized.message)
+
+    # return weight vector
+    return optimized.x
+
 
 def _erc_weights_ccd(x0,
                      cov,
@@ -1598,11 +1667,23 @@ def calc_erc_weights(returns,
     # calc risk parity weights matrix
     if risk_parity_method == 'ccd':
         # cyclical coordinate descent implementation
-        erc_weights = _erc_weights_ccd(initial_weights,
-                                       covar,
-                                       risk_weights,
-                                       maximum_iterations,
-                                       tolerance)
+        erc_weights = _erc_weights_ccd(
+            initial_weights,
+            covar,
+            risk_weights,
+            maximum_iterations,
+            tolerance
+        )
+    elif risk_parity_method == 'slsqp':
+        #scipys slsqp optimizer
+        erc_weights = _erc_weights_slsqp(
+            initial_weights,
+            covar,
+            risk_weights,
+            maximum_iterations,
+            tolerance
+        )
+
     else:
         raise NotImplementedError('risk_parity_method not implemented')
 
@@ -2177,6 +2258,9 @@ def resample_returns(
         stats.loc[i] = func(returns.loc[random_indices])
 
     return stats
+
+
+
 
 
 def extend_pandas():
