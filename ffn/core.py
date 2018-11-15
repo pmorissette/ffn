@@ -1513,7 +1513,11 @@ def _erc_weights_slsqp(
 
     def fitness(weights, covar):
         # total risk contributions
-        trc = weights*np.matmul(covar,weights)/np.matmul(weights.T,np.matmul(covar,weights))
+        # trc = weights*np.matmul(covar,weights)/np.sqrt(np.matmul(weights.T,np.matmul(covar,weights)))
+
+        # instead of using the true definition for trc we will use the optimization on page 5
+        trc = weights * np.matmul(covar, weights)
+        
         n = len(trc)
         # sum of squared differences of total risk contributions
         sse = 0.
