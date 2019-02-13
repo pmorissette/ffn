@@ -28,6 +28,9 @@ if 'DISPLAY' not in os.environ:
 
 from matplotlib import pyplot as plt  # noqa
 
+#module level variable, can be different for non traditional markets (eg. crypto - 360)
+TRADING_DAYS_PER_YEAR = 252
+
 
 class PerformanceStats(object):
 
@@ -53,7 +56,7 @@ class PerformanceStats(object):
 
     """
 
-    def __init__(self, prices, rf=0.):
+    def __init__(self, prices, rf=0., trading_days_per_year=TRADING_DAYS_PER_YEAR):
         super(PerformanceStats, self).__init__()
         self.prices = prices
         self.name = self.prices.name
@@ -61,6 +64,7 @@ class PerformanceStats(object):
         self._end = self.prices.index[-1]
 
         self.rf = rf
+        self.trading_days_per_year = trading_days_per_year
 
         self._update(self.prices)
 
@@ -192,17 +196,17 @@ class PerformanceStats(object):
         # Will calculate daily figures only if the input data has at least daily frequency or higher (e.g hourly)
         # Rather < 2 days than <= 1 days in case of data taken at different hours of the days
         if r.index.to_series().diff().min() < pd.Timedelta('2 days'):
-            self.daily_mean = r.mean() * 252
-            self.daily_vol = np.std(r, ddof=1) * np.sqrt(252)
+            self.daily_mean = r.mean() * self.trading_days_per_year
+            self.daily_vol = np.std(r, ddof=1) * np.sqrt(self.trading_days_per_year)
 
             if type(self.rf) is float:
-                self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
-                self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
+                self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=self.trading_days_per_year)
+                self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=self.trading_days_per_year)
             # rf is a price series
             else:
                 _rf_daily_price_returns = self.rf.to_returns()
-                self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=252)
-                self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=252)
+                self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=self.trading_days_per_year)
+                self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=self.trading_days_per_year)
 
             self.best_day = r.max()
             self.worst_day = r.min()
@@ -1257,6 +1261,9 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
             etc.)
 
     """
+    if nperiods is None:
+        nperiods = infer_freq(returns)
+    
     if type(rf) is float and rf != 0 and nperiods is None:
         raise Exception('Must provide nperiods if rf != 0')
 
@@ -1509,7 +1516,7 @@ def _erc_weights_ccd(x0,
         Griveau-Billion, Theophile and Richard, Jean-Charles and Roncalli,
         Thierry, A Fast Algorithm for Computing High-Dimensional Risk Parity
         Portfolios (2013).
-        Available at SSRN: https://ssrn.com/abstract=2325255
+        Available at SSRN: https://ssrn.com/abstract=23trading_days_per_year55
 
     """
     n = len(x0)
@@ -1634,7 +1641,7 @@ def get_num_days_required(offset, period='d', perc_required=0.90):
     elif period == 'm':
         req = (days / 20) * perc_required
     elif period == 'y':
-        req = (days / 252) * perc_required
+        req = (days / trading_days_per_year) * perc_required
     else:
         raise NotImplementedError(
             'period not supported. Supported periods are d, m, y')
@@ -2044,7 +2051,65 @@ def deannualize(returns, nperiods):
             monthly, etc.
 
     """
+    if nperiods is None:
+        nperiods = infer_freq(returns)
+        
     return np.power(1 + returns, 1. / nperiods) - 1.
+
+
+def infer_freq(data):
+    """
+    Infer the most likely frequency given the input index. If the frequency is
+uncertain or index is not DateTime like, just return None
+    Args:
+        * data (DataFrame, Series): Any timeseries dataframe or series
+    """
+    try:
+        return pd.infer_freq(data.index, warn=False)
+    except Exception:
+        return None
+
+def infer_nperiods(data, trading_days_per_year = None):
+    if trading_days_per_year is None:
+        trading_days_per_year = TRADING_DAYS_PER_YEAR
+    
+    freq = infer_freq(data)
+    
+    if freq is None:
+        return None
+    
+    def whole_periods_str_to_nperiods(freq):
+        if freq == 'Y' or freq == 'A':
+            return 1
+        if freq == 'M':
+            return 12
+        if freq == 'D':
+            return TRADING_DAYS_PER_YEAR
+        if freq == 'H':
+            return TRADING_DAYS_PER_YEAR * 24
+        if freq == 'T':
+            return TRADING_DAYS_PER_YEAR * 24 * 60
+        if freq == 'S':
+            return TRADING_DAYS_PER_YEAR * 24 * 60 * 60
+        return None
+    
+    ""
+    if len(freq) == 1:
+        return whole_periods_str_to_nperiods(freq)
+    else:
+        try:
+            if freq.startswith('A'):
+                return 1
+            else:
+                whole_periods_str = freq[-1]
+                num_str = freq[:-1]
+                num = int(num_str)
+                return num * whole_periods_str_to_nperiods(whole_periods_str)
+        except:
+            return None
+
+    return None
+    
 
 
 def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
@@ -2060,6 +2125,9 @@ def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
     """
     if type(rf) is float and rf != 0 and nperiods is None:
         raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
+        
+    if nperiods is None:
+        nperiods = infer_freq(returns)
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
@@ -2088,6 +2156,9 @@ def to_excess_returns(returns, rf, nperiods=None):
         * excess_returns (Series, DataFrame): Returns - rf
 
     """
+    if nperiods is None:
+        nperiods = infer_freq(returns)
+    
     if type(rf) is float and nperiods is not None:
         _rf = deannualize(rf, nperiods)
     else:
@@ -2134,6 +2205,9 @@ def to_ulcer_performance_index(prices, rf=0., nperiods=None):
         * nperiods (int): Used to deannualize rf if rf is provided (non-zero)
 
     """
+    if nperiods is None:
+        nperiods = infer_freq(returns)
+    
     if type(rf) is float and rf != 0 and nperiods is None:
         raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
 
