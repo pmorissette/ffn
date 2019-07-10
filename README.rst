@@ -37,7 +37,7 @@ Installation
 ------------
 
 The easiest way to install ``ffn`` is from the `Python Package Index <https://pypi.python.org/pypi/ffn/>`_
-using ``pip`` or ``easy_insatll``:
+using ``pip`` or ``easy_install``:
 
 .. code-block:: bash
 
