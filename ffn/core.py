@@ -1642,6 +1642,7 @@ def calc_erc_weights(returns,
         * risk_parity_method (str): Risk parity estimation method.
             Currently supported:
                 - ccd (cyclical coordinate descent)[default]
+                - slsqp (scipy's implementation of sequential least squares programming)
         * maximum_iterations (int): Maximum iterations in iterative solutions.
         * tolerance (float): Tolerance level in iterative solutions.
 
