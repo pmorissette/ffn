@@ -24,7 +24,10 @@ import os
 import matplotlib
 
 if 'DISPLAY' not in os.environ:
-    matplotlib.use('agg', warn=False)
+    if matplotlib.__version__ > '2.':
+        matplotlib.use('agg', force=False)
+    else:
+        matplotlib.use('agg', warn=False)
 
 from matplotlib import pyplot as plt  # noqa
 
