@@ -36,6 +36,12 @@ setuptools.setup(
         'scipy>=0.15',
         'future>=0.15'
     ],
+    extras_require={
+        'dev': [
+            'codecov',
+            'coverage',
+        ],
+    },
     packages=['ffn'],
     long_description=local_file('README.rst').read(),
     classifiers=[
