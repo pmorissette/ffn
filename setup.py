@@ -4,9 +4,15 @@ import os
 import re
 
 
+# def local_file(filename):
+#     return codecs.open(
+#         os.path.join(os.path.dirname(__file__), filename), 'r', 'utf-8'
+#     )
+
+# Changes here related to issue Install error #73
 def local_file(filename):
-    return codecs.open(
-        os.path.join(os.path.dirname(__file__), filename), 'r', 'utf-8'
+    return open(
+        os.path.join(os.path.dirname(__file__), filename), 'r', encoding='utf-8'
     )
 
 
