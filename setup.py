@@ -4,13 +4,16 @@ import os
 import re
 
 
-with open(os.path.join(os.path.dirname(__file__), filename), 'r') as fp:
+with open(os.path.join(os.path.dirname(__file__), 'ffn', '__init__.py'), 'r') as fp:
     version = re.search(
         "^__version__ = \((\d+), (\d+), (\d+)\)$",
         fp.read(),
         re.MULTILINE
     ).groups()
 
+
+with open(os.path.join(os.path.dirname(__file__), 'README.rst'), 'r') as fp:
+    description = fp.read()
 
 setuptools.setup(
     name="ffn",
@@ -38,7 +41,7 @@ setuptools.setup(
         ],
     },
     packages=['ffn'],
-    long_description=local_file('README.rst').read(),
+    long_description=description,
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Topic :: Software Development :: Libraries',
