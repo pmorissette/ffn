@@ -566,21 +566,9 @@ def test_calc_sortino_ratio():
     p = 1
     r = df.to_returns()
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
-    negative_returns = np.minimum(r[1:], 0)
-    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns, ddof=1)) * np.sqrt(p))
-
-    a = r.calc_sortino_ratio()
-    negative_returns = np.minimum(r[1:], 0)
-    assert np.allclose(a, np.divide((r.mean() - rf), np.std(negative_returns, ddof=1)) * np.sqrt(p))
-
-    rf = 0.02
-    p = 252
-    r = df.to_returns()
-    er = r.to_excess_returns(rf, nperiods=p)
-
-    a = r.calc_sortino_ratio(rf=rf, nperiods=p)
-    negative_returns = np.minimum(r[1:], 0)
-    assert np.allclose(a, np.divide(er.mean(), np.std(negative_returns, ddof=1)) * np.sqrt(p))
+    er = r.to_excess_returns(rf, p)
+    negative_returns = np.minimum(er[1:], 0)
+    assert np.allclose(a, np.divide((er.mean() - rf), np.std(negative_returns, ddof=1)) * np.sqrt(p))
 
 
 def test_calmar_ratio():
