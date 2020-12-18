@@ -38,6 +38,9 @@ setuptools.setup(
         'dev': [
             'codecov',
             'coverage',
+            'future',
+            'mock',
+            'nose',
         ],
     },
     packages=['ffn'],
