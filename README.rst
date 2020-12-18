@@ -1,7 +1,10 @@
 .. image:: http://pmorissette.github.io/ffn/_static/logo.png
 
-.. image:: https://travis-ci.org/pmorissette/ffn.svg?branch=master
-    :target: https://travis-ci.org/pmorissette/ffn
+.. image:: https://github.com/pmorissette/ffn/workflows/Build%20Status/badge.svg
+    :target: https://github.com/pmorissette/ffn/actions/
+
+.. image:: https://codecov.io/gh/pmorissette/ffn/branch/master/graph/badge.svg
+    :target: https://codecov.io/pmorissette/ffn
 
 ffn - Financial Functions for Python
 ====================================
