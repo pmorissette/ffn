@@ -1,5 +1,8 @@
 .. image:: http://pmorissette.github.io/ffn/_static/logo.png
 
+.. image:: https://github.com/pmorissette/ffn/workflows/Build%20Status/badge.svg
+    :target: https://github.com/pmorissette/ffn/actions/
+
 .. image:: https://codecov.io/gh/pmorissette/ffn/branch/master/graph/badge.svg
     :target: https://codecov.io/pmorissette/ffn
 
