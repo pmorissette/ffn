@@ -2153,7 +2153,8 @@ def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
             provided if rf is non-zero and rf is not a price series
 
     """
-    if type(rf) is float and rf != 0 and nperiods is None:
+    # if type(rf) is float and rf != 0 and nperiods is None:
+    if isinstance(rf, float) and rf != 0 and nperiods is None:
         raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
@@ -2183,7 +2184,9 @@ def to_excess_returns(returns, rf, nperiods=None):
         * excess_returns (Series, DataFrame): Returns - rf
 
     """
-    if type(rf) is float and nperiods is not None:
+    # if type(rf) is float and nperiods is not None:
+    if isinstance(rf, float) and nperiods is not None:
+
         _rf = deannualize(rf, nperiods)
     else:
         _rf = rf
@@ -2229,7 +2232,8 @@ def to_ulcer_performance_index(prices, rf=0., nperiods=None):
         * nperiods (int): Used to deannualize rf if rf is provided (non-zero)
 
     """
-    if type(rf) is float and rf != 0 and nperiods is None:
+    # if type(rf) is float and rf != 0 and nperiods is None:
+    if isinstance(rf, float) and rf != 0 and nperiods is None:
         raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
