@@ -1149,7 +1149,13 @@ def to_drawdown_series(prices):
     drawdown[np.isnan(drawdown)] = -np.Inf
 
     # Rolling maximum
-    roll_max = np.maximum.accumulate(drawdown)
+    if isinstance(drawdown, pd.DataFrame):
+        roll_max = pd.DataFrame()
+        for col in drawdown:
+            roll_max[col] = np.maximum.accumulate(drawdown[col])
+    else:
+        roll_max = np.maximum.accumulate(drawdown)
+
     drawdown = drawdown / roll_max - 1.
     return drawdown
 
