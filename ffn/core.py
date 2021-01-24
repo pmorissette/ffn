@@ -183,7 +183,19 @@ class PerformanceStats(object):
 
         if len(dp) is 1:
             return
-
+        
+        # Use dp if returns are only available from same month, else mp[-2]
+        if len(mp) == 1:
+            self.mtd = dp[-1] / dp[0] - 1        
+        else:
+            self.mtd = dp[-1] / mp[-2] - 1
+        
+        # Use dp if returns are only avaliable from same year, else yp[-2]
+        if len(yp) == 1:
+            self.ytd = dp[-1] / dp[0] - 1
+        else:
+            self.ytd = dp[-1] / yp[-2] - 1
+        
         # stats using daily data
         self.returns = dp.to_returns()
         self.log_returns = dp.to_log_returns()
@@ -211,9 +223,7 @@ class PerformanceStats(object):
             self.worst_day = r.min()
 
         self.total_return = obj[-1] / obj[0] - 1
-        # save ytd as total_return for now - if we get to real ytd
-        # then it will get updated
-        self.ytd = self.total_return
+
         self.cagr = calc_cagr(dp)
         self.incep = self.cagr
 
@@ -259,9 +269,6 @@ class PerformanceStats(object):
                 self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
             self.best_month = mr.max()
             self.worst_month = mr.min()
-
-            # -2 because p[-1] will be mp[-1]
-            self.mtd = dp[-1] / mp[-2] - 1
 
             # -1 here to account for first return that will be nan
             self.pos_month_perc = len(mr[mr > 0]) / float(len(mr) - 1)
@@ -322,8 +329,6 @@ class PerformanceStats(object):
 
             if len(yr) < 2:
                 return
-
-            self.ytd = dp[-1] / yp[-2] - 1
 
             denom = dp[:dp.index[-1] - pd.DateOffset(years=1)]
             if len(denom) > 0:
