@@ -13,7 +13,7 @@ with open(os.path.join(os.path.dirname(__file__), 'ffn', '__init__.py'), 'r') as
 
 
 with open(os.path.join(os.path.dirname(__file__), 'README.rst'), 'r') as fp:
-    description = fp.read()
+    description = fp.read().replace("\r\n", "\n")
 
 setuptools.setup(
     name="ffn",
