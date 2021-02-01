@@ -23,6 +23,7 @@ setuptools.setup(
     description='Financial functions for Python',
     keywords='python finance quant functions',
     url='https://github.com/pmorissette/ffn',
+    license='MIT',
     install_requires=[
         'decorator>=4',
         'numpy>=1.5',
