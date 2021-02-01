@@ -5,11 +5,11 @@ on:
     tags:
       - 'v*'
 
-environment: dev
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    environment: dev
 
     strategy:
       matrix:
