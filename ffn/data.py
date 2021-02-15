@@ -3,21 +3,31 @@ from distutils.version import LooseVersion
 import pandas as pd
 
 import ffn
-#import ffn.utils as utils
+
+# import ffn.utils as utils
 from . import utils
 
 # This is a temporary fix until pandas_datareader 0.7 is released.
 # pandas 0.23 has moved is_list_like from common to api.types, hence the monkey patch
-if LooseVersion(pd.__version__) > LooseVersion('0.23.0'):
+if LooseVersion(pd.__version__) > LooseVersion("0.23.0"):
     pd.core.common.is_list_like = pd.api.types.is_list_like
 
 from pandas_datareader import data as pdata
 
 
 @utils.memoize
-def get(tickers, provider=None, common_dates=True, forward_fill=False,
-        clean_tickers=True, column_names=None, ticker_field_sep=':',
-        mrefresh=False, existing=None, **kwargs):
+def get(
+    tickers,
+    provider=None,
+    common_dates=True,
+    forward_fill=False,
+    clean_tickers=True,
+    column_names=None,
+    ticker_field_sep=":",
+    mrefresh=False,
+    existing=None,
+    **kwargs
+):
     """
     Helper function for retrieving data as a DataFrame.
 
@@ -62,9 +72,8 @@ def get(tickers, provider=None, common_dates=True, forward_fill=False,
             f = bits[1]
 
         # call provider - check if supports memoization
-        if hasattr(provider, 'mcache'):
-            data[ticker] = provider(ticker=t, field=f,
-                                    mrefresh=mrefresh, **kwargs)
+        if hasattr(provider, "mcache"):
+            data[ticker] = provider(ticker=t, field=f, mrefresh=mrefresh, **kwargs)
         else:
             data[ticker] = provider(ticker=t, field=f, **kwargs)
 
@@ -79,13 +88,12 @@ def get(tickers, provider=None, common_dates=True, forward_fill=False,
         df = df.dropna()
 
     if forward_fill:
-        df = df.fillna(method='ffill')
+        df = df.fillna(method="ffill")
 
     if column_names:
         cnames = utils.parse_arg(column_names)
         if len(cnames) != len(df.columns):
-            raise ValueError(
-                'column_names must be of same length as tickers')
+            raise ValueError("column_names must be of same length as tickers")
         df.columns = cnames
     elif clean_tickers:
         df.columns = map(utils.clean_ticker, df.columns)
@@ -94,20 +102,18 @@ def get(tickers, provider=None, common_dates=True, forward_fill=False,
 
 
 @utils.memoize
-def web(ticker, field=None, start=None, end=None,
-        mrefresh=False, source='yahoo'):
+def web(ticker, field=None, start=None, end=None, mrefresh=False, source="yahoo"):
     """
     Data provider wrapper around pandas.io.data provider. Provides
     memoization.
     """
-    if source == 'yahoo' and field is None:
-        field = 'Adj Close'
+    if source == "yahoo" and field is None:
+        field = "Adj Close"
 
-    tmp = _download_web(ticker, data_source=source,
-                        start=start, end=end)
+    tmp = _download_web(ticker, data_source=source, start=start, end=end)
 
     if tmp is None:
-        raise ValueError('failed to retrieve data for %s:%s' % (ticker, field))
+        raise ValueError("failed to retrieve data for %s:%s" % (ticker, field))
 
     if field:
         return tmp[field]
@@ -126,12 +132,12 @@ def _download_web(name, **kwargs):
 @utils.memoize
 def yf(ticker, field, start=None, end=None, mrefresh=False):
     if field is None:
-        field = 'Adj Close'
+        field = "Adj Close"
 
     tmp = pdata.get_data_yahoo(ticker, start=start, end=end)
 
     if tmp is None:
-        raise ValueError('failed to retrieve data for %s:%s' % (ticker, field))
+        raise ValueError("failed to retrieve data for %s:%s" % (ticker, field))
 
     if field:
         return tmp[field]
@@ -140,26 +146,26 @@ def yf(ticker, field, start=None, end=None, mrefresh=False):
 
 
 @utils.memoize
-def csv(ticker, path='data.csv', field='', mrefresh=False, **kwargs):
+def csv(ticker, path="data.csv", field="", mrefresh=False, **kwargs):
     """
     Data provider wrapper around pandas' read_csv. Provides memoization.
     """
     # set defaults if not specified
-    if 'index_col' not in kwargs:
-        kwargs['index_col'] = 0
-    if 'parse_dates' not in kwargs:
-        kwargs['parse_dates'] = True
+    if "index_col" not in kwargs:
+        kwargs["index_col"] = 0
+    if "parse_dates" not in kwargs:
+        kwargs["parse_dates"] = True
 
     # read in dataframe from csv file
     df = pd.read_csv(path, **kwargs)
 
     tf = ticker
-    if field is not '' and field is not None:
-        tf = '%s:%s' % (tf, field)
+    if field is not "" and field is not None:
+        tf = "%s:%s" % (tf, field)
 
     # check that required column exists
     if tf not in df:
-        raise ValueError('Ticker(field) not present in csv file!')
+        raise ValueError("Ticker(field) not present in csv file!")
 
     return df[tf]
 

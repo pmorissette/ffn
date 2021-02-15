@@ -2,6 +2,7 @@ import re
 import decorator
 import numpy as np
 import pandas as pd
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -33,7 +34,7 @@ def _memoize(func, *args, **kw):
         return result
 
 
-def memoize(f, refresh_keyword='mrefresh'):
+def memoize(f, refresh_keyword="mrefresh"):
     """
     Memoize decorator. The refresh keyword is the keyword
     used to bypass the cache (in the function call).
@@ -54,8 +55,8 @@ def parse_arg(arg):
     if type(arg) == str:
         arg = arg.strip()
         # parse csv as tickers and create children
-        if ',' in arg:
-            arg = arg.split(',')
+        if "," in arg:
+            arg = arg.split(",")
             arg = [x.strip() for x in arg]
         # assume single string - create single item list
         else:
@@ -76,8 +77,8 @@ def clean_ticker(ticker):
     >>> clean_ticker('SPX Index')
     'spx'
     """
-    pattern = re.compile('[\W_]+')
-    res = pattern.sub('', ticker.split(' ')[0])
+    pattern = re.compile("[\W_]+")
+    res = pattern.sub("", ticker.split(" ")[0])
     return res.lower()
 
 
@@ -93,8 +94,8 @@ def fmtp(number):
     Formatting helper - percent
     """
     if np.isnan(number):
-        return '-'
-    return format(number, '.2%')
+        return "-"
+    return format(number, ".2%")
 
 
 def fmtpn(number):
@@ -102,8 +103,8 @@ def fmtpn(number):
     Formatting helper - percent no % sign
     """
     if np.isnan(number):
-        return '-'
-    return format(number * 100, '.2f')
+        return "-"
+    return format(number * 100, ".2f")
 
 
 def fmtn(number):
@@ -111,37 +112,38 @@ def fmtn(number):
     Formatting helper - float
     """
     if np.isnan(number):
-        return '-'
-    return format(number, '.2f')
+        return "-"
+    return format(number, ".2f")
 
 
 def get_freq_name(period):
     period = period.upper()
     periods = {
-        'B': 'business day',
-        'C': 'custom business day',
-        'D': 'daily',
-        'W': 'weekly',
-        'M': 'monthly',
-        'BM': 'business month end',
-        'CBM': 'custom business month end',
-        'MS': 'month start',
-        'BMS': 'business month start',
-        'CBMS': 'custom business month start',
-        'Q': 'quarterly',
-        'BQ': 'business quarter end',
-        'QS': 'quarter start',
-        'BQS': 'business quarter start',
-        'Y': 'yearly',
-        'A': 'yearly',
-        'BA': 'business year end',
-        'AS': 'year start',
-        'BAS': 'business year start',
-        'H': 'hourly',
-        'T': 'minutely',
-        'S': 'secondly',
-        'L': 'milliseonds',
-        'U': 'microseconds'}
+        "B": "business day",
+        "C": "custom business day",
+        "D": "daily",
+        "W": "weekly",
+        "M": "monthly",
+        "BM": "business month end",
+        "CBM": "custom business month end",
+        "MS": "month start",
+        "BMS": "business month start",
+        "CBMS": "custom business month start",
+        "Q": "quarterly",
+        "BQ": "business quarter end",
+        "QS": "quarter start",
+        "BQS": "business quarter start",
+        "Y": "yearly",
+        "A": "yearly",
+        "BA": "business year end",
+        "AS": "year start",
+        "BAS": "business year start",
+        "H": "hourly",
+        "T": "minutely",
+        "S": "secondly",
+        "L": "milliseonds",
+        "U": "microseconds",
+    }
 
     if period in periods:
         return periods[period]
@@ -169,10 +171,10 @@ def scale(val, src, dst):
 
 
 def as_percent(self, digits=2):
-    return as_format(self, '.%s%%' % digits)
+    return as_format(self, ".%s%%" % digits)
 
 
-def as_format(item, format_str='.2f'):
+def as_format(item, format_str=".2f"):
     """
     Map a format string over a pandas object.
     """
