@@ -1,19 +1,22 @@
 from __future__ import print_function
-from future.utils import listvalues, iteritems
+
 import random
-from . import utils
-from .utils import fmtp, fmtn, fmtpn, get_freq_name
+
 import numpy as np
 import pandas as pd
-from pandas.core.base import PandasObject
-from tabulate import tabulate
-import sklearn.manifold
+import scipy.stats
 import sklearn.cluster
 import sklearn.covariance
-from sklearn.utils import resample
+import sklearn.manifold
+from future.utils import iteritems, listvalues
+from pandas.core.base import PandasObject
 from scipy.optimize import minimize
-import scipy.stats
 from scipy.stats import t
+from sklearn.utils import resample
+from tabulate import tabulate
+
+from . import utils
+from .utils import fmtn, fmtp, fmtpn, get_freq_name
 
 try:
     import prettyplotlib  # NOQA
@@ -22,6 +25,7 @@ except ImportError:
 
 # avoid pyplot import failure in headless environment
 import os
+
 import matplotlib
 
 if 'DISPLAY' not in os.environ:
@@ -581,7 +585,13 @@ class PerformanceStats(object):
         ser = self._get_series(freq).to_returns().dropna()
 
         plt.figure(figsize=figsize)
-        ax = ser.hist(bins=bins, figsize=figsize, normed=True, **kwargs)
+
+        if matplotlib.__version__ > '2.':
+            # normed deprecated
+            ax = ser.hist(bins=bins, figsize=figsize, density=True, **kwargs)
+        else:
+            ax = ser.hist(bins=bins, figsize=figsize, normed=True, **kwargs)
+
         ax.set_title(title)
         plt.axvline(0, linewidth=4)
         return ser.plot(kind='kde')
