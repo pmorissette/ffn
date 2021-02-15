@@ -1,4 +1,5 @@
 import re
+
 import decorator
 import numpy as np
 import pandas as pd
@@ -77,7 +78,7 @@ def clean_ticker(ticker):
     >>> clean_ticker('SPX Index')
     'spx'
     """
-    pattern = re.compile("[\W_]+")
+    pattern = re.compile("[\\W_]+")
     res = pattern.sub("", ticker.split(" ")[0])
     return res.lower()
 
