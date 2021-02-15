@@ -98,7 +98,7 @@ def get(
     elif clean_tickers:
         df.columns = map(utils.clean_ticker, df.columns)
 
-    return df
+    return df[~df.index.duplicated(keep='last')]
 
 
 @utils.memoize
