@@ -3,6 +3,7 @@ from distutils.version import LooseVersion
 import pandas as pd
 
 import ffn
+
 #import ffn.utils as utils
 from . import utils
 
@@ -90,7 +91,7 @@ def get(tickers, provider=None, common_dates=True, forward_fill=False,
     elif clean_tickers:
         df.columns = map(utils.clean_ticker, df.columns)
 
-    return df
+    return df[~df.index.duplicated(keep='last')]
 
 
 @utils.memoize
