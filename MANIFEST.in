@@ -1,0 +1,15 @@
+graft ffn
+include LICENSE
+include README.rst
+
+include setup.cfg
+include pyproject.toml
+
+# Patterns to exclude from any directory
+global-exclude *~
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude .git
+global-exclude .ipynb_checkpoints
+global-exclude .mypy_cache
+global-exclude .DS_Store

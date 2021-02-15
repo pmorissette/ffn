@@ -1,6 +1,15 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: clean dist docs pages serve notebooks klink
+.PHONY: clean dist docs pages serve notebooks klink test lint fix
+
+test:
+	python -m nose --with-coverage --cover-package ffn
+
+lint:
+	python -m flake8 ffn setup.py
+
+fix:
+	python -m black ffn setup.py
 
 clean:
 	- rm -rf dist
