@@ -14,6 +14,7 @@ from sklearn.utils import resample
 from scipy.optimize import minimize
 import scipy.stats
 from scipy.stats import t
+
 try:
     import prettyplotlib  # NOQA
 except ImportError:
@@ -33,7 +34,6 @@ from matplotlib import pyplot as plt  # noqa
 
 
 class PerformanceStats(object):
-
     """
     PerformanceStats is a convenience class used for the performance
     evaluation of a price series. It contains various helper functions
@@ -172,16 +172,16 @@ class PerformanceStats(object):
         #  if months or years are missing then we will need .dropna() too
         self.daily_prices = self.daily_prices.dropna()
         # M = month end frequency
-        self.monthly_prices = obj.resample('M').last() #.dropna()
+        self.monthly_prices = obj.resample('M').last()  # .dropna()
         # A == year end frequency
-        self.yearly_prices = obj.resample('A').last() #.dropna()
+        self.yearly_prices = obj.resample('A').last()  # .dropna()
 
         # let's save some typing
         dp = self.daily_prices
         mp = self.monthly_prices
         yp = self.yearly_prices
 
-        if len(dp) is 1:
+        if len(dp) == 1:
             return
 
         # stats using daily data
@@ -198,7 +198,8 @@ class PerformanceStats(object):
             self.daily_mean = r.mean() * 252
             self.daily_vol = np.std(r, ddof=1) * np.sqrt(252)
 
-            if type(self.rf) is float:
+            # if type(self.rf) is float:
+            if isinstance(self.rf, float):
                 self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
                 self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
             # rf is a price series
@@ -272,9 +273,9 @@ class PerformanceStats(object):
             for idx in mr.index:
                 if idx.year not in self.return_table:
                     self.return_table[idx.year] = {1: 0, 2: 0, 3: 0,
-                                               4: 0, 5: 0, 6: 0,
-                                               7: 0, 8: 0, 9: 0,
-                                               10: 0, 11: 0, 12: 0}
+                                                   4: 0, 5: 0, 6: 0,
+                                                   7: 0, 8: 0, 9: 0,
+                                                   10: 0, 11: 0, 12: 0}
                 if not np.isnan(mr[idx]):
                     self.return_table[idx.year][idx.month] = mr[idx]
             # add first month
@@ -332,7 +333,8 @@ class PerformanceStats(object):
             self.yearly_mean = yr.mean()
             self.yearly_vol = np.std(yr, ddof=1)
 
-            if type(self.rf) is float:
+            # if type(self.rf) is float:
+            if isinstance(self.rf, float):
                 if self.yearly_vol > 0:
                     self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
                 self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
@@ -668,7 +670,6 @@ class PerformanceStats(object):
 
 
 class GroupStats(dict):
-
     """
     GroupStats enables one to compare multiple series side by side.
     It is a wrapper around a dict of {price.name: PerformanceStats} and
@@ -720,7 +721,8 @@ class GroupStats(dict):
         self._update(self._prices)
 
     def __getitem__(self, key):
-        if type(key) == int:
+        if isinstance(key, int):
+            # if type(key) == int:
             return self[self._names[key]]
         else:
             return self.get(key)
@@ -1195,11 +1197,11 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     end = is_zero & (~is_zero).shift(1)
     end = list(end[end == True].index)  # NOQA
 
-    if len(start) is 0:
+    if len(start) == 0:  # start.empty
         return None
 
     # drawdown has no end (end period in dd)
-    if len(end) is 0:
+    if len(end) == 0:  # end.empty
         end.append(drawdown.index[-1])
 
     # if the first drawdown start is larger than the first drawdown end it
@@ -1266,7 +1268,8 @@ def calc_sharpe(returns, rf=0., nperiods=None, annualize=True):
             etc.)
 
     """
-    if type(rf) is float and rf != 0 and nperiods is None:
+    # if type(rf) is float and rf != 0 and nperiods is None:
+    if isinstance(rf, float) and rf != 0 and nperiods is None:
         raise Exception('Must provide nperiods if rf != 0')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
@@ -1456,6 +1459,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
         Series {col_name: weight}
 
     """
+
     def fitness(weights, exp_rets, covar, rf):
         # portfolio mean
         mean = sum(exp_rets * weights)
@@ -1494,6 +1498,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0., 1.),
     # return weight vector
     return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
 
+
 def _erc_weights_slsqp(
         x0,
         cov,
@@ -1526,19 +1531,19 @@ def _erc_weights_slsqp(
 
         # instead of using the true definition for trc we will use the optimization on page 5
         trc = weights * np.matmul(covar, weights)
-        
+
         n = len(trc)
         # sum of squared differences of total risk contributions
         sse = 0.
         for i in range(n):
             for j in range(n):
-                #switched from squared deviations to absolute deviations to avoid numerical instability
+                # switched from squared deviations to absolute deviations to avoid numerical instability
                 sse += np.abs(trc[i] - trc[j])
         # minimizes metric
         return sse
 
-    #nonnegative
-    bounds = [(0,None) for i in range(len(x0))]
+    # nonnegative
+    bounds = [(0, None) for i in range(len(x0))]
     # sum of weights must be equal to 1
     constraints = (
         {
@@ -1547,7 +1552,7 @@ def _erc_weights_slsqp(
         }
     )
     options = {
-        'maxiter':maximum_iterations
+        'maxiter': maximum_iterations
     }
 
     optimized = minimize(
@@ -1689,7 +1694,7 @@ def calc_erc_weights(returns,
             tolerance
         )
     elif risk_parity_method == 'slsqp':
-        #scipys slsqp optimizer
+        # scipys slsqp optimizer
         erc_weights = _erc_weights_slsqp(
             initial_weights,
             covar,
@@ -2099,7 +2104,7 @@ def winsorize(x, axis=0, limits=0.01):
     x = x.copy()
 
     if isinstance(x, pd.DataFrame):
-        return x.apply(_winsorize_wrapper, axis=axis, args=(limits, ))
+        return x.apply(_winsorize_wrapper, axis=axis, args=(limits,))
     else:
         return pd.Series(_winsorize_wrapper(x, limits).values,
                          index=x.index)
@@ -2109,6 +2114,7 @@ def rescale(x, min=0., max=1., axis=0):
     """
     Rescale values to fit a certain range [min, max]
     """
+
     def innerfn(x, min, max):
         return np.interp(x, [np.min(x), np.max(x)], [min, max])
 
@@ -2153,7 +2159,8 @@ def calc_sortino_ratio(returns, rf=0., nperiods=None, annualize=True):
             provided if rf is non-zero and rf is not a price series
 
     """
-    if type(rf) is float and rf != 0 and nperiods is None:
+    # if type(rf) is float and rf != 0 and nperiods is None:
+    if isinstance(rf, float) and rf != 0 and nperiods is None:
         raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
@@ -2183,7 +2190,9 @@ def to_excess_returns(returns, rf, nperiods=None):
         * excess_returns (Series, DataFrame): Returns - rf
 
     """
-    if type(rf) is float and nperiods is not None:
+    # if type(rf) is float and nperiods is not None:
+    if isinstance(rf, float) and nperiods is not None:
+
         _rf = deannualize(rf, nperiods)
     else:
         _rf = rf
@@ -2229,7 +2238,8 @@ def to_ulcer_performance_index(prices, rf=0., nperiods=None):
         * nperiods (int): Used to deannualize rf if rf is provided (non-zero)
 
     """
-    if type(rf) is float and rf != 0 and nperiods is None:
+    # if type(rf) is float and rf != 0 and nperiods is None:
+    if isinstance(rf, float) and rf != 0 and nperiods is None:
         raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
@@ -2264,7 +2274,7 @@ def resample_returns(
             columns=returns.columns
         )
     else:
-        raise(TypeError("returns needs to be a Series or DataFrame!"))
+        raise (TypeError("returns needs to be a Series or DataFrame!"))
 
     n = returns.shape[0]
     for i in range(num_trials):
@@ -2272,9 +2282,6 @@ def resample_returns(
         stats.loc[i] = func(returns.loc[random_indices])
 
     return stats
-
-
-
 
 
 def extend_pandas():
