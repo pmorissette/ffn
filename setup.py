@@ -34,7 +34,7 @@ setuptools.setup(
     ],
     extras_require={
         "dev": [
-            "black",
+            "black>=20.8b1",
             "codecov",
             "coverage",
             "flake8",
