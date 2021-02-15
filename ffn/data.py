@@ -3,6 +3,7 @@ from distutils.version import LooseVersion
 import pandas as pd
 
 import ffn
+
 #import ffn.utils as utils
 from . import utils
 
@@ -154,7 +155,7 @@ def csv(ticker, path='data.csv', field='', mrefresh=False, **kwargs):
     df = pd.read_csv(path, **kwargs)
 
     tf = ticker
-    if field is not '' and field is not None:
+    if field != '' and field is not None:
         tf = '%s:%s' % (tf, field)
 
     # check that required column exists

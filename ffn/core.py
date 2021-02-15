@@ -1,19 +1,23 @@
 from __future__ import print_function
-from future.utils import listvalues, iteritems
+
 import random
-from . import utils
-from .utils import fmtp, fmtn, fmtpn, get_freq_name
+
 import numpy as np
 import pandas as pd
-from pandas.core.base import PandasObject
-from tabulate import tabulate
-import sklearn.manifold
+import scipy.stats
 import sklearn.cluster
 import sklearn.covariance
-from sklearn.utils import resample
+import sklearn.manifold
+from future.utils import iteritems, listvalues
+from pandas.core.base import PandasObject
 from scipy.optimize import minimize
-import scipy.stats
 from scipy.stats import t
+from sklearn.utils import resample
+from tabulate import tabulate
+
+from . import utils
+from .utils import fmtn, fmtp, fmtpn, get_freq_name
+
 try:
     import prettyplotlib  # NOQA
 except ImportError:
@@ -21,6 +25,7 @@ except ImportError:
 
 # avoid pyplot import failure in headless environment
 import os
+
 import matplotlib
 
 if 'DISPLAY' not in os.environ:
@@ -158,7 +163,7 @@ class PerformanceStats(object):
         self.return_table = {}
         # end default values
 
-        if len(obj) is 0:
+        if len(obj) == 0:
             return
 
         self.start = obj.index[0]
@@ -181,7 +186,7 @@ class PerformanceStats(object):
         mp = self.monthly_prices
         yp = self.yearly_prices
 
-        if len(dp) is 1:
+        if len(dp) == 1:
             return
 
         # stats using daily data
@@ -1195,11 +1200,11 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     end = is_zero & (~is_zero).shift(1)
     end = list(end[end == True].index)  # NOQA
 
-    if len(start) is 0:
+    if len(start) == 0:
         return None
 
     # drawdown has no end (end period in dd)
-    if len(end) is 0:
+    if len(end) == 0:
         end.append(drawdown.index[-1])
 
     # if the first drawdown start is larger than the first drawdown end it
