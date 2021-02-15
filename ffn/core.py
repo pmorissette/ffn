@@ -183,7 +183,7 @@ class PerformanceStats(object):
         self.return_table = {}
         # end default values
 
-        if len(obj) is 0:
+        if len(obj) == 0:
             return
 
         self.start = obj.index[0]
@@ -197,9 +197,9 @@ class PerformanceStats(object):
         #  if months or years are missing then we will need .dropna() too
         self.daily_prices = self.daily_prices.dropna()
         # M = month end frequency
-        self.monthly_prices = obj.resample('M').last()  # .dropna()
+        self.monthly_prices = obj.resample("M").last()  # .dropna()
         # A == year end frequency
-        self.yearly_prices = obj.resample('A').last()  # .dropna()
+        self.yearly_prices = obj.resample("A").last()  # .dropna()
 
         # let's save some typing
         dp = self.daily_prices
@@ -305,10 +305,20 @@ class PerformanceStats(object):
             # return_table
             for idx in mr.index:
                 if idx.year not in self.return_table:
-                    self.return_table[idx.year] = {1: 0, 2: 0, 3: 0,
-                                                   4: 0, 5: 0, 6: 0,
-                                                   7: 0, 8: 0, 9: 0,
-                                                   10: 0, 11: 0, 12: 0}
+                    self.return_table[idx.year] = {
+                        1: 0,
+                        2: 0,
+                        3: 0,
+                        4: 0,
+                        5: 0,
+                        6: 0,
+                        7: 0,
+                        8: 0,
+                        9: 0,
+                        10: 0,
+                        11: 0,
+                        12: 0,
+                    }
                 if not np.isnan(mr[idx]):
                     self.return_table[idx.year][idx.month] = mr[idx]
             # add first month
@@ -1348,7 +1358,8 @@ def calc_risk_return_ratio(returns):
 
 def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     """
-    Calculates the `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_ (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
+    Calculates the `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_
+    (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
 
     If rf is non-zero and a float, you must specify nperiods. In this case, rf is assumed
     to be expressed in yearly (annualized) terms.
@@ -1362,7 +1373,7 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     """
     # if type(rf) is float and rf != 0 and nperiods is None:
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception('Must provide nperiods if rf != 0')
+        raise Exception("Must provide nperiods if rf != 0")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
     std = np.std(er, ddof=1)
@@ -1595,13 +1606,7 @@ def calc_mean_var_weights(
     return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
 
 
-def _erc_weights_slsqp(
-        x0,
-        cov,
-        b,
-        maximum_iterations,
-        tolerance
-):
+def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):
     """
     Calculates the equal risk contribution / risk parity weights given
         a DataFrame of returns.
@@ -1641,15 +1646,8 @@ def _erc_weights_slsqp(
     # nonnegative
     bounds = [(0, None) for i in range(len(x0))]
     # sum of weights must be equal to 1
-    constraints = (
-        {
-            'type': 'eq',
-            'fun': lambda W: sum(W) - 1.
-        }
-    )
-    options = {
-        'maxiter': maximum_iterations
-    }
+    constraints = {"type": "eq", "fun": lambda W: sum(W) - 1.0}
+    options = {"maxiter": maximum_iterations}
 
     optimized = minimize(
         fitness,
@@ -1783,7 +1781,7 @@ def calc_erc_weights(
         erc_weights = _erc_weights_ccd(
             initial_weights, covar, risk_weights, maximum_iterations, tolerance
         )
-    elif risk_parity_method == 'slsqp':
+    elif risk_parity_method == "slsqp":
         # scipys slsqp optimizer
         erc_weights = _erc_weights_slsqp(
             initial_weights, covar, risk_weights, maximum_iterations, tolerance
@@ -2252,7 +2250,8 @@ def deannualize(returns, nperiods):
 
 def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
     """
-    Calculates the `Sortino ratio <https://www.investopedia.com/terms/s/sortinoratio.asp>`_ given a series of returns (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
+    Calculates the `Sortino ratio <https://www.investopedia.com/terms/s/sortinoratio.asp>`_ given a series of returns
+    (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
 
     Args:
         * returns (Series or DataFrame): Returns
@@ -2263,7 +2262,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
     """
     # if type(rf) is float and rf != 0 and nperiods is None:
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
+        raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
@@ -2342,7 +2341,7 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
     """
     # if type(rf) is float and rf != 0 and nperiods is None:
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception('nperiods must be set if rf != 0 and rf is not a price series')
+        raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
 

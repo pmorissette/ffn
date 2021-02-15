@@ -98,7 +98,7 @@ def get(
     elif clean_tickers:
         df.columns = map(utils.clean_ticker, df.columns)
 
-    return df[~df.index.duplicated(keep='last')]
+    return df[~df.index.duplicated(keep="last")]
 
 
 @utils.memoize
@@ -160,7 +160,7 @@ def csv(ticker, path="data.csv", field="", mrefresh=False, **kwargs):
     df = pd.read_csv(path, **kwargs)
 
     tf = ticker
-    if field is not "" and field is not None:
+    if field != "" and field is not None:
         tf = "%s:%s" % (tf, field)
 
     # check that required column exists
