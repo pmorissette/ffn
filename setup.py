@@ -1,8 +1,8 @@
-import setuptools
 import codecs
 import os
 import re
 
+import setuptools
 
 with open(os.path.join(os.path.dirname(__file__), 'ffn', '__init__.py'), 'r') as fp:
     version = re.search(
@@ -37,8 +37,11 @@ setuptools.setup(
     ],
     extras_require={
         'dev': [
+            'black',
             'codecov',
             'coverage',
+            'flake8',
+            'flake8-black',
             'future',
             'mock',
             'nose',
