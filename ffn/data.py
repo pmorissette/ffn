@@ -76,6 +76,10 @@ def get(
             data[ticker] = provider(ticker=t, field=f, mrefresh=mrefresh, **kwargs)
         else:
             data[ticker] = provider(ticker=t, field=f, **kwargs)
+    
+    for ticker in data:
+        df = data[ticker]
+        data[ticker] = df[~df.index.duplicated(keep="last")]
 
     df = pd.DataFrame(data)
     # ensure same order as provided
@@ -98,7 +102,7 @@ def get(
     elif clean_tickers:
         df.columns = map(utils.clean_ticker, df.columns)
 
-    return df[~df.index.duplicated(keep="last")]
+    return df
 
 
 @utils.memoize
