@@ -76,7 +76,7 @@ def get(
             data[ticker] = provider(ticker=t, field=f, mrefresh=mrefresh, **kwargs)
         else:
             data[ticker] = provider(ticker=t, field=f, **kwargs)
-    
+
     for ticker in data:
         df = data[ticker]
         data[ticker] = df[~df.index.duplicated(keep="last")]
