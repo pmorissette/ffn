@@ -14,6 +14,53 @@ except FileNotFoundError as e:
 ts = df['AAPL'][0:10]
 
 
+def test_mtd_ytd():
+    data = df['AAPL']
+    
+    # Intramonth
+    prices = data[pd.to_datetime('2004-12-10'):pd.to_datetime('2004-12-25')]
+    dp = prices.resample("D").last().dropna()
+    mp = prices.resample("M").last().dropna()
+    yp = prices.resample("A").last().dropna()
+    mtd_actual = ffn.calc_mtd(dp, mp)
+    ytd_actual = ffn.calc_ytd(dp, yp)
+
+    aae(mtd_actual, -0.0175, 4)
+    assert mtd_actual == ytd_actual
+
+    # Year change - first month
+    prices = data[pd.to_datetime('2004-12-10'):pd.to_datetime('2005-01-15')]
+    dp = prices.resample("D").last().dropna()
+    mp = prices.resample("M").last().dropna()
+    yp = prices.resample("A").last().dropna()
+    mtd_actual = ffn.calc_mtd(dp, mp)
+    ytd_actual = ffn.calc_ytd(dp, yp)
+
+    aae(mtd_actual, 0.0901, 4)
+    assert mtd_actual == ytd_actual
+
+    # Year change - second month
+    prices = data[pd.to_datetime('2004-12-10'):pd.to_datetime('2005-02-15')]
+    dp = prices.resample("D").last().dropna()
+    mp = prices.resample("M").last().dropna()
+    yp = prices.resample("A").last().dropna()
+    mtd_actual = ffn.calc_mtd(dp, mp)
+    ytd_actual = ffn.calc_ytd(dp, yp)
+
+    aae(mtd_actual, 0.1497, 4)
+    aae(ytd_actual, 0.3728, 4)
+
+    # Single day
+    prices = data[[pd.to_datetime('2004-12-10')]]
+    dp = prices.resample("D").last().dropna()
+    mp = prices.resample("M").last().dropna()
+    yp = prices.resample("A").last().dropna()
+    mtd_actual = ffn.calc_mtd(dp, mp)
+    ytd_actual = ffn.calc_ytd(dp, yp)
+
+    assert mtd_actual == ytd_actual == 0
+
+
 def test_to_returns_ts():
     data = ts
     actual = data.to_returns()
