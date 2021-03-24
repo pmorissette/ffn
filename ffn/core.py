@@ -334,7 +334,7 @@ class PerformanceStats(object):
             if len(mr) < 3:
                 return
 
-            denom = dp[:dp.index[-1] - pd.DateOffset(months=3)]
+            denom = dp[: dp.index[-1] - pd.DateOffset(months=3)]
             if len(denom) > 0:
                 self.three_month = dp[-1] / denom[-1] - 1
 
@@ -352,7 +352,7 @@ class PerformanceStats(object):
             if len(mr) < 6:
                 return
 
-            denom = dp[:dp.index[-1] - pd.DateOffset(months=6)]
+            denom = dp[: dp.index[-1] - pd.DateOffset(months=6)]
 
             if len(denom) > 0:
                 self.six_month = dp[-1] / denom[-1] - 1
@@ -366,7 +366,7 @@ class PerformanceStats(object):
             if len(yr) < 2:
                 return
 
-            denom = dp[:dp.index[-1] - pd.DateOffset(years=1)]
+            denom = dp[: dp.index[-1] - pd.DateOffset(years=1)]
 
             if len(denom) > 0:
                 self.one_year = dp[-1] / denom[-1] - 1
