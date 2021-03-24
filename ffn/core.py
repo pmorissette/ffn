@@ -411,7 +411,7 @@ class PerformanceStats(object):
                 return
 
             # annualize stat for over 1 year
-            self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
+            self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3) :])
 
         if r.index.to_series().diff().min() < pd.Timedelta("367 days"):
             if len(yr) < 4:
@@ -426,12 +426,12 @@ class PerformanceStats(object):
         if r.index.to_series().diff().min() < pd.Timedelta("1828 days"):
             if len(yr) < 5:
                 return
-            self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
+            self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5) :])
 
         if r.index.to_series().diff().min() < pd.Timedelta("3654 days"):
             if len(yr) < 10:
                 return
-            self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
+            self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10) :])
 
         return
 
@@ -1351,7 +1351,7 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     )
 
     for i in range(0, len(start)):
-        dd = drawdown[start[i]:end[i]].min()
+        dd = drawdown[start[i] : end[i]].min()
 
         if index_type is pd.DatetimeIndex:
             result.iloc[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
