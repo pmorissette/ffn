@@ -16,12 +16,12 @@ ts = df['AAPL'][0:10]
 
 def test_mtd_ytd():
     data = df['AAPL']
-    
+
     # Intramonth
     prices = data[pd.to_datetime('2004-12-10'):pd.to_datetime('2004-12-25')]
-    dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    dp = prices.resample('D').last().dropna()
+    mp = prices.resample('M').last().dropna()
+    yp = prices.resample('A').last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -30,9 +30,9 @@ def test_mtd_ytd():
 
     # Year change - first month
     prices = data[pd.to_datetime('2004-12-10'):pd.to_datetime('2005-01-15')]
-    dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    dp = prices.resample('D').last().dropna()
+    mp = prices.resample('M').last().dropna()
+    yp = prices.resample('A').last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -41,9 +41,9 @@ def test_mtd_ytd():
 
     # Year change - second month
     prices = data[pd.to_datetime('2004-12-10'):pd.to_datetime('2005-02-15')]
-    dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    dp = prices.resample('D').last().dropna()
+    mp = prices.resample('M').last().dropna()
+    yp = prices.resample('A').last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -52,9 +52,9 @@ def test_mtd_ytd():
 
     # Single day
     prices = data[[pd.to_datetime('2004-12-10')]]
-    dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    dp = prices.resample('D').last().dropna()
+    mp = prices.resample('M').last().dropna()
+    yp = prices.resample('A').last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -341,8 +341,6 @@ def test_calc_erc_weights():
     aae(actual['AAPL'], 0.234, 3)
     aae(actual['MSFT'], 0.409, 3)
     aae(actual['C'], 0.356, 3)
-
-
 
 
 def test_calc_total_return():
@@ -890,6 +888,7 @@ def test_resample_returns():
         ) < 3
     )
 
+
 def test_monthly_returns():
 
     dates = [
@@ -960,14 +959,13 @@ def test_monthly_returns():
 
     df1 = pd.DataFrame(
         prices,
-        index = pd.to_datetime(dates,format = "%d/%m/%Y"),
+        index=pd.to_datetime(dates, format="%d/%m/%Y"),
         columns=['Price']
     )
 
     obj1 = ffn.PerformanceStats(df1['Price'])
 
     obj1.monthly_returns == df1['Price'].resample('M').last().pct_change()
-
 
 
 def test_drawdown_details():
@@ -984,5 +982,3 @@ def test_drawdown_details():
 
     drawdown = ffn.to_drawdown_series(returns)
     drawdown_details = ffn.drawdown_details(drawdown, index_type=drawdown.index)
-
-
