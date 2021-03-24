@@ -208,10 +208,10 @@ class PerformanceStats(object):
 
         if len(dp) == 1:
             return
-        
+
         self.mtd = calc_mtd(dp, mp)
         self.ytd = calc_ytd(dp, yp)
-        
+
         # stats using daily data
         self.returns = dp.to_returns()
         self.log_returns = dp.to_log_returns()
@@ -353,7 +353,7 @@ class PerformanceStats(object):
                 return
 
             denom = dp[:dp.index[-1] - pd.DateOffset(months=6)]
-            
+
             if len(denom) > 0:
                 self.six_month = dp[-1] / denom[-1] - 1
 
@@ -411,7 +411,7 @@ class PerformanceStats(object):
                 return
 
             # annualize stat for over 1 year
-            self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3) :])
+            self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3):])
 
         if r.index.to_series().diff().min() < pd.Timedelta("367 days"):
             if len(yr) < 4:
@@ -426,12 +426,12 @@ class PerformanceStats(object):
         if r.index.to_series().diff().min() < pd.Timedelta("1828 days"):
             if len(yr) < 5:
                 return
-            self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5) :])
+            self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5):])
 
         if r.index.to_series().diff().min() < pd.Timedelta("3654 days"):
             if len(yr) < 10:
                 return
-            self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10) :])
+            self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10):])
 
         return
 
@@ -1272,11 +1272,11 @@ def to_drawdown_series(prices):
 def calc_mtd(daily_prices, monthly_prices):
     """
     Calculates mtd return of a price series.
-    Use daily_prices if prices are only available from same month, 
+    Use daily_prices if prices are only available from same month
     else use monthly_prices
     """
     if len(monthly_prices) == 1:
-        return daily_prices[-1] / daily_prices[0] - 1        
+        return daily_prices[-1] / daily_prices[0] - 1
     else:
         return daily_prices[-1] / monthly_prices[-2] - 1
 
@@ -1284,11 +1284,11 @@ def calc_mtd(daily_prices, monthly_prices):
 def calc_ytd(daily_prices, yearly_prices):
     """
     Calculates ytd return of a price series.
-    Use daily_prices if prices are only available from same year, 
+    Use daily_prices if prices are only available from same year
     else use yearly_prices
     """
     if len(yearly_prices) == 1:
-        return daily_prices[-1] / daily_prices[0] - 1        
+        return daily_prices[-1] / daily_prices[0] - 1
     else:
         return daily_prices[-1] / yearly_prices[-2] - 1
 
@@ -1351,7 +1351,7 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     )
 
     for i in range(0, len(start)):
-        dd = drawdown[start[i] : end[i]].min()
+        dd = drawdown[start[i]:end[i]].min()
 
         if index_type is pd.DatetimeIndex:
             result.iloc[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
