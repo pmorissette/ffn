@@ -209,6 +209,9 @@ class PerformanceStats(object):
         if len(dp) == 1:
             return
 
+        self.mtd = calc_mtd(dp, mp)
+        self.ytd = calc_ytd(dp, yp)
+
         # stats using daily data
         self.returns = dp.to_returns()
         self.log_returns = dp.to_log_returns()
@@ -241,9 +244,7 @@ class PerformanceStats(object):
             self.worst_day = r.min()
 
         self.total_return = obj[-1] / obj[0] - 1
-        # save ytd as total_return for now - if we get to real ytd
-        # then it will get updated
-        self.ytd = self.total_return
+
         self.cagr = calc_cagr(dp)
         self.incep = self.cagr
 
@@ -293,9 +294,6 @@ class PerformanceStats(object):
                 )
             self.best_month = mr.max()
             self.worst_month = mr.min()
-
-            # -2 because p[-1] will be mp[-1]
-            self.mtd = dp[-1] / mp[-2] - 1
 
             # -1 here to account for first return that will be nan
             self.pos_month_perc = len(mr[mr > 0]) / float(len(mr) - 1)
@@ -355,6 +353,7 @@ class PerformanceStats(object):
                 return
 
             denom = dp[: dp.index[-1] - pd.DateOffset(months=6)]
+
             if len(denom) > 0:
                 self.six_month = dp[-1] / denom[-1] - 1
 
@@ -367,9 +366,8 @@ class PerformanceStats(object):
             if len(yr) < 2:
                 return
 
-            self.ytd = dp[-1] / yp[-2] - 1
-
             denom = dp[: dp.index[-1] - pd.DateOffset(years=1)]
+
             if len(denom) > 0:
                 self.one_year = dp[-1] / denom[-1] - 1
 
@@ -1269,6 +1267,30 @@ def to_drawdown_series(prices):
 
     drawdown = drawdown / roll_max - 1.0
     return drawdown
+
+
+def calc_mtd(daily_prices, monthly_prices):
+    """
+    Calculates mtd return of a price series.
+    Use daily_prices if prices are only available from same month
+    else use monthly_prices
+    """
+    if len(monthly_prices) == 1:
+        return daily_prices[-1] / daily_prices[0] - 1
+    else:
+        return daily_prices[-1] / monthly_prices[-2] - 1
+
+
+def calc_ytd(daily_prices, yearly_prices):
+    """
+    Calculates ytd return of a price series.
+    Use daily_prices if prices are only available from same year
+    else use yearly_prices
+    """
+    if len(yearly_prices) == 1:
+        return daily_prices[-1] / daily_prices[0] - 1
+    else:
+        return daily_prices[-1] / yearly_prices[-2] - 1
 
 
 def calc_max_drawdown(prices):
