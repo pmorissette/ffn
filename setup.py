@@ -23,14 +23,14 @@ setuptools.setup(
     license="MIT",
     install_requires=[
         "decorator>=4",
+        "future>=0.15",
+        "matplotlib>=1",
         "numpy>=1.5",
         "pandas>=0.19",
         "pandas-datareader>=0.2",
-        "tabulate>=0.7.5",
-        "matplotlib>=1",
         "scikit-learn>=0.15",
         "scipy>=0.15",
-        "future>=0.15",
+        "tabulate>=0.7.5",
     ],
     extras_require={
         "dev": [
