@@ -1,5 +1,5 @@
 graft ffn
-include LICENSE
+include LICENSE.txt
 include README.rst
 
 include setup.cfg
