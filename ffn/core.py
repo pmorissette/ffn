@@ -1042,7 +1042,10 @@ class GroupStats(dict):
 
         plt.figure()
         ser = self._get_series(freq).to_returns().dropna()
-        pd.scatter_matrix(ser, figsize=figsize, **kwargs)
+        if hasattr(pd, "scatter_matrix"):
+            pd.scatter_matrix(ser, figsize=figsize, **kwargs)
+        else:
+            pd.plotting.scatter_matrix(ser, figsize=figsize, **kwargs)
         return plt.suptitle(title)
 
     def plot_histograms(self, freq=None, title=None, figsize=(10, 10), **kwargs):
