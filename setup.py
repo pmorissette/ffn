@@ -51,4 +51,5 @@ setuptools.setup(
         "Topic :: Software Development :: Libraries",
         "Programming Language :: Python",
     ],
+    python_requires=">=3.7",
 )
