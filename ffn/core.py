@@ -49,6 +49,7 @@ class PerformanceStats(object):
         * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a float. Otherwise
             rf should be a price series.
+        * annualization_factor (float): `Annualization factor` used in various calculations; aka `nperiods`, `252`
 
     Attributes:
         * name (str): Name, derived from price series name
@@ -60,7 +61,7 @@ class PerformanceStats(object):
 
     """
 
-    def __init__(self, prices, rf=0.0):
+    def __init__(self, prices, rf=0.0, annualization_factor=252):
         super(PerformanceStats, self).__init__()
         self.prices = prices
         self.name = self.prices.name
@@ -68,6 +69,7 @@ class PerformanceStats(object):
         self._end = self.prices.index[-1]
 
         self.rf = rf
+        self.annualization_factor = annualization_factor
 
         self._update(self.prices)
 
@@ -223,21 +225,25 @@ class PerformanceStats(object):
         # Will calculate daily figures only if the input data has at least daily frequency or higher (e.g hourly)
         # Rather < 2 days than <= 1 days in case of data taken at different hours of the days
         if r.index.to_series().diff().min() < pd.Timedelta("2 days"):
-            self.daily_mean = r.mean() * 252
-            self.daily_vol = np.std(r, ddof=1) * np.sqrt(252)
+            self.daily_mean = r.mean() * self.annualization_factor
+            self.daily_vol = np.std(r, ddof=1) * np.sqrt(self.annualization_factor)
 
             # if type(self.rf) is float:
             if isinstance(self.rf, float):
-                self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=252)
-                self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=252)
+                self.daily_sharpe = r.calc_sharpe(
+                    rf=self.rf, nperiods=self.annualization_factor
+                )
+                self.daily_sortino = calc_sortino_ratio(
+                    r, rf=self.rf, nperiods=self.annualization_factor
+                )
             # rf is a price series
             else:
                 _rf_daily_price_returns = self.rf.to_returns()
                 self.daily_sharpe = r.calc_sharpe(
-                    rf=_rf_daily_price_returns, nperiods=252
+                    rf=_rf_daily_price_returns, nperiods=self.annualization_factor
                 )
                 self.daily_sortino = calc_sortino_ratio(
-                    r, rf=_rf_daily_price_returns, nperiods=252
+                    r, rf=_rf_daily_price_returns, nperiods=self.annualization_factor
                 )
 
             self.best_day = r.max()
