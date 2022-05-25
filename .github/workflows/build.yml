@@ -5,9 +5,6 @@ on:
     branches:
       - master
   pull_request:
-  schedule:
-    # run on sunday nights
-    - cron:  '0 0 * * 0'
 
 jobs:
   build:
@@ -22,9 +19,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+        cache: 'pip'
 
     - name: Install dependencies
       run: |
@@ -40,8 +38,8 @@ jobs:
         python -m nose --with-coverage --cover-package ffn
 
     - name: Coverage
-      run: |
-        codecov
+      uses: codecov/codecov-action@v2
+      if: ${{ github.event_name == matrix.event-name }}
 
     - name: Package and check
       run: |
