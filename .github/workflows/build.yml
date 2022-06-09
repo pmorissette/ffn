@@ -43,7 +43,7 @@ jobs:
         python -m nose --with-coverage --cover-package ffn
 
     - name: Coverage
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       if: ${{ github.event_name == matrix.event-name }}
 
     - name: Package and check
