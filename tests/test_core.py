@@ -936,3 +936,38 @@ def test_drawdown_details():
 
     drawdown = ffn.to_drawdown_series(returns)
     drawdown_details = ffn.drawdown_details(drawdown, index_type=drawdown.index)
+
+
+def test_infer_nperiods():
+    daily = pd.DataFrame(np.random.randn(10),
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'D'))
+    hourly = pd.DataFrame(np.random.randn(10),
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'H'))
+    yearly = pd.DataFrame(np.random.randn(10),
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'Y'))
+    monthly = pd.DataFrame(np.random.randn(10),
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'M'))
+    minutely = pd.DataFrame(np.random.randn(10),
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'T'))
+    secondly = pd.DataFrame(np.random.randn(10),
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'S'))
+    
+    minutely_30 = pd.DataFrame(np.random.randn(10),
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = '30T'))
+    
+    
+    not_known_vals = np.concatenate((pd.date_range(start='2018-01-01', periods = 5, freq = '1H').values,
+    pd.date_range(start='2018-01-02', periods = 5, freq = '5H').values))
+        
+    not_known = pd.DataFrame(np.random.randn(10),
+            index = pd.DatetimeIndex(not_known_vals))
+    
+    assert ffn.core.infer_nperiods(daily) == ffn.core.TRADING_DAYS_PER_YEAR
+    assert ffn.core.infer_nperiods(hourly) == ffn.core.TRADING_DAYS_PER_YEAR * 24
+    assert ffn.core.infer_nperiods(minutely) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60
+    assert ffn.core.infer_nperiods(secondly) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 60
+    assert ffn.core.infer_nperiods(monthly) == 12
+    assert ffn.core.infer_nperiods(yearly) == 1
+    assert ffn.core.infer_nperiods(minutely_30) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 30
+    assert ffn.core.infer_nperiods(not_known) is None
+    
