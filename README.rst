@@ -6,6 +6,14 @@
 .. image:: https://codecov.io/gh/pmorissette/ffn/branch/master/graph/badge.svg
     :target: https://codecov.io/pmorissette/ffn
 
+.. image:: https://img.shields.io/pypi/v/ffn
+    :alt: PyPI
+    :target: https://pypi.org/project/ffn/
+
+.. image:: https://img.shields.io/pypi/l/ffn
+    :alt: PyPI - License
+    :target: https://pypi.org/project/ffn/
+
 ffn - Financial Functions for Python
 ====================================
 
@@ -57,15 +65,3 @@ Read the docs at http://pmorissette.github.io/ffn
 
 - `Quickstart <http://pmorissette.github.io/ffn/quick.html>`__
 - `Full API <http://pmorissette.github.io/ffn/ffn.html>`__
-
-Special Thanks
---------------
-
-A special thanks to the following contributors for their involvement with the project:
-
-* Jordan Platts `@JordanPlatts <https://github.com/JordanPlatts>`_ 
-
-License
--------
-
-MIT
