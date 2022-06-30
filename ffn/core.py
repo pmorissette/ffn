@@ -2372,7 +2372,8 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
     negative_returns = np.minimum(er[1:], 0.0)
     std = np.std(negative_returns, ddof=1)
-    res = np.divide(er.mean(), std)
+    with np.errstate(divide="ignore"):
+        res = np.divide(er.mean(), std)
 
     if annualize:
         if nperiods is None:
