@@ -1,6 +1,6 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: clean dist docs pages serve notebooks klink test lint fix
+.PHONY: clean dist docs pages serve notebooks klink test lint fix develop
 
 develop:
 	python -m pip install -e .[dev]
