@@ -1,30 +1,18 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>Quickstart &#8212; ffn 0.3.0 documentation</title>
-    
-    <link rel="stylesheet" href="_static/css/klink.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quickstart &#8212; ffn 0.3.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/klink.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="API" href="ffn.html" />
@@ -32,13 +20,10 @@
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
         
-            <link rel="shortcut icon" href="_static/favicon.ico">
-        
         <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
         <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,500,700' rel='stylesheet' type='text/css'>
     
-  </head>
-  <body role="document">  
+  </head><body>  
 
     <div class="document">
       <div class="documentwrapper">
@@ -46,98 +31,110 @@
           <div class="body" role="main">
             
   <div class="section" id="quickstart">
-<h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h1>
-<p>Here is a quick rundown of ffn&#8217;s capabilities. For a more complete guide, read
+<h1>Quickstart<a class="headerlink" href="#quickstart" title="Permalink to this heading">¶</a></h1>
+<p>Here is a quick rundown of ffn’s capabilities. For a more complete guide, read
 the source, or check out the <a class="reference internal" href="ffn.html"><span class="doc">API docs</span></a>.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ffn</span>
-<span class="c1">#%pylab inline</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">ffn</span>
+</pre></div>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
 </pre></div>
 </div>
 <div class="section" id="data-retrieval">
-<h2>Data Retrieval<a class="headerlink" href="#data-retrieval" title="Permalink to this headline">¶</a></h2>
-<p>The main method for data retrieval is the <code class="xref py py-func docutils literal"><span class="pre">get</span></code> function. The get function uses a data provider to download data from an external service and packs that data into a pandas DataFrame for further manipulation.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;agg,hyg,spy,eem,efa&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">&#39;2010-01-01&#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;2014-01-01&#39;</span><span class="p">)</span>
-<span class="nb">print</span> <span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<h2>Data Retrieval<a class="headerlink" href="#data-retrieval" title="Permalink to this heading">¶</a></h2>
+<p>The main method for data retrieval is the <code class="xref py py-func docutils literal notranslate"><span class="pre">get</span></code> function. The get function uses a data provider to download data from an external service and packs that data into a pandas DataFrame for further manipulation.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You should note that upon import <cite>ffn</cite> modifies the <cite>pandas.core.base.PandasObject</cite>
+to provide added functionality to pandas objects, including DataFrames.</p>
+</div>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;agg,hyg,spy,eem,efa&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">&#39;2010-01-01&#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;2014-01-01&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span>              <span class="n">agg</span>    <span class="n">hyg</span>     <span class="n">spy</span>    <span class="n">eem</span>    <span class="n">efa</span>
-<span class="n">Date</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mf">90.45</span>  <span class="mf">64.87</span>  <span class="mf">103.44</span>  <span class="mf">39.32</span>  <span class="mf">49.08</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>  <span class="mf">90.86</span>  <span class="mf">65.18</span>  <span class="mf">103.71</span>  <span class="mf">39.61</span>  <span class="mf">49.13</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span>  <span class="mf">90.81</span>  <span class="mf">65.35</span>  <span class="mf">103.79</span>  <span class="mf">39.69</span>  <span class="mf">49.33</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span>  <span class="mf">90.70</span>  <span class="mf">65.61</span>  <span class="mf">104.23</span>  <span class="mf">39.46</span>  <span class="mf">49.14</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">90.75</span>  <span class="mf">65.72</span>  <span class="mf">104.57</span>  <span class="mf">39.77</span>  <span class="mf">49.53</span>
-
-<span class="p">[</span><span class="mi">5</span> <span class="n">rows</span> <span class="n">x</span> <span class="mi">5</span> <span class="n">columns</span><span class="p">]</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span>                   <span class="n">agg</span>        <span class="n">hyg</span>        <span class="n">spy</span>        <span class="n">eem</span>        <span class="n">efa</span>
+ <span class="n">Date</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mf">74.942818</span>  <span class="mf">43.466671</span>  <span class="mf">89.225403</span>  <span class="mf">33.181232</span>  <span class="mf">38.846069</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>  <span class="mf">75.283783</span>  <span class="mf">43.672871</span>  <span class="mf">89.461578</span>  <span class="mf">33.422070</span>  <span class="mf">38.880318</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span>  <span class="mf">75.240242</span>  <span class="mf">43.785816</span>  <span class="mf">89.524582</span>  <span class="mf">33.491989</span>  <span class="mf">39.044666</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span>  <span class="mf">75.153183</span>  <span class="mf">43.962566</span>  <span class="mf">89.902481</span>  <span class="mf">33.297764</span>  <span class="mf">38.894009</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">75.196701</span>  <span class="mf">44.031300</span>  <span class="mf">90.201675</span>  <span class="mf">33.561905</span>  <span class="mf">39.202148</span>
 </pre></div>
 </div>
 <p>By default, the data is downloaded from Yahoo! Finance and the Adjusted
-Close is used as the security&#8217;s price. Other data sources are also
+Close is used as the security’s price. Other data sources are also
 available and you may select other fields as well. Fields are specified
 by using the following format: {ticker}:{field}. So, if we want to get
 the Open, High, Low, Close for aapl, we would do the following:</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="nb">print</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;aapl:Open,aapl:High,aapl:Low,aapl:Close&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">&#39;2010-01-01&#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;2014-01-01&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;aapl:Open,aapl:High,aapl:Low,aapl:Close&#39;</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">&#39;2010-01-01&#39;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;2014-01-01&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span>            <span class="n">aaplopen</span>  <span class="n">aaplhigh</span>  <span class="n">aapllow</span>  <span class="n">aaplclose</span>
-<span class="n">Date</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>    <span class="mf">213.43</span>    <span class="mf">214.50</span>   <span class="mf">212.38</span>     <span class="mf">214.01</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>    <span class="mf">214.60</span>    <span class="mf">215.59</span>   <span class="mf">213.25</span>     <span class="mf">214.38</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span>    <span class="mf">214.38</span>    <span class="mf">215.23</span>   <span class="mf">210.75</span>     <span class="mf">210.97</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span>    <span class="mf">211.75</span>    <span class="mf">212.00</span>   <span class="mf">209.05</span>     <span class="mf">210.58</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>    <span class="mf">210.30</span>    <span class="mf">212.00</span>   <span class="mf">209.06</span>     <span class="mf">211.98</span>
-
-<span class="p">[</span><span class="mi">5</span> <span class="n">rows</span> <span class="n">x</span> <span class="mi">4</span> <span class="n">columns</span><span class="p">]</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span>             <span class="n">aaplopen</span>  <span class="n">aaplhigh</span>   <span class="n">aapllow</span>  <span class="n">aaplclose</span>
+ <span class="n">Date</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mf">7.622500</span>  <span class="mf">7.660714</span>  <span class="mf">7.585000</span>   <span class="mf">7.643214</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>  <span class="mf">7.664286</span>  <span class="mf">7.699643</span>  <span class="mf">7.616071</span>   <span class="mf">7.656429</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span>  <span class="mf">7.656429</span>  <span class="mf">7.686786</span>  <span class="mf">7.526786</span>   <span class="mf">7.534643</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span>  <span class="mf">7.562500</span>  <span class="mf">7.571429</span>  <span class="mf">7.466071</span>   <span class="mf">7.520714</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">7.510714</span>  <span class="mf">7.571429</span>  <span class="mf">7.466429</span>   <span class="mf">7.570714</span>
 </pre></div>
 </div>
-<p>The default data provider is <a class="reference internal" href="ffn.html#ffn.data.web" title="ffn.data.web"><code class="xref py py-func docutils literal"><span class="pre">ffn.data.web()</span></code></a>. This is basically just a thin wrapper around pandas&#8217; pandas.io.data provider. Please refer to the appropriate docs for more info (data sources, etc.). The <a class="reference internal" href="ffn.html#ffn.data.csv" title="ffn.data.csv"><code class="xref py py-func docutils literal"><span class="pre">ffn.data.csv()</span></code></a> provider is also available when we want to load data from a local file. In this case, we can tell <a class="reference internal" href="ffn.html#ffn.data.get" title="ffn.data.get"><code class="xref py py-func docutils literal"><span class="pre">ffn.data.get()</span></code></a> to use the csv provider. In this case, we also want to merge this new data with the existing data we downloaded earlier. Therefore, we will provide the <strong>data</strong> object as the <em>existing</em> argument, and the new data will be merged into the existing DataFrame.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dbc&#39;</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="n">ffn</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">csv</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;test_data.csv&#39;</span><span class="p">,</span> <span class="n">existing</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
-<span class="nb">print</span> <span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<p>The default data provider is <a class="reference internal" href="ffn.html#ffn.data.web" title="ffn.data.web"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.data.web()</span></code></a>. This is basically just a thin wrapper around pandas’ pandas.io.data provider. Please refer to the appropriate docs for more info (data sources, etc.). The <a class="reference internal" href="ffn.html#ffn.data.csv" title="ffn.data.csv"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.data.csv()</span></code></a> provider is also available when we want to load data from a local file. In this case, we can tell <a class="reference internal" href="ffn.html#ffn.data.get" title="ffn.data.get"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.data.get()</span></code></a> to use the csv provider. In this case, we also want to merge this new data with the existing data we downloaded earlier. Therefore, we will provide the <strong>data</strong> object as the <em>existing</em> argument, and the new data will be merged into the existing DataFrame.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dbc&#39;</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="n">ffn</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">csv</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;test_data.csv&#39;</span><span class="p">,</span> <span class="n">existing</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span>              <span class="n">agg</span>    <span class="n">hyg</span>     <span class="n">spy</span>    <span class="n">eem</span>    <span class="n">efa</span>    <span class="n">dbc</span>
-<span class="n">Date</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mf">90.45</span>  <span class="mf">64.87</span>  <span class="mf">103.44</span>  <span class="mf">39.32</span>  <span class="mf">49.08</span>  <span class="mf">25.24</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>  <span class="mf">90.86</span>  <span class="mf">65.18</span>  <span class="mf">103.71</span>  <span class="mf">39.61</span>  <span class="mf">49.13</span>  <span class="mf">25.27</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span>  <span class="mf">90.81</span>  <span class="mf">65.35</span>  <span class="mf">103.79</span>  <span class="mf">39.69</span>  <span class="mf">49.33</span>  <span class="mf">25.72</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span>  <span class="mf">90.70</span>  <span class="mf">65.61</span>  <span class="mf">104.23</span>  <span class="mf">39.46</span>  <span class="mf">49.14</span>  <span class="mf">25.40</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">90.75</span>  <span class="mf">65.72</span>  <span class="mf">104.57</span>  <span class="mf">39.77</span>  <span class="mf">49.53</span>  <span class="mf">25.38</span>
-
-<span class="p">[</span><span class="mi">5</span> <span class="n">rows</span> <span class="n">x</span> <span class="mi">6</span> <span class="n">columns</span><span class="p">]</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span>                   <span class="n">agg</span>        <span class="n">hyg</span>        <span class="n">spy</span>        <span class="n">eem</span>        <span class="n">efa</span>    <span class="n">dbc</span>
+ <span class="n">Date</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mf">74.942818</span>  <span class="mf">43.466671</span>  <span class="mf">89.225403</span>  <span class="mf">33.181232</span>  <span class="mf">38.846069</span>  <span class="mf">25.24</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>  <span class="mf">75.283783</span>  <span class="mf">43.672871</span>  <span class="mf">89.461578</span>  <span class="mf">33.422070</span>  <span class="mf">38.880318</span>  <span class="mf">25.27</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span>  <span class="mf">75.240242</span>  <span class="mf">43.785816</span>  <span class="mf">89.524582</span>  <span class="mf">33.491989</span>  <span class="mf">39.044666</span>  <span class="mf">25.72</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span>  <span class="mf">75.153183</span>  <span class="mf">43.962566</span>  <span class="mf">89.902481</span>  <span class="mf">33.297764</span>  <span class="mf">38.894009</span>  <span class="mf">25.40</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">75.196701</span>  <span class="mf">44.031300</span>  <span class="mf">90.201675</span>  <span class="mf">33.561905</span>  <span class="mf">39.202148</span>  <span class="mf">25.38</span>
 </pre></div>
 </div>
 <p>As we can see above, the dbc column was added to the DataFrame. Internally, get is using the function ffn.merge, which is useful when you want to merge TimeSeries and DataFrames together. We plan on adding many more data sources over time. If you know your way with Python and would like to contribute a data provider, please feel free to submit a pull request - contributions are always welcome!</p>
 </div>
 <div class="section" id="data-manipulation">
-<h2>Data Manipulation<a class="headerlink" href="#data-manipulation" title="Permalink to this headline">¶</a></h2>
-<p>Now that we have some data, let&#8217;s start manipulating it. In quantitative finance, we are often interested in the returns of a given time series. Let&#8217;s calculate the returns by simply calling the <a class="reference internal" href="ffn.html#ffn.core.to_returns" title="ffn.core.to_returns"><code class="xref py py-func docutils literal"><span class="pre">to_returns</span></code></a> or <a class="reference internal" href="ffn.html#ffn.core.to_log_returns" title="ffn.core.to_log_returns"><code class="xref py py-func docutils literal"><span class="pre">to_log_returns</span></code></a> extension methods.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">returns</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to_log_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
-<span class="nb">print</span> <span class="n">returns</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<h2>Data Manipulation<a class="headerlink" href="#data-manipulation" title="Permalink to this heading">¶</a></h2>
+<p>Now that we have some data, let’s start manipulating it. In quantitative finance, we are often interested in the returns of a given time series. Let’s calculate the returns by simply calling the <a class="reference internal" href="ffn.html#ffn.core.to_returns" title="ffn.core.to_returns"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_returns</span></code></a> or <a class="reference internal" href="ffn.html#ffn.core.to_log_returns" title="ffn.core.to_log_returns"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_log_returns</span></code></a> extension methods.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">returns</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">to_log_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span>                 <span class="n">agg</span>       <span class="n">hyg</span>       <span class="n">spy</span>       <span class="n">eem</span>       <span class="n">efa</span>       <span class="n">dbc</span>
-<span class="n">Date</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>  <span class="mf">0.004523</span>  <span class="mf">0.004767</span>  <span class="mf">0.002607</span>  <span class="mf">0.007348</span>  <span class="mf">0.001018</span>  <span class="mf">0.001188</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span> <span class="o">-</span><span class="mf">0.000550</span>  <span class="mf">0.002605</span>  <span class="mf">0.000771</span>  <span class="mf">0.002018</span>  <span class="mf">0.004063</span>  <span class="mf">0.017651</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span> <span class="o">-</span><span class="mf">0.001212</span>  <span class="mf">0.003971</span>  <span class="mf">0.004230</span> <span class="o">-</span><span class="mf">0.005812</span> <span class="o">-</span><span class="mf">0.003859</span> <span class="o">-</span><span class="mf">0.012520</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">0.000551</span>  <span class="mf">0.001675</span>  <span class="mf">0.003257</span>  <span class="mf">0.007825</span>  <span class="mf">0.007905</span> <span class="o">-</span><span class="mf">0.000788</span>
-<span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">11</span> <span class="o">-</span><span class="mf">0.000772</span> <span class="o">-</span><span class="mf">0.000913</span>  <span class="mf">0.001433</span> <span class="o">-</span><span class="mf">0.002014</span>  <span class="mf">0.008244</span> <span class="o">-</span><span class="mf">0.003157</span>
-
-<span class="p">[</span><span class="mi">5</span> <span class="n">rows</span> <span class="n">x</span> <span class="mi">6</span> <span class="n">columns</span><span class="p">]</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span>                  <span class="n">agg</span>       <span class="n">hyg</span>       <span class="n">spy</span>       <span class="n">eem</span>       <span class="n">efa</span>       <span class="n">dbc</span>
+ <span class="n">Date</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">05</span>  <span class="mf">0.004539</span>  <span class="mf">0.004733</span>  <span class="mf">0.002643</span>  <span class="mf">0.007232</span>  <span class="mf">0.000881</span>  <span class="mf">0.001188</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">06</span> <span class="o">-</span><span class="mf">0.000579</span>  <span class="mf">0.002583</span>  <span class="mf">0.000704</span>  <span class="mf">0.002090</span>  <span class="mf">0.004218</span>  <span class="mf">0.017651</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">07</span> <span class="o">-</span><span class="mf">0.001158</span>  <span class="mf">0.004029</span>  <span class="mf">0.004212</span> <span class="o">-</span><span class="mf">0.005816</span> <span class="o">-</span><span class="mf">0.003866</span> <span class="o">-</span><span class="mf">0.012520</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">0.000579</span>  <span class="mf">0.001562</span>  <span class="mf">0.003322</span>  <span class="mf">0.007901</span>  <span class="mf">0.007891</span> <span class="o">-</span><span class="mf">0.000788</span>
+ <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">11</span> <span class="o">-</span><span class="mf">0.000772</span> <span class="o">-</span><span class="mf">0.000893</span>  <span class="mf">0.001395</span> <span class="o">-</span><span class="mf">0.002085</span>  <span class="mf">0.008176</span> <span class="o">-</span><span class="mf">0.003157</span>
 </pre></div>
 </div>
-<p>Let&#8217;s look at the different distributions to see how they look.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+<p>Let’s look at the different distributions to see how they look.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="_images/quickstart_10_0.png" class="pynb" src="_images/quickstart_10_0.png" />
+<a class="pynb reference internal image-reference" href="_images/quickstart_11_0.png"><img alt="_images/quickstart_11_0.png" class="pynb" src="_images/quickstart_11_0.png" style="width: 721px; height: 320px;" /></a>
 <p>We can also use the numerous functions packed into numpy, pandas and the
 like to further analyze the returns. For example, we can use the corr
 function to get the pairwise correlations between assets.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span><span class="o">.</span><span class="n">as_format</span><span class="p">(</span><span class="s1">&#39;.2f&#39;</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span><span class="o">.</span><span class="n">as_format</span><span class="p">(</span><span class="s1">&#39;.2f&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="pynb-result" style="max-height:1000px;max-width:1500px;overflow:auto;">
+<div class="pynb-result">
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -153,238 +150,254 @@ function to get the pairwise correlations between assets.</p>
   <tbody>
     <tr>
       <th>agg</th>
-      <td>  1.00</td>
-      <td> -0.11</td>
-      <td> -0.33</td>
-      <td> -0.23</td>
-      <td> -0.29</td>
-      <td> -0.18</td>
+      <td>1.00</td>
+      <td>-0.12</td>
+      <td>-0.33</td>
+      <td>-0.23</td>
+      <td>-0.29</td>
+      <td>-0.18</td>
     </tr>
     <tr>
       <th>hyg</th>
-      <td> -0.11</td>
-      <td>  1.00</td>
-      <td>  0.77</td>
-      <td>  0.75</td>
-      <td>  0.76</td>
-      <td>  0.49</td>
+      <td>-0.12</td>
+      <td>1.00</td>
+      <td>0.77</td>
+      <td>0.75</td>
+      <td>0.76</td>
+      <td>0.49</td>
     </tr>
     <tr>
       <th>spy</th>
-      <td> -0.33</td>
-      <td>  0.77</td>
-      <td>  1.00</td>
-      <td>  0.88</td>
-      <td>  0.92</td>
-      <td>  0.59</td>
+      <td>-0.33</td>
+      <td>0.77</td>
+      <td>1.00</td>
+      <td>0.88</td>
+      <td>0.92</td>
+      <td>0.59</td>
     </tr>
     <tr>
       <th>eem</th>
-      <td> -0.23</td>
-      <td>  0.75</td>
-      <td>  0.88</td>
-      <td>  1.00</td>
-      <td>  0.90</td>
-      <td>  0.62</td>
+      <td>-0.23</td>
+      <td>0.75</td>
+      <td>0.88</td>
+      <td>1.00</td>
+      <td>0.90</td>
+      <td>0.62</td>
     </tr>
     <tr>
       <th>efa</th>
-      <td> -0.29</td>
-      <td>  0.76</td>
-      <td>  0.92</td>
-      <td>  0.90</td>
-      <td>  1.00</td>
-      <td>  0.61</td>
+      <td>-0.29</td>
+      <td>0.76</td>
+      <td>0.92</td>
+      <td>0.90</td>
+      <td>1.00</td>
+      <td>0.61</td>
     </tr>
     <tr>
       <th>dbc</th>
-      <td> -0.18</td>
-      <td>  0.49</td>
-      <td>  0.59</td>
-      <td>  0.62</td>
-      <td>  0.61</td>
-      <td>  1.00</td>
+      <td>-0.18</td>
+      <td>0.49</td>
+      <td>0.59</td>
+      <td>0.62</td>
+      <td>0.61</td>
+      <td>1.00</td>
     </tr>
   </tbody>
 </table>
-<p>6 rows × 6 columns</p>
-</div><p>Here we used the convenience method as_format to have a prettier
-output. We could also plot a heatmap to better visualize the results.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">plot_corr_heatmap</span><span class="p">()</span>
+</div><p>Here we used the convenience method as_format to have a prettier output.
+We could also plot a heatmap to better visualize the results.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">plot_corr_heatmap</span><span class="p">();</span>
 </pre></div>
 </div>
-<img alt="_images/quickstart_14_0.png" class="pynb" src="_images/quickstart_14_0.png" />
-<p>We used the <a class="reference internal" href="ffn.html#ffn.core.plot_corr_heatmap" title="ffn.core.plot_corr_heatmap"><code class="xref py py-func docutils literal"><span class="pre">ffn.core.plot_corr_heatmap()</span></code></a>, which is a convenience method that simply calls ffn&#8217;s <a class="reference internal" href="ffn.html#ffn.core.plot_heatmap" title="ffn.core.plot_heatmap"><code class="xref py py-func docutils literal"><span class="pre">ffn.core.plot_heatmap()</span></code></a> with sane arguments.</p>
-<p>Let&#8217;s start looking at how all these securities performed over the period. To achieve this, we will plot rebased time series so that we can see how they each performed relative to eachother.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">rebase</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
+<a class="pynb reference internal image-reference" href="_images/quickstart_15_0.png"><img alt="_images/quickstart_15_0.png" class="pynb" src="_images/quickstart_15_0.png" style="width: 377px; height: 266px;" /></a>
+<p>We used the <a class="reference internal" href="ffn.html#ffn.core.plot_corr_heatmap" title="ffn.core.plot_corr_heatmap"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.core.plot_corr_heatmap()</span></code></a>, which is a convenience method that simply calls ffn’s <a class="reference internal" href="ffn.html#ffn.core.plot_heatmap" title="ffn.core.plot_heatmap"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.core.plot_heatmap()</span></code></a> with sane arguments.</p>
+<p>Let’s start looking at how all these securities performed over the period. To achieve this, we will plot rebased time series so that we can see how they each performed relative to eachother.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">rebase</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="_images/quickstart_16_0.png" class="pynb" src="_images/quickstart_16_0.png" />
+<a class="pynb reference internal image-reference" href="_images/quickstart_17_0.png"><img alt="_images/quickstart_17_0.png" class="pynb" src="_images/quickstart_17_0.png" style="width: 711px; height: 313px;" /></a>
 </div>
 <div class="section" id="performance-measurement">
-<h2>Performance Measurement<a class="headerlink" href="#performance-measurement" title="Permalink to this headline">¶</a></h2>
-<p>For a more complete view of each asset&#8217;s performance over the period, we can use the <a class="reference internal" href="ffn.html#ffn.core.calc_stats" title="ffn.core.calc_stats"><code class="xref py py-func docutils literal"><span class="pre">ffn.core.calc_stats()</span></code></a> method which will create a <a class="reference internal" href="ffn.html#ffn.core.GroupStats" title="ffn.core.GroupStats"><code class="xref py py-class docutils literal"><span class="pre">ffn.core.GroupStats</span></code></a> object. A GroupStats object wraps a bunch of <a class="reference internal" href="ffn.html#ffn.core.PerformanceStats" title="ffn.core.PerformanceStats"><code class="xref py py-class docutils literal"><span class="pre">ffn.core.PerformanceStats</span></code></a> objects in a dict with some added convenience methods.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">perf</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">calc_stats</span><span class="p">()</span>
+<h2>Performance Measurement<a class="headerlink" href="#performance-measurement" title="Permalink to this heading">¶</a></h2>
+<p>For a more complete view of each asset’s performance over the period, we can use the <a class="reference internal" href="ffn.html#ffn.core.calc_stats" title="ffn.core.calc_stats"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.core.calc_stats()</span></code></a> method which will create a <a class="reference internal" href="ffn.html#ffn.core.GroupStats" title="ffn.core.GroupStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">ffn.core.GroupStats</span></code></a> object. A GroupStats object wraps a bunch of <a class="reference internal" href="ffn.html#ffn.core.PerformanceStats" title="ffn.core.PerformanceStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">ffn.core.PerformanceStats</span></code></a> objects in a dict with some added convenience methods.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">perf</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">calc_stats</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Now that we have our GroupStats object, we can analyze the performance
 in greater detail. For example, the <strong>plot</strong> method yields a graph
 similar to the one above.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">perf</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">perf</span><span class="o">.</span><span class="n">plot</span><span class="p">();</span>
 </pre></div>
 </div>
-<img alt="_images/quickstart_20_0.png" class="pynb" src="_images/quickstart_20_0.png" />
+<a class="pynb reference internal image-reference" href="_images/quickstart_21_0.png"><img alt="_images/quickstart_21_0.png" class="pynb" src="_images/quickstart_21_0.png" style="width: 879px; height: 328px;" /></a>
 <p>We can also display a wide array of statistics that are all contained in
 the PerformanceStats object. This will probably look crappy in the docs,
 but do try it out in a Notebook. We are also actively trying to improve
 the way we display this wide array of stats.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="nb">print</span> <span class="n">perf</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">perf</span><span class="o">.</span><span class="n">display</span><span class="p">())</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span><span class="n">Stat</span>                 <span class="n">agg</span>         <span class="n">hyg</span>         <span class="n">spy</span>         <span class="n">eem</span>         <span class="n">efa</span>         <span class="n">dbc</span>
-<span class="o">-------------------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>
-<span class="n">Start</span>                <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>
-<span class="n">End</span>                  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="n">Stat</span>                 <span class="n">agg</span>         <span class="n">hyg</span>         <span class="n">spy</span>         <span class="n">eem</span>         <span class="n">efa</span>         <span class="n">dbc</span>
+ <span class="o">-------------------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>  <span class="o">----------</span>
+ <span class="n">Start</span>                <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>  <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span>
+ <span class="n">End</span>                  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>  <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span>
+ <span class="n">Risk</span><span class="o">-</span><span class="n">free</span> <span class="n">rate</span>       <span class="mf">0.00</span><span class="o">%</span>       <span class="mf">0.00</span><span class="o">%</span>       <span class="mf">0.00</span><span class="o">%</span>       <span class="mf">0.00</span><span class="o">%</span>       <span class="mf">0.00</span><span class="o">%</span>       <span class="mf">0.00</span><span class="o">%</span>
 
-<span class="n">Total</span> <span class="n">Return</span>         <span class="mf">16.36</span><span class="o">%</span>      <span class="mf">39.23</span><span class="o">%</span>      <span class="mf">76.91</span><span class="o">%</span>      <span class="mf">5.47</span><span class="o">%</span>       <span class="mf">33.44</span><span class="o">%</span>      <span class="mf">1.66</span><span class="o">%</span>
-<span class="n">Daily</span> <span class="n">Sharpe</span>         <span class="mf">1.11</span>        <span class="mf">0.97</span>        <span class="mf">0.93</span>        <span class="mf">0.18</span>        <span class="mf">0.44</span>        <span class="mf">0.11</span>
-<span class="n">CAGR</span>                 <span class="mf">3.87</span><span class="o">%</span>       <span class="mf">8.65</span><span class="o">%</span>       <span class="mf">15.37</span><span class="o">%</span>      <span class="mf">1.34</span><span class="o">%</span>       <span class="mf">7.50</span><span class="o">%</span>       <span class="mf">0.41</span><span class="o">%</span>
-<span class="n">Max</span> <span class="n">Drawdown</span>         <span class="o">-</span><span class="mf">5.14</span><span class="o">%</span>      <span class="o">-</span><span class="mf">10.07</span><span class="o">%</span>     <span class="o">-</span><span class="mf">18.61</span><span class="o">%</span>     <span class="o">-</span><span class="mf">30.87</span><span class="o">%</span>     <span class="o">-</span><span class="mf">25.86</span><span class="o">%</span>     <span class="o">-</span><span class="mf">24.34</span><span class="o">%</span>
+ <span class="n">Total</span> <span class="n">Return</span>         <span class="mf">16.36</span><span class="o">%</span>      <span class="mf">39.22</span><span class="o">%</span>      <span class="mf">76.92</span><span class="o">%</span>      <span class="mf">5.46</span><span class="o">%</span>       <span class="mf">33.43</span><span class="o">%</span>      <span class="mf">1.66</span><span class="o">%</span>
+ <span class="n">Daily</span> <span class="n">Sharpe</span>         <span class="mf">1.11</span>        <span class="mf">0.97</span>        <span class="mf">0.93</span>        <span class="mf">0.18</span>        <span class="mf">0.44</span>        <span class="mf">0.11</span>
+ <span class="n">Daily</span> <span class="n">Sortino</span>        <span class="mf">1.84</span>        <span class="mf">1.51</span>        <span class="mf">1.48</span>        <span class="mf">0.29</span>        <span class="mf">0.69</span>        <span class="mf">0.17</span>
+ <span class="n">CAGR</span>                 <span class="mf">3.87</span><span class="o">%</span>       <span class="mf">8.65</span><span class="o">%</span>       <span class="mf">15.37</span><span class="o">%</span>      <span class="mf">1.34</span><span class="o">%</span>       <span class="mf">7.50</span><span class="o">%</span>       <span class="mf">0.41</span><span class="o">%</span>
+ <span class="n">Max</span> <span class="n">Drawdown</span>         <span class="o">-</span><span class="mf">5.14</span><span class="o">%</span>      <span class="o">-</span><span class="mf">10.06</span><span class="o">%</span>     <span class="o">-</span><span class="mf">18.61</span><span class="o">%</span>     <span class="o">-</span><span class="mf">30.87</span><span class="o">%</span>     <span class="o">-</span><span class="mf">25.86</span><span class="o">%</span>     <span class="o">-</span><span class="mf">24.34</span><span class="o">%</span>
+ <span class="n">Calmar</span> <span class="n">Ratio</span>         <span class="mf">0.75</span>        <span class="mf">0.86</span>        <span class="mf">0.83</span>        <span class="mf">0.04</span>        <span class="mf">0.29</span>        <span class="mf">0.02</span>
 
-<span class="n">MTD</span>                  <span class="o">-</span><span class="mf">0.56</span><span class="o">%</span>      <span class="mf">0.41</span><span class="o">%</span>       <span class="mf">2.59</span><span class="o">%</span>       <span class="o">-</span><span class="mf">0.41</span><span class="o">%</span>      <span class="mf">2.17</span><span class="o">%</span>       <span class="mf">0.59</span><span class="o">%</span>
-<span class="mi">3</span><span class="n">m</span>                   <span class="mf">0.02</span><span class="o">%</span>       <span class="mf">3.42</span><span class="o">%</span>       <span class="mf">10.52</span><span class="o">%</span>      <span class="mf">3.47</span><span class="o">%</span>       <span class="mf">6.07</span><span class="o">%</span>       <span class="o">-</span><span class="mf">0.39</span><span class="o">%</span>
-<span class="mi">6</span><span class="n">m</span>                   <span class="mf">0.57</span><span class="o">%</span>       <span class="mf">5.85</span><span class="o">%</span>       <span class="mf">16.32</span><span class="o">%</span>      <span class="mf">9.54</span><span class="o">%</span>       <span class="mf">18.11</span><span class="o">%</span>      <span class="mf">2.11</span><span class="o">%</span>
-<span class="n">YTD</span>                  <span class="o">-</span><span class="mf">1.97</span><span class="o">%</span>      <span class="mf">5.76</span><span class="o">%</span>       <span class="mf">32.30</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.65</span><span class="o">%</span>      <span class="mf">21.44</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.63</span><span class="o">%</span>
-<span class="mi">1</span><span class="n">Y</span>                   <span class="o">-</span><span class="mf">1.97</span><span class="o">%</span>      <span class="mf">5.76</span><span class="o">%</span>       <span class="mf">32.30</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.65</span><span class="o">%</span>      <span class="mf">21.44</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.63</span><span class="o">%</span>
-<span class="mi">3</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>            <span class="mf">3.08</span><span class="o">%</span>       <span class="mf">7.83</span><span class="o">%</span>       <span class="mf">16.07</span><span class="o">%</span>      <span class="o">-</span><span class="mf">2.34</span><span class="o">%</span>      <span class="mf">8.17</span><span class="o">%</span>       <span class="o">-</span><span class="mf">2.34</span><span class="o">%</span>
-<span class="mi">5</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>            <span class="mf">3.87</span><span class="o">%</span>       <span class="mf">8.65</span><span class="o">%</span>       <span class="mf">15.37</span><span class="o">%</span>      <span class="mf">1.34</span><span class="o">%</span>       <span class="mf">7.50</span><span class="o">%</span>       <span class="mf">0.41</span><span class="o">%</span>
-<span class="mi">10</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>           <span class="mf">3.87</span><span class="o">%</span>       <span class="mf">8.65</span><span class="o">%</span>       <span class="mf">15.37</span><span class="o">%</span>      <span class="mf">1.34</span><span class="o">%</span>       <span class="mf">7.50</span><span class="o">%</span>       <span class="mf">0.41</span><span class="o">%</span>
-<span class="n">Since</span> <span class="n">Incep</span><span class="o">.</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>  <span class="mf">3.87</span><span class="o">%</span>       <span class="mf">8.65</span><span class="o">%</span>       <span class="mf">15.37</span><span class="o">%</span>      <span class="mf">1.34</span><span class="o">%</span>       <span class="mf">7.50</span><span class="o">%</span>       <span class="mf">0.41</span><span class="o">%</span>
+ <span class="n">MTD</span>                  <span class="o">-</span><span class="mf">0.56</span><span class="o">%</span>      <span class="mf">0.41</span><span class="o">%</span>       <span class="mf">2.59</span><span class="o">%</span>       <span class="o">-</span><span class="mf">0.41</span><span class="o">%</span>      <span class="mf">2.18</span><span class="o">%</span>       <span class="mf">0.59</span><span class="o">%</span>
+ <span class="mi">3</span><span class="n">m</span>                   <span class="mf">0.02</span><span class="o">%</span>       <span class="mf">3.42</span><span class="o">%</span>       <span class="mf">10.52</span><span class="o">%</span>      <span class="mf">3.48</span><span class="o">%</span>       <span class="mf">6.08</span><span class="o">%</span>       <span class="o">-</span><span class="mf">0.39</span><span class="o">%</span>
+ <span class="mi">6</span><span class="n">m</span>                   <span class="mf">0.57</span><span class="o">%</span>       <span class="mf">5.84</span><span class="o">%</span>       <span class="mf">16.32</span><span class="o">%</span>      <span class="mf">9.55</span><span class="o">%</span>       <span class="mf">18.12</span><span class="o">%</span>      <span class="mf">2.11</span><span class="o">%</span>
+ <span class="n">YTD</span>                  <span class="o">-</span><span class="mf">1.98</span><span class="o">%</span>      <span class="mf">5.75</span><span class="o">%</span>       <span class="mf">32.31</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.65</span><span class="o">%</span>      <span class="mf">21.44</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.63</span><span class="o">%</span>
+ <span class="mi">1</span><span class="n">Y</span>                   <span class="o">-</span><span class="mf">1.98</span><span class="o">%</span>      <span class="mf">5.75</span><span class="o">%</span>       <span class="mf">32.31</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.65</span><span class="o">%</span>      <span class="mf">21.44</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.63</span><span class="o">%</span>
+ <span class="mi">3</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>            <span class="mf">3.08</span><span class="o">%</span>       <span class="mf">7.83</span><span class="o">%</span>       <span class="mf">16.07</span><span class="o">%</span>      <span class="o">-</span><span class="mf">2.34</span><span class="o">%</span>      <span class="mf">8.17</span><span class="o">%</span>       <span class="o">-</span><span class="mf">2.34</span><span class="o">%</span>
+ <span class="mi">5</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>            <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>
+ <span class="mi">10</span><span class="n">Y</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>
+ <span class="n">Since</span> <span class="n">Incep</span><span class="o">.</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>  <span class="mf">3.87</span><span class="o">%</span>       <span class="mf">8.65</span><span class="o">%</span>       <span class="mf">15.37</span><span class="o">%</span>      <span class="mf">1.34</span><span class="o">%</span>       <span class="mf">7.50</span><span class="o">%</span>       <span class="mf">0.41</span><span class="o">%</span>
 
-<span class="n">Daily</span> <span class="n">Sharpe</span>         <span class="mf">1.11</span>        <span class="mf">0.97</span>        <span class="mf">0.93</span>        <span class="mf">0.18</span>        <span class="mf">0.44</span>        <span class="mf">0.11</span>
-<span class="n">Daily</span> <span class="n">Mean</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>    <span class="mf">3.86</span><span class="o">%</span>       <span class="mf">8.70</span><span class="o">%</span>       <span class="mf">15.73</span><span class="o">%</span>      <span class="mf">4.35</span><span class="o">%</span>       <span class="mf">9.73</span><span class="o">%</span>       <span class="mf">1.83</span><span class="o">%</span>
-<span class="n">Daily</span> <span class="n">Vol</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>     <span class="mf">3.47</span><span class="o">%</span>       <span class="mf">8.98</span><span class="o">%</span>       <span class="mf">16.83</span><span class="o">%</span>      <span class="mf">24.56</span><span class="o">%</span>      <span class="mf">22.32</span><span class="o">%</span>      <span class="mf">16.84</span><span class="o">%</span>
-<span class="n">Daily</span> <span class="n">Skew</span>           <span class="o">-</span><span class="mf">0.40</span>       <span class="o">-</span><span class="mf">0.55</span>       <span class="o">-</span><span class="mf">0.39</span>       <span class="o">-</span><span class="mf">0.12</span>       <span class="o">-</span><span class="mf">0.26</span>       <span class="o">-</span><span class="mf">0.47</span>
-<span class="n">Daily</span> <span class="n">Kurt</span>           <span class="mf">2.28</span>        <span class="mf">7.52</span>        <span class="mf">4.02</span>        <span class="mf">3.06</span>        <span class="mf">3.64</span>        <span class="mf">2.90</span>
-<span class="n">Best</span> <span class="n">Day</span>             <span class="mf">0.84</span><span class="o">%</span>       <span class="mf">3.06</span><span class="o">%</span>       <span class="mf">4.65</span><span class="o">%</span>       <span class="mf">7.20</span><span class="o">%</span>       <span class="mf">6.75</span><span class="o">%</span>       <span class="mf">4.34</span><span class="o">%</span>
-<span class="n">Worst</span> <span class="n">Day</span>            <span class="o">-</span><span class="mf">1.24</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.27</span><span class="o">%</span>      <span class="o">-</span><span class="mf">6.51</span><span class="o">%</span>      <span class="o">-</span><span class="mf">8.34</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.46</span><span class="o">%</span>      <span class="o">-</span><span class="mf">6.70</span><span class="o">%</span>
+ <span class="n">Daily</span> <span class="n">Sharpe</span>         <span class="mf">1.11</span>        <span class="mf">0.97</span>        <span class="mf">0.93</span>        <span class="mf">0.18</span>        <span class="mf">0.44</span>        <span class="mf">0.11</span>
+ <span class="n">Daily</span> <span class="n">Sortino</span>        <span class="mf">1.84</span>        <span class="mf">1.51</span>        <span class="mf">1.48</span>        <span class="mf">0.29</span>        <span class="mf">0.69</span>        <span class="mf">0.17</span>
+ <span class="n">Daily</span> <span class="n">Mean</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>    <span class="mf">3.86</span><span class="o">%</span>       <span class="mf">8.70</span><span class="o">%</span>       <span class="mf">15.73</span><span class="o">%</span>      <span class="mf">4.35</span><span class="o">%</span>       <span class="mf">9.73</span><span class="o">%</span>       <span class="mf">1.83</span><span class="o">%</span>
+ <span class="n">Daily</span> <span class="n">Vol</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>     <span class="mf">3.48</span><span class="o">%</span>       <span class="mf">8.97</span><span class="o">%</span>       <span class="mf">16.83</span><span class="o">%</span>      <span class="mf">24.56</span><span class="o">%</span>      <span class="mf">22.31</span><span class="o">%</span>      <span class="mf">16.84</span><span class="o">%</span>
+ <span class="n">Daily</span> <span class="n">Skew</span>           <span class="o">-</span><span class="mf">0.40</span>       <span class="o">-</span><span class="mf">0.55</span>       <span class="o">-</span><span class="mf">0.39</span>       <span class="o">-</span><span class="mf">0.12</span>       <span class="o">-</span><span class="mf">0.26</span>       <span class="o">-</span><span class="mf">0.47</span>
+ <span class="n">Daily</span> <span class="n">Kurt</span>           <span class="mf">2.30</span>        <span class="mf">7.50</span>        <span class="mf">4.03</span>        <span class="mf">3.06</span>        <span class="mf">3.64</span>        <span class="mf">2.90</span>
+ <span class="n">Best</span> <span class="n">Day</span>             <span class="mf">0.84</span><span class="o">%</span>       <span class="mf">3.05</span><span class="o">%</span>       <span class="mf">4.65</span><span class="o">%</span>       <span class="mf">7.20</span><span class="o">%</span>       <span class="mf">6.74</span><span class="o">%</span>       <span class="mf">4.34</span><span class="o">%</span>
+ <span class="n">Worst</span> <span class="n">Day</span>            <span class="o">-</span><span class="mf">1.24</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.26</span><span class="o">%</span>      <span class="o">-</span><span class="mf">6.51</span><span class="o">%</span>      <span class="o">-</span><span class="mf">8.34</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.46</span><span class="o">%</span>      <span class="o">-</span><span class="mf">6.70</span><span class="o">%</span>
 
-<span class="n">Monthly</span> <span class="n">Sharpe</span>       <span class="mf">1.23</span>        <span class="mf">1.11</span>        <span class="mf">1.22</span>        <span class="mf">0.30</span>        <span class="mf">0.60</span>        <span class="mf">0.27</span>
-<span class="n">Monthly</span> <span class="n">Mean</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>  <span class="mf">3.59</span><span class="o">%</span>       <span class="mf">9.51</span><span class="o">%</span>       <span class="mf">16.99</span><span class="o">%</span>      <span class="mf">6.43</span><span class="o">%</span>       <span class="mf">11.06</span><span class="o">%</span>      <span class="mf">4.61</span><span class="o">%</span>
-<span class="n">Monthly</span> <span class="n">Vol</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>   <span class="mf">2.93</span><span class="o">%</span>       <span class="mf">8.56</span><span class="o">%</span>       <span class="mf">13.92</span><span class="o">%</span>      <span class="mf">21.45</span><span class="o">%</span>      <span class="mf">18.41</span><span class="o">%</span>      <span class="mf">17.10</span><span class="o">%</span>
-<span class="n">Monthly</span> <span class="n">Skew</span>         <span class="o">-</span><span class="mf">0.34</span>       <span class="mf">0.14</span>        <span class="o">-</span><span class="mf">0.32</span>       <span class="o">-</span><span class="mf">0.10</span>       <span class="o">-</span><span class="mf">0.37</span>       <span class="o">-</span><span class="mf">0.74</span>
-<span class="n">Monthly</span> <span class="n">Kurt</span>         <span class="mf">0.02</span>        <span class="mf">1.74</span>        <span class="mf">0.24</span>        <span class="mf">1.28</span>        <span class="mf">0.17</span>        <span class="mf">1.16</span>
-<span class="n">Best</span> <span class="n">Month</span>           <span class="mf">1.77</span><span class="o">%</span>       <span class="mf">8.49</span><span class="o">%</span>       <span class="mf">10.92</span><span class="o">%</span>      <span class="mf">16.27</span><span class="o">%</span>      <span class="mf">11.63</span><span class="o">%</span>      <span class="mf">9.89</span><span class="o">%</span>
-<span class="n">Worst</span> <span class="n">Month</span>          <span class="o">-</span><span class="mf">2.00</span><span class="o">%</span>      <span class="o">-</span><span class="mf">5.30</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.94</span><span class="o">%</span>      <span class="o">-</span><span class="mf">17.89</span><span class="o">%</span>     <span class="o">-</span><span class="mf">11.19</span><span class="o">%</span>     <span class="o">-</span><span class="mf">14.62</span><span class="o">%</span>
+ <span class="n">Monthly</span> <span class="n">Sharpe</span>       <span class="mf">1.23</span>        <span class="mf">1.11</span>        <span class="mf">1.22</span>        <span class="mf">0.30</span>        <span class="mf">0.60</span>        <span class="mf">0.27</span>
+ <span class="n">Monthly</span> <span class="n">Sortino</span>      <span class="mf">2.49</span>        <span class="mf">2.19</span>        <span class="mf">2.36</span>        <span class="mf">0.53</span>        <span class="mf">1.06</span>        <span class="mf">0.43</span>
+ <span class="n">Monthly</span> <span class="n">Mean</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>  <span class="mf">3.59</span><span class="o">%</span>       <span class="mf">9.51</span><span class="o">%</span>       <span class="mf">16.99</span><span class="o">%</span>      <span class="mf">6.43</span><span class="o">%</span>       <span class="mf">11.06</span><span class="o">%</span>      <span class="mf">4.61</span><span class="o">%</span>
+ <span class="n">Monthly</span> <span class="n">Vol</span> <span class="p">(</span><span class="n">ann</span><span class="o">.</span><span class="p">)</span>   <span class="mf">2.93</span><span class="o">%</span>       <span class="mf">8.56</span><span class="o">%</span>       <span class="mf">13.91</span><span class="o">%</span>      <span class="mf">21.45</span><span class="o">%</span>      <span class="mf">18.41</span><span class="o">%</span>      <span class="mf">17.10</span><span class="o">%</span>
+ <span class="n">Monthly</span> <span class="n">Skew</span>         <span class="o">-</span><span class="mf">0.34</span>       <span class="mf">0.14</span>        <span class="o">-</span><span class="mf">0.32</span>       <span class="o">-</span><span class="mf">0.10</span>       <span class="o">-</span><span class="mf">0.37</span>       <span class="o">-</span><span class="mf">0.74</span>
+ <span class="n">Monthly</span> <span class="n">Kurt</span>         <span class="mf">0.02</span>        <span class="mf">1.75</span>        <span class="mf">0.24</span>        <span class="mf">1.28</span>        <span class="mf">0.17</span>        <span class="mf">1.16</span>
+ <span class="n">Best</span> <span class="n">Month</span>           <span class="mf">1.77</span><span class="o">%</span>       <span class="mf">8.49</span><span class="o">%</span>       <span class="mf">10.91</span><span class="o">%</span>      <span class="mf">16.27</span><span class="o">%</span>      <span class="mf">11.61</span><span class="o">%</span>      <span class="mf">9.89</span><span class="o">%</span>
+ <span class="n">Worst</span> <span class="n">Month</span>          <span class="o">-</span><span class="mf">2.00</span><span class="o">%</span>      <span class="o">-</span><span class="mf">5.30</span><span class="o">%</span>      <span class="o">-</span><span class="mf">7.95</span><span class="o">%</span>      <span class="o">-</span><span class="mf">17.89</span><span class="o">%</span>     <span class="o">-</span><span class="mf">11.19</span><span class="o">%</span>     <span class="o">-</span><span class="mf">14.62</span><span class="o">%</span>
 
-<span class="n">Yearly</span> <span class="n">Sharpe</span>        <span class="mf">0.65</span>        <span class="mf">2.79</span>        <span class="mf">1.10</span>        <span class="o">-</span><span class="mf">0.06</span>       <span class="mf">0.50</span>        <span class="o">-</span><span class="mf">0.40</span>
-<span class="n">Yearly</span> <span class="n">Mean</span>          <span class="mf">3.16</span><span class="o">%</span>       <span class="mf">7.85</span><span class="o">%</span>       <span class="mf">16.73</span><span class="o">%</span>      <span class="o">-</span><span class="mf">1.13</span><span class="o">%</span>      <span class="mf">9.32</span><span class="o">%</span>       <span class="o">-</span><span class="mf">2.24</span><span class="o">%</span>
-<span class="n">Yearly</span> <span class="n">Vol</span>           <span class="mf">4.86</span><span class="o">%</span>       <span class="mf">2.81</span><span class="o">%</span>       <span class="mf">15.22</span><span class="o">%</span>      <span class="mf">19.06</span><span class="o">%</span>      <span class="mf">18.72</span><span class="o">%</span>      <span class="mf">5.57</span><span class="o">%</span>
-<span class="n">Yearly</span> <span class="n">Skew</span>          <span class="o">-</span><span class="mf">0.54</span>       <span class="mf">1.50</span>        <span class="mf">0.22</span>        <span class="mf">0.58</span>        <span class="o">-</span><span class="mf">1.69</span>       <span class="mf">0.27</span>
-<span class="n">Yearly</span> <span class="n">Kurt</span>          <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>
-<span class="n">Best</span> <span class="n">Year</span>            <span class="mf">7.70</span><span class="o">%</span>       <span class="mf">11.05</span><span class="o">%</span>      <span class="mf">32.30</span><span class="o">%</span>      <span class="mf">19.06</span><span class="o">%</span>      <span class="mf">21.44</span><span class="o">%</span>      <span class="mf">3.50</span><span class="o">%</span>
-<span class="n">Worst</span> <span class="n">Year</span>           <span class="o">-</span><span class="mf">1.97</span><span class="o">%</span>      <span class="mf">5.76</span><span class="o">%</span>       <span class="mf">1.90</span><span class="o">%</span>       <span class="o">-</span><span class="mf">18.80</span><span class="o">%</span>     <span class="o">-</span><span class="mf">12.23</span><span class="o">%</span>     <span class="o">-</span><span class="mf">7.63</span><span class="o">%</span>
+ <span class="n">Yearly</span> <span class="n">Sharpe</span>        <span class="mf">0.65</span>        <span class="mf">2.79</span>        <span class="mf">1.10</span>        <span class="o">-</span><span class="mf">0.06</span>       <span class="mf">0.50</span>        <span class="o">-</span><span class="mf">0.40</span>
+ <span class="n">Yearly</span> <span class="n">Sortino</span>       <span class="mf">2.77</span>        <span class="n">inf</span>         <span class="n">inf</span>         <span class="o">-</span><span class="mf">0.11</span>       <span class="mf">1.32</span>        <span class="o">-</span><span class="mf">0.58</span>
+ <span class="n">Yearly</span> <span class="n">Mean</span>          <span class="mf">3.16</span><span class="o">%</span>       <span class="mf">7.85</span><span class="o">%</span>       <span class="mf">16.73</span><span class="o">%</span>      <span class="o">-</span><span class="mf">1.13</span><span class="o">%</span>      <span class="mf">9.32</span><span class="o">%</span>       <span class="o">-</span><span class="mf">2.24</span><span class="o">%</span>
+ <span class="n">Yearly</span> <span class="n">Vol</span>           <span class="mf">4.86</span><span class="o">%</span>       <span class="mf">2.82</span><span class="o">%</span>       <span class="mf">15.22</span><span class="o">%</span>      <span class="mf">19.05</span><span class="o">%</span>      <span class="mf">18.72</span><span class="o">%</span>      <span class="mf">5.57</span><span class="o">%</span>
+ <span class="n">Yearly</span> <span class="n">Skew</span>          <span class="o">-</span><span class="mf">0.54</span>       <span class="mf">1.49</span>        <span class="mf">0.22</span>        <span class="mf">0.58</span>        <span class="o">-</span><span class="mf">1.69</span>       <span class="mf">0.27</span>
+ <span class="n">Yearly</span> <span class="n">Kurt</span>          <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>           <span class="o">-</span>
+ <span class="n">Best</span> <span class="n">Year</span>            <span class="mf">7.70</span><span class="o">%</span>       <span class="mf">11.06</span><span class="o">%</span>      <span class="mf">32.31</span><span class="o">%</span>      <span class="mf">19.05</span><span class="o">%</span>      <span class="mf">21.44</span><span class="o">%</span>      <span class="mf">3.50</span><span class="o">%</span>
+ <span class="n">Worst</span> <span class="n">Year</span>           <span class="o">-</span><span class="mf">1.98</span><span class="o">%</span>      <span class="mf">5.75</span><span class="o">%</span>       <span class="mf">1.89</span><span class="o">%</span>       <span class="o">-</span><span class="mf">18.79</span><span class="o">%</span>     <span class="o">-</span><span class="mf">12.23</span><span class="o">%</span>     <span class="o">-</span><span class="mf">7.63</span><span class="o">%</span>
 
-<span class="n">Avg</span><span class="o">.</span> <span class="n">Drawdown</span>        <span class="o">-</span><span class="mf">0.48</span><span class="o">%</span>      <span class="o">-</span><span class="mf">1.18</span><span class="o">%</span>      <span class="o">-</span><span class="mf">1.79</span><span class="o">%</span>      <span class="o">-</span><span class="mf">5.16</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.96</span><span class="o">%</span>      <span class="o">-</span><span class="mf">5.09</span><span class="o">%</span>
-<span class="n">Avg</span><span class="o">.</span> <span class="n">Drawdown</span> <span class="n">Days</span>   <span class="mf">17.16</span>       <span class="mf">15.69</span>       <span class="mf">17.55</span>       <span class="mf">78.22</span>       <span class="mf">60.04</span>       <span class="mf">107.85</span>
-<span class="n">Avg</span><span class="o">.</span> <span class="n">Up</span> <span class="n">Month</span>        <span class="mf">0.83</span><span class="o">%</span>       <span class="mf">1.86</span><span class="o">%</span>       <span class="mf">3.58</span><span class="o">%</span>       <span class="mf">5.87</span><span class="o">%</span>       <span class="mf">4.37</span><span class="o">%</span>       <span class="mf">4.28</span><span class="o">%</span>
-<span class="n">Avg</span><span class="o">.</span> <span class="n">Down</span> <span class="n">Month</span>      <span class="o">-</span><span class="mf">0.49</span><span class="o">%</span>      <span class="o">-</span><span class="mf">2.31</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.21</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.41</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.15</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.35</span><span class="o">%</span>
-<span class="n">Win</span> <span class="n">Year</span> <span class="o">%</span>           <span class="mf">66.67</span><span class="o">%</span>      <span class="mf">100.00</span><span class="o">%</span>     <span class="mf">100.00</span><span class="o">%</span>     <span class="mf">33.33</span><span class="o">%</span>      <span class="mf">66.67</span><span class="o">%</span>      <span class="mf">33.33</span><span class="o">%</span>
-<span class="n">Win</span> <span class="mi">12</span><span class="n">m</span> <span class="o">%</span>            <span class="mf">81.08</span><span class="o">%</span>      <span class="mf">97.30</span><span class="o">%</span>      <span class="mf">94.59</span><span class="o">%</span>      <span class="mf">59.46</span><span class="o">%</span>      <span class="mf">70.27</span><span class="o">%</span>      <span class="mf">45.95</span><span class="o">%</span>
-<span class="kc">None</span>
+ <span class="n">Avg</span><span class="o">.</span> <span class="n">Drawdown</span>        <span class="o">-</span><span class="mf">0.48</span><span class="o">%</span>      <span class="o">-</span><span class="mf">1.18</span><span class="o">%</span>      <span class="o">-</span><span class="mf">1.78</span><span class="o">%</span>      <span class="o">-</span><span class="mf">5.16</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.96</span><span class="o">%</span>      <span class="o">-</span><span class="mf">5.09</span><span class="o">%</span>
+ <span class="n">Avg</span><span class="o">.</span> <span class="n">Drawdown</span> <span class="n">Days</span>   <span class="mf">16.95</span>       <span class="mf">15.70</span>       <span class="mf">17.55</span>       <span class="mf">78.22</span>       <span class="mf">60.04</span>       <span class="mf">107.85</span>
+ <span class="n">Avg</span><span class="o">.</span> <span class="n">Up</span> <span class="n">Month</span>        <span class="mf">0.83</span><span class="o">%</span>       <span class="mf">1.86</span><span class="o">%</span>       <span class="mf">3.58</span><span class="o">%</span>       <span class="mf">5.87</span><span class="o">%</span>       <span class="mf">4.37</span><span class="o">%</span>       <span class="mf">4.28</span><span class="o">%</span>
+ <span class="n">Avg</span><span class="o">.</span> <span class="n">Down</span> <span class="n">Month</span>      <span class="o">-</span><span class="mf">0.49</span><span class="o">%</span>      <span class="o">-</span><span class="mf">2.31</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.21</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.41</span><span class="o">%</span>      <span class="o">-</span><span class="mf">4.15</span><span class="o">%</span>      <span class="o">-</span><span class="mf">3.35</span><span class="o">%</span>
+ <span class="n">Win</span> <span class="n">Year</span> <span class="o">%</span>           <span class="mf">66.67</span><span class="o">%</span>      <span class="mf">100.00</span><span class="o">%</span>     <span class="mf">100.00</span><span class="o">%</span>     <span class="mf">33.33</span><span class="o">%</span>      <span class="mf">66.67</span><span class="o">%</span>      <span class="mf">33.33</span><span class="o">%</span>
+ <span class="n">Win</span> <span class="mi">12</span><span class="n">m</span> <span class="o">%</span>            <span class="mf">81.08</span><span class="o">%</span>      <span class="mf">97.30</span><span class="o">%</span>      <span class="mf">94.59</span><span class="o">%</span>      <span class="mf">59.46</span><span class="o">%</span>      <span class="mf">70.27</span><span class="o">%</span>      <span class="mf">45.95</span><span class="o">%</span>
+ <span class="kc">None</span>
 </pre></div>
 </div>
 <p>Lots to look at here. We can also access the underlying PerformanceStats
 for each series, either by index or name.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="c1"># we can also use perf[2] in this case</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># we can also use perf[2] in this case</span>
 <span class="n">perf</span><span class="p">[</span><span class="s1">&#39;spy&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">display_monthly_returns</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span>  <span class="n">Year</span>    <span class="n">Jan</span>    <span class="n">Feb</span>    <span class="n">Mar</span>    <span class="n">Apr</span>    <span class="n">May</span>    <span class="n">Jun</span>    <span class="n">Jul</span>    <span class="n">Aug</span>    <span class="n">Sep</span>    <span class="n">Oct</span>    <span class="n">Nov</span>    <span class="n">Dec</span>    <span class="n">YTD</span>
-<span class="o">------</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>
-  <span class="mi">2010</span>  <span class="o">-</span><span class="mf">5.24</span>   <span class="mf">3.12</span>   <span class="mf">6.08</span>   <span class="mf">1.55</span>  <span class="o">-</span><span class="mf">7.94</span>  <span class="o">-</span><span class="mf">5.18</span>   <span class="mf">6.83</span>  <span class="o">-</span><span class="mf">4.5</span>    <span class="mf">8.96</span>   <span class="mf">3.82</span>   <span class="mi">0</span>      <span class="mf">6.68</span>  <span class="mf">13.14</span>
-  <span class="mi">2011</span>   <span class="mf">2.33</span>   <span class="mf">3.47</span>   <span class="mf">0.01</span>   <span class="mf">2.9</span>   <span class="o">-</span><span class="mf">1.12</span>  <span class="o">-</span><span class="mf">1.69</span>  <span class="o">-</span><span class="mi">2</span>     <span class="o">-</span><span class="mf">5.5</span>   <span class="o">-</span><span class="mf">6.94</span>  <span class="mf">10.92</span>  <span class="o">-</span><span class="mf">0.41</span>   <span class="mf">1.05</span>   <span class="mf">1.9</span>
-  <span class="mi">2012</span>   <span class="mf">4.64</span>   <span class="mf">4.34</span>   <span class="mf">3.22</span>  <span class="o">-</span><span class="mf">0.67</span>  <span class="o">-</span><span class="mi">6</span>      <span class="mf">4.06</span>   <span class="mf">1.18</span>   <span class="mf">2.51</span>   <span class="mf">2.54</span>  <span class="o">-</span><span class="mf">1.82</span>   <span class="mf">0.56</span>   <span class="mf">0.9</span>   <span class="mf">15.99</span>
-  <span class="mi">2013</span>   <span class="mf">5.12</span>   <span class="mf">1.27</span>   <span class="mf">3.8</span>    <span class="mf">1.92</span>   <span class="mf">2.36</span>  <span class="o">-</span><span class="mf">1.34</span>   <span class="mf">5.17</span>  <span class="o">-</span><span class="mi">3</span>      <span class="mf">3.17</span>   <span class="mf">4.63</span>   <span class="mf">2.97</span>   <span class="mf">2.59</span>  <span class="mf">32.3</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span>   <span class="n">Year</span>    <span class="n">Jan</span>    <span class="n">Feb</span>    <span class="n">Mar</span>    <span class="n">Apr</span>    <span class="n">May</span>    <span class="n">Jun</span>    <span class="n">Jul</span>    <span class="n">Aug</span>    <span class="n">Sep</span>    <span class="n">Oct</span>    <span class="n">Nov</span>    <span class="n">Dec</span>    <span class="n">YTD</span>
+ <span class="o">------</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>  <span class="o">-----</span>
+   <span class="mi">2010</span>  <span class="o">-</span><span class="mf">5.24</span>   <span class="mf">3.12</span>   <span class="mf">6.09</span>   <span class="mf">1.55</span>  <span class="o">-</span><span class="mf">7.95</span>  <span class="o">-</span><span class="mf">5.17</span>   <span class="mf">6.83</span>  <span class="o">-</span><span class="mf">4.5</span>    <span class="mf">8.96</span>   <span class="mf">3.82</span>   <span class="mi">0</span>      <span class="mf">6.69</span>  <span class="mf">13.14</span>
+   <span class="mi">2011</span>   <span class="mf">2.33</span>   <span class="mf">3.47</span>   <span class="mf">0.01</span>   <span class="mf">2.9</span>   <span class="o">-</span><span class="mf">1.12</span>  <span class="o">-</span><span class="mf">1.69</span>  <span class="o">-</span><span class="mi">2</span>     <span class="o">-</span><span class="mf">5.5</span>   <span class="o">-</span><span class="mf">6.94</span>  <span class="mf">10.91</span>  <span class="o">-</span><span class="mf">0.41</span>   <span class="mf">1.04</span>   <span class="mf">1.89</span>
+   <span class="mi">2012</span>   <span class="mf">4.64</span>   <span class="mf">4.34</span>   <span class="mf">3.22</span>  <span class="o">-</span><span class="mf">0.67</span>  <span class="o">-</span><span class="mf">6.01</span>   <span class="mf">4.06</span>   <span class="mf">1.18</span>   <span class="mf">2.51</span>   <span class="mf">2.54</span>  <span class="o">-</span><span class="mf">1.82</span>   <span class="mf">0.57</span>   <span class="mf">0.89</span>  <span class="mf">15.99</span>
+   <span class="mi">2013</span>   <span class="mf">5.12</span>   <span class="mf">1.28</span>   <span class="mf">3.8</span>    <span class="mf">1.92</span>   <span class="mf">2.36</span>  <span class="o">-</span><span class="mf">1.33</span>   <span class="mf">5.17</span>  <span class="o">-</span><span class="mi">3</span>      <span class="mf">3.16</span>   <span class="mf">4.63</span>   <span class="mf">2.96</span>   <span class="mf">2.59</span>  <span class="mf">32.31</span>
 </pre></div>
 </div>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">perf</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot_histogram</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">perf</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">plot_histogram</span><span class="p">();</span>
 </pre></div>
 </div>
-<img alt="_images/quickstart_25_0.png" class="pynb" src="_images/quickstart_25_0.png" />
+<a class="pynb reference internal image-reference" href="_images/quickstart_26_0.png"><img alt="_images/quickstart_26_0.png" class="pynb" src="_images/quickstart_26_0.png" style="width: 888px; height: 320px;" /></a>
 <p>Most of the stats are also available as pandas objects - see the
 <strong>stats, return_table, lookback_returns</strong> attributes.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">perf</span><span class="p">[</span><span class="s1">&#39;spy&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">perf</span><span class="p">[</span><span class="s1">&#39;spy&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">stats</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span><span class="n">start</span>                    <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span>
-<span class="n">end</span>                      <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span>
-<span class="n">total_return</span>                       <span class="mf">0.7691415</span>
-<span class="n">daily_sharpe</span>                       <span class="mf">0.9343834</span>
-<span class="n">cagr</span>                               <span class="mf">0.1537473</span>
-<span class="n">max_drawdown</span>                      <span class="o">-</span><span class="mf">0.1860885</span>
-<span class="n">mtd</span>                               <span class="mf">0.02589976</span>
-<span class="n">three_month</span>                        <span class="mf">0.1052059</span>
-<span class="n">six_month</span>                          <span class="mf">0.1631602</span>
-<span class="n">ytd</span>                                <span class="mf">0.3230191</span>
-<span class="n">three_year</span>                         <span class="mf">0.1606551</span>
-<span class="n">daily_mean</span>                          <span class="mf">0.157277</span>
-<span class="n">daily_vol</span>                          <span class="mf">0.1683217</span>
-<span class="n">daily_skew</span>                        <span class="o">-</span><span class="mf">0.3877139</span>
-<span class="n">daily_kurt</span>                          <span class="mf">4.021851</span>
-<span class="n">best_day</span>                          <span class="mf">0.04646752</span>
-<span class="n">worst_day</span>                        <span class="o">-</span><span class="mf">0.06507669</span>
-<span class="n">monthly_sharpe</span>                      <span class="mf">1.220851</span>
-<span class="n">monthly_mean</span>                       <span class="mf">0.1699025</span>
-<span class="n">monthly_vol</span>                        <span class="mf">0.1391673</span>
-<span class="n">monthly_skew</span>                      <span class="o">-</span><span class="mf">0.3188291</span>
-<span class="n">monthly_kurt</span>                       <span class="mf">0.2366642</span>
-<span class="n">best_month</span>                          <span class="mf">0.109239</span>
-<span class="n">worst_month</span>                      <span class="o">-</span><span class="mf">0.07943796</span>
-<span class="n">yearly_sharpe</span>                       <span class="mf">1.099516</span>
-<span class="n">yearly_mean</span>                        <span class="mf">0.1673016</span>
-<span class="n">yearly_vol</span>                         <span class="mf">0.1521593</span>
-<span class="n">yearly_skew</span>                        <span class="mf">0.2179042</span>
-<span class="n">yearly_kurt</span>                              <span class="n">NaN</span>
-<span class="n">worst_year</span>                         <span class="mf">0.0189695</span>
-<span class="n">avg_drawdown</span>                     <span class="o">-</span><span class="mf">0.01785071</span>
-<span class="n">avg_drawdown_days</span>                   <span class="mf">17.55072</span>
-<span class="n">avg_up_month</span>                      <span class="mf">0.03583112</span>
-<span class="n">avg_down_month</span>                   <span class="o">-</span><span class="mf">0.03207629</span>
-<span class="n">win_year_perc</span>                              <span class="mi">1</span>
-<span class="n">twelve_month_win_perc</span>              <span class="mf">0.9459459</span>
-<span class="n">dtype</span><span class="p">:</span> <span class="nb">object</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="n">start</span>                    <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">04</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span>
+ <span class="n">end</span>                      <span class="mi">2013</span><span class="o">-</span><span class="mi">12</span><span class="o">-</span><span class="mi">31</span> <span class="mi">00</span><span class="p">:</span><span class="mi">00</span><span class="p">:</span><span class="mi">00</span>
+ <span class="n">rf</span>                                       <span class="mf">0.0</span>
+ <span class="n">total_return</span>                        <span class="mf">0.769155</span>
+ <span class="n">cagr</span>                                 <span class="mf">0.15375</span>
+ <span class="n">max_drawdown</span>                       <span class="o">-</span><span class="mf">0.186055</span>
+ <span class="n">calmar</span>                              <span class="mf">0.826367</span>
+ <span class="n">mtd</span>                                 <span class="mf">0.025926</span>
+ <span class="n">three_month</span>                         <span class="mf">0.105247</span>
+ <span class="n">six_month</span>                           <span class="mf">0.163183</span>
+ <span class="n">ytd</span>                                 <span class="mf">0.323077</span>
+ <span class="n">one_year</span>                            <span class="mf">0.323077</span>
+ <span class="n">three_year</span>                           <span class="mf">0.16066</span>
+ <span class="n">five_year</span>                                <span class="n">NaN</span>
+ <span class="n">ten_year</span>                                 <span class="n">NaN</span>
+ <span class="n">incep</span>                                <span class="mf">0.15375</span>
+ <span class="n">daily_sharpe</span>                         <span class="mf">0.93439</span>
+ <span class="n">daily_sortino</span>                       <span class="mf">1.478916</span>
+ <span class="n">daily_mean</span>                          <span class="mf">0.157279</span>
+ <span class="n">daily_vol</span>                           <span class="mf">0.168323</span>
+ <span class="n">daily_skew</span>                         <span class="o">-</span><span class="mf">0.388777</span>
+ <span class="n">daily_kurt</span>                          <span class="mf">4.028481</span>
+ <span class="n">best_day</span>                            <span class="mf">0.046499</span>
+ <span class="n">worst_day</span>                          <span class="o">-</span><span class="mf">0.065123</span>
+ <span class="n">monthly_sharpe</span>                      <span class="mf">1.221065</span>
+ <span class="n">monthly_sortino</span>                     <span class="mf">2.362922</span>
+ <span class="n">monthly_mean</span>                        <span class="mf">0.169906</span>
+ <span class="n">monthly_vol</span>                         <span class="mf">0.139146</span>
+ <span class="n">monthly_skew</span>                       <span class="o">-</span><span class="mf">0.319921</span>
+ <span class="n">monthly_kurt</span>                        <span class="mf">0.235707</span>
+ <span class="n">best_month</span>                          <span class="mf">0.109147</span>
+ <span class="n">worst_month</span>                        <span class="o">-</span><span class="mf">0.079455</span>
+ <span class="n">yearly_sharpe</span>                       <span class="mf">1.099284</span>
+ <span class="n">yearly_sortino</span>                           <span class="n">inf</span>
+ <span class="n">yearly_mean</span>                          <span class="mf">0.16731</span>
+ <span class="n">yearly_vol</span>                          <span class="mf">0.152199</span>
+ <span class="n">yearly_skew</span>                          <span class="mf">0.21847</span>
+ <span class="n">yearly_kurt</span>                              <span class="n">NaN</span>
+ <span class="n">best_year</span>                           <span class="mf">0.323077</span>
+ <span class="n">worst_year</span>                           <span class="mf">0.01895</span>
+ <span class="n">avg_drawdown</span>                       <span class="o">-</span><span class="mf">0.017845</span>
+ <span class="n">avg_drawdown_days</span>                  <span class="mf">17.550725</span>
+ <span class="n">avg_up_month</span>                        <span class="mf">0.035827</span>
+ <span class="n">avg_down_month</span>                     <span class="o">-</span><span class="mf">0.032066</span>
+ <span class="n">win_year_perc</span>                            <span class="mf">1.0</span>
+ <span class="n">twelve_month_win_perc</span>               <span class="mf">0.945946</span>
+ <span class="n">dtype</span><span class="p">:</span> <span class="nb">object</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="numerical-routines-and-financial-functions">
-<h2>Numerical Routines and Financial Functions<a class="headerlink" href="#numerical-routines-and-financial-functions" title="Permalink to this headline">¶</a></h2>
-<p>ffn also provides commonly used numerical routines and plans to add many more in the future. One can easily determine the proper weights using a mean-variance approach using the <a class="reference internal" href="ffn.html#ffn.core.calc_mean_var_weights" title="ffn.core.calc_mean_var_weights"><code class="xref py py-func docutils literal"><span class="pre">ffn.core.calc_mean_var_weights()</span></code></a> function.</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">calc_mean_var_weights</span><span class="p">()</span><span class="o">.</span><span class="n">as_format</span><span class="p">(</span><span class="s1">&#39;.2%&#39;</span><span class="p">)</span>
+<h2>Numerical Routines and Financial Functions<a class="headerlink" href="#numerical-routines-and-financial-functions" title="Permalink to this heading">¶</a></h2>
+<p>ffn also provides commonly used numerical routines and plans to add many more in the future. One can easily determine the proper weights using a mean-variance approach using the <a class="reference internal" href="ffn.html#ffn.core.calc_mean_var_weights" title="ffn.core.calc_mean_var_weights"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.core.calc_mean_var_weights()</span></code></a> function.</p>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">calc_mean_var_weights</span><span class="p">()</span><span class="o">.</span><span class="n">as_format</span><span class="p">(</span><span class="s1">&#39;.2%&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span><span class="n">agg</span>    <span class="mf">79.57</span><span class="o">%</span>
-<span class="n">dbc</span>     <span class="mf">0.00</span><span class="o">%</span>
-<span class="n">eem</span>     <span class="mf">0.00</span><span class="o">%</span>
-<span class="n">efa</span>     <span class="mf">0.00</span><span class="o">%</span>
-<span class="n">hyg</span>     <span class="mf">6.39</span><span class="o">%</span>
-<span class="n">spy</span>    <span class="mf">14.03</span><span class="o">%</span>
-<span class="n">dtype</span><span class="p">:</span> <span class="nb">object</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="n">agg</span>    <span class="mf">79.52</span><span class="o">%</span>
+ <span class="n">hyg</span>     <span class="mf">6.47</span><span class="o">%</span>
+ <span class="n">spy</span>    <span class="mf">14.01</span><span class="o">%</span>
+ <span class="n">eem</span>     <span class="mf">0.00</span><span class="o">%</span>
+ <span class="n">efa</span>     <span class="mf">0.00</span><span class="o">%</span>
+ <span class="n">dbc</span>     <span class="mf">0.00</span><span class="o">%</span>
+ <span class="n">dtype</span><span class="p">:</span> <span class="nb">object</span>
 </pre></div>
 </div>
 <p>Some other interesting functions are the clustering routines, such as a
-Python implementation of David Varadi&#8217;s Fast Threshold Clustering
+Python implementation of David Varadi’s Fast Threshold Clustering
 Algorithm (FTCA)</p>
-<div class="code highlight-default"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">calc_ftca</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">returns</span><span class="o">.</span><span class="n">calc_ftca</span><span class="p">(</span><span class="n">threshold</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="pynb-result highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;eem&#39;</span><span class="p">,</span> <span class="s1">&#39;spy&#39;</span><span class="p">,</span> <span class="s1">&#39;efa&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;agg&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;dbc&#39;</span><span class="p">],</span> <span class="mi">4</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;hyg&#39;</span><span class="p">]}</span>
+<div class="pynb-result highlight-default notranslate"><div class="highlight"><pre><span></span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;eem&#39;</span><span class="p">,</span> <span class="s1">&#39;spy&#39;</span><span class="p">,</span> <span class="s1">&#39;efa&#39;</span><span class="p">],</span> <span class="mi">2</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;agg&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;dbc&#39;</span><span class="p">],</span> <span class="mi">4</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;hyg&#39;</span><span class="p">]}</span>
 </pre></div>
 </div>
 </div>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -417,21 +430,23 @@ Algorithm (FTCA)</p>
             </ul>
             
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </aside>
     
       <div class="clearer"></div>
     </div>
         <div class="footer">
-            ffn was created by Philippe Morissette. If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+            ffn was created by Philippe Morissette.
+If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+
         </div>
 
         

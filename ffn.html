@@ -1,43 +1,28 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>API &#8212; ffn 0.3.0 documentation</title>
-    
-    <link rel="stylesheet" href="_static/css/klink.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    './',
-        VERSION:     '0.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>API &#8212; ffn 0.3.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/css/klink.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
     <link rel="prev" title="Quickstart" href="quick.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
         
-            <link rel="shortcut icon" href="_static/favicon.ico">
-        
         <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
         <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,500,700' rel='stylesheet' type='text/css'>
     
-  </head>
-  <body role="document">  
+  </head><body>  
 
     <div class="document">
       <div class="documentwrapper">
@@ -45,179 +30,170 @@
           <div class="body" role="main">
             
   <div class="section" id="api">
-<h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<h1>API<a class="headerlink" href="#api" title="Permalink to this heading">¶</a></h1>
 <div class="section" id="module-ffn.__init__">
-<span id="ffn-package"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">ffn</span></code> Package<a class="headerlink" href="#module-ffn.__init__" title="Permalink to this headline">¶</a></h2>
+<span id="ffn-package"></span><h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">ffn</span></code> Package<a class="headerlink" href="#module-ffn.__init__" title="Permalink to this heading">¶</a></h2>
 </div>
 <div class="section" id="module-ffn.core">
-<span id="core-module"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">core</span></code> Module<a class="headerlink" href="#module-ffn.core" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="ffn.core.GroupStats">
-<em class="property">class </em><code class="descclassname">ffn.core.</code><code class="descname">GroupStats</code><span class="sig-paren">(</span><em>*prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">dict</span></code></p>
+<span id="core-module"></span><h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">core</span></code> Module<a class="headerlink" href="#module-ffn.core" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ffn.core.GroupStats">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">GroupStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></p>
 <p>GroupStats enables one to compare multiple series side by side.
 It is a wrapper around a dict of {price.name: PerformanceStats} and
 provides many convenience methods.</p>
 <p>The order of the series passed in will be preserved.
 Individual PerformanceStats objects can be accessed via index
 position or name via the [] accessor.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series): Multiple price series to be compared.</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series): Multiple price series to be compared.</p></li>
 </ul>
 </dd>
-<dt>Attributes:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>stats (DataFrame): Dataframe containing stats for each</dt>
-<dd>series provided.  Stats in rows, series in columns.</dd>
+<dt>Attributes:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>stats (DataFrame): Dataframe containing stats for each</dt><dd><p>series provided.  Stats in rows, series in columns.</p>
+</dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>lookback_returns (DataFrame): Returns for diffrent</dt>
-<dd>lookback periods (1m, 3m, 6m, ytd...)
-Period in rows, series in columns.</dd>
+<li><dl class="simple">
+<dt>lookback_returns (DataFrame): Returns for diffrent</dt><dd><p>lookback periods (1m, 3m, 6m, ytd…)
+Period in rows, series in columns.</p>
+</dd>
 </dl>
 </li>
-<li>prices (DataFrame): The merged and rebased prices.</li>
+<li><p>prices (DataFrame): The merged and rebased prices.</p></li>
 </ul>
 </dd>
 </dl>
-<dl class="method">
-<dt id="ffn.core.GroupStats.display">
-<code class="descname">display</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.display" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.display">
+<span class="sig-name descname"><span class="pre">display</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.display" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display summary stats table.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.display_lookback_returns">
-<code class="descname">display_lookback_returns</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display_lookback_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.display_lookback_returns">
+<span class="sig-name descname"><span class="pre">display_lookback_returns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.display_lookback_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays the current lookback returns for each series.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.plot">
-<code class="descname">plot</code><span class="sig-paren">(</span><em>freq=None</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(15,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for plotting the series.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>freq (str): Data frequency used for display purposes.</dt>
-<dd>Refer to pandas docs for valid freq strings.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>freq (str): Data frequency used for display purposes.</dt><dd><p>Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>logy (bool): log-scale for y axis</li>
-<li>kwargs: passed to pandas&#8217; plot method</li>
+<li><p>figsize ((x,y)): figure size</p></li>
+<li><p>title (str): Title if default not appropriate</p></li>
+<li><p>logy (bool): log-scale for y axis</p></li>
+<li><p>kwargs: passed to pandas’ plot method</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.plot_correlation">
-<code class="descname">plot_correlation</code><span class="sig-paren">(</span><em>freq=None</em>, <em>title=None</em>, <em>figsize=(12</em>, <em>6)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_correlation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_correlation" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.plot_correlation">
+<span class="sig-name descname"><span class="pre">plot_correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(12,</span> <span class="pre">6)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_correlation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_correlation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Utility function to plot correlations.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>freq (str): Pandas data frequency alias string</li>
-<li>title (str): Plot title</li>
-<li>figsize (tuple (x,y)): figure size</li>
-<li>kwargs: passed to Pandas&#8217; plot_corr_heatmap function</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>freq (str): Pandas data frequency alias string</p></li>
+<li><p>title (str): Plot title</p></li>
+<li><p>figsize (tuple (x,y)): figure size</p></li>
+<li><p>kwargs: passed to Pandas’ plot_corr_heatmap function</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.plot_histograms">
-<code class="descname">plot_histograms</code><span class="sig-paren">(</span><em>freq=None</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_histograms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_histograms" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper around pandas&#8217; hist.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>freq (str): Data frequency used for display purposes.</dt>
-<dd>Refer to pandas docs for valid freq strings.</dd>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.plot_histograms">
+<span class="sig-name descname"><span class="pre">plot_histograms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_histograms"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_histograms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper around pandas’ hist.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>freq (str): Data frequency used for display purposes.</dt><dd><p>Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>kwargs: passed to pandas&#8217; hist method</li>
+<li><p>figsize ((x,y)): figure size</p></li>
+<li><p>title (str): Title if default not appropriate</p></li>
+<li><p>kwargs: passed to pandas’ hist method</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.plot_scatter_matrix">
-<code class="descname">plot_scatter_matrix</code><span class="sig-paren">(</span><em>freq=None</em>, <em>title=None</em>, <em>figsize=(10</em>, <em>10)</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_scatter_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_scatter_matrix" title="Permalink to this definition">¶</a></dt>
-<dd><p>Wrapper around pandas&#8217; scatter_matrix.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>freq (str): Data frequency used for display purposes.</dt>
-<dd>Refer to pandas docs for valid freq strings.</dd>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.plot_scatter_matrix">
+<span class="sig-name descname"><span class="pre">plot_scatter_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.plot_scatter_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.plot_scatter_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper around pandas’ scatter_matrix.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>freq (str): Data frequency used for display purposes.</dt><dd><p>Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>kwargs: passed to pandas&#8217; scatter_matrix method</li>
+<li><p>figsize ((x,y)): figure size</p></li>
+<li><p>title (str): Title if default not appropriate</p></li>
+<li><p>kwargs: passed to pandas’ scatter_matrix method</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.set_date_range">
-<code class="descname">set_date_range</code><span class="sig-paren">(</span><em>start=None</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.set_date_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.set_date_range" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.set_date_range">
+<span class="sig-name descname"><span class="pre">set_date_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.set_date_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.set_date_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update date range of stats, charts, etc. If None then
 the original date range is used. So to reset to the original
 range, just call with no args.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>start (date): start date</li>
-<li>end (end): end date</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>start (date): start date</p></li>
+<li><p>end (end): end date</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.set_riskfree_rate">
-<code class="descname">set_riskfree_rate</code><span class="sig-paren">(</span><em>rf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.set_riskfree_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set annual risk-free rate property and calculate properly annualized
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.set_riskfree_rate">
+<span class="sig-name descname"><span class="pre">set_riskfree_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.set_riskfree_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set annual <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">risk-free rate</a> property and calculate properly annualized
 monthly and daily rates. Then performance stats are recalculated.
 Affects only those instances of PerformanceStats that are children of
 this GroupStats object.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>rf (float): Annual risk-free rate</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>rf (float, Series): Annual risk-free rate or risk-free rate price series</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.GroupStats.to_csv">
-<code class="descname">to_csv</code><span class="sig-paren">(</span><em>sep='</em>, <em>'</em>, <em>path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.GroupStats.to_csv" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.GroupStats.to_csv">
+<span class="sig-name descname"><span class="pre">to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#GroupStats.to_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.to_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CSV string with appropriate formatting.
 If path is not None, the string will be saved to file
 at path.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>sep (char): Separator</li>
-<li><dl class="first docutils">
-<dt>path (str): If None, CSV string returned. Else file</dt>
-<dd>written to specified path.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>sep (char): Separator</p></li>
+<li><dl class="simple">
+<dt>path (str): If None, CSV string returned. Else file</dt><dd><p>written to specified path.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -227,150 +203,145 @@ at path.</p>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="ffn.core.PerformanceStats">
-<em class="property">class </em><code class="descclassname">ffn.core.</code><code class="descname">PerformanceStats</code><span class="sig-paren">(</span><em>prices</em>, <em>rf=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="py class">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">PerformanceStats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualization_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">252</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>PerformanceStats is a convenience class used for the performance
 evaluation of a price series. It contains various helper functions
 to help with plotting and contains a large amount of descriptive
 statistics.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series): A price series.</li>
-<li><dl class="first docutils">
-<dt>rf (float): Risk-free rate used in various calculation. Should be</dt>
-<dd>expressed as a yearly (annualized) return</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series): A price series.</p></li>
+<li><dl class="simple">
+<dt>rf (float, Series): <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> used in various calculation. Should be</dt><dd><p>expressed as a yearly (annualized) return if it is a float. Otherwise
+rf should be a price series.</p>
+</dd>
 </dl>
 </li>
 </ul>
 </dd>
-<dt>Attributes:</dt>
-<dd><ul class="first last simple">
-<li>name (str): Name, derived from price series name</li>
-<li><dl class="first docutils">
-<dt>return_table (DataFrame): A table of monthly returns with</dt>
-<dd>YTD figures as well.</dd>
+<dt>Attributes:</dt><dd><ul class="simple">
+<li><p>name (str): Name, derived from price series name</p></li>
+<li><dl class="simple">
+<dt>return_table (DataFrame): A table of monthly returns with</dt><dd><p>YTD figures as well.</p>
+</dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>lookback_returns (Series): Returns for different</dt>
-<dd>lookback periods (1m, 3m, 6m, ytd...)</dd>
+<li><dl class="simple">
+<dt>lookback_returns (Series): Returns for different</dt><dd><p>lookback periods (1m, 3m, 6m, ytd…)</p>
+</dd>
 </dl>
 </li>
-<li>stats (Series): A series that contains all the stats</li>
+<li><p>stats (Series): A series that contains all the stats</p></li>
+<li><p>annualization_factor (float): <cite>Annualization factor</cite> used in various calculations; aka <cite>nperiods</cite>, <cite>252</cite></p></li>
 </ul>
 </dd>
 </dl>
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.display">
-<code class="descname">display</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.display">
+<span class="sig-name descname"><span class="pre">display</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays an overview containing descriptive stats for the Series
 provided.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.display_lookback_returns">
-<code class="descname">display_lookback_returns</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_lookback_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.display_lookback_returns">
+<span class="sig-name descname"><span class="pre">display_lookback_returns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_lookback_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_lookback_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Displays the current lookback returns.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.display_monthly_returns">
-<code class="descname">display_monthly_returns</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_monthly_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_monthly_returns" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.display_monthly_returns">
+<span class="sig-name descname"><span class="pre">display_monthly_returns</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.display_monthly_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.display_monthly_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display a table containing monthly returns and ytd returns
 for every year in range.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.plot">
-<code class="descname">plot</code><span class="sig-paren">(</span><em>freq=None</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>logy=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.plot">
+<span class="sig-name descname"><span class="pre">plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(15,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for plotting the series.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>freq (str): Data frequency used for display purposes.</dt>
-<dd>Refer to pandas docs for valid freq strings.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>freq (str): Data frequency used for display purposes.</dt><dd><p>Refer to pandas docs for valid freq strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>logy (bool): log-scale for y axis</li>
-<li>kwargs: passed to pandas&#8217; plot method</li>
+<li><p>figsize ((x,y)): figure size</p></li>
+<li><p>title (str): Title if default not appropriate</p></li>
+<li><p>logy (bool): log-scale for y axis</p></li>
+<li><p>kwargs: passed to pandas’ plot method</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.plot_histogram">
-<code class="descname">plot_histogram</code><span class="sig-paren">(</span><em>freq=None</em>, <em>figsize=(15</em>, <em>5)</em>, <em>title=None</em>, <em>bins=20</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot_histogram"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot_histogram" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.plot_histogram">
+<span class="sig-name descname"><span class="pre">plot_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(15,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.plot_histogram"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.plot_histogram" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots a histogram of returns given a return frequency.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>freq (str): Data frequency used for display purposes.</dt>
-<dd>This will dictate the type of returns
-(daily returns, monthly, ...)
-Refer to pandas docs for valid period strings.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>freq (str): Data frequency used for display purposes.</dt><dd><p>This will dictate the type of returns
+(daily returns, monthly, …)
+Refer to pandas docs for valid period strings.</p>
+</dd>
 </dl>
 </li>
-<li>figsize ((x,y)): figure size</li>
-<li>title (str): Title if default not appropriate</li>
-<li>bins (int): number of bins for the histogram</li>
-<li>kwargs: passed to pandas&#8217; hist method</li>
+<li><p>figsize ((x,y)): figure size</p></li>
+<li><p>title (str): Title if default not appropriate</p></li>
+<li><p>bins (int): number of bins for the histogram</p></li>
+<li><p>kwargs: passed to pandas’ hist method</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.set_date_range">
-<code class="descname">set_date_range</code><span class="sig-paren">(</span><em>start=None</em>, <em>end=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.set_date_range"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_date_range" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.set_date_range">
+<span class="sig-name descname"><span class="pre">set_date_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.set_date_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_date_range" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update date range of stats, charts, etc. If None then
 the original date is used. So to reset to the original
 range, just call with no args.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>start (date): start date</li>
-<li>end (end): end date</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>start (date): start date</p></li>
+<li><p>end (end): end date</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.set_riskfree_rate">
-<code class="descname">set_riskfree_rate</code><span class="sig-paren">(</span><em>rf</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.set_riskfree_rate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.set_riskfree_rate">
+<span class="sig-name descname"><span class="pre">set_riskfree_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.set_riskfree_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_riskfree_rate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set annual risk-free rate property and calculate properly annualized
 monthly and daily rates. Then performance stats are recalculated.
 Affects only this instance of the PerformanceStats.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>rf (float): Annual risk-free rate</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>rf (float): Annual <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">risk-free rate</a></p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="ffn.core.PerformanceStats.to_csv">
-<code class="descname">to_csv</code><span class="sig-paren">(</span><em>sep='</em>, <em>'</em>, <em>path=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.to_csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.PerformanceStats.to_csv" title="Permalink to this definition">¶</a></dt>
+<dl class="py method">
+<dt class="sig sig-object py" id="ffn.core.PerformanceStats.to_csv">
+<span class="sig-name descname"><span class="pre">to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#PerformanceStats.to_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.to_csv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CSV string with appropriate formatting.
 If path is not None, the string will be saved to file
 at path.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>sep (char): Separator</li>
-<li><dl class="first docutils">
-<dt>path (str): If None, CSV string returned. Else file written</dt>
-<dd>to specified path.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>sep (char): Separator</p></li>
+<li><dl class="simple">
+<dt>path (str): If None, CSV string returned. Else file written</dt><dd><p>to specified path.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -380,260 +351,254 @@ at path.</p>
 
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.annualize">
-<code class="descclassname">ffn.core.</code><code class="descname">annualize</code><span class="sig-paren">(</span><em>returns</em>, <em>durations</em>, <em>one_year=365.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#annualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.annualize" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.annualize">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">annualize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">durations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">one_year</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">365.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#annualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.annualize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Annualize returns using their respective durations.</p>
-<dl class="docutils">
-<dt>Formula used is:</dt>
-<dd>(1 + returns) ** (1 / (durations / one_year)) - 1</dd>
+<dl class="simple">
+<dt>Formula used is:</dt><dd><p>(1 + returns) ** (1 / (durations / one_year)) - 1</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.asfreq_actual">
-<code class="descclassname">ffn.core.</code><code class="descname">asfreq_actual</code><span class="sig-paren">(</span><em>series</em>, <em>freq</em>, <em>method='ffill'</em>, <em>how='end'</em>, <em>normalize=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#asfreq_actual"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.asfreq_actual" title="Permalink to this definition">¶</a></dt>
-<dd><p>Similar to pandas&#8217; asfreq but keeps the actual dates.
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.asfreq_actual">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">asfreq_actual</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ffill'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">how</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'end'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#asfreq_actual"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.asfreq_actual" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similar to pandas’ asfreq but keeps the actual dates.
 For example, if last data point in Jan is on the 29th,
 that date will be used instead of the 31st.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_cagr">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_cagr</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_cagr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_cagr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the CAGR (compound annual growth rate) for a given price series.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (pandas.Series): A Series of prices.</li>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_cagr">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_cagr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_cagr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_cagr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/c/cagr.asp">CAGR (compound annual growth rate)</a> for a given price series.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (pandas.Series): A Series of prices.</p></li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd><ul class="first last simple">
-<li>float &#8211; cagr.</li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="ffn.core.calc_calmar_ratio">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_calmar_ratio</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_calmar_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_calmar_ratio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the Calmar Ratio given a series of prices</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series, DataFrame): Price series</li>
+<dt>Returns:</dt><dd><ul class="simple">
+<li><p>float – cagr.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_clusters">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_clusters</code><span class="sig-paren">(</span><em>returns</em>, <em>n=None</em>, <em>plot=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_clusters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_clusters" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_calmar_ratio">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_calmar_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_calmar_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_calmar_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/c/calmarratio.asp">Calmar ratio</a> given a series of prices</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series, DataFrame): Price series</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_clusters">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_clusters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_clusters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_clusters" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the clusters based on k-means
 clustering.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (pd.DataFrame): DataFrame of returns</li>
-<li><dl class="first docutils">
-<dt>n (int): Specify # of clusters. If None, this</dt>
-<dd>will be automatically determined</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns (pd.DataFrame): DataFrame of returns</p></li>
+<li><dl class="simple">
+<dt>n (int): Specify # of clusters. If None, this</dt><dd><p>will be automatically determined</p>
+</dd>
 </dl>
 </li>
-<li>plot (bool): Show plot?</li>
+<li><p>plot (bool): Show plot?</p></li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd><ul class="first last simple">
-<li>dict with structure: {cluster# : [col names]}</li>
+<dt>Returns:</dt><dd><ul class="simple">
+<li><p>dict with structure: {cluster# : [col names]}</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_erc_weights">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_erc_weights</code><span class="sig-paren">(</span><em>returns</em>, <em>initial_weights=None</em>, <em>risk_weights=None</em>, <em>covar_method='ledoit-wolf'</em>, <em>risk_parity_method='ccd'</em>, <em>maximum_iterations=100</em>, <em>tolerance=1e-08</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_erc_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_erc_weights" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_erc_weights">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_erc_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk_weights</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ledoit-wolf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">risk_parity_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ccd'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maximum_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tolerance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-08</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_erc_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_erc_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the equal risk contribution / risk parity weights given a
 DataFrame of returns.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (DataFrame): Returns for multiple securities.</li>
-<li>initial_weights (list): Starting asset weights [default inverse vol].</li>
-<li>risk_weights (list): Risk target weights [default equal weight].</li>
-<li><dl class="first docutils">
-<dt>covar_method (str): Covariance matrix estimation method.</dt>
-<dd><dl class="first last docutils">
-<dt>Currently supported:</dt>
-<dd><ul class="first last">
-<li>ledoit-wolf [default]</li>
-<li>standard</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns (DataFrame): Returns for multiple securities.</p></li>
+<li><p>initial_weights (list): Starting asset weights [default inverse vol].</p></li>
+<li><p>risk_weights (list): Risk target weights [default equal weight].</p></li>
+<li><dl class="simple">
+<dt>covar_method (str): Covariance matrix estimation method.</dt><dd><dl class="simple">
+<dt>Currently supported:</dt><dd><ul>
+<li><p><a class="reference external" href="http://www.ledoit.net/honey.pdf">ledoit-wolf</a> [default]</p></li>
+<li><p>standard</p></li>
 </ul>
 </dd>
 </dl>
 </dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>risk_parity_method (str): Risk parity estimation method.</dt>
-<dd><dl class="first last docutils">
-<dt>Currently supported:</dt>
-<dd><ul class="first last">
-<li>ccd (cyclical coordinate descent)[default]</li>
+<li><dl class="simple">
+<dt>risk_parity_method (str): Risk parity estimation method.</dt><dd><dl class="simple">
+<dt>Currently supported:</dt><dd><ul>
+<li><p>ccd (cyclical coordinate descent)[default]</p></li>
+<li><p>slsqp (scipy’s implementation of sequential least squares programming)</p></li>
 </ul>
 </dd>
 </dl>
 </dd>
 </dl>
 </li>
-<li>maximum_iterations (int): Maximum iterations in iterative solutions.</li>
-<li>tolerance (float): Tolerance level in iterative solutions.</li>
+<li><p>maximum_iterations (int): Maximum iterations in iterative solutions.</p></li>
+<li><p>tolerance (float): Tolerance level in iterative solutions.</p></li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd>Series {col_name: weight}</dd>
+<dt>Returns:</dt><dd><p>Series {col_name: weight}</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_ftca">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_ftca</code><span class="sig-paren">(</span><em>returns</em>, <em>threshold=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_ftca"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_ftca" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implementation of David Varadi&#8217;s Fast Threshold
-Clustering Algorithm (FTCA).</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_ftca">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_ftca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_ftca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_ftca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementation of David Varadi’s <a class="reference external" href="http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/">Fast Threshold Clustering Algorithm (FTCA)</a>.</p>
 <p><a class="reference external" href="http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/">http://cssanalytics.wordpress.com/2013/11/26/fast-threshold-clustering-algorithm-ftca/</a>  # NOQA</p>
 <p>More stable than k-means for clustering purposes.
 If you want more clusters, use a higher threshold.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>returns - expects a pandas dataframe of returns where</dt>
-<dd>each column is the name of a given security.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>returns - expects a pandas dataframe of returns where</dt><dd><p>each column is the name of a given security.</p>
+</dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>threshold (float): Threshold parameter - use higher value</dt>
-<dd>for more clusters. Basically controls how similar
-(correlated) series have to be.</dd>
+<li><dl class="simple">
+<dt>threshold (float): Threshold parameter - use higher value</dt><dd><p>for more clusters. Basically controls how similar
+(correlated) series have to be.</p>
+</dd>
 </dl>
 </li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd>dict of cluster name (a number) and list of securities in cluster</dd>
+<dt>Returns:</dt><dd><p>dict of cluster name (a number) and list of securities in cluster</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_information_ratio">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_information_ratio</code><span class="sig-paren">(</span><em>returns</em>, <em>benchmark_returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_information_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_information_ratio" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://en.wikipedia.org/wiki/Information_ratio">http://en.wikipedia.org/wiki/Information_ratio</a></p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_information_ratio">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_information_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">benchmark_returns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_information_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_information_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/i/informationratio.asp">Information ratio</a> (or <a class="reference external" href="http://en.wikipedia.org/wiki/Information_ratio">from Wikipedia</a>).</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_inv_vol_weights">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_inv_vol_weights</code><span class="sig-paren">(</span><em>returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_inv_vol_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_inv_vol_weights" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_inv_vol_weights">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_inv_vol_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_inv_vol_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_inv_vol_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates weights proportional to inverse volatility of each column.</p>
-<p>Returns weights that are inversely proportional to the column&#8217;s
+<p>Returns weights that are inversely proportional to the column’s
 volatility resulting in a set of portfolio weights where each position
 has the same level of volatility.</p>
 <p>Note, that assets with returns all equal to NaN or 0 are excluded from
 the portfolio (their weight is set to NaN).</p>
-<dl class="docutils">
-<dt>Returns:</dt>
-<dd>Series {col_name: weight}</dd>
+<dl class="simple">
+<dt>Returns:</dt><dd><p>Series {col_name: weight}</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_max_drawdown">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_max_drawdown</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_max_drawdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_max_drawdown" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_max_drawdown">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_max_drawdown</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_max_drawdown"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_max_drawdown" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the max drawdown of a price series. If you want the
 actual drawdown series, please use to_drawdown_series.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_mean_var_weights">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_mean_var_weights</code><span class="sig-paren">(</span><em>returns</em>, <em>weight_bounds=(0.0</em>, <em>1.0)</em>, <em>rf=0.0</em>, <em>covar_method='ledoit-wolf'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_mean_var_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_mean_var_weights" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_mean_var_weights">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_mean_var_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">covar_method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ledoit-wolf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_mean_var_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_mean_var_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the mean-variance weights given a DataFrame of returns.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (DataFrame): Returns for multiple securities.</li>
-<li>weight_bounds ((low, high)): Weigh limits for optimization.</li>
-<li>rf (float): Risk-free rate used in utility calculation</li>
-<li><dl class="first docutils">
-<dt>covar_method (str): Covariance matrix estimation method.</dt>
-<dd><dl class="first last docutils">
-<dt>Currently supported:</dt>
-<dd><ul class="first last">
-<li>ledoit-wolf</li>
-<li>standard</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns (DataFrame): Returns for multiple securities.</p></li>
+<li><p>weight_bounds ((low, high)): Weigh limits for optimization.</p></li>
+<li><p>rf (float): <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> used in utility calculation</p></li>
+<li><dl class="simple">
+<dt>covar_method (str): Covariance matrix estimation method.</dt><dd><dl class="simple">
+<dt>Currently supported:</dt><dd><ul>
+<li><p><a class="reference external" href="http://www.ledoit.net/honey.pdf">ledoit-wolf</a></p></li>
+<li><p>standard</p></li>
 </ul>
 </dd>
 </dl>
 </dd>
 </dl>
 </li>
+<li><p>options (dict): options for minimizing, e.g. {‘maxiter’: 10000 }</p></li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd>Series {col_name: weight}</dd>
+<dt>Returns:</dt><dd><p>Series {col_name: weight}</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_perf_stats">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_perf_stats</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_perf_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_perf_stats" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_mtd">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_mtd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monthly_prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_mtd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_mtd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates mtd return of a price series.
+Use daily_prices if prices are only available from same month
+else use monthly_prices</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_perf_stats">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_perf_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_perf_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_perf_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the performance statistics given an object.
 The object should be a Series of prices.</p>
 <p>A PerformanceStats object will be returned containing all the stats.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series): Series of prices</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series): Series of prices</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_prob_mom">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_prob_mom</code><span class="sig-paren">(</span><em>returns</em>, <em>other_returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_prob_mom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_prob_mom" title="Permalink to this definition">¶</a></dt>
-<dd><p>Probabilistic momentum</p>
-<p>Basically the &#8220;probability or confidence that one asset
-is going to outperform the other&#8221;.</p>
-<dl class="docutils">
-<dt>Source:</dt>
-<dd><a class="reference external" href="http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/">http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/</a> # NOQA</dd>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_prob_mom">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_prob_mom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_returns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_prob_mom"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_prob_mom" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/">Probabilistic momentum</a> (see <a class="reference external" href="https://www.investopedia.com/terms/m/momentum_investing.asp">momentum investing</a>)</p>
+<p>Basically the “probability or confidence that one asset
+is going to outperform the other”.</p>
+<dl class="simple">
+<dt>Source:</dt><dd><p><a class="reference external" href="http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/">http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/</a> # NOQA</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_risk_return_ratio">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_risk_return_ratio</code><span class="sig-paren">(</span><em>returns</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_risk_return_ratio">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_risk_return_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the return / risk ratio. Basically the
-Sharpe ratio without factoring in the risk-free rate.</p>
+<a class="reference external" href="https://www.investopedia.com/terms/s/sharperatio.asp">Sharpe ratio</a> without factoring in the <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">risk-free rate</a>.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_sharpe">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_sharpe</code><span class="sig-paren">(</span><em>returns</em>, <em>rf=0.0</em>, <em>nperiods=None</em>, <em>annualize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_sharpe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_sharpe" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the Sharpe ratio.</p>
-<p>If rf is non-zero, you must specify nperiods. In this case, rf is assumed
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_sharpe">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_sharpe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_sharpe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_sharpe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/s/sharperatio.asp">Sharpe ratio</a>
+(see <a class="reference external" href="https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp">Sharpe vs. Sortino</a>).</p>
+<p>If rf is non-zero and a float, you must specify nperiods. In this case, rf is assumed
 to be expressed in yearly (annualized) terms.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (Series, DataFrame): Input return series</li>
-<li>rf (float): Risk-free rate expressed as a yearly (annualized) return</li>
-<li><dl class="first docutils">
-<dt>nperiods (int): Frequency of returns (252 for daily, 12 for monthly,</dt>
-<dd>etc.)</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns (Series, DataFrame): Input return series</p></li>
+<li><p>rf (float, Series): <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> expressed as a yearly (annualized) return or return series</p></li>
+<li><dl class="simple">
+<dt>nperiods (int): Frequency of returns (252 for daily, 12 for monthly,</dt><dd><p>etc.)</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -641,18 +606,18 @@ to be expressed in yearly (annualized) terms.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_sortino_ratio">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_sortino_ratio</code><span class="sig-paren">(</span><em>returns</em>, <em>rf=0</em>, <em>nperiods=None</em>, <em>annualize=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_sortino_ratio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_sortino_ratio" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the sortino ratio given a series of returns</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (Series or DataFrame): Returns</li>
-<li>rf (float): Risk-free rate expressed in yearly (annualized) terms.</li>
-<li><dl class="first docutils">
-<dt>nperiods (int): Number of periods used for annualization. Must be</dt>
-<dd>provided if rf is non-zero</dd>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_sortino_ratio">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_sortino_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_sortino_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_sortino_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/s/sortinoratio.asp">Sortino ratio</a> given a series of returns
+(see <a class="reference external" href="https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp">Sharpe vs. Sortino</a>).</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns (Series or DataFrame): Returns</p></li>
+<li><p>rf (float, Series): <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> expressed in yearly (annualized) terms or return series.</p></li>
+<li><dl class="simple">
+<dt>nperiods (int): Number of periods used for annualization. Must be</dt><dd><p>provided if rf is non-zero and rf is not a price series</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -660,40 +625,46 @@ to be expressed in yearly (annualized) terms.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_stats">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_stats</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_stats"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_stats" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_stats">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_stats" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates performance stats of a given object.</p>
 <p>If object is Series, a PerformanceStats object is
 returned. If object is DataFrame, a GroupStats object
 is returned.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series, DataFrame): Set of prices</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series, DataFrame): Set of prices</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.calc_total_return">
-<code class="descclassname">ffn.core.</code><code class="descname">calc_total_return</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_total_return"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.calc_total_return" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_total_return">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_total_return</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_total_return"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_total_return" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the total return of a series.</p>
 <p>last / first - 1</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.deannualize">
-<code class="descclassname">ffn.core.</code><code class="descname">deannualize</code><span class="sig-paren">(</span><em>returns</em>, <em>nperiods</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#deannualize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.deannualize" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_ytd">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_ytd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yearly_prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#calc_ytd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_ytd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates ytd return of a price series.
+Use daily_prices if prices are only available from same year
+else use yearly_prices</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.deannualize">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">deannualize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#deannualize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.deannualize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert return expressed in annual terms on a different basis.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (float, Series, DataFrame): Return(s)</li>
-<li><dl class="first docutils">
-<dt>nperiods (int): Target basis, typically 252 for daily, 12 for</dt>
-<dd>monthly, etc.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns (float, Series, DataFrame): Return(s)</p></li>
+<li><dl class="simple">
+<dt>nperiods (int): Target basis, typically 252 for daily, 12 for</dt><dd><p>monthly, etc.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -701,30 +672,28 @@ is returned.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.drawdown_details">
-<code class="descclassname">ffn.core.</code><code class="descname">drawdown_details</code><span class="sig-paren">(</span><em>drawdown</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#drawdown_details"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.drawdown_details" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.drawdown_details">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">drawdown_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">drawdown</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_type=&lt;class</span> <span class="pre">'pandas.core.indexes.datetimes.DatetimeIndex'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#drawdown_details"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.drawdown_details" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a data frame with start, end, days (duration) and
 drawdown for each drawdown in a drawdown series.</p>
 <div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">days are actual calendar days, not trading days</p>
+<p class="admonition-title">Note</p>
+<p>days are actual calendar days, not trading days</p>
 </div>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>drawdown (pandas.Series): A drawdown Series</dt>
-<dd>(can be obtained w/ drawdown(prices).</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>drawdown (pandas.Series): A drawdown Series</dt><dd><p>(can be obtained w/ drawdown(prices).</p>
+</dd>
 </dl>
 </li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>pandas.DataFrame &#8211; A data frame with the following</dt>
-<dd>columns: start, end, days, drawdown.</dd>
+<dt>Returns:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>pandas.DataFrame – A data frame with the following</dt><dd><p>columns: start, end, days, drawdown.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -732,41 +701,40 @@ drawdown for each drawdown in a drawdown series.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.drop_duplicate_cols">
-<code class="descclassname">ffn.core.</code><code class="descname">drop_duplicate_cols</code><span class="sig-paren">(</span><em>df</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#drop_duplicate_cols"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.drop_duplicate_cols" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.drop_duplicate_cols">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">drop_duplicate_cols</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#drop_duplicate_cols"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.drop_duplicate_cols" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes duplicate columns from a dataframe
 and keeps column w/ longest history</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.extend_pandas">
-<code class="descclassname">ffn.core.</code><code class="descname">extend_pandas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#extend_pandas"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.extend_pandas" title="Permalink to this definition">¶</a></dt>
-<dd><p>Extends pandas&#8217; PandasObject (Series, Series,
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.extend_pandas">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">extend_pandas</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#extend_pandas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.extend_pandas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extends pandas’ PandasObject (Series, Series,
 DataFrame) with some functions defined in this file.</p>
 <p>This facilitates common functional composition used in quant
 finance.</p>
-<dl class="docutils">
-<dt>Ex:</dt>
-<dd>prices.to_returns().dropna().calc_clusters()
-(where prices would be a DataFrame)</dd>
+<dl class="simple">
+<dt>Ex:</dt><dd><p>prices.to_returns().dropna().calc_clusters()
+(where prices would be a DataFrame)</p>
+</dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.get_num_days_required">
-<code class="descclassname">ffn.core.</code><code class="descname">get_num_days_required</code><span class="sig-paren">(</span><em>offset</em>, <em>period='d'</em>, <em>perc_required=0.9</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#get_num_days_required"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.get_num_days_required" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.get_num_days_required">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">get_num_days_required</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">offset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'d'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_required</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualization_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">252</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#get_num_days_required"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.get_num_days_required" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimates the number of days required to assume that data is OK.</p>
-<p>Helper function used to determine if there are enough &#8220;good&#8221; data
+<p>Helper function used to determine if there are enough “good” data
 days over a given period.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>offset (DateOffset): Offset (lookback) period.</li>
-<li>period (str): Period string.</li>
-<li><dl class="first docutils">
-<dt>perc_required (float): percentage of number of days</dt>
-<dd>expected required.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>offset (DateOffset): Offset (lookback) period.</p></li>
+<li><p>period (str): Period string.</p></li>
+<li><dl class="simple">
+<dt>perc_required (float): percentage of number of days</dt><dd><p>expected required.</p>
+</dd>
 </dl>
 </li>
 </ul>
@@ -774,211 +742,241 @@ days over a given period.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.limit_weights">
-<code class="descclassname">ffn.core.</code><code class="descname">limit_weights</code><span class="sig-paren">(</span><em>weights</em>, <em>limit=0.1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#limit_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.limit_weights" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.infer_freq">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">infer_freq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#infer_freq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.infer_freq" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+<div><p>Infer the most likely frequency given the input index. If the frequency is</p>
+</div></blockquote>
+<dl class="simple">
+<dt>uncertain or index is not DateTime like, just return None</dt><dd><dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>data (DataFrame, Series): Any timeseries dataframe or series</p></li>
+</ul>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.infer_nperiods">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">infer_nperiods</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualization_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#infer_nperiods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.infer_nperiods" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.limit_weights">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">limit_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#limit_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.limit_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Limits weights and redistributes excedent amount
 proportionally.</p>
-<dl class="docutils">
-<dt>ex:</dt>
-<dd><ul class="first last simple">
-<li>weights are {a: 0.7, b: 0.2, c: 0.1}</li>
-<li>call with limit=0.5</li>
-<li><dl class="first docutils">
-<dt>excess 0.2 in a is ditributed to b and c</dt>
-<dd>proportionally.
-- result is {a: 0.5, b: 0.33, c: 0.167}</dd>
+<dl class="simple">
+<dt>ex:</dt><dd><ul class="simple">
+<li><p>weights are {a: 0.7, b: 0.2, c: 0.1}</p></li>
+<li><p>call with limit=0.5</p></li>
+<li><dl class="simple">
+<dt>excess 0.2 in a is ditributed to b and c</dt><dd><p>proportionally.
+- result is {a: 0.5, b: 0.33, c: 0.167}</p>
+</dd>
 </dl>
 </li>
 </ul>
 </dd>
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>weights (Series): A series describing the weights</li>
-<li>limit (float): Maximum weight allowed</li>
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>weights (Series): A series describing the weights</p></li>
+<li><p>limit (float): Maximum weight allowed</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.merge">
-<code class="descclassname">ffn.core.</code><code class="descname">merge</code><span class="sig-paren">(</span><em>*series</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.merge" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.merge">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">merge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">series</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#merge"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.merge" title="Permalink to this definition">¶</a></dt>
 <dd><p>Merge Series and/or DataFrames together.</p>
 <p>Returns a DataFrame.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.plot_corr_heatmap">
-<code class="descclassname">ffn.core.</code><code class="descname">plot_corr_heatmap</code><span class="sig-paren">(</span><em>data</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_corr_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_corr_heatmap" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.plot_corr_heatmap">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">plot_corr_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_corr_heatmap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.plot_corr_heatmap" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots the correlation heatmap for a given DataFrame.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.plot_heatmap">
-<code class="descclassname">ffn.core.</code><code class="descname">plot_heatmap</code><span class="sig-paren">(</span><em>data</em>, <em>title='Heatmap'</em>, <em>show_legend=True</em>, <em>show_labels=True</em>, <em>label_fmt='.2f'</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>figsize=None</em>, <em>label_color='w'</em>, <em>cmap='RdBu'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_heatmap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.plot_heatmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot a heatmap using matplotlib&#8217;s pcolor.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li><dl class="first docutils">
-<dt>data (DataFrame): DataFrame to plot. Usually small matrix (ex.</dt>
-<dd>correlation matrix).</dd>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.plot_heatmap">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">plot_heatmap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Heatmap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_legend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_fmt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.2f'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RdBu'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#plot_heatmap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.plot_heatmap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot a heatmap using matplotlib’s pcolor.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><dl class="simple">
+<dt>data (DataFrame): DataFrame to plot. Usually small matrix (ex.</dt><dd><p>correlation matrix).</p>
+</dd>
 </dl>
 </li>
-<li>title (string): Plot title</li>
-<li>show_legend (bool): Show color legend</li>
-<li>show_labels (bool): Show value labels</li>
-<li>label_fmt (str): Label format string</li>
-<li>vmin (float): Min value for scale</li>
-<li>vmax (float): Max value for scale</li>
-<li>cmap (string): Color map</li>
-<li>kwargs: Passed to matplotlib&#8217;s pcolor</li>
+<li><p>title (string): Plot title</p></li>
+<li><p>show_legend (bool): Show color legend</p></li>
+<li><p>show_labels (bool): Show value labels</p></li>
+<li><p>label_fmt (str): Label format string</p></li>
+<li><p>vmin (float): Min value for scale</p></li>
+<li><p>vmax (float): Max value for scale</p></li>
+<li><p>cmap (string): Color map</p></li>
+<li><p>kwargs: Passed to matplotlib’s pcolor</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.random_weights">
-<code class="descclassname">ffn.core.</code><code class="descname">random_weights</code><span class="sig-paren">(</span><em>n</em>, <em>bounds=(0.0</em>, <em>1.0)</em>, <em>total=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#random_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.random_weights" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.random_weights">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">random_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.0,</span> <span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#random_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.random_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate pseudo-random weights.</p>
 <p>Returns a list of random weights that is of length
 n, where each weight is in the range bounds, and
 where the weights sum up to total.</p>
 <p>Useful for creating random portfolios when benchmarking.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>n (int): number of random weights</li>
-<li>bounds ((low, high)): bounds for each weight</li>
-<li>total (float): total sum of the weights</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>n (int): number of random weights</p></li>
+<li><p>bounds ((low, high)): bounds for each weight</p></li>
+<li><p>total (float): total sum of the weights</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.rebase">
-<code class="descclassname">ffn.core.</code><code class="descname">rebase</code><span class="sig-paren">(</span><em>prices</em>, <em>value=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rebase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rebase" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.rebase">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">rebase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rebase"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.rebase" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rebase all series to a given intial value.</p>
 <p>This makes comparing/plotting different series
 together easier.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices: Expects a price series</li>
-<li>value (number): starting value for all series.</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices: Expects a price series</p></li>
+<li><p>value (number): starting value for all series.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.rescale">
-<code class="descclassname">ffn.core.</code><code class="descname">rescale</code><span class="sig-paren">(</span><em>x</em>, <em>min=0.0</em>, <em>max=1.0</em>, <em>axis=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rescale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rescale" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.resample_returns">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">resample_returns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#resample_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.resample_returns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample the returns and calculate any statistic on every new sample.</p>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Resampling_(statistics">https://en.wikipedia.org/wiki/Resampling_(statistics</a>)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>DataFrame</strong><strong>)</strong> (<em>returns</em><em> (</em><em>Series</em><em>,</em>) – Returns</p></li>
+<li><p><strong>func</strong> – Given the resampled returns calculate a statistic</p></li>
+<li><p><strong>seed</strong> – Seed for random number generator</p></li>
+<li><p><strong>num_trials</strong> – Number of times to resample and run the experiment</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Series of resampled statistics</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.rescale">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">rescale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rescale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.rescale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rescale values to fit a certain range [min, max]</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.rollapply">
-<code class="descclassname">ffn.core.</code><code class="descname">rollapply</code><span class="sig-paren">(</span><em>data</em>, <em>window</em>, <em>fn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rollapply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.rollapply" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.rollapply">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">rollapply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#rollapply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.rollapply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply a function fn over a rolling window of size window.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>data (Series or DataFrame): Series or DataFrame</li>
-<li>window (int): Window size</li>
-<li><dl class="first docutils">
-<dt>fn (function): Function to apply over the rolling window.</dt>
-<dd>For a series, the return value is expected to be a single
-number. For a DataFrame, it shuold return a new row.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>data (Series or DataFrame): Series or DataFrame</p></li>
+<li><p>window (int): Window size</p></li>
+<li><dl class="simple">
+<dt>fn (function): Function to apply over the rolling window.</dt><dd><p>For a series, the return value is expected to be a single
+number. For a DataFrame, it shuold return a new row.</p>
+</dd>
 </dl>
 </li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd><ul class="first last simple">
-<li>Object of same dimensions as data</li>
+<dt>Returns:</dt><dd><ul class="simple">
+<li><p>Object of same dimensions as data</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_drawdown_series">
-<code class="descclassname">ffn.core.</code><code class="descname">to_drawdown_series</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_drawdown_series"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_drawdown_series" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calculates the drawdown series.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_drawdown_series">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_drawdown_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_drawdown_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_drawdown_series" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/d/drawdown.asp">drawdown</a> series.</p>
 <p>This returns a series representing a drawdown.
 When the price is at all time highs, the drawdown
 is 0. However, when prices are below high water marks,
 the drawdown series = current / hwm - 1</p>
 <p>The max drawdown can be obtained by simply calling .min()
 on the result (since the drawdown series is negative)</p>
-<p>Method ignores all gaps of NaN&#8217;s in the price series.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series or DataFrame): Series of prices.</li>
+<p>Method ignores all gaps of NaN’s in the price series.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series or DataFrame): Series of prices.</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_excess_returns">
-<code class="descclassname">ffn.core.</code><code class="descname">to_excess_returns</code><span class="sig-paren">(</span><em>returns</em>, <em>rf</em>, <em>nperiods=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_excess_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_excess_returns" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_excess_returns">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_excess_returns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_excess_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_excess_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given a series of returns, it will return the excess returns over rf.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns (Series, DataFrame): Returns</li>
-<li>rf (float, Series, DataFrame): Risk-Free rate(s)</li>
-<li><dl class="first docutils">
-<dt>nperiods (int): Optional. If provided, will convert rf to different</dt>
-<dd>frequency using deannualize</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns (Series, DataFrame): Returns</p></li>
+<li><p>rf (float, Series): <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-Free rate(s)</a> expressed in annualized term or return series</p></li>
+<li><dl class="simple">
+<dt>nperiods (int): Optional. If provided, will convert rf to different</dt><dd><p>frequency using deannualize only if rf is a float</p>
+</dd>
 </dl>
 </li>
 </ul>
 </dd>
-<dt>Returns:</dt>
-<dd><ul class="first last simple">
-<li>excess_returns (Series, DataFrame): Returns - rf</li>
+<dt>Returns:</dt><dd><ul class="simple">
+<li><p>excess_returns (Series, DataFrame): Returns - rf</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_log_returns">
-<code class="descclassname">ffn.core.</code><code class="descname">to_log_returns</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_log_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_log_returns" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_log_returns">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_log_returns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_log_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_log_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the log returns of a price series.</p>
 <p>Formula is: ln(p1/p0)</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices: Expects a price series</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices: Expects a price series</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_monthly">
-<code class="descclassname">ffn.core.</code><code class="descname">to_monthly</code><span class="sig-paren">(</span><em>series</em>, <em>method='ffill'</em>, <em>how='end'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_monthly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_monthly" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_monthly">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_monthly</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">series</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ffill'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">how</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'end'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_monthly"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_monthly" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience method that wraps asfreq_actual
-with &#8216;M&#8217; param (method=&#8217;ffill&#8217;, how=&#8217;end&#8217;).</p>
+with ‘M’ param (method=’ffill’, how=’end’).</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_price_index">
-<code class="descclassname">ffn.core.</code><code class="descname">to_price_index</code><span class="sig-paren">(</span><em>returns</em>, <em>start=100</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_price_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_price_index" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_price_index">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_price_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_price_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_price_index" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a price index given a series of returns.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>returns: Expects a return series</li>
-<li>start (number): Starting level</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>returns: Expects a return series</p></li>
+<li><p>start (number): Starting level</p></li>
 </ul>
 </dd>
 </dl>
@@ -986,72 +984,68 @@ with &#8216;M&#8217; param (method=&#8217;ffill&#8217;, how=&#8217;end&#8217;).<
 <p>Formula is: cumprod (1+r)</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_returns">
-<code class="descclassname">ffn.core.</code><code class="descname">to_returns</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_returns"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_returns" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_returns">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_returns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_returns" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates the simple arithmetic returns of a price series.</p>
 <p>Formula is: (t1 / t0) - 1</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices: Expects a price series</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices: Expects a price series</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_ulcer_index">
-<code class="descclassname">ffn.core.</code><code class="descname">to_ulcer_index</code><span class="sig-paren">(</span><em>prices</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_ulcer_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_ulcer_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts from prices -&gt; Ulcer index</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_ulcer_index">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_ulcer_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_ulcer_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_ulcer_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts from prices -&gt; <a class="reference external" href="https://www.investopedia.com/terms/u/ulcerindex.asp">Ulcer index</a></p>
 <p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Ulcer_index">https://en.wikipedia.org/wiki/Ulcer_index</a></p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series, DataFrame): Prices</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series, DataFrame): Prices</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.to_ulcer_performance_index">
-<code class="descclassname">ffn.core.</code><code class="descname">to_ulcer_performance_index</code><span class="sig-paren">(</span><em>prices</em>, <em>rf=0.0</em>, <em>nperiods=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_ulcer_performance_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.to_ulcer_performance_index" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts from prices -&gt; ulcer performance index.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.to_ulcer_performance_index">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_ulcer_performance_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#to_ulcer_performance_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_ulcer_performance_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts from prices -&gt; <a class="reference external" href="https://www.investopedia.com/terms/u/ulcerindex.asp">ulcer performance index</a>.</p>
 <p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Ulcer_index">https://en.wikipedia.org/wiki/Ulcer_index</a></p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>prices (Series, DataFrame): Prices</li>
-<li><dl class="first docutils">
-<dt>rf (float): Risk-free rate of return. Assumed to be expressed in</dt>
-<dd>yearly (annualized) terms</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>prices (Series, DataFrame): Prices</p></li>
+<li><dl class="simple">
+<dt>rf (float, Series): <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate of return</a>. Assumed to be expressed in</dt><dd><p>yearly (annualized) terms or return series</p>
+</dd>
 </dl>
 </li>
-<li>nperiods (int): Used to deannualize rf if rf is provided (non-zero)</li>
+<li><p>nperiods (int): Used to deannualize rf if rf is provided (non-zero)</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.winsorize">
-<code class="descclassname">ffn.core.</code><code class="descname">winsorize</code><span class="sig-paren">(</span><em>x</em>, <em>axis=0</em>, <em>limits=0.01</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#winsorize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.winsorize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Winsorize values based on limits</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.winsorize">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">winsorize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.01</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#winsorize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.winsorize" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="https://en.wikipedia.org/wiki/Winsorizing">Winsorize</a> values based on limits</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.core.year_frac">
-<code class="descclassname">ffn.core.</code><code class="descname">year_frac</code><span class="sig-paren">(</span><em>start</em>, <em>end</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#year_frac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.core.year_frac" title="Permalink to this definition">¶</a></dt>
-<dd><p>Similar to excel&#8217;s yearfrac function. Returns
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.year_frac">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">year_frac</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/core.html#year_frac"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.year_frac" title="Permalink to this definition">¶</a></dt>
+<dd><p>Similar to excel’s yearfrac function. Returns
 a year fraction between two dates (i.e. 1.53 years).</p>
 <p>Approximation using the average number of seconds
 in a year.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>start (datetime): start date</li>
-<li>end (datetime): end date</li>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>start (datetime): start date</p></li>
+<li><p>end (datetime): end date</p></li>
 </ul>
 </dd>
 </dl>
@@ -1059,101 +1053,100 @@ in a year.</p>
 
 </div>
 <div class="section" id="module-ffn.data">
-<span id="data-module"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">data</span></code> Module<a class="headerlink" href="#module-ffn.data" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="ffn.data.DEFAULT_PROVIDER">
-<code class="descclassname">ffn.data.</code><code class="descname">DEFAULT_PROVIDER</code><span class="sig-paren">(</span><em>ticker</em>, <em>field</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ffn.data.DEFAULT_PROVIDER" title="Permalink to this definition">¶</a></dt>
+<span id="data-module"></span><h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">data</span></code> Module<a class="headerlink" href="#module-ffn.data" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.data.DEFAULT_PROVIDER">
+<span class="sig-prename descclassname"><span class="pre">ffn.data.</span></span><span class="sig-name descname"><span class="pre">DEFAULT_PROVIDER</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mrefresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#ffn.data.DEFAULT_PROVIDER" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="ffn.data.csv">
-<code class="descclassname">ffn.data.</code><code class="descname">csv</code><span class="sig-paren">(</span><em>ticker</em>, <em>path='data.csv'</em>, <em>field=''</em>, <em>mrefresh=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.csv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Data provider wrapper around pandas&#8217; read_csv. Provides memoization.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.data.csv">
+<span class="sig-prename descclassname"><span class="pre">ffn.data.</span></span><span class="sig-name descname"><span class="pre">csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'data.csv'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mrefresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.data.csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data provider wrapper around pandas’ read_csv. Provides memoization.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.data.get">
-<code class="descclassname">ffn.data.</code><code class="descname">get</code><span class="sig-paren">(</span><em>tickers</em>, <em>provider=None</em>, <em>common_dates=True</em>, <em>forward_fill=False</em>, <em>clean_tickers=True</em>, <em>column_names=None</em>, <em>ticker_field_sep=':'</em>, <em>mrefresh=False</em>, <em>existing=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.get" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.data.get">
+<span class="sig-prename descclassname"><span class="pre">ffn.data.</span></span><span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tickers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provider</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">common_dates</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward_fill</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clean_tickers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ticker_field_sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">':'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mrefresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">existing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#get"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.data.get" title="Permalink to this definition">¶</a></dt>
 <dd><p>Helper function for retrieving data as a DataFrame.</p>
-<dl class="docutils">
-<dt>Args:</dt>
-<dd><ul class="first last simple">
-<li>tickers (list, string, csv string): Tickers to download.</li>
-<li><dl class="first docutils">
-<dt>provider (function): Provider to use for downloading data.</dt>
-<dd>By default it will be ffn.DEFAULT_PROVIDER if not provided.</dd>
+<dl class="simple">
+<dt>Args:</dt><dd><ul class="simple">
+<li><p>tickers (list, string, csv string): Tickers to download.</p></li>
+<li><dl class="simple">
+<dt>provider (function): Provider to use for downloading data.</dt><dd><p>By default it will be ffn.DEFAULT_PROVIDER if not provided.</p>
+</dd>
 </dl>
 </li>
-<li>common_dates (bool): Keep common dates only? Drop na&#8217;s.</li>
-<li><dl class="first docutils">
-<dt>forward_fill (bool): forward fill values if missing. Only works</dt>
-<dd>if common_dates is False, since common_dates will remove
-all nan&#8217;s, so no filling forward necessary.</dd>
+<li><p>common_dates (bool): Keep common dates only? Drop na’s.</p></li>
+<li><dl class="simple">
+<dt>forward_fill (bool): forward fill values if missing. Only works</dt><dd><p>if common_dates is False, since common_dates will remove
+all nan’s, so no filling forward necessary.</p>
+</dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>clean_tickers (bool): Should the tickers be &#8216;cleaned&#8217; using</dt>
-<dd>ffn.utils.clean_tickers? Basically remove non-standard
-characters (^VIX -&gt; vix) and standardize to lower case.</dd>
+<li><dl class="simple">
+<dt>clean_tickers (bool): Should the tickers be ‘cleaned’ using</dt><dd><p>ffn.utils.clean_tickers? Basically remove non-standard
+characters (^VIX -&gt; vix) and standardize to lower case.</p>
+</dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>column_names (list): List of column names if clean_tickers</dt>
-<dd>is not satisfactory.</dd>
+<li><dl class="simple">
+<dt>column_names (list): List of column names if clean_tickers</dt><dd><p>is not satisfactory.</p>
+</dd>
 </dl>
 </li>
-<li><dl class="first docutils">
-<dt>ticker_field_sep (char): separator used to determine the</dt>
-<dd>ticker and field. This is in case we want to specify
+<li><dl class="simple">
+<dt>ticker_field_sep (char): separator used to determine the</dt><dd><p>ticker and field. This is in case we want to specify
 particular, non-default fields. For example, we might
-want: AAPL:Low,AAPL:High,AAPL:Close. &#8216;:&#8217; is the separator.</dd>
+want: AAPL:Low,AAPL:High,AAPL:Close. ‘:’ is the separator.</p>
+</dd>
 </dl>
 </li>
-<li>mrefresh (bool): Ignore memoization.</li>
-<li><dl class="first docutils">
-<dt>existing (DataFrame): Existing DataFrame to append returns</dt>
-<dd>to - used when we download from multiple sources</dd>
+<li><p>mrefresh (bool): Ignore memoization.</p></li>
+<li><dl class="simple">
+<dt>existing (DataFrame): Existing DataFrame to append returns</dt><dd><p>to - used when we download from multiple sources</p>
+</dd>
 </dl>
 </li>
-<li>kwargs: passed to provider</li>
+<li><p>kwargs: passed to provider</p></li>
 </ul>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.data.web">
-<code class="descclassname">ffn.data.</code><code class="descname">web</code><span class="sig-paren">(</span><em>ticker</em>, <em>field=None</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em>, <em>source='yahoo'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#web"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.web" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.data.web">
+<span class="sig-prename descclassname"><span class="pre">ffn.data.</span></span><span class="sig-name descname"><span class="pre">web</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mrefresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'yahoo'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#web"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.data.web" title="Permalink to this definition">¶</a></dt>
 <dd><p>Data provider wrapper around pandas.io.data provider. Provides
 memoization.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.data.yf">
-<code class="descclassname">ffn.data.</code><code class="descname">yf</code><span class="sig-paren">(</span><em>ticker</em>, <em>field</em>, <em>start=None</em>, <em>end=None</em>, <em>mrefresh=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#yf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.data.yf" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.data.yf">
+<span class="sig-prename descclassname"><span class="pre">ffn.data.</span></span><span class="sig-name descname"><span class="pre">yf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticker</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mrefresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/data.html#yf"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.data.yf" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
 <div class="section" id="module-ffn.utils">
-<span id="utils-module"></span><h2><code class="xref py py-mod docutils literal"><span class="pre">utils</span></code> Module<a class="headerlink" href="#module-ffn.utils" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="ffn.utils.as_format">
-<code class="descclassname">ffn.utils.</code><code class="descname">as_format</code><span class="sig-paren">(</span><em>item</em>, <em>format_str='.2f'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#as_format"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.as_format" title="Permalink to this definition">¶</a></dt>
+<span id="utils-module"></span><h2><code class="xref py py-mod docutils literal notranslate"><span class="pre">utils</span></code> Module<a class="headerlink" href="#module-ffn.utils" title="Permalink to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.as_format">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">as_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">format_str</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.2f'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#as_format"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.as_format" title="Permalink to this definition">¶</a></dt>
 <dd><p>Map a format string over a pandas object.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.as_percent">
-<code class="descclassname">ffn.utils.</code><code class="descname">as_percent</code><span class="sig-paren">(</span><em>self</em>, <em>digits=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#as_percent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.as_percent" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.as_percent">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">as_percent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">digits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#as_percent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.as_percent" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.clean_ticker">
-<code class="descclassname">ffn.utils.</code><code class="descname">clean_ticker</code><span class="sig-paren">(</span><em>ticker</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#clean_ticker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.clean_ticker" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.clean_ticker">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">clean_ticker</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ticker</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#clean_ticker"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.clean_ticker" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cleans a ticker for easier use throughout MoneyTree</p>
 <p>Splits by space and only keeps first bit. Also removes
 any characters that are not letters. Returns as lowercase.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s1">&#39;^VIX&#39;</span><span class="p">)</span>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s1">&#39;^VIX&#39;</span><span class="p">)</span>
 <span class="go">&#39;vix&#39;</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">clean_ticker</span><span class="p">(</span><span class="s1">&#39;SPX Index&#39;</span><span class="p">)</span>
 <span class="go">&#39;spx&#39;</span>
@@ -1161,60 +1154,60 @@ any characters that are not letters. Returns as lowercase.</p>
 </div>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.clean_tickers">
-<code class="descclassname">ffn.utils.</code><code class="descname">clean_tickers</code><span class="sig-paren">(</span><em>tickers</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#clean_tickers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.clean_tickers" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.clean_tickers">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">clean_tickers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tickers</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#clean_tickers"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.clean_tickers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Maps clean_ticker over tickers.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.fmtn">
-<code class="descclassname">ffn.utils.</code><code class="descname">fmtn</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtn" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.fmtn">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">fmtn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.fmtn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatting helper - float</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.fmtp">
-<code class="descclassname">ffn.utils.</code><code class="descname">fmtp</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtp" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.fmtp">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">fmtp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.fmtp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatting helper - percent</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.fmtpn">
-<code class="descclassname">ffn.utils.</code><code class="descname">fmtpn</code><span class="sig-paren">(</span><em>number</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtpn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.fmtpn" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.fmtpn">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">fmtpn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#fmtpn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.fmtpn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Formatting helper - percent no % sign</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.get_freq_name">
-<code class="descclassname">ffn.utils.</code><code class="descname">get_freq_name</code><span class="sig-paren">(</span><em>period</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#get_freq_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.get_freq_name" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.get_freq_name">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">get_freq_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">period</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#get_freq_name"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.get_freq_name" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.memoize">
-<code class="descclassname">ffn.utils.</code><code class="descname">memoize</code><span class="sig-paren">(</span><em>f</em>, <em>refresh_keyword='mrefresh'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#memoize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.memoize" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.memoize">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">memoize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh_keyword</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mrefresh'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#memoize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.memoize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Memoize decorator. The refresh keyword is the keyword
 used to bypass the cache (in the function call).</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.parse_arg">
-<code class="descclassname">ffn.utils.</code><code class="descname">parse_arg</code><span class="sig-paren">(</span><em>arg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#parse_arg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.parse_arg" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.parse_arg">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">parse_arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#parse_arg"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.parse_arg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parses arguments for convenience. Argument can be a
-csv list (&#8216;a,b,c&#8217;), a string, a list, a tuple.</p>
+csv list (‘a,b,c’), a string, a list, a tuple.</p>
 <p>Returns a list.</p>
 </dd></dl>
 
-<dl class="function">
-<dt id="ffn.utils.scale">
-<code class="descclassname">ffn.utils.</code><code class="descname">scale</code><span class="sig-paren">(</span><em>val</em>, <em>src</em>, <em>dst</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ffn.utils.scale" title="Permalink to this definition">¶</a></dt>
+<dl class="py function">
+<dt class="sig sig-object py" id="ffn.utils.scale">
+<span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">val</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">src</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ffn/utils.html#scale"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.scale" title="Permalink to this definition">¶</a></dt>
 <dd><p>Scale value from src range to dst range.
 If value outside bounds, it is clipped and set to
 the low or high bound of dst.</p>
-<dl class="docutils">
-<dt>Ex:</dt>
-<dd>scale(0, (0.0, 99.0), (-1.0, 1.0)) == -1.0
-scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</dd>
+<dl class="simple">
+<dt>Ex:</dt><dd><p>scale(0, (0.0, 99.0), (-1.0, 1.0)) == -1.0
+scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -1222,6 +1215,7 @@ scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</dd>
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -1236,10 +1230,10 @@ scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</dd>
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.__init__"><code class="docutils literal"><span class="pre">ffn</span></code> Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.core"><code class="docutils literal"><span class="pre">core</span></code> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.data"><code class="docutils literal"><span class="pre">data</span></code> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-ffn.utils"><code class="docutils literal"><span class="pre">utils</span></code> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-ffn.__init__"><code class="xref py py-mod docutils literal notranslate"><span class="pre">ffn</span></code> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-ffn.core"><code class="xref py py-mod docutils literal notranslate"><span class="pre">core</span></code> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-ffn.data"><code class="xref py py-mod docutils literal notranslate"><span class="pre">data</span></code> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-ffn.utils"><code class="xref py py-mod docutils literal notranslate"><span class="pre">utils</span></code> Module</a></li>
 </ul>
 </li>
 </ul>
@@ -1251,21 +1245,23 @@ scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</dd>
             </ul>
             
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </aside>
     
       <div class="clearer"></div>
     </div>
         <div class="footer">
-            ffn was created by Philippe Morissette. If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+            ffn was created by Philippe Morissette.
+If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+
         </div>
 
         

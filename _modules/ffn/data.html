@@ -1,42 +1,27 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>ffn.data &#8212; ffn 0.3.0 documentation</title>
-    
-    <link rel="stylesheet" href="../../_static/css/klink.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '0.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ffn.data &#8212; ffn 0.3.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/klink.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
         
-            <link rel="shortcut icon" href="../../_static/favicon.ico">
-        
         <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
         <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,500,700' rel='stylesheet' type='text/css'>
     
-  </head>
-  <body role="document">  
+  </head><body>  
 
     <div class="document">
       <div class="documentwrapper">
@@ -44,17 +29,36 @@
           <div class="body" role="main">
             
   <h1>Source code for ffn.data</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">ffn</span>
-<span class="kn">import</span> <span class="nn">ffn.utils</span> <span class="k">as</span> <span class="nn">utils</span>
+<span></span><span class="kn">from</span> <span class="nn">distutils.version</span> <span class="kn">import</span> <span class="n">LooseVersion</span>
+
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">from</span> <span class="nn">pandas_datareader</span> <span class="k">import</span> <span class="n">data</span> <span class="k">as</span> <span class="n">pdata</span>
-<span class="kn">import</span> <span class="nn">fix_yahoo_finance</span>  <span class="c1"># noqa</span>
+
+<span class="kn">import</span> <span class="nn">ffn</span>
+
+<span class="c1"># import ffn.utils as utils</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">utils</span>
+
+<span class="c1"># This is a temporary fix until pandas_datareader 0.7 is released.</span>
+<span class="c1"># pandas 0.23 has moved is_list_like from common to api.types, hence the monkey patch</span>
+<span class="k">if</span> <span class="n">LooseVersion</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">LooseVersion</span><span class="p">(</span><span class="s2">&quot;0.23.0&quot;</span><span class="p">):</span>
+    <span class="n">pd</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">common</span><span class="o">.</span><span class="n">is_list_like</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_list_like</span>
+
+<span class="kn">from</span> <span class="nn">pandas_datareader</span> <span class="kn">import</span> <span class="n">data</span> <span class="k">as</span> <span class="n">pdata</span>
 
 
-<span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-<div class="viewcode-block" id="get"><a class="viewcode-back" href="../../ffn.html#ffn.data.get">[docs]</a><span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">tickers</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">common_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">forward_fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="n">clean_tickers</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">column_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ticker_field_sep</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span>
-        <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">existing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="get"><a class="viewcode-back" href="../../ffn.html#ffn.data.get">[docs]</a><span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+<span class="k">def</span> <span class="nf">get</span><span class="p">(</span>
+    <span class="n">tickers</span><span class="p">,</span>
+    <span class="n">provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">common_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">forward_fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">clean_tickers</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">column_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">ticker_field_sep</span><span class="o">=</span><span class="s2">&quot;:&quot;</span><span class="p">,</span>
+    <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">existing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Helper function for retrieving data as a DataFrame.</span>
 
@@ -99,13 +103,15 @@
             <span class="n">f</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
         <span class="c1"># call provider - check if supports memoization</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s1">&#39;mcache&#39;</span><span class="p">):</span>
-            <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">provider</span><span class="p">(</span><span class="n">ticker</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
-                                    <span class="n">mrefresh</span><span class="o">=</span><span class="n">mrefresh</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">&quot;mcache&quot;</span><span class="p">):</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">provider</span><span class="p">(</span><span class="n">ticker</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="n">mrefresh</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">provider</span><span class="p">(</span><span class="n">ticker</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+        <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">][</span><span class="o">~</span><span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="s2">&quot;last&quot;</span><span class="p">)]</span>
+
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
     <span class="c1"># ensure same order as provided</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">tickers</span><span class="p">]</span>
 
@@ -116,13 +122,12 @@
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">forward_fill</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;ffill&#39;</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">&quot;ffill&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">column_names</span><span class="p">:</span>
         <span class="n">cnames</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_arg</span><span class="p">(</span><span class="n">column_names</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cnames</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s1">&#39;column_names must be of same length as tickers&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;column_names must be of same length as tickers&quot;</span><span class="p">)</span>
         <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">cnames</span>
     <span class="k">elif</span> <span class="n">clean_tickers</span><span class="p">:</span>
         <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">clean_ticker</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
@@ -130,21 +135,19 @@
     <span class="k">return</span> <span class="n">df</span></div>
 
 
-<span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-<div class="viewcode-block" id="web"><a class="viewcode-back" href="../../ffn.html#ffn.data.web">[docs]</a><span class="k">def</span> <span class="nf">web</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s1">&#39;yahoo&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="web"><a class="viewcode-back" href="../../ffn.html#ffn.data.web">[docs]</a><span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+<span class="k">def</span> <span class="nf">web</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="s2">&quot;yahoo&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Data provider wrapper around pandas.io.data provider. Provides</span>
 <span class="sd">    memoization.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s1">&#39;yahoo&#39;</span> <span class="ow">and</span> <span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">field</span> <span class="o">=</span> <span class="s1">&#39;Adj Close&#39;</span>
+    <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="s2">&quot;yahoo&quot;</span> <span class="ow">and</span> <span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="s2">&quot;Adj Close&quot;</span>
 
-    <span class="n">tmp</span> <span class="o">=</span> <span class="n">_download_web</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">data_source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span>
-                        <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">_download_web</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">data_source</span><span class="o">=</span><span class="n">source</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">tmp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;failed to retrieve data for </span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failed to retrieve data for </span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tmp</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
@@ -160,15 +163,15 @@
     <span class="k">return</span> <span class="n">pdata</span><span class="o">.</span><span class="n">DataReader</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-<div class="viewcode-block" id="yf"><a class="viewcode-back" href="../../ffn.html#ffn.data.yf">[docs]</a><span class="k">def</span> <span class="nf">yf</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<div class="viewcode-block" id="yf"><a class="viewcode-back" href="../../ffn.html#ffn.data.yf">[docs]</a><span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+<span class="k">def</span> <span class="nf">yf</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">field</span> <span class="o">=</span> <span class="s1">&#39;Adj Close&#39;</span>
+        <span class="n">field</span> <span class="o">=</span> <span class="s2">&quot;Adj Close&quot;</span>
 
     <span class="n">tmp</span> <span class="o">=</span> <span class="n">pdata</span><span class="o">.</span><span class="n">get_data_yahoo</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">tmp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;failed to retrieve data for </span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failed to retrieve data for </span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="p">))</span>
 
     <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">tmp</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
@@ -176,27 +179,27 @@
         <span class="k">return</span> <span class="n">tmp</span></div>
 
 
-<span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-<div class="viewcode-block" id="csv"><a class="viewcode-back" href="../../ffn.html#ffn.data.csv">[docs]</a><span class="k">def</span> <span class="nf">csv</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;data.csv&#39;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="csv"><a class="viewcode-back" href="../../ffn.html#ffn.data.csv">[docs]</a><span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
+<span class="k">def</span> <span class="nf">csv</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;data.csv&quot;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Data provider wrapper around pandas&#39; read_csv. Provides memoization.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># set defaults if not specified</span>
-    <span class="k">if</span> <span class="s1">&#39;index_col&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;index_col&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">if</span> <span class="s1">&#39;parse_dates&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
-        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;parse_dates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="s2">&quot;index_col&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;index_col&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="s2">&quot;parse_dates&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;parse_dates&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="c1"># read in dataframe from csv file</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="n">tf</span> <span class="o">=</span> <span class="n">ticker</span>
-    <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="s1">&#39;&#39;</span> <span class="ow">and</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">tf</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">:</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tf</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">field</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="ow">and</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">tf</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tf</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
 
     <span class="c1"># check that required column exists</span>
     <span class="k">if</span> <span class="n">tf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Ticker(field) not present in csv file!&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Ticker(field) not present in csv file!&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">tf</span><span class="p">]</span></div>
 
@@ -204,6 +207,7 @@
 <span class="n">DEFAULT_PROVIDER</span> <span class="o">=</span> <span class="n">yf</span>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -227,21 +231,23 @@
             </ul>
             
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </aside>
     
       <div class="clearer"></div>
     </div>
         <div class="footer">
-            ffn was created by Philippe Morissette. If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+            ffn was created by Philippe Morissette.
+If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+
         </div>
 
         

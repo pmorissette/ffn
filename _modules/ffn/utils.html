@@ -1,42 +1,27 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
   <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
-    <title>ffn.utils &#8212; ffn 0.3.0 documentation</title>
-    
-    <link rel="stylesheet" href="../../_static/css/klink.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '../../',
-        VERSION:     '0.3.0',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true,
-        SOURCELINK_SUFFIX: '.txt'
-      };
-    </script>
-    <script type="text/javascript" src="../../_static/jquery.js"></script>
-    <script type="text/javascript" src="../../_static/underscore.js"></script>
-    <script type="text/javascript" src="../../_static/doctools.js"></script>
-    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ffn.utils &#8212; ffn 0.3.6 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/klink.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
         
-            <link rel="shortcut icon" href="../../_static/favicon.ico">
-        
         <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
         <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,500,700' rel='stylesheet' type='text/css'>
     
-  </head>
-  <body role="document">  
+  </head><body>  
 
     <div class="document">
       <div class="documentwrapper">
@@ -45,9 +30,11 @@
             
   <h1>Source code for ffn.utils</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">re</span>
+
 <span class="kn">import</span> <span class="nn">decorator</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">cPickle</span> <span class="k">as</span> <span class="nn">pickle</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
@@ -79,7 +66,7 @@
         <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../ffn.html#ffn.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">refresh_keyword</span><span class="o">=</span><span class="s1">&#39;mrefresh&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../ffn.html#ffn.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">refresh_keyword</span><span class="o">=</span><span class="s2">&quot;mrefresh&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Memoize decorator. The refresh keyword is the keyword</span>
 <span class="sd">    used to bypass the cache (in the function call).</span>
@@ -100,8 +87,8 @@
     <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
         <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="c1"># parse csv as tickers and create children</span>
-        <span class="k">if</span> <span class="s1">&#39;,&#39;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
-            <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
             <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">]</span>
         <span class="c1"># assume single string - create single item list</span>
         <span class="k">else</span><span class="p">:</span>
@@ -122,8 +109,8 @@
 <span class="sd">    &gt;&gt;&gt; clean_ticker(&#39;SPX Index&#39;)</span>
 <span class="sd">    &#39;spx&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s1">&#39;[\W_]+&#39;</span><span class="p">)</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">ticker</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;[</span><span class="se">\\</span><span class="s2">W_]+&quot;</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ticker</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
 
 
@@ -139,8 +126,8 @@
 <span class="sd">    Formatting helper - percent</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;-&#39;</span>
-    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s1">&#39;.2%&#39;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="s2">&quot;-&quot;</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s2">&quot;.2%&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fmtpn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtpn">[docs]</a><span class="k">def</span> <span class="nf">fmtpn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
@@ -148,8 +135,8 @@
 <span class="sd">    Formatting helper - percent no % sign</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;-&#39;</span>
-    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;.2f&#39;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="s2">&quot;-&quot;</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;.2f&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="fmtn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtn">[docs]</a><span class="k">def</span> <span class="nf">fmtn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
@@ -157,37 +144,38 @@
 <span class="sd">    Formatting helper - float</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s1">&#39;-&#39;</span>
-    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s1">&#39;.2f&#39;</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="s2">&quot;-&quot;</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s2">&quot;.2f&quot;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="get_freq_name"><a class="viewcode-back" href="../../ffn.html#ffn.utils.get_freq_name">[docs]</a><span class="k">def</span> <span class="nf">get_freq_name</span><span class="p">(</span><span class="n">period</span><span class="p">):</span>
     <span class="n">period</span> <span class="o">=</span> <span class="n">period</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
     <span class="n">periods</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="s1">&#39;business day&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="s1">&#39;custom business day&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="s1">&#39;daily&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;W&#39;</span><span class="p">:</span> <span class="s1">&#39;weekly&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="s1">&#39;monthly&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;BM&#39;</span><span class="p">:</span> <span class="s1">&#39;business month end&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;CBM&#39;</span><span class="p">:</span> <span class="s1">&#39;custom business month end&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;MS&#39;</span><span class="p">:</span> <span class="s1">&#39;month start&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;BMS&#39;</span><span class="p">:</span> <span class="s1">&#39;business month start&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;CBMS&#39;</span><span class="p">:</span> <span class="s1">&#39;custom business month start&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;Q&#39;</span><span class="p">:</span> <span class="s1">&#39;quarterly&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;BQ&#39;</span><span class="p">:</span> <span class="s1">&#39;business quarter end&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;QS&#39;</span><span class="p">:</span> <span class="s1">&#39;quarter start&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;BQS&#39;</span><span class="p">:</span> <span class="s1">&#39;business quarter start&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;Y&#39;</span><span class="p">:</span> <span class="s1">&#39;yearly&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="s1">&#39;yearly&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;BA&#39;</span><span class="p">:</span> <span class="s1">&#39;business year end&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;AS&#39;</span><span class="p">:</span> <span class="s1">&#39;year start&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;BAS&#39;</span><span class="p">:</span> <span class="s1">&#39;business year start&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;H&#39;</span><span class="p">:</span> <span class="s1">&#39;hourly&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;T&#39;</span><span class="p">:</span> <span class="s1">&#39;minutely&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="s1">&#39;secondly&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;L&#39;</span><span class="p">:</span> <span class="s1">&#39;milliseonds&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;U&#39;</span><span class="p">:</span> <span class="s1">&#39;microseconds&#39;</span><span class="p">}</span>
+        <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="s2">&quot;business day&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="s2">&quot;custom business day&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;D&quot;</span><span class="p">:</span> <span class="s2">&quot;daily&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;W&quot;</span><span class="p">:</span> <span class="s2">&quot;weekly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;M&quot;</span><span class="p">:</span> <span class="s2">&quot;monthly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BM&quot;</span><span class="p">:</span> <span class="s2">&quot;business month end&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;CBM&quot;</span><span class="p">:</span> <span class="s2">&quot;custom business month end&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;MS&quot;</span><span class="p">:</span> <span class="s2">&quot;month start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BMS&quot;</span><span class="p">:</span> <span class="s2">&quot;business month start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;CBMS&quot;</span><span class="p">:</span> <span class="s2">&quot;custom business month start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="s2">&quot;quarterly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BQ&quot;</span><span class="p">:</span> <span class="s2">&quot;business quarter end&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;QS&quot;</span><span class="p">:</span> <span class="s2">&quot;quarter start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BQS&quot;</span><span class="p">:</span> <span class="s2">&quot;business quarter start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Y&quot;</span><span class="p">:</span> <span class="s2">&quot;yearly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="s2">&quot;yearly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BA&quot;</span><span class="p">:</span> <span class="s2">&quot;business year end&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;AS&quot;</span><span class="p">:</span> <span class="s2">&quot;year start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;BAS&quot;</span><span class="p">:</span> <span class="s2">&quot;business year start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="s2">&quot;hourly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="s2">&quot;minutely&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;S&quot;</span><span class="p">:</span> <span class="s2">&quot;secondly&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;L&quot;</span><span class="p">:</span> <span class="s2">&quot;milliseonds&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="s2">&quot;microseconds&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
 
     <span class="k">if</span> <span class="n">period</span> <span class="ow">in</span> <span class="n">periods</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">periods</span><span class="p">[</span><span class="n">period</span><span class="p">]</span>
@@ -215,10 +203,10 @@
 
 
 <div class="viewcode-block" id="as_percent"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_percent">[docs]</a><span class="k">def</span> <span class="nf">as_percent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">as_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;.</span><span class="si">%s%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">digits</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">as_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;.</span><span class="si">%s%%</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">digits</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="as_format"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_format">[docs]</a><span class="k">def</span> <span class="nf">as_format</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s1">&#39;.2f&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="as_format"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_format">[docs]</a><span class="k">def</span> <span class="nf">as_format</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s2">&quot;.2f&quot;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Map a format string over a pandas object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -228,6 +216,7 @@
         <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span></div>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -251,21 +240,23 @@
             </ul>
             
 <div id="searchbox" style="display: none" role="search">
-  <h3>Quick search</h3>
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
-      <div><input type="text" name="q" /></div>
-      <div><input type="submit" value="Go" /></div>
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
     </form>
+    </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>document.getElementById('searchbox').style.display = "block"</script>
         </aside>
     
       <div class="clearer"></div>
     </div>
         <div class="footer">
-            ffn was created by Philippe Morissette. If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+            ffn was created by Philippe Morissette.
+If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
+
         </div>
 
         
