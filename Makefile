@@ -29,13 +29,13 @@ docs:
 	$(MAKE) -C docs/ html
 
 pages: 
-	- rm -rf $(TMPREPO)
-	git clone -b gh-pages https://github.com/pmorissette/ffn.git $(TMPREPO)
+	rm -rf $(TMPREPO)
+	git clone -b gh-pages git@github.com:pmorissette/ffn.git $(TMPREPO)
 	rm -rf $(TMPREPO)/*
 	cp -r docs/build/html/* $(TMPREPO)
-	cd $(TMPREPO); \
-	git add -A ; \
-	git commit -a -m 'auto-updating docs' ; \
+	cd $(TMPREPO)
+	git add -A
+	git commit -a -m 'auto-updating docs'
 	git push
 
 serve: 
