@@ -23,7 +23,6 @@ setuptools.setup(
     license="MIT",
     install_requires=[
         "decorator>=4",
-        "future>=0.15",
         "matplotlib>=1",
         "numpy>=1.5",
         "pandas>=0.19",
@@ -36,12 +35,10 @@ setuptools.setup(
         "dev": [
             "black>=20.8b1",
             "codecov",
-            "coverage",
             "flake8",
             "flake8-black",
-            "future",
-            "mock",
-            "nose",
+            "pytest",
+            "pytest-cov",
         ],
     },
     packages=["ffn"],

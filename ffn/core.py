@@ -2,13 +2,14 @@ from __future__ import print_function
 
 import random
 
+import matplotlib
 import numpy as np
 import pandas as pd
 import scipy.stats
 import sklearn.cluster
 import sklearn.covariance
 import sklearn.manifold
-from future.utils import iteritems, listvalues
+from matplotlib import pyplot as plt  # noqa
 from pandas.core.base import PandasObject
 from scipy.optimize import minimize
 from scipy.stats import t
@@ -19,22 +20,12 @@ from . import utils
 from .utils import fmtn, fmtp, fmtpn, get_freq_name
 
 try:
-    import prettyplotlib  # NOQA
+    import seaborn as sns
+
+    sns.set(style="ticks", palette="Set2")
 except ImportError:
     pass
 
-# avoid pyplot import failure in headless environment
-import os
-
-import matplotlib
-
-if "DISPLAY" not in os.environ:
-    if matplotlib.__version__ > "2.":
-        matplotlib.use("agg", force=False)
-    else:
-        matplotlib.use("agg", warn=False)
-
-from matplotlib import pyplot as plt  # noqa
 
 # module level variable, can be different for non traditional markets (eg. crypto - 360)
 TRADING_DAYS_PER_YEAR = 252
@@ -335,7 +326,7 @@ class PerformanceStats(object):
                 self.return_table[fidx.year][fidx.month] = 0
             # calculate the YTD values
             for idx in self.return_table:
-                arr = np.array(listvalues(self.return_table[idx]))
+                arr = np.array(list(self.return_table[idx].values()))
                 self.return_table[idx][13] = np.prod(arr + 1) - 1
 
         if r.index.to_series().diff().min() < pd.Timedelta("93 days"):
@@ -1936,7 +1927,7 @@ def calc_clusters(returns, n=None, plot=False):
     tmp = result[0]
     # map as such {cluster: [list of tickers], cluster2: [...]}
     inv_map = {}
-    for k, v in iteritems(tmp):
+    for k, v in tmp.items():
         inv_map[v] = inv_map.get(v, [])
         inv_map[v].append(k)
 
