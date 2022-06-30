@@ -40,11 +40,11 @@ pages:
 
 serve: 
 	cd docs/build/html; \
-	python -m SimpleHTTPServer 9087
+	python -m http.server 9087
 
 notebooks:
 	cd docs/source; \
-	ipython notebook --no-browser --ip=*
+	jupyter notebook --no-browser --ip=*
 
 klink:
 	git subtree pull --prefix=docs/source/_themes/klink --squash klink master
