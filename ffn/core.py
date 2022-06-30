@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import random
 
+import matplotlib
 import numpy as np
 import pandas as pd
 import scipy.stats
@@ -20,7 +21,8 @@ from .utils import fmtn, fmtp, fmtpn, get_freq_name
 
 try:
     import seaborn as sns
-    sns.set(style='ticks', palette='Set2')
+
+    sns.set(style="ticks", palette="Set2")
 except ImportError:
     pass
 
