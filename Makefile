@@ -1,6 +1,6 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: clean dist docs pages serve notebooks klink test lint fix
+.PHONY: clean dist docs pages serve notebooks klink test lint fix develop
 
 develop:
 	python -m pip install -e .[dev]
@@ -40,11 +40,11 @@ pages:
 
 serve: 
 	cd docs/build/html; \
-	python -m SimpleHTTPServer 9087
+	python -m http.server 9087
 
 notebooks:
 	cd docs/source; \
-	ipython notebook --no-browser --ip=*
+	jupyter notebook --no-browser --ip=*
 
 klink:
 	git subtree pull --prefix=docs/source/_themes/klink --squash klink master

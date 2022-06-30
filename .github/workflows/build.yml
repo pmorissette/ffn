@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [3.7, 3.9]
+        python-version: [3.9]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
@@ -44,7 +44,6 @@ jobs:
 
     - name: Coverage
       uses: codecov/codecov-action@v3
-      if: ${{ github.event_name == matrix.event-name }}
 
     - name: Package and check
       run: |
