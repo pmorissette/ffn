@@ -53,11 +53,16 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# generated
+docs/source/intro.rst
+docs/source/quickstart.rst
+
+# css files
+docs/source/_themes/klink/static/css
+
 # vim .swp
 *.swp
 
 #ipython notebook files
 .ipynb_checkpoints/
 
-# css files
-docs/source/_themes/klink/static/css
