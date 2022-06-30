@@ -59,10 +59,10 @@ def convert_notebooks():
                 line = lines[i]
                 # add class tags to images for css formatting
                 if 'image::' in line:
-                    lines.insert(i + 1, '    :class: pynb\n')
+                    lines.insert(i + 1, '   :class: pynb\n')
                     n += 1
                 elif 'parsed-literal::' in line:
-                    lines.insert(i + 1, '    :class: pynb-result\n')
+                    lines.insert(i + 1, '   :class: pynb-result\n')
                     n += 1
                 elif 'raw:: html' in line:
                     rawWatch = True
