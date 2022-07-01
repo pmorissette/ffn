@@ -254,7 +254,8 @@ class PerformanceStats(object):
             self.avg_drawdown = self.drawdown_details["drawdown"].mean()
             self.avg_drawdown_days = self.drawdown_details["Length"].mean()
 
-        self.calmar = np.divide(self.cagr, np.abs(self.max_drawdown))
+        with np.errstate(invalid="ignore", divide="ignore"):
+            self.calmar = np.divide(self.cagr, np.abs(self.max_drawdown))
 
         if len(r) < 4:
             return
@@ -1409,7 +1410,8 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
     std = np.std(er, ddof=1)
-    res = np.divide(er.mean(), std)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        res = np.divide(er.mean(), std)
 
     if annualize:
         if nperiods is None:
@@ -2363,7 +2365,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
     negative_returns = np.minimum(er[1:], 0.0)
     std = np.std(negative_returns, ddof=1)
-    with np.errstate(divide="ignore"):
+    with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), std)
 
     if annualize:
