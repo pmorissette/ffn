@@ -30,10 +30,11 @@ setuptools.setup(
         "scikit-learn>=0.15",
         "scipy>=0.15",
         "tabulate>=0.7.5",
+        "yfinance>=0.2",
     ],
     extras_require={
         "dev": [
-            "black>=20.8b1",
+            "black>=22",
             "codecov",
             "flake8",
             "flake8-black",
