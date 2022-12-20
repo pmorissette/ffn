@@ -3,6 +3,7 @@ from distutils.version import LooseVersion
 import pandas as pd
 
 import ffn
+import yfinance
 
 # import ffn.utils as utils
 from . import utils
@@ -136,6 +137,8 @@ def _download_web(name, **kwargs):
 def yf(ticker, field, start=None, end=None, mrefresh=False):
     if field is None:
         field = "Adj Close"
+
+    yfinance.pdr_override()
 
     tmp = pdata.get_data_yahoo(ticker, start=start, end=end)
 
