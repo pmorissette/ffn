@@ -2411,7 +2411,7 @@ def calc_calmar_ratio(prices):
     return np.divide(prices.calc_cagr(), abs(prices.calc_max_drawdown()))
 
 
-def ulcer_index(prices):
+def to_ulcer_index(prices):
     """
     Calculates the Ulcer Index for a series of investment returns.
     
@@ -2441,8 +2441,6 @@ def ulcer_index(prices):
     # calculate the square root of the average squared drawdowns
     ulcer_index = np.sqrt(avg_squared_drawdowns)
     return ulcer_index
-
-
 
 
 def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
