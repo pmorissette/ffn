@@ -34,6 +34,8 @@ graphing and common data transformations.
 .. code:: python
 
     >> import ffn
+    >> import yfinance
+    >> yfinance.pdr_override()
     >> returns = ffn.get('aapl,msft,c,gs,ge', start='2010-01-01').to_returns().dropna()
     >> returns.calc_mean_var_weights().as_format('.2%')
     aapl    62.54%
