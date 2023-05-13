@@ -2411,18 +2411,38 @@ def calc_calmar_ratio(prices):
     return np.divide(prices.calc_cagr(), abs(prices.calc_max_drawdown()))
 
 
-def to_ulcer_index(prices):
+def ulcer_index(prices):
     """
+    Calculates the Ulcer Index for a series of investment returns.
+    
     Converts from prices -> `Ulcer index <https://www.investopedia.com/terms/u/ulcerindex.asp>`_
-
+    
     See https://en.wikipedia.org/wiki/Ulcer_index
 
     Args:
-        * prices (Series, DataFrame): Prices
+        prices (pandas.Series or numpy.ndarray): A series of investment returns.
 
+    Returns:
+        float: The Ulcer Index.
     """
-    dd = prices.to_drawdown_series()
-    return np.divide(np.sqrt(np.sum(np.power(dd, 2))), dd.count())
+    
+    # calculate the maximum value seen so far at each point in time
+    max_values = np.maximum.accumulate(prices)
+
+    # calculate the drawdowns relative to the maximum values
+    drawdowns = ((prices - max_values) / max_values) * 100
+    
+    # calculate the squared drawdowns
+    squared_drawdowns = np.square(drawdowns)
+
+    # calculate the average of the squared drawdowns
+    avg_squared_drawdowns = np.mean(squared_drawdowns)
+
+    # calculate the square root of the average squared drawdowns
+    ulcer_index = np.sqrt(avg_squared_drawdowns)
+    return ulcer_index
+
+
 
 
 def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
