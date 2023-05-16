@@ -68,7 +68,6 @@ class PerformanceStats(object):
         self._update(self.prices)
 
     def set_riskfree_rate(self, rf):
-
         """
         Set annual risk-free rate property and calculate properly annualized
         monthly and daily rates. Then performance stats are recalculated.
@@ -928,7 +927,6 @@ class GroupStats(dict):
             return "%s %s" % (get_freq_name(freq), kind)
 
     def set_riskfree_rate(self, rf):
-
         """
         Set annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ property and calculate properly annualized
         monthly and daily rates. Then performance stats are recalculated.
@@ -1730,7 +1728,6 @@ def _erc_weights_ccd(x0, cov, b, maximum_iterations, tolerance):
     sigma_x = np.sqrt(x.T.dot(ctr))
 
     for iteration in range(maximum_iterations):
-
         for i in range(n):
             alpha = var[i]
             beta = ctr[i] - x[i] * alpha
@@ -2414,9 +2411,9 @@ def calc_calmar_ratio(prices):
 def to_ulcer_index(prices):
     """
     Calculates the Ulcer Index for a series of investment returns.
-    
+
     Converts from prices -> `Ulcer index <https://www.investopedia.com/terms/u/ulcerindex.asp>`_
-    
+
     See https://en.wikipedia.org/wiki/Ulcer_index
 
     Args:
@@ -2425,13 +2422,13 @@ def to_ulcer_index(prices):
     Returns:
         float: The Ulcer Index.
     """
-    
+
     # calculate the maximum value seen so far at each point in time
     max_values = np.maximum.accumulate(prices)
 
     # calculate the drawdowns relative to the maximum values
     drawdowns = ((prices - max_values) / max_values) * 100
-    
+
     # calculate the squared drawdowns
     squared_drawdowns = np.square(drawdowns)
 
