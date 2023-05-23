@@ -1,20 +1,27 @@
 import ffn
 import pandas as pd
 import numpy as np
+from pytest import fixture
 from numpy.testing import assert_almost_equal as aae
 
-try:
-    df = pd.read_csv("tests/data/test_data.csv", index_col=0, parse_dates=True)
-except FileNotFoundError as e:
+
+@fixture
+def df():
     try:
-        df = pd.read_csv("data/test_data.csv", index_col=0, parse_dates=True)
-    except FileNotFoundError as e2:
-        raise (str(e2))
+        df = pd.read_csv("tests/data/test_data.csv", index_col=0, parse_dates=True)
+    except FileNotFoundError as e:
+        try:
+            df = pd.read_csv("data/test_data.csv", index_col=0, parse_dates=True)
+        except FileNotFoundError as e2:
+            raise (str(e2))
+    return df
 
-ts = df["AAPL"][0:10]
+@fixture
+def ts(df):
+    return df["AAPL"][0:10]
 
 
-def test_mtd_ytd():
+def test_mtd_ytd(df):
     data = df["AAPL"]
 
     # Intramonth
@@ -61,7 +68,7 @@ def test_mtd_ytd():
     assert mtd_actual == ytd_actual == 0
 
 
-def test_to_returns_ts():
+def test_to_returns_ts(ts):
     data = ts
     actual = data.to_returns()
 
@@ -71,7 +78,7 @@ def test_to_returns_ts():
     aae(actual[9], -0.022, 3)
 
 
-def test_to_returns_df():
+def test_to_returns_df(df):
     data = df
     actual = data.to_returns()
 
@@ -85,7 +92,7 @@ def test_to_returns_df():
     aae(actual["C"][9], 0.004, 3)
 
 
-def test_to_log_returns_ts():
+def test_to_log_returns_ts(ts):
     data = ts
     actual = data.to_log_returns()
 
@@ -95,7 +102,7 @@ def test_to_log_returns_ts():
     aae(actual[9], -0.022, 3)
 
 
-def test_to_log_returns_df():
+def test_to_log_returns_df(df):
     data = df
     actual = data.to_log_returns()
 
@@ -109,7 +116,7 @@ def test_to_log_returns_df():
     aae(actual["C"][9], 0.004, 3)
 
 
-def test_to_price_index():
+def test_to_price_index(df):
     data = df
     rets = data.to_returns()
     actual = rets.to_price_index()
@@ -133,7 +140,7 @@ def test_to_price_index():
     aae(actual["C"][9], 1.012, 3)
 
 
-def test_rebase():
+def test_rebase(df):
     data = df
     actual = data.rebase()
 
@@ -146,7 +153,7 @@ def test_rebase():
     aae(actual["C"][9], 101.199, 3)
 
 
-def test_to_drawdown_series_ts():
+def test_to_drawdown_series_ts(ts):
     data = ts
     actual = data.to_drawdown_series()
 
@@ -156,7 +163,7 @@ def test_to_drawdown_series_ts():
     aae(actual[9], -0.086, 3)
 
 
-def test_to_drawdown_series_df():
+def test_to_drawdown_series_df(df):
     data = df
     actual = data.to_drawdown_series()
 
@@ -174,14 +181,14 @@ def test_to_drawdown_series_df():
     aae(actual["C"][9], -0.029, 3)
 
 
-def test_max_drawdown_ts():
+def test_max_drawdown_ts(ts):
     data = ts
     actual = data.calc_max_drawdown()
 
     aae(actual, -0.086, 3)
 
 
-def test_max_drawdown_df():
+def test_max_drawdown_df(df):
     data = df
     data = data[0:10]
     actual = data.calc_max_drawdown()
@@ -197,13 +204,13 @@ def test_year_frac():
     aae(actual, 0.0520, 4)
 
 
-def test_cagr_ts():
+def test_cagr_ts(ts):
     data = ts
     actual = data.calc_cagr()
     aae(actual, -0.921, 3)
 
 
-def test_cagr_df():
+def test_cagr_df(df):
     data = df
     actual = data.calc_cagr()
     aae(actual["AAPL"], 0.440, 3)
@@ -246,7 +253,7 @@ def test_merge():
     assert actual["b"][1] == 200
 
 
-def test_calc_inv_vol_weights():
+def test_calc_inv_vol_weights(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
     actual = ffn.core.calc_inv_vol_weights(rets)
@@ -261,7 +268,7 @@ def test_calc_inv_vol_weights():
     aae(actual["C"], 0.318, 3)
 
 
-def test_calc_mean_var_weights():
+def test_calc_mean_var_weights(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
     actual = ffn.core.calc_mean_var_weights(rets)
@@ -276,7 +283,7 @@ def test_calc_mean_var_weights():
     aae(actual["C"], 1.000, 3)
 
 
-def test_calc_erc_weights():
+def test_calc_erc_weights(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
 
@@ -331,7 +338,7 @@ def test_calc_erc_weights():
     aae(actual["C"], 0.356, 3)
 
 
-def test_calc_total_return():
+def test_calc_total_return(df):
     prc = df.iloc[0:11]
     actual = prc.calc_total_return()
 
@@ -597,7 +604,7 @@ def test_annualize():
     assert ffn.annualize(0.1, 60) == (1.1 ** (1.0 / (60.0 / 365)) - 1)
 
 
-def test_calc_sortino_ratio():
+def test_calc_sortino_ratio(df):
     rf = 0
     p = 1
     r = df.to_returns()
@@ -609,7 +616,7 @@ def test_calc_sortino_ratio():
     )
 
 
-def test_calmar_ratio():
+def test_calmar_ratio(df):
     cagr = df.calc_cagr()
     mdd = df.calc_max_drawdown()
 
@@ -617,7 +624,7 @@ def test_calmar_ratio():
     assert np.allclose(a, cagr / abs(mdd))
 
 
-def test_calc_stats():
+def test_calc_stats(df):
     # test twelve_month_win_perc divide by zero
     prices = df.C["2010-10-01":"2011-08-01"]
     stats = ffn.calc_stats(prices).stats
@@ -637,7 +644,7 @@ def test_calc_stats():
     assert pd.isnull(stats["yearly_sharpe"])
 
 
-def test_calc_sharpe():
+def test_calc_sharpe(df):
     x = pd.Series()
     assert np.isnan(x.calc_sharpe())
 
@@ -657,7 +664,7 @@ def test_deannualize():
     assert np.allclose(res, np.power(1.05, 1 / 252.0) - 1)
 
 
-def test_to_excess_returns():
+def test_to_excess_returns(df):
     rf = 0.05
     r = df.to_returns()
 
@@ -671,7 +678,7 @@ def test_to_excess_returns():
     np.allclose(r.to_excess_returns(rf), r - rf)
 
 
-def test_set_riskfree_rate():
+def test_set_riskfree_rate(df):
     r = df.to_returns()
 
     performanceStats = ffn.PerformanceStats(df["MSFT"])
@@ -781,7 +788,7 @@ def test_set_riskfree_rate():
     aae(performanceStats.yearly_sharpe, groupStats["MSFT"].yearly_sharpe, 3)
 
 
-def test_performance_stats():
+def test_performance_stats(df):
     ps = ffn.PerformanceStats(df["AAPL"])
 
     num_stats = len(ps.stats.keys())
@@ -789,7 +796,7 @@ def test_performance_stats():
     assert num_stats == num_unique_stats
 
 
-def test_group_stats_calc_stats():
+def test_group_stats_calc_stats(df):
     gs = df.calc_stats()
 
     num_stats = len(gs.stats.index)
@@ -797,7 +804,7 @@ def test_group_stats_calc_stats():
     assert num_stats == num_unique_stats
 
 
-def test_resample_returns():
+def test_resample_returns(df):
     num_years = 30
     num_months = num_years * 12
     np.random.seed(0)
@@ -922,7 +929,7 @@ def test_monthly_returns():
     obj1.monthly_returns == df1["Price"].resample("M").last().pct_change()
 
 
-def test_drawdown_details():
+def test_drawdown_details(df):
     drawdown = ffn.to_drawdown_series(df["MSFT"])
     drawdown_details = ffn.drawdown_details(drawdown)
 

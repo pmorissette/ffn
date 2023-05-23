@@ -10,6 +10,7 @@ import sklearn.cluster
 import sklearn.covariance
 import sklearn.manifold
 from matplotlib import pyplot as plt  # noqa
+from packaging.version import Version
 from pandas.core.base import PandasObject
 from scipy.optimize import minimize
 from scipy.stats import t
@@ -26,6 +27,7 @@ try:
 except ImportError:
     pass
 
+_PANDAS_TWO = Version(pd.__version__) >= Version("2")
 
 # module level variable, can be different for non traditional markets (eg. crypto - 360)
 TRADING_DAYS_PER_YEAR = 252
@@ -1415,8 +1417,7 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
         if nperiods is None:
             nperiods = 1
         return res * np.sqrt(nperiods)
-    else:
-        return res
+    return res
 
 
 def calc_information_ratio(returns, benchmark_returns):
@@ -2291,53 +2292,53 @@ def infer_freq(data):
             * data (DataFrame, Series): Any timeseries dataframe or series
     """
     try:
-        return pd.infer_freq(data.index, warn=False)
+        if _PANDAS_TWO:
+            return pd.infer_freq(data.index)
+        else:
+            return pd.infer_freq(data.index, warn=False)
     except Exception:
         return None
 
 
-def infer_nperiods(data, annualization_factor=None):
-    if annualization_factor is None:
-        annualization_factor = TRADING_DAYS_PER_YEAR
+def _whole_periods_str_to_nperiods(freq, annualization_factor=TRADING_DAYS_PER_YEAR):
+    if freq == "Y" or freq == "A":
+        return 1
+    if freq == "M":
+        return 12
+    if freq == "D":
+        return annualization_factor
+    if freq == "H":
+        return annualization_factor * 24
+    if freq == "T":
+        return annualization_factor * 24 * 60
+    if freq == "S":
+        return annualization_factor * 24 * 60 * 60
+    return None
 
+
+def infer_nperiods(data, annualization_factor=TRADING_DAYS_PER_YEAR):
+    annualization_factor = annualization_factor or TRADING_DAYS_PER_YEAR
     freq = infer_freq(data)
 
     if freq is None:
         return None
 
-    def whole_periods_str_to_nperiods(freq):
-        if freq == "Y" or freq == "A":
-            return 1
-        if freq == "M":
-            return 12
-        if freq == "D":
-            return annualization_factor
-        if freq == "H":
-            return annualization_factor * 24
-        if freq == "T":
-            return annualization_factor * 24 * 60
-        if freq == "S":
-            return annualization_factor * 24 * 60 * 60
-        return None
-
-    ""
     if len(freq) == 1:
-        return whole_periods_str_to_nperiods(freq)
-    else:
-        try:
-            if freq.startswith("A"):
-                return 1
-            else:
-                whole_periods_str = freq[-1]
-                num_str = freq[:-1]
-                num = int(num_str)
-                return num * whole_periods_str_to_nperiods(whole_periods_str)
-        except KeyboardInterrupt:
-            raise
-        except BaseException:
-            return None
-
-    return None
+        return _whole_periods_str_to_nperiods(freq, annualization_factor)
+    try:
+        if freq.startswith("A"):
+            return 1
+        else:
+            whole_periods_str = freq[-1]
+            num_str = freq[:-1]
+            num = int(num_str)
+            return num * _whole_periods_str_to_nperiods(
+                whole_periods_str, annualization_factor
+            )
+    except KeyboardInterrupt:
+        raise
+    except BaseException:
+        return None
 
 
 def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):

@@ -1,19 +1,16 @@
-from distutils.version import LooseVersion
-
-import pandas as pd
-
 import ffn
+import pandas as pd
 import yfinance
+from packaging.version import Version
+from pandas_datareader import data as pdata
 
 # import ffn.utils as utils
 from . import utils
 
 # This is a temporary fix until pandas_datareader 0.7 is released.
 # pandas 0.23 has moved is_list_like from common to api.types, hence the monkey patch
-if LooseVersion(pd.__version__) > LooseVersion("0.23.0"):
+if Version(pd.__version__) > Version("0.23.0"):
     pd.core.common.is_list_like = pd.api.types.is_list_like
-
-from pandas_datareader import data as pdata
 
 
 @utils.memoize
