@@ -229,7 +229,7 @@ class PerformanceStats(object):
             self.best_day = r.max()
             self.worst_day = r.min()
 
-        self.total_return = obj[-1] / obj[0] - 1
+        self.total_return = obj.iloc[-1] / obj.iloc[0] - 1
 
         self.cagr = calc_cagr(dp)
         self.incep = self.cagr
@@ -305,7 +305,7 @@ class PerformanceStats(object):
             # add first month
             fidx = mr.index[0]
             try:
-                self.return_table[fidx.year][fidx.month] = float(mp[0]) / dp[0] - 1
+                self.return_table[fidx.year][fidx.month] = float(mp.iloc[0]) / dp.iloc[0] - 1
             except ZeroDivisionError:
                 self.return_table[fidx.year][fidx.month] = 0
             # calculate the YTD values
@@ -319,7 +319,7 @@ class PerformanceStats(object):
 
             denom = dp[: dp.index[-1] - pd.DateOffset(months=3)]
             if len(denom) > 0:
-                self.three_month = dp[-1] / denom[-1] - 1
+                self.three_month = dp.iloc[-1] / denom.iloc[-1] - 1
 
         if r.index.to_series().diff().min() < pd.Timedelta("32 days"):
             if len(mr) < 4:
@@ -338,7 +338,7 @@ class PerformanceStats(object):
             denom = dp[: dp.index[-1] - pd.DateOffset(months=6)]
 
             if len(denom) > 0:
-                self.six_month = dp[-1] / denom[-1] - 1
+                self.six_month = dp.iloc[-1] / denom.iloc[-1] - 1
 
         # Will calculate yearly figures only if the input data has at least yearly frequency or higher (e.g monthly)
         # Rather < 367 days than <= 366 days in case of data taken at different hours of the days
@@ -352,7 +352,7 @@ class PerformanceStats(object):
             denom = dp[: dp.index[-1] - pd.DateOffset(years=1)]
 
             if len(denom) > 0:
-                self.one_year = dp[-1] / denom[-1] - 1
+                self.one_year = dp.iloc[-1] / denom.iloc[-1] - 1
 
             self.yearly_mean = yr.mean()
             self.yearly_vol = np.std(yr, ddof=1)
@@ -381,7 +381,7 @@ class PerformanceStats(object):
                 win = 0
                 for i in range(11, len(mr)):
                     tot += 1
-                    if mp[i] / mp[i - 11] > 1:
+                    if mp.iloc[i] / mp.iloc[i - 11] > 1:
                         win += 1
                 self.twelve_month_win_perc = float(win) / tot
 
@@ -1229,7 +1229,7 @@ def to_drawdown_series(prices):
     drawdown = prices.copy()
 
     # Fill NaN's with previous values
-    drawdown = drawdown.fillna(method="ffill")
+    drawdown = drawdown.ffill()
 
     # Ignore problems with NaN's in the beginning
     drawdown[np.isnan(drawdown)] = -np.Inf
@@ -1253,9 +1253,9 @@ def calc_mtd(daily_prices, monthly_prices):
     else use monthly_prices
     """
     if len(monthly_prices) == 1:
-        return daily_prices[-1] / daily_prices[0] - 1
+        return daily_prices.iloc[-1] / daily_prices.iloc[0] - 1
     else:
-        return daily_prices[-1] / monthly_prices[-2] - 1
+        return daily_prices.iloc[-1] / monthly_prices.iloc[-2] - 1
 
 
 def calc_ytd(daily_prices, yearly_prices):
@@ -1265,9 +1265,9 @@ def calc_ytd(daily_prices, yearly_prices):
     else use yearly_prices
     """
     if len(yearly_prices) == 1:
-        return daily_prices[-1] / daily_prices[0] - 1
+        return daily_prices.iloc[-1] / daily_prices.iloc[0] - 1
     else:
-        return daily_prices[-1] / yearly_prices[-2] - 1
+        return daily_prices.iloc[-1] / yearly_prices.iloc[-2] - 1
 
 
 def calc_max_drawdown(prices):
