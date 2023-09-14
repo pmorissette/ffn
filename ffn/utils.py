@@ -53,7 +53,7 @@ def parse_arg(arg):
     Returns a list.
     """
     # handle string input
-    if type(arg) == str:
+    if isinstance(arg, str):
         arg = arg.strip()
         # parse csv as tickers and create children
         if "," in arg:
