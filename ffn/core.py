@@ -721,7 +721,7 @@ class PerformanceStats(object):
             # blank row
             if k is None:
                 continue
-            elif k == "rf" and not type(self.rf) == float:
+            elif k == "rf" and not isinstance(self.rf, float):
                 continue
 
             if n in short_names:
@@ -757,7 +757,7 @@ class PerformanceStats(object):
                 row = [""] * len(data[0])
                 data.append(sep.join(row))
                 continue
-            elif k == "rf" and not type(self.rf) == float:
+            elif k == "rf" and not isinstance(self.rf, float):
                 continue
 
             row = [n]
@@ -983,7 +983,7 @@ class GroupStats(dict):
                 raw = getattr(self[key], k)
 
                 # if rf is a series print nan
-                if k == "rf" and not type(raw) == float:
+                if k == "rf" and not isinstance(raw, float):
                     row.append(np.nan)
                 elif f is None:
                     row.append(raw)
