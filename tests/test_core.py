@@ -267,6 +267,15 @@ def test_calc_inv_vol_weights(df):
     aae(actual["MSFT"], 0.464, 3)
     aae(actual["C"], 0.318, 3)
 
+def test_calc_inv_vol_weights_object_regression_204(df):
+    prc = df.iloc[0:11]
+    rets = prc.to_returns().dropna().astype(object)
+    actual = ffn.core.calc_inv_vol_weights(rets)
+
+    aae(actual["AAPL"], 0.218, 3)
+    aae(actual["MSFT"], 0.464, 3)
+    aae(actual["C"], 0.318, 3)
+
 
 def test_calc_mean_var_weights(df):
     prc = df.iloc[0:11]
@@ -958,17 +967,17 @@ def test_infer_nperiods():
             index = pd.date_range(start='2018-01-01', periods = 10, freq = 'T'))
     secondly = pd.DataFrame(np.random.randn(10),
             index = pd.date_range(start='2018-01-01', periods = 10, freq = 'S'))
-    
+
     minutely_30 = pd.DataFrame(np.random.randn(10),
             index = pd.date_range(start='2018-01-01', periods = 10, freq = '30T'))
-    
-    
+
+
     not_known_vals = np.concatenate((pd.date_range(start='2018-01-01', periods = 5, freq = '1H').values,
     pd.date_range(start='2018-01-02', periods = 5, freq = '5H').values))
-        
+
     not_known = pd.DataFrame(np.random.randn(10),
             index = pd.DatetimeIndex(not_known_vals))
-    
+
     assert ffn.core.infer_nperiods(daily) == ffn.core.TRADING_DAYS_PER_YEAR
     assert ffn.core.infer_nperiods(hourly) == ffn.core.TRADING_DAYS_PER_YEAR * 24
     assert ffn.core.infer_nperiods(minutely) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60
@@ -977,4 +986,3 @@ def test_infer_nperiods():
     assert ffn.core.infer_nperiods(yearly) == 1
     assert ffn.core.infer_nperiods(minutely_30) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 30
     assert ffn.core.infer_nperiods(not_known) is None
-    
