@@ -36,17 +36,13 @@ jobs:
         python -m pip install -U wheel twine setuptools
 
     - name: Lint
-      run: |
-        make lint
+      run: make lint
 
     - name: Test
-      run: |
-        make test
+      run: make test
 
     - name: Coverage
       uses: codecov/codecov-action@v3
 
     - name: Package and check
-      run: |
-        python setup.py sdist bdist_wheel
-        python -m twine check dist/*
+      run: make dist
