@@ -667,7 +667,7 @@ class PerformanceStats(object):
 
         plt.figure(figsize=figsize)
 
-        if matplotlib.__version__ > "2.":
+        if Version(matplotlib.__version__) >= Version("2"):
             # normed deprecated
             ax = ser.hist(bins=bins, figsize=figsize, density=True, **kwargs)
         else:
