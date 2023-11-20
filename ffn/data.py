@@ -14,18 +14,7 @@ if Version(pd.__version__) > Version("0.23.0"):
 
 
 @utils.memoize
-def get(
-    tickers,
-    provider=None,
-    common_dates=True,
-    forward_fill=False,
-    clean_tickers=True,
-    column_names=None,
-    ticker_field_sep=":",
-    mrefresh=False,
-    existing=None,
-    **kwargs
-):
+def get(tickers, provider=None, common_dates=True, forward_fill=False, clean_tickers=True, column_names=None, ticker_field_sep=":", mrefresh=False, existing=None, **kwargs):
     """
     Helper function for retrieving data as a DataFrame.
 

@@ -20,14 +20,8 @@ from tabulate import tabulate
 from . import utils
 from .utils import fmtn, fmtp, fmtpn, get_freq_name
 
-try:
-    import seaborn as sns
-
-    sns.set(style="ticks", palette="Set2")
-except ImportError:
-    pass
-
 _PANDAS_TWO = Version(pd.__version__) >= Version("2")
+
 
 # module level variable, can be different for non traditional markets (eg. crypto - 360)
 TRADING_DAYS_PER_YEAR = 252
@@ -224,21 +218,13 @@ class PerformanceStats(object):
             self.daily_vol = np.std(r, ddof=1) * np.sqrt(self.annualization_factor)
 
             if isinstance(self.rf, float):
-                self.daily_sharpe = r.calc_sharpe(
-                    rf=self.rf, nperiods=self.annualization_factor
-                )
-                self.daily_sortino = calc_sortino_ratio(
-                    r, rf=self.rf, nperiods=self.annualization_factor
-                )
+                self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=self.annualization_factor)
+                self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=self.annualization_factor)
             # rf is a price series
             else:
                 _rf_daily_price_returns = self.rf.to_returns()
-                self.daily_sharpe = r.calc_sharpe(
-                    rf=_rf_daily_price_returns, nperiods=self.annualization_factor
-                )
-                self.daily_sortino = calc_sortino_ratio(
-                    r, rf=_rf_daily_price_returns, nperiods=self.annualization_factor
-                )
+                self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=self.annualization_factor)
+                self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=self.annualization_factor)
 
             self.best_day = r.max()
             self.worst_day = r.min()
@@ -281,18 +267,14 @@ class PerformanceStats(object):
             self.monthly_mean = mr.mean() * 12
             self.monthly_vol = np.std(mr, ddof=1) * np.sqrt(12)
 
-            if type(self.rf) is float:
+            if isinstance(self.rf, float):
                 self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
                 self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
             # rf is a price series
             else:
                 _rf_monthly_price_returns = self.rf.resample("M").last().to_returns()
-                self.monthly_sharpe = mr.calc_sharpe(
-                    rf=_rf_monthly_price_returns, nperiods=12
-                )
-                self.monthly_sortino = calc_sortino_ratio(
-                    mr, rf=_rf_monthly_price_returns, nperiods=12
-                )
+                self.monthly_sharpe = mr.calc_sharpe(rf=_rf_monthly_price_returns, nperiods=12)
+                self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
             self.best_month = mr.max()
             self.worst_month = mr.min()
 
@@ -384,12 +366,8 @@ class PerformanceStats(object):
             else:
                 _rf_yearly_price_returns = self.rf.resample("A").last().to_returns()
                 if self.yearly_vol > 0:
-                    self.yearly_sharpe = yr.calc_sharpe(
-                        rf=_rf_yearly_price_returns, nperiods=1
-                    )
-                self.yearly_sortino = calc_sortino_ratio(
-                    yr, rf=_rf_yearly_price_returns, nperiods=1
-                )
+                    self.yearly_sharpe = yr.calc_sharpe(rf=_rf_yearly_price_returns, nperiods=1)
+                self.yearly_sortino = calc_sortino_ratio(yr, rf=_rf_yearly_price_returns, nperiods=1)
 
             self.best_year = yr.max()
             self.worst_year = yr.min()
@@ -515,7 +493,7 @@ class PerformanceStats(object):
         provided.
         """
         print("Stats for %s from %s - %s" % (self.name, self.start, self.end))
-        if type(self.rf) is float:
+        if isinstance(self.rf, float):
             print("Annual risk-free rate considered: %s" % (fmtp(self.rf)))
         print("Summary:")
         data = [
@@ -526,9 +504,7 @@ class PerformanceStats(object):
                 fmtp(self.max_drawdown),
             ]
         ]
-        print(
-            tabulate(data, headers=["Total Return", "Sharpe", "CAGR", "Max Drawdown"])
-        )
+        print(tabulate(data, headers=["Total Return", "Sharpe", "CAGR", "Max Drawdown"]))
 
         print("\nAnnualized Returns:")
         data = [
@@ -916,9 +892,7 @@ class GroupStats(dict):
 
     def _update_stats(self):
         # lookback returns dataframe
-        self.lookback_returns = pd.DataFrame(
-            {x.lookback_returns.name: x.lookback_returns for x in self.values()}
-        )
+        self.lookback_returns = pd.DataFrame({x.lookback_returns.name: x.lookback_returns for x in self.values()})
 
         self.stats = pd.DataFrame({x.name: x.stats for x in self.values()})
 
@@ -1349,9 +1323,7 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     if start[-1] > end[-1]:
         end.append(drawdown.index[-1])
 
-    result = pd.DataFrame(
-        columns=("Start", "End", "Length", "drawdown"), index=range(0, len(start))
-    )
+    result = pd.DataFrame(columns=("Start", "End", "Length", "drawdown"), index=range(0, len(start)))
 
     for i in range(0, len(start)):
         dd = drawdown[start[i] : end[i]].min()
@@ -1538,9 +1510,7 @@ def asfreq_actual(series, freq, method="ffill", how="end", normalize=False):
         orig = pd.DataFrame({name: series})
 
     # add date column
-    t = pd.concat(
-        [orig, pd.DataFrame({"dt": orig.index.values}, index=orig.index.values)], axis=1
-    )
+    t = pd.concat([orig, pd.DataFrame({"dt": orig.index.values}, index=orig.index.values)], axis=1)
     # fetch dates
     dts = t.asfreq(freq=freq, method=method, how=how, normalize=normalize)["dt"]
 
@@ -1573,9 +1543,7 @@ def calc_inv_vol_weights(returns):
     return np.divide(vol, volsum)
 
 
-def calc_mean_var_weights(
-    returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_method="ledoit-wolf", options=None
-):
+def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_method="ledoit-wolf", options=None):
     """
     Calculates the mean-variance weights given a DataFrame of returns.
 
@@ -1740,9 +1708,7 @@ def _erc_weights_ccd(x0, cov, b, maximum_iterations, tolerance):
             ctr = ctr - cov[i] * x_i + cov[i] * x_tilde
             sigma_x = sigma_x * sigma_x - 2 * x_i * cov[i].dot(x) + x_i * x_i * var[i]
             x[i] = x_tilde
-            sigma_x = np.sqrt(
-                sigma_x + 2 * x_tilde * cov[i].dot(x) - x_tilde * x_tilde * var[i]
-            )
+            sigma_x = np.sqrt(sigma_x + 2 * x_tilde * cov[i].dot(x) - x_tilde * x_tilde * var[i])
 
         # check convergence
         if np.power((x - x0) / x.sum(), 2).sum() < tolerance:
@@ -1751,9 +1717,7 @@ def _erc_weights_ccd(x0, cov, b, maximum_iterations, tolerance):
         x0 = x.copy()
 
     # no solution found
-    raise ValueError(
-        "No solution found after {0} iterations.".format(maximum_iterations)
-    )
+    raise ValueError("No solution found after {0} iterations.".format(maximum_iterations))
 
 
 def calc_erc_weights(
@@ -1810,14 +1774,10 @@ def calc_erc_weights(
     # calc risk parity weights matrix
     if risk_parity_method == "ccd":
         # cyclical coordinate descent implementation
-        erc_weights = _erc_weights_ccd(
-            initial_weights, covar, risk_weights, maximum_iterations, tolerance
-        )
+        erc_weights = _erc_weights_ccd(initial_weights, covar, risk_weights, maximum_iterations, tolerance)
     elif risk_parity_method == "slsqp":
         # scipys slsqp optimizer
-        erc_weights = _erc_weights_slsqp(
-            initial_weights, covar, risk_weights, maximum_iterations, tolerance
-        )
+        erc_weights = _erc_weights_slsqp(initial_weights, covar, risk_weights, maximum_iterations, tolerance)
 
     else:
         raise NotImplementedError("risk_parity_method not implemented")
@@ -1826,9 +1786,7 @@ def calc_erc_weights(
     return pd.Series(erc_weights, index=returns.columns, name="erc")
 
 
-def get_num_days_required(
-    offset, period="d", perc_required=0.90, annualization_factor=252
-):
+def get_num_days_required(offset, period="d", perc_required=0.90, annualization_factor=252):
     """
     Estimates the number of days required to assume that data is OK.
 
@@ -2051,9 +2009,7 @@ def limit_weights(weights, limit=0.1):
         weights = pd.Series(weights)
 
     if np.round(weights.sum(), 1) != 1.0:
-        raise ValueError(
-            "Expecting weights (that sum to 1) - sum is %s" % weights.sum()
-        )
+        raise ValueError("Expecting weights (that sum to 1) - sum is %s" % weights.sum())
 
     res = np.round(weights.copy(), 4)
     to_rebalance = (res[res > limit] - limit).sum()
@@ -2115,19 +2071,7 @@ def random_weights(n, bounds=(0.0, 1.0), total=1.0):
     return w
 
 
-def plot_heatmap(
-    data,
-    title="Heatmap",
-    show_legend=True,
-    show_labels=True,
-    label_fmt=".2f",
-    vmin=None,
-    vmax=None,
-    figsize=None,
-    label_color="w",
-    cmap="RdBu",
-    **kwargs
-):
+def plot_heatmap(data, title="Heatmap", show_legend=True, show_labels=True, label_fmt=".2f", vmin=None, vmax=None, figsize=None, label_color="w", cmap="RdBu", **kwargs):
     """
     Plot a heatmap using matplotlib's pcolor.
 
@@ -2332,9 +2276,7 @@ def infer_nperiods(data, annualization_factor=TRADING_DAYS_PER_YEAR):
             whole_periods_str = freq[-1]
             num_str = freq[:-1]
             num = int(num_str)
-            return num * _whole_periods_str_to_nperiods(
-                whole_periods_str, annualization_factor
-            )
+            return num * _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor)
     except KeyboardInterrupt:
         raise
     except BaseException:

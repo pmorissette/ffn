@@ -9,26 +9,27 @@ test:
 	python -m pytest -vvv tests --cov=ffn --junitxml=python_junit.xml --cov-report=xml --cov-branch --cov-report term
 
 lint:
-	python -m flake8 ffn setup.py docs/source/conf.py
+	python -m ruff ffn setup.py docs/source/conf.py
 
 fix:
-	python -m black ffn setup.py docs/source/conf.py
+	python -m ruff format ffn setup.py docs/source/conf.py
 
 clean:
 	- rm -rf dist
 	- rm -rf ffn.egg-info
 
 dist:
-	python setup.py sdist
+	python -m build
+	twine check dist/*
 
 upload: clean dist
 	twine upload dist/*
 
-docs: 
+docs:
 	$(MAKE) -C docs/ clean
 	$(MAKE) -C docs/ html
 
-pages: 
+pages:
 	rm -rf $(TMPREPO)
 	git clone -b gh-pages git@github.com:pmorissette/ffn.git $(TMPREPO)
 	rm -rf $(TMPREPO)/*
@@ -38,7 +39,7 @@ pages:
 	git commit -a -m 'auto-updating docs';\
 	git push;\
 
-serve: 
+serve:
 	cd docs/build/html; \
 	python -m http.server 9087
 
