@@ -1,11 +1,12 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ffn"
 description = "Financial functions for Python"
-version = "0.4.0"
+version = "1.0.0"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
 requires-python = ">=3.8"
@@ -67,6 +68,3 @@ line-length = 180
 
 [tool.ruff.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
-
-[tool.setuptools]
-py-modules = ["ffn"]
