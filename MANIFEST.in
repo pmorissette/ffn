@@ -1,9 +1,10 @@
 graft ffn
 include LICENSE.txt
 include README.rst
-
-include setup.cfg
 include pyproject.toml
+
+exclude setup.cfg
+prune tests
 
 # Patterns to exclude from any directory
 global-exclude *~

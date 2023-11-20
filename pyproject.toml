@@ -1,3 +1,72 @@
 [build-system]
 # Minimum requirements for the build system to execute.
 requires = ["setuptools", "wheel"]
+
+[project]
+name = "ffn"
+description = "Financial functions for Python"
+version = "0.3.7"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+requires-python = ">=3.8"
+authors = [
+    { name = "Philippe Morissette", email = "morissette.philippe@gmail.com" },
+]
+keywords = [
+    "python",
+    "finance",
+    "quant",
+    "quant finance",
+    "algotrading",
+    "algorithmic trading",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "decorator>=4",
+    "matplotlib>=1",
+    "numpy>=1.5",
+    "pandas>=0.19",
+    "pandas-datareader>=0.2",
+    "scikit-learn>=0.15",
+    "scipy>=0.15",
+    "tabulate>=0.7.5",
+    "yfinance>=0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "ruff",
+    "pytest",
+    "pytest-cov",
+    "wheel",
+]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Repository = "https://github.com/pmorissette/ffn"
+Homepage = "http://pmorissette.github.io/ffn/"
+
+
+[tool.ruff]
+line-length = 180
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401", "F403"]
+
+[tool.setuptools]
+py-modules = ["ffn"]
