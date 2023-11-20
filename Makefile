@@ -20,10 +20,10 @@ clean:
 
 dist:
 	python -m build
-	twine check dist/*
+	python -m twine check dist/*
 
 upload: clean dist
-	twine upload dist/*
+	python -m twine upload dist/* --skip-existing
 
 docs:
 	$(MAKE) -C docs/ clean
