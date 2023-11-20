@@ -1,8 +1,9 @@
 graft ffn
-include LICENSE.txt
-include README.rst
+include LICENSE
+include README.md
 include pyproject.toml
 
+prune docs
 prune tests
 
 # Patterns to exclude from any directory
