@@ -3,7 +3,6 @@ include LICENSE.txt
 include README.rst
 include pyproject.toml
 
-exclude setup.cfg
 prune tests
 
 # Patterns to exclude from any directory
