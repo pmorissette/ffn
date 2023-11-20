@@ -1567,7 +1567,7 @@ def calc_inv_vol_weights(returns):
         Series {col_name: weight}
     """
     # calc vols
-    vol = np.divide(1.0, np.std(returns, ddof=1))
+    vol = np.divide(1.0, np.std(returns, ddof=1)).astype(float)
     vol[np.isinf(vol)] = np.NaN
     volsum = vol.sum()
     return np.divide(vol, volsum)
