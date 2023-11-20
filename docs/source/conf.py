@@ -69,7 +69,7 @@ If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new
 # built documents.
 #
 # The short X.Y version.
-version = ".".join(str(x) for x in ffn.__version__)
+version = ffn.__version__
 # The full version, including alpha/beta/rc tags.
 release = version
 
