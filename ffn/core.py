@@ -1181,7 +1181,7 @@ def rebase(prices, value=100):
     return prices / prices.iloc[0] * value
 
 
-def calc_perf_stats(prices):
+def calc_perf_stats(prices, risk_free_rate=0.0, annualization_factor=252):
     """
     Calculates the performance statistics given an object.
     The object should be a Series of prices.
@@ -1190,9 +1190,11 @@ def calc_perf_stats(prices):
 
     Args:
         * prices (Series): Series of prices
+        * risk_free_rate (float, Series): Annual risk-free rate or risk-free rate price series
+        * annualization_factor (int): Annualizing factor. Default is 252 (trading days)
 
     """
-    return PerformanceStats(prices)
+    return PerformanceStats(prices, rf=risk_free_rate, annualization_factor=annualization_factor)
 
 
 def calc_stats(prices):
