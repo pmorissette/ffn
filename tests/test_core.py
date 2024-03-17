@@ -18,7 +18,7 @@ def df():
 
 @fixture
 def ts(df):
-    return df["AAPL"][0:10]
+    return df["AAPL"].iloc[0:10]
 
 
 def test_mtd_ytd(df):
@@ -27,8 +27,8 @@ def test_mtd_ytd(df):
     # Intramonth
     prices = data[pd.to_datetime("2004-12-10") : pd.to_datetime("2004-12-25")]
     dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    mp = prices.resample(ffn.core._MonthEnd).last().dropna()
+    yp = prices.resample(ffn.core._YearEnd).last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -38,8 +38,8 @@ def test_mtd_ytd(df):
     # Year change - first month
     prices = data[pd.to_datetime("2004-12-10") : pd.to_datetime("2005-01-15")]
     dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    mp = prices.resample(ffn.core._MonthEnd).last().dropna()
+    yp = prices.resample(ffn.core._YearEnd).last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -49,8 +49,8 @@ def test_mtd_ytd(df):
     # Year change - second month
     prices = data[pd.to_datetime("2004-12-10") : pd.to_datetime("2005-02-15")]
     dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    mp = prices.resample(ffn.core._MonthEnd).last().dropna()
+    yp = prices.resample(ffn.core._YearEnd).last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -60,8 +60,8 @@ def test_mtd_ytd(df):
     # Single day
     prices = data[[pd.to_datetime("2004-12-10")]]
     dp = prices.resample("D").last().dropna()
-    mp = prices.resample("M").last().dropna()
-    yp = prices.resample("A").last().dropna()
+    mp = prices.resample(ffn.core._MonthEnd).last().dropna()
+    yp = prices.resample(ffn.core._YearEnd).last().dropna()
     mtd_actual = ffn.calc_mtd(dp, mp)
     ytd_actual = ffn.calc_ytd(dp, yp)
 
@@ -73,9 +73,9 @@ def test_to_returns_ts(ts):
     actual = data.to_returns()
 
     assert len(actual) == len(data)
-    assert np.isnan(actual[0])
-    aae(actual[1], -0.019, 3)
-    aae(actual[9], -0.022, 3)
+    assert np.isnan(actual.iloc[0])
+    aae(actual.iloc[1], -0.019, 3)
+    aae(actual.iloc[9], -0.022, 3)
 
 
 def test_to_returns_df(df):
@@ -84,12 +84,12 @@ def test_to_returns_df(df):
 
     assert len(actual) == len(data)
     assert all(np.isnan(actual.iloc[0]))
-    aae(actual["AAPL"][1], -0.019, 3)
-    aae(actual["AAPL"][9], -0.022, 3)
-    aae(actual["MSFT"][1], -0.011, 3)
-    aae(actual["MSFT"][9], -0.014, 3)
-    aae(actual["C"][1], -0.012, 3)
-    aae(actual["C"][9], 0.004, 3)
+    aae(actual["AAPL"].iloc[1], -0.019, 3)
+    aae(actual["AAPL"].iloc[9], -0.022, 3)
+    aae(actual["MSFT"].iloc[1], -0.011, 3)
+    aae(actual["MSFT"].iloc[9], -0.014, 3)
+    aae(actual["C"].iloc[1], -0.012, 3)
+    aae(actual["C"].iloc[9], 0.004, 3)
 
 
 def test_to_log_returns_ts(ts):
@@ -97,9 +97,9 @@ def test_to_log_returns_ts(ts):
     actual = data.to_log_returns()
 
     assert len(actual) == len(data)
-    assert np.isnan(actual[0])
-    aae(actual[1], -0.019, 3)
-    aae(actual[9], -0.022, 3)
+    assert np.isnan(actual.iloc[0])
+    aae(actual.iloc[1], -0.019, 3)
+    aae(actual.iloc[9], -0.022, 3)
 
 
 def test_to_log_returns_df(df):
@@ -108,12 +108,12 @@ def test_to_log_returns_df(df):
 
     assert len(actual) == len(data)
     assert all(np.isnan(actual.iloc[0]))
-    aae(actual["AAPL"][1], -0.019, 3)
-    aae(actual["AAPL"][9], -0.022, 3)
-    aae(actual["MSFT"][1], -0.011, 3)
-    aae(actual["MSFT"][9], -0.014, 3)
-    aae(actual["C"][1], -0.012, 3)
-    aae(actual["C"][9], 0.004, 3)
+    aae(actual["AAPL"].iloc[1], -0.019, 3)
+    aae(actual["AAPL"].iloc[9], -0.022, 3)
+    aae(actual["MSFT"].iloc[1], -0.011, 3)
+    aae(actual["MSFT"].iloc[9], -0.014, 3)
+    aae(actual["C"].iloc[1], -0.012, 3)
+    aae(actual["C"].iloc[9], 0.004, 3)
 
 
 def test_to_price_index(df):
@@ -122,22 +122,22 @@ def test_to_price_index(df):
     actual = rets.to_price_index()
 
     assert len(actual) == len(data)
-    aae(actual["AAPL"][0], 100, 3)
-    aae(actual["MSFT"][0], 100, 3)
-    aae(actual["C"][0], 100, 3)
-    aae(actual["AAPL"][9], 91.366, 3)
-    aae(actual["MSFT"][9], 95.191, 3)
-    aae(actual["C"][9], 101.199, 3)
+    aae(actual["AAPL"].iloc[0], 100, 3)
+    aae(actual["MSFT"].iloc[0], 100, 3)
+    aae(actual["C"].iloc[0], 100, 3)
+    aae(actual["AAPL"].iloc[9], 91.366, 3)
+    aae(actual["MSFT"].iloc[9], 95.191, 3)
+    aae(actual["C"].iloc[9], 101.199, 3)
 
     actual = rets.to_price_index(start=1)
 
     assert len(actual) == len(data)
-    aae(actual["AAPL"][0], 1, 3)
-    aae(actual["MSFT"][0], 1, 3)
-    aae(actual["C"][0], 1, 3)
-    aae(actual["AAPL"][9], 0.914, 3)
-    aae(actual["MSFT"][9], 0.952, 3)
-    aae(actual["C"][9], 1.012, 3)
+    aae(actual["AAPL"].iloc[0], 1, 3)
+    aae(actual["MSFT"].iloc[0], 1, 3)
+    aae(actual["C"].iloc[0], 1, 3)
+    aae(actual["AAPL"].iloc[9], 0.914, 3)
+    aae(actual["MSFT"].iloc[9], 0.952, 3)
+    aae(actual["C"].iloc[9], 1.012, 3)
 
 
 def test_rebase(df):
@@ -145,12 +145,12 @@ def test_rebase(df):
     actual = data.rebase()
 
     assert len(actual) == len(data)
-    aae(actual["AAPL"][0], 100, 3)
-    aae(actual["MSFT"][0], 100, 3)
-    aae(actual["C"][0], 100, 3)
-    aae(actual["AAPL"][9], 91.366, 3)
-    aae(actual["MSFT"][9], 95.191, 3)
-    aae(actual["C"][9], 101.199, 3)
+    aae(actual["AAPL"].iloc[0], 100, 3)
+    aae(actual["MSFT"].iloc[0], 100, 3)
+    aae(actual["C"].iloc[0], 100, 3)
+    aae(actual["AAPL"].iloc[9], 91.366, 3)
+    aae(actual["MSFT"].iloc[9], 95.191, 3)
+    aae(actual["C"].iloc[9], 101.199, 3)
 
 
 def test_to_drawdown_series_ts(ts):
@@ -158,9 +158,9 @@ def test_to_drawdown_series_ts(ts):
     actual = data.to_drawdown_series()
 
     assert len(actual) == len(data)
-    aae(actual[0], 0, 3)
-    aae(actual[1], -0.019, 3)
-    aae(actual[9], -0.086, 3)
+    aae(actual.iloc[0], 0, 3)
+    aae(actual.iloc[1], -0.019, 3)
+    aae(actual.iloc[9], -0.086, 3)
 
 
 def test_to_drawdown_series_df(df):
@@ -168,17 +168,17 @@ def test_to_drawdown_series_df(df):
     actual = data.to_drawdown_series()
 
     assert len(actual) == len(data)
-    aae(actual["AAPL"][0], 0, 3)
-    aae(actual["MSFT"][0], 0, 3)
-    aae(actual["C"][0], 0, 3)
+    aae(actual["AAPL"].iloc[0], 0, 3)
+    aae(actual["MSFT"].iloc[0], 0, 3)
+    aae(actual["C"].iloc[0], 0, 3)
 
-    aae(actual["AAPL"][1], -0.019, 3)
-    aae(actual["MSFT"][1], -0.011, 3)
-    aae(actual["C"][1], -0.012, 3)
+    aae(actual["AAPL"].iloc[1], -0.019, 3)
+    aae(actual["MSFT"].iloc[1], -0.011, 3)
+    aae(actual["C"].iloc[1], -0.012, 3)
 
-    aae(actual["AAPL"][9], -0.086, 3)
-    aae(actual["MSFT"][9], -0.048, 3)
-    aae(actual["C"][9], -0.029, 3)
+    aae(actual["AAPL"].iloc[9], -0.086, 3)
+    aae(actual["MSFT"].iloc[9], -0.048, 3)
+    aae(actual["C"].iloc[9], -0.029, 3)
 
 
 def test_max_drawdown_ts(ts):
@@ -227,12 +227,12 @@ def test_merge():
     assert "b" in actual
     assert len(actual) == 6
     assert len(actual.columns) == 2
-    assert np.isnan(actual["a"][-1])
-    assert np.isnan(actual["b"][0])
-    assert actual["a"][0] == 100
-    assert actual["a"][1] == 100
-    assert actual["b"][-1] == 200
-    assert actual["b"][1] == 200
+    assert np.isnan(actual["a"].iloc[-1])
+    assert np.isnan(actual["b"].iloc[0])
+    assert actual["a"].iloc[0] == 100
+    assert actual["a"].iloc[1] == 100
+    assert actual["b"].iloc[-1] == 200
+    assert actual["b"].iloc[1] == 200
 
     old = actual
     old.columns = ["c", "d"]
@@ -245,12 +245,12 @@ def test_merge():
     assert "d" in actual
     assert len(actual) == 6
     assert len(actual.columns) == 4
-    assert np.isnan(actual["a"][-1])
-    assert np.isnan(actual["b"][0])
-    assert actual["a"][0] == 100
-    assert actual["a"][1] == 100
-    assert actual["b"][-1] == 200
-    assert actual["b"][1] == 200
+    assert np.isnan(actual["a"].iloc[-1])
+    assert np.isnan(actual["b"].iloc[0])
+    assert actual["a"].iloc[0] == 100
+    assert actual["a"].iloc[1] == 100
+    assert actual["b"].iloc[-1] == 200
+    assert actual["b"].iloc[1] == 200
 
 
 def test_calc_inv_vol_weights(df):
@@ -371,7 +371,7 @@ def test_asfreq_actual():
     a = pd.Series(
         {pd.to_datetime("2010-02-27"): 100, pd.to_datetime("2010-03-25"): 200}
     )
-    actual = a.asfreq_actual(freq="M", method="ffill")
+    actual = a.asfreq_actual(freq=ffn.core._MonthEnd, method="ffill")
 
     assert len(actual) == 1
     assert "2010-02-27" in actual
@@ -702,7 +702,7 @@ def test_set_riskfree_rate(df):
 
     aae(performanceStats.daily_sharpe, groupStats["MSFT"].daily_sharpe, 3)
 
-    monthly_returns = df["MSFT"].resample("M").last().pct_change()
+    monthly_returns = df["MSFT"].resample(ffn.core._MonthEnd).last().pct_change()
     aae(
         performanceStats.monthly_sharpe,
         monthly_returns.dropna().mean()
@@ -712,7 +712,7 @@ def test_set_riskfree_rate(df):
     )
     aae(performanceStats.monthly_sharpe, groupStats["MSFT"].monthly_sharpe, 3)
 
-    yearly_returns = df["MSFT"].resample("A").last().pct_change()
+    yearly_returns = df["MSFT"].resample(ffn.core._YearEnd).last().pct_change()
     aae(
         performanceStats.yearly_sharpe,
         yearly_returns.dropna().mean() / (yearly_returns.dropna().std()) * (np.sqrt(1)),
@@ -733,7 +733,7 @@ def test_set_riskfree_rate(df):
     )
     aae(performanceStats.daily_sharpe, groupStats["MSFT"].daily_sharpe, 3)
 
-    monthly_returns = df["MSFT"].resample("M").last().pct_change()
+    monthly_returns = df["MSFT"].resample(ffn.core._MonthEnd).last().pct_change()
     aae(
         performanceStats.monthly_sharpe,
         np.mean(monthly_returns.dropna() - 0.02 / 12)
@@ -743,7 +743,7 @@ def test_set_riskfree_rate(df):
     )
     aae(performanceStats.monthly_sharpe, groupStats["MSFT"].monthly_sharpe, 3)
 
-    yearly_returns = df["MSFT"].resample("A").last().pct_change()
+    yearly_returns = df["MSFT"].resample(ffn.core._YearEnd).last().pct_change()
     aae(
         performanceStats.yearly_sharpe,
         np.mean(yearly_returns.dropna() - 0.02 / 1)
@@ -774,8 +774,8 @@ def test_set_riskfree_rate(df):
     )
     aae(performanceStats.daily_sharpe, groupStats["MSFT"].daily_sharpe, 3)
 
-    monthly_returns = df["MSFT"].resample("M").last().pct_change()
-    rf_monthly_returns = rf.resample("M").last().pct_change()
+    monthly_returns = df["MSFT"].resample(ffn.core._MonthEnd).last().pct_change()
+    rf_monthly_returns = rf.resample(ffn.core._MonthEnd).last().pct_change()
     aae(
         performanceStats.monthly_sharpe,
         np.mean(monthly_returns - rf_monthly_returns)
@@ -785,8 +785,8 @@ def test_set_riskfree_rate(df):
     )
     aae(performanceStats.monthly_sharpe, groupStats["MSFT"].monthly_sharpe, 3)
 
-    yearly_returns = df["MSFT"].resample("A").last().pct_change()
-    rf_yearly_returns = rf.resample("A").last().pct_change()
+    yearly_returns = df["MSFT"].resample(ffn.core._YearEnd).last().pct_change()
+    rf_yearly_returns = rf.resample(ffn.core._YearEnd).last().pct_change()
     aae(
         performanceStats.yearly_sharpe,
         np.mean(yearly_returns - rf_yearly_returns)
@@ -935,7 +935,7 @@ def test_monthly_returns():
 
     obj1 = ffn.PerformanceStats(df1["Price"])
 
-    obj1.monthly_returns == df1["Price"].resample("M").last().pct_change()
+    obj1.monthly_returns == df1["Price"].resample(ffn.core._MonthEnd).last().fillna(1.0).pct_change(fill_method=None)
 
 
 def test_drawdown_details(df):
@@ -958,22 +958,22 @@ def test_infer_nperiods():
     daily = pd.DataFrame(np.random.randn(10),
             index = pd.date_range(start='2018-01-01', periods = 10, freq = 'D'))
     hourly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'H'))
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'h'))
     yearly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'Y'))
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = ffn.core._YearEnd))
     monthly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'M'))
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = ffn.core._MonthEnd))
     minutely = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'T'))
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'min'))
     secondly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'S'))
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = 's'))
 
     minutely_30 = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = '30T'))
+            index = pd.date_range(start='2018-01-01', periods = 10, freq = '30min'))
 
 
-    not_known_vals = np.concatenate((pd.date_range(start='2018-01-01', periods = 5, freq = '1H').values,
-    pd.date_range(start='2018-01-02', periods = 5, freq = '5H').values))
+    not_known_vals = np.concatenate((pd.date_range(start='2018-01-01', periods = 5, freq = '1h').values,
+    pd.date_range(start='2018-01-02', periods = 5, freq = '5h').values))
 
     not_known = pd.DataFrame(np.random.randn(10),
             index = pd.DatetimeIndex(not_known_vals))
