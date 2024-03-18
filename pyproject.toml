@@ -48,7 +48,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build",
-    "ruff",
+    "ruff>=0.3,<0.4",
     "pytest",
     "pytest-cov",
     "wheel",

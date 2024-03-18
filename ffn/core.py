@@ -21,7 +21,14 @@ from . import utils
 from .utils import fmtn, fmtp, fmtpn, get_freq_name
 
 _PANDAS_TWO = Version(pd.__version__) >= Version("2")
+_PANDAS_TWO_TWO = Version(pd.__version__) >= Version("2.2")
 
+if _PANDAS_TWO_TWO:
+    _MonthEnd = "ME"
+    _YearEnd = "YE"
+else:
+    _MonthEnd = "M"
+    _YearEnd = "Y"
 
 # module level variable, can be different for non traditional markets (eg. crypto - 360)
 TRADING_DAYS_PER_YEAR = 252
@@ -188,9 +195,9 @@ class PerformanceStats(object):
         #  if months or years are missing then we will need .dropna() too
         self.daily_prices = self.daily_prices.dropna()
         # M = month end frequency
-        self.monthly_prices = obj.resample("M").last()  # .dropna()
+        self.monthly_prices = obj.resample(_MonthEnd).last()  # .dropna()
         # A == year end frequency
-        self.yearly_prices = obj.resample("A").last()  # .dropna()
+        self.yearly_prices = obj.resample(_YearEnd).last()  # .dropna()
 
         # let's save some typing
         dp = self.daily_prices
@@ -272,7 +279,7 @@ class PerformanceStats(object):
                 self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
             # rf is a price series
             else:
-                _rf_monthly_price_returns = self.rf.resample("M").last().to_returns()
+                _rf_monthly_price_returns = self.rf.resample(_MonthEnd).last().to_returns()
                 self.monthly_sharpe = mr.calc_sharpe(rf=_rf_monthly_price_returns, nperiods=12)
                 self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
             self.best_month = mr.max()
@@ -364,7 +371,7 @@ class PerformanceStats(object):
                 self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
             # rf is a price series
             else:
-                _rf_yearly_price_returns = self.rf.resample("A").last().to_returns()
+                _rf_yearly_price_returns = self.rf.resample(_YearEnd).last().to_returns()
                 if self.yearly_vol > 0:
                     self.yearly_sharpe = yr.calc_sharpe(rf=_rf_yearly_price_returns, nperiods=1)
                 self.yearly_sortino = calc_sortino_ratio(yr, rf=_rf_yearly_price_returns, nperiods=1)
@@ -1493,7 +1500,7 @@ def to_monthly(series, method="ffill", how="end"):
     Convenience method that wraps asfreq_actual
     with 'M' param (method='ffill', how='end').
     """
-    return series.asfreq_actual("M", method=method, how=how)
+    return series.asfreq_actual(_MonthEnd, method=method, how=how)
 
 
 def asfreq_actual(series, freq, method="ffill", how="end", normalize=False):
@@ -2140,7 +2147,7 @@ def rollapply(data, window, fn):
     Returns:
         * Object of same dimensions as data
     """
-    res = data.copy()
+    res = data.copy().astype(float)
     res[:] = np.nan
     n = len(data)
 
@@ -2245,17 +2252,17 @@ def infer_freq(data):
 
 
 def _whole_periods_str_to_nperiods(freq, annualization_factor=TRADING_DAYS_PER_YEAR):
-    if freq == "Y" or freq == "A":
+    if freq in ("Y", "A"):
         return 1
     if freq == "M":
         return 12
     if freq == "D":
         return annualization_factor
-    if freq == "H":
+    if freq in ("H", "h"):
         return annualization_factor * 24
     if freq == "T":
         return annualization_factor * 24 * 60
-    if freq == "S":
+    if freq in ("S", "s"):
         return annualization_factor * 24 * 60 * 60
     return None
 
@@ -2266,6 +2273,16 @@ def infer_nperiods(data, annualization_factor=TRADING_DAYS_PER_YEAR):
 
     if freq is None:
         return None
+
+    if _PANDAS_TWO_TWO:
+        # pandas 2.2+ compatibility
+        if "min" in freq:
+            freq = freq.replace("min", "T")
+        if "ME" in freq:
+            freq = freq.replace("ME", "M")
+        if "YE" in freq:
+            freq = freq.replace("YE-DEC", "Y")
+            freq = freq.replace("YE", "Y")
 
     if len(freq) == 1:
         return _whole_periods_str_to_nperiods(freq, annualization_factor)
