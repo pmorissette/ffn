@@ -9,7 +9,7 @@ test:
 	python -m pytest -vvv tests --cov=ffn --junitxml=python_junit.xml --cov-report=xml --cov-branch --cov-report term
 
 lint:
-	python -m ruff ffn setup.py docs/source/conf.py
+	python -m ruff check ffn setup.py docs/source/conf.py
 
 fix:
 	python -m ruff format ffn setup.py docs/source/conf.py
