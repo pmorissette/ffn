@@ -1,3 +1,4 @@
+from typing import Sequence, Union
 import ffn
 import pandas as pd
 import yfinance
@@ -14,7 +15,7 @@ if Version(pd.__version__) > Version("0.23.0"):
 
 
 @utils.memoize
-def get(tickers, provider=None, common_dates=True, forward_fill=False, clean_tickers=True, column_names=None, ticker_field_sep=":", mrefresh=False, existing=None, **kwargs):
+def get(tickers: Sequence[str], provider=None, common_dates=True, forward_fill=False, clean_tickers=True, column_names=None, ticker_field_sep=":", mrefresh=False, existing=None, **kwargs) -> pd.DataFrame:
     """
     Helper function for retrieving data as a DataFrame.
 
@@ -92,7 +93,7 @@ def get(tickers, provider=None, common_dates=True, forward_fill=False, clean_tic
 
 
 @utils.memoize
-def web(ticker, field=None, start=None, end=None, mrefresh=False, source="yahoo"):
+def web(ticker: str, field=None, start=None, end=None, mrefresh=False, source="yahoo"):
     """
     Data provider wrapper around pandas.io.data provider. Provides
     memoization.
@@ -112,7 +113,7 @@ def web(ticker, field=None, start=None, end=None, mrefresh=False, source="yahoo"
 
 
 @utils.memoize
-def _download_web(name, **kwargs):
+def _download_web(name: str, **kwargs) -> pd.DataFrame:
     """
     Thin wrapper to enable memoization
     """
@@ -120,7 +121,7 @@ def _download_web(name, **kwargs):
 
 
 @utils.memoize
-def yf(ticker, field, start=None, end=None, mrefresh=False):
+def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> Union[pd.Series, pd.DataFrame]:
     if field is None:
         field = "Adj Close"
 
@@ -138,7 +139,7 @@ def yf(ticker, field, start=None, end=None, mrefresh=False):
 
 
 @utils.memoize
-def csv(ticker, path="data.csv", field="", mrefresh=False, **kwargs):
+def csv(ticker: str, path="data.csv", field="", mrefresh=False, **kwargs) -> pd.Series:
     """
     Data provider wrapper around pandas' read_csv. Provides memoization.
     """

@@ -3,6 +3,7 @@ import re
 import decorator
 import numpy as np
 import pandas as pd
+from typing import List, Sequence, Tuple, Union
 
 try:
     import cPickle as pickle
@@ -45,7 +46,7 @@ def memoize(f, refresh_keyword="mrefresh"):
     return decorator.decorator(_memoize, f)
 
 
-def parse_arg(arg):
+def parse_arg(arg: Union[str, List[str], Tuple[str]]):
     """
     Parses arguments for convenience. Argument can be a
     csv list ('a,b,c'), a string, a list, a tuple.
@@ -66,7 +67,7 @@ def parse_arg(arg):
     return arg
 
 
-def clean_ticker(ticker):
+def clean_ticker(ticker: str) -> str:
     """
     Cleans a ticker for easier use throughout MoneyTree
 
@@ -83,14 +84,14 @@ def clean_ticker(ticker):
     return res.lower()
 
 
-def clean_tickers(tickers):
+def clean_tickers(tickers: Sequence[str]) -> list[str]:
     """
     Maps clean_ticker over tickers.
     """
     return [clean_ticker(x) for x in tickers]
 
 
-def fmtp(number):
+def fmtp(number: float) -> str:
     """
     Formatting helper - percent
     """
@@ -99,7 +100,7 @@ def fmtp(number):
     return format(number, ".2%")
 
 
-def fmtpn(number):
+def fmtpn(number: float) -> str:
     """
     Formatting helper - percent no % sign
     """
@@ -108,7 +109,7 @@ def fmtpn(number):
     return format(number * 100, ".2f")
 
 
-def fmtn(number):
+def fmtn(number: float) -> str:
     """
     Formatting helper - float
     """
@@ -117,7 +118,7 @@ def fmtn(number):
     return format(number, ".2f")
 
 
-def get_freq_name(period):
+def get_freq_name(period: str) -> Union[str, None]:
     period = period.upper()
     periods = {
         "B": "business day",
@@ -152,7 +153,7 @@ def get_freq_name(period):
         return None
 
 
-def scale(val, src, dst):
+def scale(val: float, src: Sequence[float], dst: Sequence[float]) -> float:
     """
     Scale value from src range to dst range.
     If value outside bounds, it is clipped and set to
@@ -175,7 +176,7 @@ def as_percent(self, digits=2):
     return as_format(self, ".%s%%" % digits)
 
 
-def as_format(item, format_str=".2f"):
+def as_format(item: Union[pd.DataFrame, pd.Series], format_str=".2f") -> Union[pd.DataFrame, pd.Series]:
     """
     Map a format string over a pandas object.
     """
