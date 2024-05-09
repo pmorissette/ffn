@@ -3,7 +3,7 @@ import re
 import decorator
 import numpy as np
 import pandas as pd
-from typing import Any, Sequence
+from typing import List, Sequence, Tuple, Union
 
 try:
     import cPickle as pickle
@@ -46,7 +46,7 @@ def memoize(f, refresh_keyword="mrefresh"):
     return decorator.decorator(_memoize, f)
 
 
-def parse_arg(arg: Any):
+def parse_arg(arg: Union[str, List[str], Tuple[str]]):
     """
     Parses arguments for convenience. Argument can be a
     csv list ('a,b,c'), a string, a list, a tuple.
@@ -176,7 +176,7 @@ def as_percent(self, digits=2):
     return as_format(self, ".%s%%" % digits)
 
 
-def as_format(item: pd.DataFrame | pd.Series, format_str=".2f") -> pd.DataFrame | pd.Series:
+def as_format(item: Union[pd.DataFrame, pd.Series], format_str=".2f") -> Union[pd.DataFrame, pd.Series]:
     """
     Map a format string over a pandas object.
     """
