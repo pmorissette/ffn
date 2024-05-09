@@ -118,7 +118,7 @@ def fmtn(number: float) -> str:
     return format(number, ".2f")
 
 
-def get_freq_name(period: str) -> str | None:
+def get_freq_name(period: str) -> Union[str, None]:
     period = period.upper()
     periods = {
         "B": "business day",
