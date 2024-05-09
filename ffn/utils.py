@@ -179,7 +179,4 @@ def as_format(item, format_str=".2f"):
     """
     Map a format string over a pandas object.
     """
-    if isinstance(item, pd.Series):
-        return item.map(lambda x: format(x, format_str))
-    elif isinstance(item, pd.DataFrame):
-        return item.applymap(lambda x: format(x, format_str))
+    return item.map(lambda x: format(x, format_str))

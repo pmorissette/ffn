@@ -452,7 +452,7 @@ def test_random_weights():
     for i in df.index:
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
-    assert df.applymap(lambda x: (x >= low and x <= high)).all().all()
+    assert df.map(lambda x: (x >= low and x <= high)).all().all()
 
     n = 4
     bounds = (0.0, 0.25)
@@ -465,7 +465,7 @@ def test_random_weights():
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert (
-        df.applymap(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
+        df.map(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
         .all()
         .all()
     )
@@ -481,7 +481,7 @@ def test_random_weights():
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert (
-        df.applymap(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
+        df.map(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
         .all()
         .all()
     )
@@ -497,7 +497,7 @@ def test_random_weights():
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert (
-        df.applymap(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
+        df.map(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
         .all()
         .all()
     )
