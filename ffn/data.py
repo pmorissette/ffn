@@ -1,4 +1,4 @@
-from typing import Sequence
+from typing import Sequence, Union
 import ffn
 import pandas as pd
 import yfinance
@@ -121,7 +121,7 @@ def _download_web(name: str, **kwargs) -> pd.DataFrame:
 
 
 @utils.memoize
-def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> pd.Series | pd.DataFrame:
+def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> Union[pd.Series, pd.DataFrame]:
     if field is None:
         field = "Adj Close"
 
