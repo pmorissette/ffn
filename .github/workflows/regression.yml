@@ -20,9 +20,15 @@ jobs:
       matrix:
         python-version: [3.9]
         os: [ubuntu-latest]
-        dependency:
-          - 'pandas>=2.2'
-          - 'pandas<2'
+        pandas_version:
+          - '>=2.2'
+          - '<2'
+        numpy_version:
+          - '<2'
+          - '>=2'
+        exclude:
+          - numpy_version: '>=2'
+            pandas_version: '<2'
 
     steps:
     - uses: actions/checkout@v4
@@ -36,7 +42,7 @@ jobs:
     - name: Install dependencies
       run: |
         make develop
-        python -m pip install -U wheel twine setuptools "${{ matrix.dependency }}"
+        python -m pip install -U wheel twine setuptools "numpy${{ matrix.numpy_version }}" "pandas${{ matrix.pandas_version}}"
 
     - name: Test
       run: make test

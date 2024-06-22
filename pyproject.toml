@@ -1,6 +1,9 @@
 [build-system]
-# Minimum requirements for the build system to execute.
-requires = ["setuptools", "wheel"]
+requires = [
+    "oldest-supported-numpy",
+    "setuptools",
+    "wheel",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -36,7 +39,7 @@ classifiers = [
 dependencies = [
     "decorator>=5.0.7",
     "matplotlib>=1",
-    "numpy>=1.5",
+    "numpy",
     "pandas>=0.19",
     "pandas-datareader>=0.2",
     "scikit-learn>=0.15",
