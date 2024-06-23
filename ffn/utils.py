@@ -84,7 +84,7 @@ def clean_ticker(ticker: str) -> str:
     return res.lower()
 
 
-def clean_tickers(tickers: Sequence[str]) -> list[str]:
+def clean_tickers(tickers: Sequence[str]) -> List[str]:
     """
     Maps clean_ticker over tickers.
     """
