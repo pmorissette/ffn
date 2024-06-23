@@ -1241,7 +1241,7 @@ def to_drawdown_series(prices):
     drawdown = drawdown.ffill()
 
     # Ignore problems with NaN's in the beginning
-    drawdown[np.isnan(drawdown)] = -np.Inf
+    drawdown[np.isnan(drawdown)] = -np.inf
 
     # Rolling maximum
     if isinstance(drawdown, pd.DataFrame):
@@ -1547,7 +1547,7 @@ def calc_inv_vol_weights(returns):
     """
     # calc vols
     vol = np.divide(1.0, np.std(returns, ddof=1)).astype(float)
-    vol[np.isinf(vol)] = np.NaN
+    vol[np.isinf(vol)] = np.nan
     volsum = vol.sum()
     return np.divide(vol, volsum)
 
