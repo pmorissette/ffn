@@ -8,4 +8,4 @@ from .core import *
 
 core.extend_pandas()
 
-__version__ = "1.0.2"
+__version__ = "1.0.3"
