@@ -54,6 +54,8 @@ dev = [
     "ruff>=0.3,<0.5",
     "pytest",
     "pytest-cov",
+    "setuptools",
+    "twine",
     "wheel",
 ]
 test = [

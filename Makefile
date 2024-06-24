@@ -20,7 +20,7 @@ clean:
 	rm -rf ffn.egg-info
 
 dist:
-	python -m build -s
+	python -m build -s -w
 	python -m twine check dist/*
 
 upload: clean dist
