@@ -10,13 +10,14 @@ test:
 
 lint:
 	python -m ruff check ffn setup.py docs/source/conf.py
+	python -m ruff format --check ffn setup.py docs/source/conf.py
 
 fix:
 	python -m ruff format ffn setup.py docs/source/conf.py
 
 clean:
-	- rm -rf dist
-	- rm -rf ffn.egg-info
+	rm -rf dist
+	rm -rf ffn.egg-info
 
 dist:
 	python -m build -s
