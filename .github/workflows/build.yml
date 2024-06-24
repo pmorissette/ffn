@@ -14,26 +14,24 @@ concurrency:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    environment: dev
-
     strategy:
       matrix:
         python-version: [3.9]
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-        cache-dependency-path: 'setup.py'
+        cache-dependency-path: 'pyproject.toml'
 
     - name: Install dependencies
-      run: |
-        make develop
-        python -m pip install -U wheel twine setuptools
+      run: make develop
 
     - name: Lint
       run: make lint
@@ -41,8 +39,6 @@ jobs:
     - name: Test
       run: make test
 
-    - name: Coverage
-      uses: codecov/codecov-action@v4
-
     - name: Package and check
       run: make dist
+

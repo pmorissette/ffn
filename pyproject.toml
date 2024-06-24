@@ -51,9 +51,11 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build",
-    "ruff>=0.3,<0.4",
+    "ruff>=0.3,<0.5",
     "pytest",
     "pytest-cov",
+    "setuptools",
+    "twine",
     "wheel",
 ]
 test = [
@@ -65,9 +67,9 @@ test = [
 Repository = "https://github.com/pmorissette/ffn"
 Homepage = "http://pmorissette.github.io/ffn/"
 
-
 [tool.ruff]
 line-length = 180
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
+
