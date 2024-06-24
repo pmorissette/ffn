@@ -1,7 +1,6 @@
 ![](http://pmorissette.github.io/ffn/_static/logo.png)
 
 [![Build Status](https://github.com/pmorissette/ffn/workflows/Build%20Status/badge.svg)](https://github.com/pmorissette/ffn/actions/)
-[![Codecov](https://codecov.io/gh/pmorissette/ffn/branch/master/graph/badge.svg)](https://codecov.io/pmorissette/ffn)
 [![PyPI Version](https://img.shields.io/pypi/v/ffn)](https://pypi.org/project/ffn/)
 [![PyPI License](https://img.shields.io/pypi/l/ffn)](https://pypi.org/project/ffn/)
 
