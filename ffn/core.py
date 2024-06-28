@@ -1643,13 +1643,9 @@ def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):
         # instead of using the true definition for trc we will use the optimization on page 5
         trc = weights * np.matmul(covar, weights)
 
-        n = len(trc)
         # sum of squared differences of total risk contributions
-        sse = 0.0
-        for i in range(n):
-            for j in range(n):
-                # switched from squared deviations to absolute deviations to avoid numerical instability
-                sse += np.abs(trc[i] - trc[j])
+        # switched from squared deviations to absolute deviations to avoid numerical instability
+        sse = np.sum(np.abs(trc - trc.reshape((-1, 1))))
         # minimizes metric
         return sse
 
