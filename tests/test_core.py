@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from pytest import fixture
 from numpy.testing import assert_almost_equal as aae
+from packaging.version import Version
 
 
 @fixture
@@ -16,6 +17,7 @@ def df():
             raise (str(e2))
     return df
 
+
 @fixture
 def ts(df):
     return df["AAPL"].iloc[0:10]
@@ -25,7 +27,7 @@ def test_mtd_ytd(df):
     data = df["AAPL"]
 
     # Intramonth
-    prices = data[pd.to_datetime("2004-12-10") : pd.to_datetime("2004-12-25")]
+    prices = data[pd.to_datetime("2004-12-10"): pd.to_datetime("2004-12-25")]
     dp = prices.resample("D").last().dropna()
     mp = prices.resample(ffn.core._MonthEnd).last().dropna()
     yp = prices.resample(ffn.core._YearEnd).last().dropna()
@@ -36,7 +38,7 @@ def test_mtd_ytd(df):
     assert mtd_actual == ytd_actual
 
     # Year change - first month
-    prices = data[pd.to_datetime("2004-12-10") : pd.to_datetime("2005-01-15")]
+    prices = data[pd.to_datetime("2004-12-10"): pd.to_datetime("2005-01-15")]
     dp = prices.resample("D").last().dropna()
     mp = prices.resample(ffn.core._MonthEnd).last().dropna()
     yp = prices.resample(ffn.core._YearEnd).last().dropna()
@@ -47,7 +49,7 @@ def test_mtd_ytd(df):
     assert mtd_actual == ytd_actual
 
     # Year change - second month
-    prices = data[pd.to_datetime("2004-12-10") : pd.to_datetime("2005-02-15")]
+    prices = data[pd.to_datetime("2004-12-10"): pd.to_datetime("2005-02-15")]
     dp = prices.resample("D").last().dropna()
     mp = prices.resample(ffn.core._MonthEnd).last().dropna()
     yp = prices.resample(ffn.core._YearEnd).last().dropna()
@@ -267,6 +269,7 @@ def test_calc_inv_vol_weights(df):
     aae(actual["MSFT"], 0.464, 3)
     aae(actual["C"], 0.318, 3)
 
+
 def test_calc_inv_vol_weights_object_regression_204(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna().astype(object)
@@ -442,6 +445,13 @@ def test_limit_weights():
 
 
 def test_random_weights():
+    PANDAS_VERSION = Version(pd.__version__)
+    PANDAS_210 = PANDAS_VERSION >= Version("2.1.0")
+
+    select_map = "map"
+    if not PANDAS_210:
+        select_map = "applymap"
+
     n = 10
     bounds = (0.0, 1.0)
     tot = 1.0000
@@ -452,7 +462,8 @@ def test_random_weights():
     for i in df.index:
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
-    assert df.applymap(lambda x: (x >= low and x <= high)).all().all()
+    assert (getattr(df, select_map)(lambda x: (x >= low and x <= high))
+            .all().all())
 
     n = 4
     bounds = (0.0, 0.25)
@@ -465,7 +476,8 @@ def test_random_weights():
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert (
-        df.applymap(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
+        getattr(df, select_map)(lambda x: (np.round(x, 2) >= low
+                                           and np.round(x, 2) <= high))
         .all()
         .all()
     )
@@ -481,7 +493,8 @@ def test_random_weights():
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert (
-        df.applymap(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
+        getattr(df, select_map)(lambda x: (np.round(x, 2) >= low
+                                           and np.round(x, 2) <= high))
         .all()
         .all()
     )
@@ -497,7 +510,8 @@ def test_random_weights():
         df.loc[i] = ffn.random_weights(n, bounds, tot)
     assert df.sum(axis=1).apply(lambda x: np.round(x, 4) == tot).all()
     assert (
-        df.applymap(lambda x: (np.round(x, 2) >= low and np.round(x, 2) <= high))
+        getattr(df, select_map)(lambda x: (np.round(x, 2) >= low
+                                           and np.round(x, 2) <= high))
         .all()
         .all()
     )
@@ -862,7 +876,6 @@ def test_resample_returns(df):
 
 
 def test_monthly_returns():
-
     dates = [
         "31/12/2017",
         "5/1/2018",
@@ -956,27 +969,26 @@ def test_drawdown_details(df):
 
 def test_infer_nperiods():
     daily = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'D'))
+                         index=pd.date_range(start='2018-01-01', periods=10, freq='D'))
     hourly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'h'))
+                          index=pd.date_range(start='2018-01-01', periods=10, freq='h'))
     yearly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = ffn.core._YearEnd))
+                          index=pd.date_range(start='2018-01-01', periods=10, freq=ffn.core._YearEnd))
     monthly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = ffn.core._MonthEnd))
+                           index=pd.date_range(start='2018-01-01', periods=10, freq=ffn.core._MonthEnd))
     minutely = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 'min'))
+                            index=pd.date_range(start='2018-01-01', periods=10, freq='min'))
     secondly = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = 's'))
+                            index=pd.date_range(start='2018-01-01', periods=10, freq='s'))
 
     minutely_30 = pd.DataFrame(np.random.randn(10),
-            index = pd.date_range(start='2018-01-01', periods = 10, freq = '30min'))
+                               index=pd.date_range(start='2018-01-01', periods=10, freq='30min'))
 
-
-    not_known_vals = np.concatenate((pd.date_range(start='2018-01-01', periods = 5, freq = '1h').values,
-    pd.date_range(start='2018-01-02', periods = 5, freq = '5h').values))
+    not_known_vals = np.concatenate((pd.date_range(start='2018-01-01', periods=5, freq='1h').values,
+                                     pd.date_range(start='2018-01-02', periods=5, freq='5h').values))
 
     not_known = pd.DataFrame(np.random.randn(10),
-            index = pd.DatetimeIndex(not_known_vals))
+                             index=pd.DatetimeIndex(not_known_vals))
 
     assert ffn.core.infer_nperiods(daily) == ffn.core.TRADING_DAYS_PER_YEAR
     assert ffn.core.infer_nperiods(hourly) == ffn.core.TRADING_DAYS_PER_YEAR * 24
