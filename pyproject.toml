@@ -41,7 +41,6 @@ dependencies = [
     "matplotlib>=1",
     "numpy",
     "pandas>=0.19",
-    "pandas-datareader>=0.2",
     "scikit-learn>=0.15",
     "scipy>=0.15",
     "tabulate>=0.7.5",
