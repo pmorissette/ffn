@@ -1,17 +1,13 @@
+import warnings
 from typing import Sequence, Union
-import ffn
+
 import pandas as pd
 import yfinance
-from packaging.version import Version
-from pandas_datareader import data as pdata
+
+import ffn
 
 # import ffn.utils as utils
 from . import utils
-
-# This is a temporary fix until pandas_datareader 0.7 is released.
-# pandas 0.23 has moved is_list_like from common to api.types, hence the monkey patch
-if Version(pd.__version__) > Version("0.23.0"):
-    pd.core.common.is_list_like = pd.api.types.is_list_like
 
 
 @utils.memoize
@@ -103,32 +99,18 @@ def get(
     return df
 
 
-@utils.memoize
 def web(ticker: str, field=None, start=None, end=None, mrefresh=False, source="yahoo"):
     """
     Data provider wrapper around pandas.io.data provider. Provides
     memoization.
     """
-    if source == "yahoo" and field is None:
-        field = "Adj Close"
-
-    tmp = _download_web(ticker, data_source=source, start=start, end=end)
-
-    if tmp is None:
-        raise ValueError("failed to retrieve data for %s:%s" % (ticker, field))
-
-    if field:
-        return tmp[field]
-    else:
-        return tmp
-
-
-@utils.memoize
-def _download_web(name: str, **kwargs) -> pd.DataFrame:
-    """
-    Thin wrapper to enable memoization
-    """
-    return pdata.DataReader(name, **kwargs)
+    if source == "yahoo":
+        warnings.warn("web function is deprecated, as , use yf() instead")
+        return yf(ticker, field, start, end, mrefresh)
+    raise Exception("""pandas_datareader data readers are unmaintained and mostly broken, If you
+                    still want them, go import the datareader directly from that library.
+                    https://github.com/pydata/pandas-datareader/issues/977
+                    """)
 
 
 @utils.memoize
@@ -136,9 +118,7 @@ def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> Union[pd.Ser
     if field is None:
         field = "Adj Close"
 
-    yfinance.pdr_override()
-
-    tmp = pdata.get_data_yahoo(ticker, start=start, end=end)
+    tmp = yfinance.download(ticker, start=start, end=end)
 
     if tmp is None:
         raise ValueError("failed to retrieve data for %s:%s" % (ticker, field))
