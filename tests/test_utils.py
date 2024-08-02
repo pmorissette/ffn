@@ -1,4 +1,5 @@
 import ffn.utils as utils
+import pandas as pd
 
 
 def test_parse_args():
@@ -82,3 +83,27 @@ def test_scale():
     assert utils.scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0
     assert utils.scale(105, (0.0, 99.0), (-1.0, 1.0)) == 1.0
     assert utils.scale(50, (0.0, 100.0), (-1.0, 1.0)) == 0.0
+
+
+def test_as_format():
+    ser = pd.Series(
+        data=[5.672083e-01, 4.327917e-01, 0.000000e+00, 3.469447e-18,
+              8.673617e-19], index=['aapl', 'msft', 'c', 'gs', 'ge'])
+
+    actual = ser.as_format('.2f')
+    assert actual.loc['aapl'] == '0.57'
+    assert actual.loc['msft'] == '0.43'
+    assert actual.loc['c'] == '0.00'
+    assert actual.loc['gs'] == '0.00'
+    assert actual.loc['ge'] == '0.00'
+
+    df = pd.DataFrame({'aapl': [217.960007, 218.240005],
+                       'msft': [23.389397, 23.396961],
+                       }, index=['aapl', 'msft'])
+
+    actual = df.as_format('.2f')
+    assert actual.loc['aapl', 'aapl'] == '217.96'
+    assert actual.loc['msft', 'aapl'] == '218.24'
+    assert actual.loc['aapl', 'msft'] == '23.39'
+    assert actual.loc['msft', 'msft'] == '23.40'
+
