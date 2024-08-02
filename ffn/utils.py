@@ -3,6 +3,7 @@ import re
 import decorator
 import numpy as np
 import pandas as pd
+from packaging.version import Version
 from typing import List, Sequence, Tuple, Union
 
 try:
@@ -180,7 +181,14 @@ def as_format(item: Union[pd.DataFrame, pd.Series], format_str=".2f") -> Union[p
     """
     Map a format string over a pandas object.
     """
+    PANDAS_VERSION = Version(pd.__version__)
+    PANDAS_210 = PANDAS_VERSION >= Version("2.1.0")
+
+    select_map = "map"
+    if not PANDAS_210:
+        select_map = "applymap"
+
     if isinstance(item, pd.Series):
         return item.map(lambda x: format(x, format_str))
     elif isinstance(item, pd.DataFrame):
-        return item.applymap(lambda x: format(x, format_str))
+        return getattr(item, select_map)(lambda x: format(x, format_str))
