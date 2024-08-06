@@ -13,6 +13,7 @@ lint:
 	python -m ruff format --check ffn setup.py docs/source/conf.py
 
 fix:
+	python -m ruff check --fix ffn setup.py docs/source/conf.py
 	python -m ruff format ffn setup.py docs/source/conf.py
 
 clean:
