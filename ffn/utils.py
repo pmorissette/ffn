@@ -1,15 +1,11 @@
+import pickle
 import re
+from typing import List, Sequence, Tuple, Union
 
 import decorator
 import numpy as np
 import pandas as pd
 from packaging.version import Version
-from typing import List, Sequence, Tuple, Union
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 
 def _memoize(func, *args, **kw):
