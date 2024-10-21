@@ -44,7 +44,7 @@ dependencies = [
     "scikit-learn>=0.15",
     "scipy>=0.15",
     "tabulate>=0.7.5",
-    "yfinance>=0.2",
+    "yfinance>=0.2,!=0.2.45",
 ]
 
 [project.optional-dependencies]
