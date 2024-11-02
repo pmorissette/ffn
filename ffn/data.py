@@ -72,6 +72,10 @@ def get(
             data[ticker] = provider(ticker=t, field=f, **kwargs)
 
         data[ticker] = data[ticker][~data[ticker].index.duplicated(keep="last")]
+        if isinstance(data[ticker], pd.DataFrame):
+            # newer yfinance returns as dataframe,
+            # convert to series
+            data[ticker] = data[ticker][data[ticker].columns[0]]
 
     df = pd.DataFrame(data)
 
