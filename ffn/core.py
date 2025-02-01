@@ -2049,7 +2049,7 @@ def random_weights(n, bounds=(0.0, 1.0), total=1.0):
     high = bounds[1]
 
     if high < low:
-        raise ValueError("Higher bound must be greater or " "equal to lower bound")
+        raise ValueError("Higher bound must be greater or equal to lower bound")
 
     if n * high < total or n * low > total:
         raise ValueError("solution not possible with given n and bounds")
