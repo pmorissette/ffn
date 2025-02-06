@@ -56,7 +56,8 @@ class PerformanceStats(object):
 
     """
 
-    def __init__(self, prices, rf=0.0, annualization_factor=TRADING_DAYS_PER_YEAR):
+    def __init__(self, prices, rf=0.0, annualization_factor=None):
+        
         super(PerformanceStats, self).__init__()
         self.prices = prices
         self.name = self.prices.name
@@ -64,7 +65,7 @@ class PerformanceStats(object):
         self._end = self.prices.index[-1]
 
         self.rf = rf
-        self.annualization_factor = annualization_factor
+        self.annualization_factor = TRADING_DAYS_PER_YEAR if annualization_factor is None else annualization_factor
 
         self._update(self.prices)
 
@@ -2247,7 +2248,8 @@ def infer_freq(data):
         return None
 
 
-def _whole_periods_str_to_nperiods(freq, annualization_factor=TRADING_DAYS_PER_YEAR):
+def _whole_periods_str_to_nperiods(freq, annualization_factor=None):
+    annualization_factor = TRADING_DAYS_PER_YEAR if annualization_factor is None else annualization_factor
     if freq in ("Y", "A"):
         return 1
     if freq == "M":
@@ -2263,7 +2265,7 @@ def _whole_periods_str_to_nperiods(freq, annualization_factor=TRADING_DAYS_PER_Y
     return None
 
 
-def infer_nperiods(data, annualization_factor=TRADING_DAYS_PER_YEAR):
+def infer_nperiods(data, annualization_factor=None):
     annualization_factor = annualization_factor or TRADING_DAYS_PER_YEAR
     freq = infer_freq(data)
 
