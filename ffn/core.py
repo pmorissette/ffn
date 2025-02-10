@@ -57,7 +57,6 @@ class PerformanceStats(object):
     """
 
     def __init__(self, prices, rf=0.0, annualization_factor=None):
-        
         super(PerformanceStats, self).__init__()
         self.prices = prices
         self.name = self.prices.name
