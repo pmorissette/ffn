@@ -121,7 +121,7 @@ def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> Union[pd.Ser
     if field is None:
         field = "Adj Close"
 
-    tmp = yfinance.download(ticker, start=start, end=end)
+    tmp = yfinance.download(ticker, auto_adjust=False, start=start, end=end)
 
     if tmp is None:
         raise ValueError("failed to retrieve data for %s:%s" % (ticker, field))
