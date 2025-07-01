@@ -50,7 +50,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build",
-    "ruff>=0.5.0,<0.12",
+    "ruff>=0.5.0,<0.13",
     "pytest",
     "pytest-cov",
     "setuptools",
