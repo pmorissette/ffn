@@ -2,7 +2,7 @@
 
 [![Build Status](https://github.com/pmorissette/ffn/workflows/Build%20Status/badge.svg)](https://github.com/pmorissette/ffn/actions/)
 [![PyPI Version](https://img.shields.io/pypi/v/ffn)](https://pypi.org/project/ffn/)
-[![PyPI License](https://img.shields.io/pypi/l/ffn)](https://pypi.org/project/ffn/)
+[![PyPI License](https://img.shields.io/pypi/l/ffn)](https://github.com/pmorissette/ffn/blob/master/LICENSE)
 
 # ffn - Financial Functions for Python
 
