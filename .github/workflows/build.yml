@@ -18,7 +18,7 @@ jobs:
       matrix:
         python-version: [3.9]
         os: [ubuntu-latest, macos-latest, windows-latest]
-
+        pandas: ["<2", "<3", "<4"]
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -32,6 +32,9 @@ jobs:
 
     - name: Install dependencies
       run: make develop
+
+    - name: Install Pandas
+      run: pip install "pandas${{ matrix.pandas }}"
 
     - name: Lint
       run: make lint

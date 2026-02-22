@@ -220,7 +220,7 @@ class PerformanceStats(object):
         # Rather < 2 days than <= 1 days in case of data taken at different hours of the days
         if r.index.to_series().diff().min() < pd.Timedelta("2 days"):
             self.daily_mean = r.mean() * self.annualization_factor
-            self.daily_vol = np.std(r, ddof=1) * np.sqrt(self.annualization_factor)
+            self.daily_vol = r.std(ddof=1) * np.sqrt(self.annualization_factor)
 
             if isinstance(self.rf, float):
                 self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=self.annualization_factor)
@@ -270,7 +270,7 @@ class PerformanceStats(object):
         # Rather < 32 days than <= 31 days in case of data taken at different hours of the days
         if r.index.to_series().diff().min() < pd.Timedelta("32 days"):
             self.monthly_mean = mr.mean() * 12
-            self.monthly_vol = np.std(mr, ddof=1) * np.sqrt(12)
+            self.monthly_vol = mr.std(ddof=1) * np.sqrt(12)
 
             if isinstance(self.rf, float):
                 self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
@@ -360,7 +360,7 @@ class PerformanceStats(object):
                 self.one_year = dp.iloc[-1] / denom.iloc[-1] - 1
 
             self.yearly_mean = yr.mean()
-            self.yearly_vol = np.std(yr, ddof=1)
+            self.yearly_vol = yr.std(ddof=1)
 
             # if type(self.rf) is float:
             if isinstance(self.rf, float):
@@ -1388,7 +1388,7 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
         raise Exception("Must provide nperiods if rf != 0")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
-    std = np.std(er, ddof=1)
+    std = er.std(ddof=1)
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), std)
 
@@ -1404,7 +1404,7 @@ def calc_information_ratio(returns, benchmark_returns):
     Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
     diff_rets = returns - benchmark_returns
-    diff_std = np.std(diff_rets, ddof=1)
+    diff_std = diff_rets.std(ddof=1)
 
     if np.isnan(diff_std) or diff_std == 0:
         return 0.0
@@ -1544,10 +1544,10 @@ def calc_inv_vol_weights(returns):
         Series {col_name: weight}
     """
     # calc vols
-    vol = np.divide(1.0, np.std(returns, ddof=1)).astype(float)
+    vol = (1.0 / returns.std(ddof=1)).astype(float)
     vol[np.isinf(vol)] = np.nan
     volsum = vol.sum()
-    return np.divide(vol, volsum)
+    return vol / volsum
 
 
 def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_method="ledoit-wolf", options=None):
@@ -2317,8 +2317,8 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
-    negative_returns = np.minimum(er[1:], 0.0)
-    std = np.std(negative_returns, ddof=1)
+    negative_returns = er[1:].clip(upper=0.0)
+    std = negative_returns.std(ddof=1)
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), std)
 
