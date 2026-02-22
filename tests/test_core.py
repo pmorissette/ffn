@@ -633,9 +633,9 @@ def test_calc_sortino_ratio(df):
     r = df.to_returns()
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
     er = r.to_excess_returns(rf, p)
-    negative_returns = np.minimum(er[1:], 0)
+    negative_returns = er[1:].clip(upper=0.0)
     assert np.allclose(
-        a, np.divide((er.mean() - rf), np.std(negative_returns, ddof=1)) * np.sqrt(p)
+        a, (er.mean() - rf) / negative_returns.std(ddof=1) * np.sqrt(p)
     )
 
 
