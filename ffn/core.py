@@ -1146,7 +1146,7 @@ def to_log_returns(prices):
         * prices: Expects a price series
 
     """
-    return np.log(prices / prices.shift(1))
+    return np.log1p(prices.pct_change())
 
 
 def to_price_index(returns, start=100):
