@@ -2318,9 +2318,9 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
     negative_returns = er[1:].clip(upper=0.0)
-    std = negative_returns.std(ddof=1)
+    downside_deviation = np.sqrt((negative_returns**2).mean())
     with np.errstate(invalid="ignore", divide="ignore"):
-        res = np.divide(er.mean(), std)
+        res = np.divide(er.mean(), downside_deviation)
 
     if annualize:
         if nperiods is None:
