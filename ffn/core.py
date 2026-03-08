@@ -1382,7 +1382,7 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
 
     """
     if nperiods is None:
-        nperiods = infer_freq(returns)
+        nperiods = infer_nperiods(returns)
 
     if isinstance(rf, float) and rf != 0 and nperiods is None:
         raise Exception("Must provide nperiods if rf != 0")
@@ -2227,7 +2227,7 @@ def deannualize(returns, nperiods):
 
     """
     if nperiods is None:
-        nperiods = infer_freq(returns)
+        nperiods = infer_nperiods(returns)
     return np.power(1 + returns, 1.0 / nperiods) - 1.0
 
 
@@ -2313,7 +2313,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
         raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
 
     if nperiods is None:
-        nperiods = infer_freq(returns)
+        nperiods = infer_nperiods(returns)
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
@@ -2344,7 +2344,7 @@ def to_excess_returns(returns, rf, nperiods=None):
 
     """
     if nperiods is None:
-        nperiods = infer_freq(returns)
+        nperiods = infer_nperiods(returns)
 
     if isinstance(rf, float) and nperiods is not None:
         _rf = deannualize(rf, nperiods)
@@ -2411,7 +2411,7 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
 
     """
     if nperiods is None:
-        nperiods = infer_freq(prices)
+        nperiods = infer_nperiods(prices)
 
     if isinstance(rf, float) and rf != 0 and nperiods is None:
         raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
