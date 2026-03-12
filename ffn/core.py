@@ -305,7 +305,7 @@ class PerformanceStats(object):
                         11: 0,
                         12: 0,
                     }
-                if not np.isnan(mr[idx]):
+                if not pd.isna(mr[idx]):
                     self.return_table[idx.year][idx.month] = mr[idx]
             # add first month
             fidx = mr.index[0]

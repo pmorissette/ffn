@@ -92,7 +92,7 @@ def fmtp(number: float) -> str:
     """
     Formatting helper - percent
     """
-    if np.isnan(number):
+    if pd.isna(number):
         return "-"
     return format(number, ".2%")
 
@@ -101,7 +101,7 @@ def fmtpn(number: float) -> str:
     """
     Formatting helper - percent no % sign
     """
-    if np.isnan(number):
+    if pd.isna(number):
         return "-"
     return format(number * 100, ".2f")
 
@@ -110,7 +110,7 @@ def fmtn(number: float) -> str:
     """
     Formatting helper - float
     """
-    if np.isnan(number):
+    if pd.isna(number):
         return "-"
     return format(number, ".2f")
 
