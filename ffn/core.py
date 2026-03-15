@@ -64,6 +64,8 @@ class PerformanceStats(object):
         self._end = self.prices.index[-1]
 
         self.rf = rf
+        # None means "infer from data"; a numeric value means "user-provided"
+        self._annualization_factor_override = annualization_factor
         self.annualization_factor = TRADING_DAYS_PER_YEAR if annualization_factor is None else annualization_factor
 
         self._update(self.prices)
@@ -215,6 +217,12 @@ class PerformanceStats(object):
 
         if len(r) < 2:
             return
+
+        # Auto-infer annualization factor from data frequency when not explicitly provided
+        if self._annualization_factor_override is None:
+            inferred = infer_nperiods(r)
+            if inferred is not None:
+                self.annualization_factor = inferred
 
         # Will calculate daily figures only if the input data has at least daily frequency or higher (e.g hourly)
         # Rather < 2 days than <= 1 days in case of data taken at different hours of the days
