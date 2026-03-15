@@ -1167,9 +1167,35 @@ def to_price_index(returns, start=100):
 
     Assumes arithmetic returns.
 
-    Formula is: cumprod (1+r)
+    The first value of the returned price index is always ``start``.
+    When the return series begins with NaN (as produced by
+    :func:`to_returns`), the NaN position is replaced by ``start`` and
+    the output length equals the input length.  Otherwise ``start`` is
+    prepended so that every return is reflected in the prices and the
+    round-trip ``to_returns(to_price_index(r))`` recovers *r*.
+
+    Formula is: start, start * cumprod(1+r)
     """
-    return (returns.replace(to_replace=np.nan, value=0) + 1).cumprod() * start
+    r = returns.replace(to_replace=np.nan, value=0)
+    cp = (1 + r).cumprod() * start
+
+    # If the first return was NaN (e.g. from to_returns()), the replace
+    # already turned it into 0 so cp starts at ``start``.  Just return.
+    if isinstance(returns, pd.DataFrame):
+        has_leading_nan = returns.iloc[0].isna().any()
+    else:
+        has_leading_nan = np.isnan(returns.iloc[0])
+
+    if has_leading_nan:
+        return cp
+
+    # No leading NaN – prepend ``start`` so the first price equals start.
+    if isinstance(cp, pd.DataFrame):
+        start_row = pd.DataFrame({c: [start] for c in cp.columns}, index=[cp.index[0]])
+    else:
+        start_row = pd.Series([start], index=[cp.index[0]], name=cp.name)
+
+    return pd.concat([start_row, cp])
 
 
 def rebase(prices, value=100):
