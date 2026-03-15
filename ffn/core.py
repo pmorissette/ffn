@@ -264,7 +264,7 @@ class PerformanceStats(object):
             self.daily_skew = r.skew()
 
             # if all zero/nan kurt fails division by zero
-            if len(r[(~np.isnan(r)) & (r != 0)]) > 0:
+            if len(r[(~pd.isna(r)) & (r != 0)]) > 0:
                 self.daily_kurt = r.kurt()
 
         # stats using monthly data
@@ -313,7 +313,7 @@ class PerformanceStats(object):
                         11: 0,
                         12: 0,
                     }
-                if not np.isnan(mr[idx]):
+                if not pd.isna(mr[idx]):
                     self.return_table[idx.year][idx.month] = mr[idx]
             # add first month
             fidx = mr.index[0]
@@ -341,7 +341,7 @@ class PerformanceStats(object):
             self.monthly_skew = mr.skew()
 
             # if all zero/nan kurt fails division by zero
-            if len(mr[(~np.isnan(mr)) & (mr != 0)]) > 0:
+            if len(mr[(~pd.isna(mr)) & (mr != 0)]) > 0:
                 self.monthly_kurt = mr.kurt()
 
         if r.index.to_series().diff().min() < pd.Timedelta("185 days"):
@@ -412,7 +412,7 @@ class PerformanceStats(object):
             self.yearly_skew = yr.skew()
 
             # if all zero/nan kurt fails division by zero
-            if len(yr[(~np.isnan(yr)) & (yr != 0)]) > 0:
+            if len(yr[(~pd.isna(yr)) & (yr != 0)]) > 0:
                 self.yearly_kurt = yr.kurt()
 
         if r.index.to_series().diff().min() < pd.Timedelta("1828 days"):
@@ -1273,7 +1273,7 @@ def to_drawdown_series(prices):
     drawdown = drawdown.ffill()
 
     # Ignore problems with NaN's in the beginning
-    drawdown[np.isnan(drawdown)] = -np.inf
+    drawdown[pd.isna(drawdown)] = -np.inf
 
     # Rolling maximum
     if isinstance(drawdown, pd.DataFrame):
@@ -1440,7 +1440,7 @@ def calc_information_ratio(returns, benchmark_returns):
     diff_rets = returns - benchmark_returns
     diff_std = diff_rets.std(ddof=1)
 
-    if np.isnan(diff_std) or diff_std == 0:
+    if pd.isna(diff_std) or diff_std == 0:
         return 0.0
 
     return np.divide(diff_rets.mean(), diff_std)
@@ -2198,7 +2198,7 @@ def _winsorize_wrapper(x, limits):
         if x.count() == 0:
             return x
 
-        notnanx = ~np.isnan(x)
+        notnanx = ~pd.isna(x)
         x[notnanx] = scipy.stats.mstats.winsorize(x[notnanx], limits=limits)
         return x
     else:
