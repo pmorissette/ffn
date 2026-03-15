@@ -1191,9 +1191,7 @@ def to_price_index(returns, start=100):
 
     # No leading NaN – prepend ``start`` so the first price equals start.
     if isinstance(cp, pd.DataFrame):
-        start_row = pd.DataFrame(
-            {c: [start] for c in cp.columns}, index=[cp.index[0]]
-        )
+        start_row = pd.DataFrame({c: [start] for c in cp.columns}, index=[cp.index[0]])
     else:
         start_row = pd.Series([start], index=[cp.index[0]], name=cp.name)
 
