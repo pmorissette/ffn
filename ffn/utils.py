@@ -3,7 +3,6 @@ import re
 from typing import List, Sequence, Tuple, Union
 
 import decorator
-import numpy as np
 import pandas as pd
 from packaging.version import Version
 
