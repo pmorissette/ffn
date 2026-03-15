@@ -327,7 +327,7 @@ class PerformanceStats(object):
                 self.return_table[idx][13] = np.prod(arr + 1) - 1
 
         if r.index.to_series().diff().min() < pd.Timedelta("93 days"):
-            if len(mr) < 3:
+            if dp.index[0] > dp.index[-1] - pd.DateOffset(months=3):
                 return
 
             denom = dp[: dp.index[-1] - pd.DateOffset(months=3)]
@@ -345,7 +345,7 @@ class PerformanceStats(object):
                 self.monthly_kurt = mr.kurt()
 
         if r.index.to_series().diff().min() < pd.Timedelta("185 days"):
-            if len(mr) < 6:
+            if dp.index[0] > dp.index[-1] - pd.DateOffset(months=6):
                 return
 
             denom = dp[: dp.index[-1] - pd.DateOffset(months=6)]
