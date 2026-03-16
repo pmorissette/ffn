@@ -857,8 +857,8 @@ def test_resample_returns(df):
         returns, lambda x: np.mean(x, axis=0), seed=0, num_trials=100
     )
 
-    resampled_mean = np.mean(sample_stats)
-    std_resampled_means = np.std(sample_stats, ddof=1)
+    resampled_mean = np.mean(sample_stats, axis=0)
+    std_resampled_means = np.std(sample_stats, ddof=1, axis=0)
 
     # resampled statistics should be within 3 std devs of actual
     assert np.all(np.abs((sample_mean - resampled_mean) / std_resampled_means) < 3)
@@ -870,8 +870,8 @@ def test_resample_returns(df):
         returns, lambda x: np.mean(x, axis=0), seed=0, num_trials=100
     )
 
-    resampled_mean = np.mean(sample_stats)
-    std_resampled_means = np.std(sample_stats, ddof=1)
+    resampled_mean = np.mean(sample_stats, axis=0)
+    std_resampled_means = np.std(sample_stats, ddof=1, axis=0)
 
     assert np.all(np.abs((sample_mean - resampled_mean) / std_resampled_means) < 3)
 
