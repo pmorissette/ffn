@@ -1,17 +1,16 @@
 [build-system]
 requires = [
-    "oldest-supported-numpy",
-    "setuptools",
-    "wheel",
+    "hatchling",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "hatchling.build"
 
 [project]
 name = "ffn"
 description = "Financial functions for Python"
 version = "1.1.5"
 readme = "README.md"
-license = { file = "LICENSE.txt" }
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.9"
 authors = [
     { name = "Philippe Morissette", email = "morissette.philippe@gmail.com" },
@@ -53,9 +52,7 @@ dev = [
     "ruff>=0.5.0,<0.16",
     "pytest",
     "pytest-cov",
-    "setuptools",
     "twine",
-    "wheel",
 ]
 test = [
     "pytest",
@@ -71,3 +68,14 @@ line-length = 180
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/ffn",
+    "/LICENSE",
+    "/README.md",
+    "/pyproject.toml",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["ffn"]
