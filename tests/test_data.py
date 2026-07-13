@@ -28,6 +28,7 @@ def test_fxmacrodata_fetches_spot_series():
     def fake_urlopen(request, timeout):
         captured["url"] = request.full_url
         captured["accept"] = request.get_header("Accept")
+        captured["api_key"] = request.get_header("X-api-key")
         captured["timeout"] = timeout
         return FakeResponse(json.dumps(payload))
 
@@ -48,8 +49,9 @@ def test_fxmacrodata_fetches_spot_series():
     )
     pd.testing.assert_series_equal(actual, expected)
     assert captured == {
-        "url": "https://fxmacrodata.com/api/v1/forex/eur/usd?start_date=2024-01-01&end_date=2024-01-31&api_key=test-key",
+        "url": "https://fxmacrodata.com/api/v1/forex/eur/usd?start_date=2024-01-01&end_date=2024-01-31",
         "accept": "application/json",
+        "api_key": "test-key",
         "timeout": 12,
     }
 
@@ -67,6 +69,23 @@ def test_fxmacrodata_requests_indicator_for_technical_field():
 
     assert captured["url"] == "https://fxmacrodata.com/api/v1/forex/eur/usd?start_date=2024-01-01&indicators=rsi_14"
     assert actual.loc[pd.Timestamp("2024-01-03")] == 54.25
+
+
+def test_fxmacrodata_omits_api_key_header_when_not_configured(monkeypatch):
+    monkeypatch.delenv("FXMACRODATA_API_KEY", raising=False)
+    monkeypatch.delenv("FXMD_API_KEY", raising=False)
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["url"] = request.full_url
+        captured["api_key"] = request.get_header("X-api-key")
+        return FakeResponse(json.dumps({"data": [{"date": "2024-01-03", "val": 1.092}]}))
+
+    with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+        ffn.data.fxmacrodata("EURUSD", mrefresh=True)
+
+    assert "api_key" not in captured["url"]
+    assert captured["api_key"] is None
 
 
 def test_fxmacrodata_integrates_with_get():

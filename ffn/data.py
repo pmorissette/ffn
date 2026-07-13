@@ -250,15 +250,15 @@ def fxmacrodata(
         params["indicators"] = indicator
 
     api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
-    if api_key:
-        params["api_key"] = api_key
-
     query = urlencode(params)
     url = f"{base_url.rstrip('/')}/forex/{base_currency.lower()}/{quote_currency.lower()}"
     if query:
         url = f"{url}?{query}"
 
-    request = Request(url, headers={"Accept": "application/json"})
+    headers = {"Accept": "application/json"}
+    if api_key:
+        headers["X-API-Key"] = api_key
+    request = Request(url, headers=headers)
     try:
         with urlopen(request, timeout=timeout) as response:
             payload = json.load(response)
