@@ -209,8 +209,7 @@ def _read_fxmacrodata_error(error: HTTPError) -> str:
     return message
 
 
-@utils.memoize
-def fxmacrodata(
+def _fxmacrodata_fetch(
     ticker: str,
     field=None,
     start=None,
@@ -218,22 +217,7 @@ def fxmacrodata(
     api_key=None,
     base_url: str = FXMACRODATA_API_BASE_URL,
     timeout: float = 30,
-    mrefresh=False,
 ) -> pd.Series:
-    """
-    Data provider for FXMacroData daily FX spot rates.
-
-    Use with :func:`ffn.get` by passing this function as the provider:
-
-    >>> prices = ffn.get("EURUSD", provider=ffn.data.fxmacrodata, start="2024-01-01", api_key="...")
-
-    ``ticker`` accepts six-character FX pairs such as ``EURUSD`` or separated
-    forms such as ``EUR/USD``. By default the returned series contains the
-    ``val`` field from the FXMacroData response. Technical fields such as
-    ``sma_20`` or ``rsi_14`` can be requested via ffn's ticker field syntax,
-    for example ``EURUSD:sma_20``. Pass ``api_key`` or set
-    ``FXMACRODATA_API_KEY`` or ``FXMD_API_KEY`` for protected pairs.
-    """
     base_currency, quote_currency = _split_fxmacrodata_pair(ticker)
     output_field = field or "val"
 
@@ -294,6 +278,57 @@ def fxmacrodata(
         raise ValueError(f"FXMacroData response did not include numeric '{output_field}' rows for {base_currency}/{quote_currency}")
 
     return series[~series.index.duplicated(keep="last")].sort_index()
+
+
+@utils.memoize
+def _fxmacrodata_cached(
+    ticker: str,
+    field=None,
+    start=None,
+    end=None,
+    base_url: str = FXMACRODATA_API_BASE_URL,
+    timeout: float = 30,
+    mrefresh=False,
+) -> pd.Series:
+    """Cache public FXMacroData responses without including credentials in the cache key."""
+    return _fxmacrodata_fetch(ticker, field=field, start=start, end=end, base_url=base_url, timeout=timeout)
+
+
+def fxmacrodata(
+    ticker: str,
+    field=None,
+    start=None,
+    end=None,
+    api_key=None,
+    base_url: str = FXMACRODATA_API_BASE_URL,
+    timeout: float = 30,
+    mrefresh=False,
+) -> pd.Series:
+    """
+    Data provider for FXMacroData daily FX spot rates.
+
+    Use with :func:`ffn.get` by passing this function as the provider:
+
+    >>> prices = ffn.get("EURUSD", provider=ffn.data.fxmacrodata, start="2024-01-01", api_key="...")
+
+    ``ticker`` accepts six-character FX pairs such as ``EURUSD`` or separated
+    forms such as ``EUR/USD``. By default the returned series contains the
+    ``val`` field from the FXMacroData response. Technical fields such as
+    ``sma_20`` or ``rsi_14`` can be requested via ffn's ticker field syntax,
+    for example ``EURUSD:sma_20``. Pass ``api_key`` or set
+    ``FXMACRODATA_API_KEY`` or ``FXMD_API_KEY`` for protected pairs.
+
+    Public responses are memoized. Authenticated requests are intentionally not
+    cached so an API key is never serialized into ffn's in-memory cache key.
+    """
+    api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
+    if api_key:
+        return _fxmacrodata_fetch(
+            ticker, field=field, start=start, end=end, api_key=api_key, base_url=base_url, timeout=timeout
+        )
+    return _fxmacrodata_cached(
+        ticker, field=field, start=start, end=end, base_url=base_url, timeout=timeout, mrefresh=mrefresh
+    )
 
 
 DEFAULT_PROVIDER = yf

@@ -88,6 +88,26 @@ def test_fxmacrodata_omits_api_key_header_when_not_configured(monkeypatch):
     assert captured["api_key"] is None
 
 
+def test_fxmacrodata_does_not_serialize_api_keys_into_cache_keys():
+    cache = ffn.data._fxmacrodata_cached.mcache
+    cache.clear()
+    request_keys = []
+
+    def fake_urlopen(request, timeout):
+        request_keys.append(request.get_header("X-api-key"))
+        return FakeResponse(json.dumps({"data": [{"date": "2024-01-03", "val": 1.092}]}))
+
+    try:
+        with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+            ffn.data.fxmacrodata("EURUSD", api_key="first-secret")
+            ffn.data.fxmacrodata("EURUSD", api_key="second-secret")
+
+        assert request_keys == ["first-secret", "second-secret"]
+        assert not cache
+    finally:
+        cache.clear()
+
+
 def test_fxmacrodata_integrates_with_get():
     payload = {"data": [{"date": "2024-01-01", "val": 1.1038}]}
 
