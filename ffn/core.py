@@ -783,6 +783,11 @@ class GroupStats(dict):
     Individual PerformanceStats objects can be accessed via index
     position or name via the [] accessor.
 
+    Each series' stats are computed from that series' own available
+    observations, matching what PerformanceStats returns for the series
+    on its own. Cross-sectional views (prices, correlations) use the
+    merged calendar, keeping only dates where every series has data.
+
     Args:
         * prices (Series): Multiple price series to be compared.
 
@@ -808,11 +813,14 @@ class GroupStats(dict):
                 names.append(getattr(p, "name", "n/a"))
         self._names = names
 
-        # store original prices
-        self._prices = merge(*prices).dropna()
+        # store original prices with each series' own calendar, and the
+        # merged intersection used for cross-sectional views
+        self._prices_full = merge(*prices)
+        self._prices = self._prices_full.dropna()
 
         # proper ordering
         self._prices = self._prices[self._names]
+        self._prices_full = self._prices_full[self._names]
 
         # check for duplicate columns
         if len(self._prices.columns) != len(set(self._prices.columns)):
@@ -824,7 +832,7 @@ class GroupStats(dict):
         self._start = self._prices.index[0]
         self._end = self._prices.index[-1]
         # calculate stats for entire series
-        self._update(self._prices)
+        self._update(self._prices, self._prices_full)
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -833,14 +841,18 @@ class GroupStats(dict):
         else:
             return self.get(key)
 
-    def _update(self, data):
-        self._calculate(data)
+    def _update(self, data, full_data=None):
+        self._calculate(data, full_data)
         self._update_stats()
 
-    def _calculate(self, data):
+    def _calculate(self, data, full_data=None):
         self.prices = data
+        # build each series' stats from its own observations so that rows
+        # missing in one series are not silently dropped from the others
+        if full_data is None:
+            full_data = data
         for c in data.columns:
-            prc = data[c]
+            prc = full_data[c].dropna()
             self[c] = PerformanceStats(prc)
 
     def _stats(self):
@@ -944,7 +956,7 @@ class GroupStats(dict):
         """
         start = self._start if start is None else pd.to_datetime(start)
         end = self._end if end is None else pd.to_datetime(end)
-        self._update(self._prices.loc[start:end])
+        self._update(self._prices.loc[start:end], self._prices_full.loc[start:end])
 
     def display(self):
         """
