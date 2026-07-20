@@ -43,7 +43,10 @@ class PerformanceStats(object):
         * prices (Series): A price series.
         * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a float. Otherwise
-            rf should be a price series.
+            rf should be a *price* series — it is converted internally with
+            to_returns(). Note this differs from calc_sharpe and
+            calc_sortino_ratio, which take rf as a return series. Passing a
+            return series here silently behaves like rf=0.
 
     Attributes:
         * name (str): Name, derived from price series name
@@ -77,7 +80,8 @@ class PerformanceStats(object):
         Affects only this instance of the PerformanceStats.
 
         Args:
-            * rf (float): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
+            * rf (float, Series): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_,
+                or a risk-free *price* series (not returns)
         """
         self.rf = rf
 
@@ -923,7 +927,8 @@ class GroupStats(dict):
         this GroupStats object.
 
         Args:
-            * rf (float, Series): Annual risk-free rate or risk-free rate price series
+            * rf (float, Series): Annual risk-free rate or risk-free rate *price*
+                series (not returns)
         """
 
         for key in self._names:
@@ -1410,7 +1415,8 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
 
     Args:
         * returns (Series, DataFrame): Input return series
-        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed as a yearly (annualized) return or return series
+        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed as a yearly (annualized) return or *return*
+            series (unlike PerformanceStats, which takes rf as a price series)
         * nperiods (int): Frequency of returns (252 for daily, 12 for monthly,
             etc.)
 
