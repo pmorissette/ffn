@@ -828,6 +828,46 @@ def test_group_stats_calc_stats(df):
     assert num_stats == num_unique_stats
 
 
+def test_group_stats_uses_each_series_own_calendar():
+    # GH #155: a NaN row in one series should not drop that date from the
+    # other series' individual stats
+    dates = pd.date_range("2020-01-31", periods=24, freq=ffn.core._MonthEnd)
+    np.random.seed(1)
+    sym1 = pd.Series(
+        100 * np.cumprod(1 + np.random.normal(0.01, 0.04, 24)), index=dates, name="SYM1"
+    )
+    sym2 = pd.Series(
+        100 * np.cumprod(1 + np.random.normal(0.01, 0.04, 24)), index=dates, name="SYM2"
+    )
+    # SYM2 missing for three months in the middle
+    sym2.iloc[9:12] = np.nan
+
+    gs = ffn.GroupStats(sym1, sym2)
+
+    # per-series stats match the single-series result
+    aae(gs["SYM1"].monthly_sharpe, ffn.PerformanceStats(sym1).monthly_sharpe, 9)
+    aae(gs["SYM1"].total_return, ffn.PerformanceStats(sym1).total_return, 9)
+    aae(
+        gs["SYM2"].monthly_sharpe, ffn.PerformanceStats(sym2.dropna()).monthly_sharpe, 9
+    )
+
+    # SYM1 keeps all of its own dates
+    assert len(gs["SYM1"].prices) == 24
+
+    # cross-sectional prices still use the common calendar
+    assert len(gs.prices) == 21
+
+    # date range slicing preserves the per-series calendar behaviour
+    gs.set_date_range(start=dates[3])
+    aae(
+        gs["SYM1"].monthly_sharpe,
+        ffn.PerformanceStats(sym1[dates[3]:]).monthly_sharpe,
+        9,
+    )
+    gs.set_date_range()
+    aae(gs["SYM1"].monthly_sharpe, ffn.PerformanceStats(sym1).monthly_sharpe, 9)
+
+
 def test_resample_returns(df):
     num_years = 30
     num_months = num_years * 12
