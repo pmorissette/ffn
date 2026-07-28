@@ -1,5 +1,10 @@
+import json
+import os
 import warnings
 from typing import Sequence, Union
+from urllib.error import HTTPError
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
 
 import pandas as pd
 import yfinance
@@ -155,6 +160,175 @@ def csv(ticker: str, path="data.csv", field="", mrefresh=False, **kwargs) -> pd.
         raise ValueError("Ticker(field) not present in csv file!")
 
     return df[tf]
+
+
+FXMACRODATA_API_BASE_URL = "https://fxmacrodata.com/api/v1"
+
+_FXMACRODATA_INDICATOR_FIELDS = {
+    "sma_20": "sma_20",
+    "sma_50": "sma_50",
+    "sma_200": "sma_200",
+    "ema_12": "ema_12",
+    "ema_20": "ema_20",
+    "ema_26": "ema_26",
+    "ema_50": "ema_50",
+    "ema_200": "ema_200",
+    "rsi_14": "rsi_14",
+    "atr_14": "atr_14",
+    "adx_14": "adx_14",
+    "macd": "macd",
+    "macd_signal": "macd",
+    "macd_histogram": "macd",
+    "bb_upper": "bollinger_bands",
+    "bb_middle": "bollinger_bands",
+    "bb_lower": "bollinger_bands",
+}
+
+
+def _format_fxmacrodata_date(value):
+    if value is None:
+        return None
+    return pd.Timestamp(value).date().isoformat()
+
+
+def _split_fxmacrodata_pair(ticker: str) -> tuple[str, str]:
+    normalized = "".join(char for char in ticker.upper() if char.isalpha())
+    if len(normalized) != 6:
+        raise ValueError("FXMacroData tickers must look like 'EURUSD' or 'EUR/USD'")
+    return normalized[:3], normalized[3:]
+
+
+def _read_fxmacrodata_error(error: HTTPError) -> str:
+    try:
+        body = error.read().decode("utf-8").strip()
+    except Exception:
+        body = ""
+    message = f"FXMacroData API error {error.code}"
+    if body:
+        message = f"{message}: {body}"
+    return message
+
+
+def _fxmacrodata_fetch(
+    ticker: str,
+    field=None,
+    start=None,
+    end=None,
+    api_key=None,
+    base_url: str = FXMACRODATA_API_BASE_URL,
+    timeout: float = 30,
+) -> pd.Series:
+    base_currency, quote_currency = _split_fxmacrodata_pair(ticker)
+    output_field = field or "val"
+
+    params = {}
+    start_date = _format_fxmacrodata_date(start)
+    end_date = _format_fxmacrodata_date(end)
+    if start_date:
+        params["start_date"] = start_date
+    if end_date:
+        params["end_date"] = end_date
+
+    indicator = _FXMACRODATA_INDICATOR_FIELDS.get(output_field)
+    if indicator:
+        params["indicators"] = indicator
+
+    api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
+    query = urlencode(params)
+    url = f"{base_url.rstrip('/')}/forex/{base_currency.lower()}/{quote_currency.lower()}"
+    if query:
+        url = f"{url}?{query}"
+
+    headers = {"Accept": "application/json"}
+    if api_key:
+        headers["X-API-Key"] = api_key
+    request = Request(url, headers=headers)
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            payload = json.load(response)
+    except HTTPError as error:
+        if error.code == 401:
+            raise PermissionError(_read_fxmacrodata_error(error)) from error
+        raise ValueError(_read_fxmacrodata_error(error)) from error
+
+    rows = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        raise ValueError("FXMacroData response did not include a data list")
+
+    records = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        date_value = row.get("date")
+        series_value = row.get(output_field)
+        if date_value is None or series_value is None:
+            continue
+        records.append((pd.Timestamp(date_value), series_value))
+
+    if not records:
+        raise ValueError(f"FXMacroData response did not include dated '{output_field}' rows for {base_currency}/{quote_currency}")
+
+    series = pd.Series(
+        data=[value for _, value in records],
+        index=pd.DatetimeIndex([date for date, _ in records]),
+        name=ticker,
+    )
+    series = pd.to_numeric(series, errors="coerce").dropna()
+    if series.empty:
+        raise ValueError(f"FXMacroData response did not include numeric '{output_field}' rows for {base_currency}/{quote_currency}")
+
+    return series[~series.index.duplicated(keep="last")].sort_index()
+
+
+@utils.memoize
+def _fxmacrodata_cached(
+    ticker: str,
+    field=None,
+    start=None,
+    end=None,
+    base_url: str = FXMACRODATA_API_BASE_URL,
+    timeout: float = 30,
+    mrefresh=False,
+) -> pd.Series:
+    """Cache public FXMacroData responses without including credentials in the cache key."""
+    return _fxmacrodata_fetch(ticker, field=field, start=start, end=end, base_url=base_url, timeout=timeout)
+
+
+def fxmacrodata(
+    ticker: str,
+    field=None,
+    start=None,
+    end=None,
+    api_key=None,
+    base_url: str = FXMACRODATA_API_BASE_URL,
+    timeout: float = 30,
+    mrefresh=False,
+) -> pd.Series:
+    """
+    Data provider for FXMacroData daily FX spot rates.
+
+    Use with :func:`ffn.get` by passing this function as the provider:
+
+    >>> prices = ffn.get("EURUSD", provider=ffn.data.fxmacrodata, start="2024-01-01", api_key="...")
+
+    ``ticker`` accepts six-character FX pairs such as ``EURUSD`` or separated
+    forms such as ``EUR/USD``. By default the returned series contains the
+    ``val`` field from the FXMacroData response. Technical fields such as
+    ``sma_20`` or ``rsi_14`` can be requested via ffn's ticker field syntax,
+    for example ``EURUSD:sma_20``. Pass ``api_key`` or set
+    ``FXMACRODATA_API_KEY`` or ``FXMD_API_KEY`` for protected pairs.
+
+    Public responses are memoized. Authenticated requests are intentionally not
+    cached so an API key is never serialized into ffn's in-memory cache key.
+    """
+    api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
+    if api_key:
+        return _fxmacrodata_fetch(
+            ticker, field=field, start=start, end=end, api_key=api_key, base_url=base_url, timeout=timeout
+        )
+    return _fxmacrodata_cached(
+        ticker, field=field, start=start, end=end, base_url=base_url, timeout=timeout, mrefresh=mrefresh
+    )
 
 
 DEFAULT_PROVIDER = yf
