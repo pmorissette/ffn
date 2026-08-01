@@ -7,7 +7,7 @@ import scipy.stats
 import sklearn.cluster
 import sklearn.covariance
 import sklearn.manifold
-from matplotlib import pyplot as plt  # noqa
+from matplotlib import pyplot as plt
 from packaging.version import Version
 from pandas.core.base import PandasObject
 from scipy.optimize import minimize
@@ -32,7 +32,7 @@ else:
 TRADING_DAYS_PER_YEAR = 252
 
 
-class PerformanceStats(object):
+class PerformanceStats:
     """
     PerformanceStats is a convenience class used for the performance
     evaluation of a price series. It contains various helper functions
@@ -60,7 +60,7 @@ class PerformanceStats(object):
     """
 
     def __init__(self, prices, rf=0.0, annualization_factor=None):
-        super(PerformanceStats, self).__init__()
+        super().__init__()
         self.prices = prices
         self.name = self.prices.name
         self._start = self.prices.index[0]
@@ -509,9 +509,9 @@ class PerformanceStats(object):
         Displays an overview containing descriptive stats for the Series
         provided.
         """
-        print("Stats for %s from %s - %s" % (self.name, self.start, self.end))
+        print(f"Stats for {self.name} from {self.start} - {self.end}")
         if isinstance(self.rf, float):
-            print("Annual risk-free rate considered: %s" % (fmtp(self.rf)))
+            print(f"Annual risk-free rate considered: {fmtp(self.rf)}")
         print("Summary:")
         data = [
             [
@@ -641,9 +641,9 @@ class PerformanceStats(object):
 
     def _get_default_plot_title(self, name, freq, kind):
         if freq is None:
-            return "%s %s" % (name, kind)
+            return f"{name} {kind}"
         else:
-            return "%s %s %s" % (name, get_freq_name(freq), kind)
+            return f"{name} {get_freq_name(freq)} {kind}"
 
     def plot(self, freq=None, figsize=(15, 5), title=None, logy=False, **kwargs):
         """
@@ -709,12 +709,10 @@ class PerformanceStats(object):
         values = []
 
         for stat in stats:
-            k, n, f = stat
+            k, n, _ = stat
 
             # blank row
-            if k is None:
-                continue
-            elif k == "rf" and not isinstance(self.rf, float):
+            if k is None or k == "rf" and not isinstance(self.rf, float):
                 continue
 
             if n in short_names:
@@ -764,7 +762,7 @@ class PerformanceStats(object):
             elif f == "dt":
                 row.append(raw.strftime("%Y-%m-%d"))
             else:
-                raise NotImplementedError("unsupported format %s" % f)
+                raise NotImplementedError(f"unsupported format {f}")
 
             data.append(sep.join(row))
 
@@ -927,9 +925,9 @@ class GroupStats(dict):
 
     def _get_default_plot_title(self, freq, kind):
         if freq is None:
-            return "%s" % kind
+            return kind
         else:
-            return "%s %s" % (get_freq_name(freq), kind)
+            return f"{get_freq_name(freq)} {kind}"
 
     def set_riskfree_rate(self, rf):
         """
@@ -998,7 +996,7 @@ class GroupStats(dict):
                 elif f == "dt":
                     row.append(raw.strftime("%Y-%m-%d"))
                 else:
-                    raise NotImplementedError("unsupported format %s" % f)
+                    raise NotImplementedError(f"unsupported format {f}")
             data.append(row)
 
         print(tabulate(data, headers="firstrow"))
@@ -1136,7 +1134,7 @@ class GroupStats(dict):
                 elif f == "dt":
                     row.append(raw.strftime("%Y-%m-%d"))
                 else:
-                    raise NotImplementedError("unsupported format %s" % f)
+                    raise NotImplementedError(f"unsupported format {f}")
             data.append(sep.join(row))
 
         res = "\n".join(data)
@@ -1357,11 +1355,11 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     is_zero = drawdown == 0
     # find start dates (first day where dd is non-zero after a zero)
     start = ~is_zero & is_zero.shift(1)
-    start = list(start[start == True].index)  # NOQA
+    start = list(start[start == True].index)
 
     # find end dates (first day where dd is 0 after non-zero)
     end = is_zero & (~is_zero).shift(1)
-    end = list(end[end == True].index)  # NOQA
+    end = list(end[end == True].index)
 
     if len(start) == 0:  # start.empty
         return None
@@ -1381,9 +1379,9 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     if start[-1] > end[-1]:
         end.append(drawdown.index[-1])
 
-    result = pd.DataFrame(columns=("Start", "End", "Length", "drawdown"), index=range(0, len(start)))
+    result = pd.DataFrame(columns=("Start", "End", "Length", "drawdown"), index=range(len(start)))
 
-    for i in range(0, len(start)):
+    for i in range(len(start)):
         dd = drawdown[start[i] : end[i]].min()
 
         if index_type is pd.DatetimeIndex:
@@ -1437,7 +1435,7 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
         nperiods = infer_nperiods(returns)
 
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception("Must provide nperiods if rf != 0")
+        raise ValueError("Must provide nperiods if rf != 0")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
     std = er.std(ddof=1)
@@ -1536,7 +1534,7 @@ def drop_duplicate_cols(df):
             # get subset of df w/ colname n
             sub = df[n]
             # make unique colnames
-            sub.columns = ["%s-%s" % (n, x) for x in range(sub.shape[1])]
+            sub.columns = [f"{n}-{x}" for x in range(sub.shape[1])]
             # get colname w/ max # of data
             keep = sub.count().idxmax()
             # drop all columns of name n from original df
@@ -1660,7 +1658,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
     )
     # check if success
     if not optimized.success:
-        raise Exception(optimized.message)
+        raise RuntimeError(optimized.message)
 
     # return weight vector
     return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
@@ -1717,7 +1715,7 @@ def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):
     )
     # check if success
     if not optimized.success:
-        raise Exception(optimized.message)
+        raise RuntimeError(optimized.message)
 
     # return weight vector
     return optimized.x
@@ -1772,7 +1770,7 @@ def _erc_weights_ccd(x0, cov, b, maximum_iterations, tolerance):
         x0 = x.copy()
 
     # no solution found
-    raise ValueError("No solution found after {0} iterations.".format(maximum_iterations))
+    raise ValueError(f"No solution found after {maximum_iterations} iterations.")
 
 
 def calc_erc_weights(
@@ -1931,7 +1929,7 @@ def calc_clusters(returns, n=None, plot=False):
                 break
 
     if plot:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.scatter(xy[:, 0], xy[:, 1], c=result[2], s=90)
         for i, txt in enumerate(returns.columns):
             ax.annotate(txt, (xy[i, 0], xy[i, 1]), size=14)
@@ -2064,7 +2062,7 @@ def limit_weights(weights, limit=0.1):
         weights = pd.Series(weights)
 
     if np.round(weights.sum(), 1) != 1.0:
-        raise ValueError("Expecting weights (that sum to 1) - sum is %s" % weights.sum())
+        raise ValueError(f"Expecting weights (that sum to 1) - sum is {weights.sum()}")
 
     res = np.round(weights.copy(), 4)
     to_rebalance = (res[res > limit] - limit).sum()
@@ -2295,7 +2293,7 @@ def infer_freq(data):
             return pd.infer_freq(data.index)
         else:
             return pd.infer_freq(data.index, warn=False)
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         return None
 
 
@@ -2345,7 +2343,7 @@ def infer_nperiods(data, annualization_factor=None):
             return num * _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor)
     except KeyboardInterrupt:
         raise
-    except BaseException:
+    except (TypeError, ValueError):
         return None
 
 
@@ -2362,7 +2360,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
     """
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
+        raise ValueError("nperiods must be set if rf != 0 and rf is not a price series")
 
     if nperiods is None:
         nperiods = infer_nperiods(returns)
@@ -2466,7 +2464,7 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
         nperiods = infer_nperiods(prices)
 
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
+        raise ValueError("nperiods must be set if rf != 0 and rf is not a price series")
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
 

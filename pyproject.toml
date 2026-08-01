@@ -49,7 +49,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "build",
-    "ruff>=0.5.0,<0.16",
+    "ruff",
     "pytest",
     "pytest-cov",
     "twine",
