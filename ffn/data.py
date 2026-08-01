@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import warnings
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import pandas as pd
 import yfinance
@@ -110,21 +112,21 @@ def web(ticker: str, field=None, start=None, end=None, mrefresh=False, source="y
     if source == "yahoo":
         warnings.warn("web function is deprecated, as , use yf() instead")
         return yf(ticker, field, start, end, mrefresh)
-    raise Exception("""pandas_datareader data readers are unmaintained and mostly broken, If you
+    raise ValueError("""pandas_datareader data readers are unmaintained and mostly broken, If you
                     still want them, go import the datareader directly from that library.
                     https://github.com/pydata/pandas-datareader/issues/977
                     """)
 
 
 @utils.memoize
-def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> Union[pd.Series, pd.DataFrame]:
+def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> pd.Series | pd.DataFrame:
     if field is None:
         field = "Adj Close"
 
     tmp = yfinance.download(ticker, auto_adjust=False, start=start, end=end)
 
     if tmp is None:
-        raise ValueError("failed to retrieve data for %s:%s" % (ticker, field))
+        raise ValueError(f"failed to retrieve data for {ticker}:{field}")
 
     if field:
         return tmp[field]
@@ -148,7 +150,7 @@ def csv(ticker: str, path="data.csv", field="", mrefresh=False, **kwargs) -> pd.
 
     tf = ticker
     if field != "" and field is not None:
-        tf = "%s:%s" % (tf, field)
+        tf = f"{tf}:{field}"
 
     # check that required column exists
     if tf not in df:
