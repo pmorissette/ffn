@@ -392,13 +392,13 @@ class PerformanceStats:
             # -1 here to account for first return that will be nan
             self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
 
-            # need at least 1 year of monthly returns
-            if mr.size > 11:
+            # need at least 1 year of monthly returns, i.e. 13 month end prices
+            if mr.size > 12:
                 tot = 0
                 win = 0
-                for i in range(11, len(mr)):
+                for i in range(12, len(mr)):
                     tot += 1
-                    if mp.iloc[i] / mp.iloc[i - 11] > 1:
+                    if mp.iloc[i] / mp.iloc[i - 12] > 1:
                         win += 1
                 self.twelve_month_win_perc = float(win) / tot
 
