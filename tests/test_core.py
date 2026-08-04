@@ -633,10 +633,44 @@ def test_calc_sortino_ratio(df):
     r = df.to_returns()
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
     er = r.to_excess_returns(rf, p)
-    negative_returns = er[1:].clip(upper=0.0)
+    negative_returns = er.clip(upper=0.0)
     downside_deviation = np.sqrt((negative_returns**2).mean())
     assert np.allclose(
         a, (er.mean() - rf) / downside_deviation * np.sqrt(p)
+    )
+
+
+def test_calc_sortino_ratio_is_order_invariant():
+    # Both the mean and the downside deviation are symmetric functions of the
+    # sample, so reordering the same returns must not change the ratio.
+    idx = pd.date_range("2026-01-31", periods=4, freq="ME")
+    negative_first = pd.Series([-0.10, 0.02, 0.01, 0.03], index=idx)
+    negative_last = pd.Series([0.02, 0.01, 0.03, -0.10], index=idx)
+
+    assert np.isclose(
+        negative_first.calc_sortino_ratio(annualize=False), -0.2
+    )
+    assert np.isclose(
+        negative_last.calc_sortino_ratio(annualize=False), -0.2
+    )
+
+
+def test_calc_sortino_ratio_counts_first_period_downside():
+    # A series whose only losing period comes first still has downside risk.
+    idx = pd.date_range("2026-01-31", periods=4, freq="ME")
+    returns = pd.Series([-0.10, 0.02, 0.01, 0.03], index=idx)
+
+    assert np.isfinite(returns.calc_sortino_ratio(annualize=False))
+
+
+def test_calc_sortino_ratio_ignores_leading_nan(df):
+    # Returns built from prices carry a leading NaN, which pandas already skips
+    # in both the mean and the downside deviation.
+    r = df.to_returns()
+
+    assert np.allclose(
+        r.calc_sortino_ratio(annualize=False),
+        r[1:].calc_sortino_ratio(annualize=False),
     )
 
 
