@@ -2468,7 +2468,9 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
 
-    return np.divide(er.mean(), prices.to_ulcer_index())
+    # to_ulcer_index is expressed in percentage points, so put the excess
+    # return on the same scale before dividing
+    return np.divide(er.mean() * 100.0, prices.to_ulcer_index())
 
 
 def resample_returns(returns, func, seed=0, num_trials=100):
