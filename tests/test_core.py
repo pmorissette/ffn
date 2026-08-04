@@ -643,7 +643,7 @@ def test_calc_sortino_ratio(df):
 def test_calc_sortino_ratio_is_order_invariant():
     # Both the mean and the downside deviation are symmetric functions of the
     # sample, so reordering the same returns must not change the ratio.
-    idx = pd.date_range("2026-01-31", periods=4, freq="ME")
+    idx = pd.date_range("2026-01-31", periods=4, freq=ffn.core._MonthEnd)
     negative_first = pd.Series([-0.10, 0.02, 0.01, 0.03], index=idx)
     negative_last = pd.Series([0.02, 0.01, 0.03, -0.10], index=idx)
 
@@ -657,7 +657,7 @@ def test_calc_sortino_ratio_is_order_invariant():
 
 def test_calc_sortino_ratio_counts_first_period_downside():
     # A series whose only losing period comes first still has downside risk.
-    idx = pd.date_range("2026-01-31", periods=4, freq="ME")
+    idx = pd.date_range("2026-01-31", periods=4, freq=ffn.core._MonthEnd)
     returns = pd.Series([-0.10, 0.02, 0.01, 0.03], index=idx)
 
     assert np.isfinite(returns.calc_sortino_ratio(annualize=False))
