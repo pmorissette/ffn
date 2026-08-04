@@ -640,6 +640,44 @@ def test_calc_sortino_ratio(df):
     )
 
 
+def test_to_ulcer_index_is_in_percentage_points():
+    # 100 -> 90 -> 100 has drawdowns of 0%, -10%, 0%, so the ulcer index is
+    # sqrt(mean([0, 100, 0])) = sqrt(100 / 3)
+    idx = pd.date_range("2026-01-01", periods=3, freq="D")
+    prices = pd.Series([100.0, 90.0, 100.0], index=idx)
+
+    assert np.isclose(prices.to_ulcer_index(), np.sqrt(100 / 3))
+
+
+def test_to_ulcer_index_without_drawdown_is_zero():
+    idx = pd.date_range("2026-01-01", periods=4, freq="D")
+    prices = pd.Series([100.0, 101.0, 102.0, 103.0], index=idx)
+
+    assert np.isclose(prices.to_ulcer_index(), 0.0)
+
+
+def test_to_ulcer_performance_index_matches_ulcer_index_scale():
+    # The ulcer index is expressed in percentage points, so the excess return
+    # must be too. Mean excess return here is (-0.1 + 1/9) / 2 = 0.005555...,
+    # i.e. 0.5555...% against an ulcer index of sqrt(100 / 3).
+    idx = pd.date_range("2026-01-01", periods=3, freq="D")
+    prices = pd.Series([100.0, 90.0, 100.0], index=idx)
+
+    expected = (0.5555555555555556) / np.sqrt(100 / 3)
+
+    assert np.isclose(prices.to_ulcer_performance_index(), expected)
+
+
+def test_to_ulcer_performance_index_is_dimensionally_consistent():
+    idx = pd.date_range("2026-01-01", periods=8, freq="D")
+    prices = pd.Series([100.0, 110, 105, 120, 90, 95, 130, 125], index=idx)
+
+    upi = prices.to_ulcer_performance_index()
+    mean_excess_pct = prices.to_returns().mean() * 100
+
+    assert np.isclose(upi * prices.to_ulcer_index(), mean_excess_pct)
+
+
 def test_calmar_ratio(df):
     cagr = df.calc_cagr()
     mdd = df.calc_max_drawdown()
