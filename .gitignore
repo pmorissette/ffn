@@ -33,6 +33,7 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
+.benchmarks/
 .coverage
 .cache
 nosetests.xml
@@ -69,4 +70,3 @@ docs/source/_themes/klink/static/css
 
 #ipython notebook files
 .ipynb_checkpoints/
-
