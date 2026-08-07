@@ -678,6 +678,51 @@ def test_to_ulcer_performance_index_is_dimensionally_consistent():
     assert np.isclose(upi * prices.to_ulcer_index(), mean_excess_pct)
 
 
+def _diff_series(n, mean=0.001, std=0.01):
+    # A return series against a flat benchmark, with the differential's mean and
+    # standard deviation pinned so the information ratio is exactly mean / std
+    rng = np.random.default_rng(0)
+    raw = rng.normal(0, 1, n)
+    raw = (raw - raw.mean()) / raw.std(ddof=1)
+    idx = pd.date_range("2020-01-01", periods=n, freq="D")
+    return (
+        pd.Series(mean + std * raw, index=idx),
+        pd.Series(np.zeros(n), index=idx),
+    )
+
+
+def test_calc_prob_mom_increases_with_sample_size():
+    """Test that the same per-period edge observed for longer gives more confidence"""
+    probs = []
+    for n in (10, 50, 250, 1000):
+        returns, benchmark = _diff_series(n)
+        assert np.isclose(returns.calc_information_ratio(benchmark), 0.1)
+        probs.append(returns.calc_prob_mom(benchmark))
+
+    for earlier, later in zip(probs, probs[1:]):
+        assert later > earlier
+
+    assert probs[0] < 0.7
+    assert probs[-1] > 0.99
+
+
+def test_calc_prob_mom_matches_one_sample_t_test():
+    """Test that the probability is the t CDF of the information ratio scaled by sqrt(n)"""
+    # 250 observations at an information ratio of 0.1 give a t statistic of
+    # 0.1 * sqrt(250) = 1.5811 on 249 degrees of freedom
+    returns, benchmark = _diff_series(250)
+
+    assert np.isclose(returns.calc_prob_mom(benchmark), 0.942442, atol=1e-6)
+
+
+def test_calc_prob_mom_without_an_edge_is_half():
+    """Test that a series compared against itself carries no information"""
+    idx = pd.date_range("2020-01-01", periods=100, freq="D")
+    returns = pd.Series(np.linspace(0.001, 0.002, 100), index=idx)
+
+    assert np.isclose(returns.calc_prob_mom(returns), 0.5)
+
+
 def test_calmar_ratio(df):
     cagr = df.calc_cagr()
     mdd = df.calc_max_drawdown()
