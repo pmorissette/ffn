@@ -721,6 +721,42 @@ def test_calc_sharpe(df):
     assert np.allclose(res, ar.mean() / ar.std() * np.sqrt(252))
 
 
+def test_calc_expected_max_sharpe():
+    # No dispersion, or a single trial, means no selection to correct for
+    assert ffn.calc_expected_max_sharpe(1, 0.5) == 0.0
+    assert ffn.calc_expected_max_sharpe(50, 0.0) == 0.0
+
+    # The hurdle grows with the number of trials and scales with their dispersion
+    assert ffn.calc_expected_max_sharpe(100, 0.5) > ffn.calc_expected_max_sharpe(10, 0.5)
+    aae(
+        ffn.calc_expected_max_sharpe(10, 1.0) * 0.5,
+        ffn.calc_expected_max_sharpe(10, 0.5),
+    )
+
+
+def test_calc_deflated_sharpe_ratio():
+    np.random.seed(0)
+    n_trials, n_periods = 40, 1000
+    index = pd.date_range(start="2015-01-01", periods=n_periods, freq="D")
+    # A search over trials that have no skill whatsoever
+    trials = pd.DataFrame(np.random.normal(0, 0.01, (n_periods, n_trials)), index=index)
+    sharpes = trials.calc_sharpe()
+    winner = trials[sharpes.idxmax()]
+
+    dsr = ffn.calc_deflated_sharpe_ratio(winner, sharpes)
+    assert 0 <= dsr <= 1
+    # The winner of a skill-less search must not survive deflation ...
+    assert dsr < 0.95
+    # ... though it looks significant when its selection is ignored
+    assert ffn.calc_deflated_sharpe_ratio(winner, [sharpes.max()]) > dsr
+
+    # More trials set a higher hurdle, hence a lower probability
+    assert ffn.calc_deflated_sharpe_ratio(winner, sharpes[:10]) > dsr
+
+    # Attached to pandas objects like the other metrics
+    aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
+
+
 def test_deannualize():
     res = ffn.deannualize(0.05, 252)
     assert np.allclose(res, np.power(1.05, 1 / 252.0) - 1)
