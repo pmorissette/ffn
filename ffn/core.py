@@ -2473,6 +2473,100 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
     return np.divide(er.mean() * 100.0, prices.to_ulcer_index())
 
 
+def calc_expected_max_sharpe(n_trials, sr_std):
+    """
+    Calculates the expected maximum `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_
+    of ``n_trials`` skill-less strategies, i.e. the hurdle the best of that
+    many trials is expected to clear by chance alone.
+
+    Searching over many strategies (or many parameter sets of one strategy)
+    and keeping the best is a multiple testing problem: even with no skill,
+    the maximum Sharpe ratio of the search grows with the number and the
+    dispersion of the trials.
+
+    ``sr_std`` and the returned value are expressed in the same terms, so
+    passing an annualized dispersion returns an annualized hurdle.
+
+    Args:
+        * n_trials (int): Number of trials (strategies or parameter sets) evaluated.
+        * sr_std (float): Standard deviation of the Sharpe ratios across those trials.
+
+    Returns:
+        * float -- expected maximum Sharpe ratio under the null of no skill.
+
+    """
+    if n_trials < 1:
+        raise ValueError("n_trials must be at least 1")
+    if n_trials == 1 or not sr_std > 0:
+        return 0.0
+    return sr_std * ((1 - np.euler_gamma) * scipy.stats.norm.ppf(1 - 1 / n_trials) + np.euler_gamma * scipy.stats.norm.ppf(1 - 1 / (n_trials * np.e)))
+
+
+def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=None, annualized_trials=True):
+    """
+    Calculates the `deflated Sharpe ratio <https://doi.org/10.3905/jpm.2014.40.5.094>`_
+    of a strategy selected as the best of several trials: the probability
+    that its true Sharpe ratio exceeds zero, after correcting for the
+    multiple testing of the selection and for the non-normality of the
+    returns.
+
+    Use it on the winner of a strategy search or a parameter optimization.
+    ``trial_sharpe_ratios`` must cover **all** trials that were evaluated,
+    not only the ones that were kept: their count and dispersion set the
+    hurdle (see :func:`calc_expected_max_sharpe`) that the winner is
+    measured against. Values close to 1 mean the winner clears the bar its
+    own search sets by chance; values below ~0.95 suggest the result may be
+    an artifact of having tried many candidates.
+
+    Where the trials are strongly correlated (e.g. a dense grid of similar
+    parameters), the effective number of independent trials is lower than
+    their count and the result is accordingly conservative.
+
+    Source: Bailey, D. and Lopez de Prado, M. (2014), "The Deflated Sharpe
+    Ratio: Correcting for Selection Bias, Backtest Overfitting, and
+    Non-Normality", Journal of Portfolio Management, 40(5), 94-107.
+
+    Args:
+        * returns (Series): Return series of the selected (best) trial.
+        * trial_sharpe_ratios (Series, array-like): Sharpe ratios of all
+            evaluated trials, e.g. as returned by :func:`calc_sharpe`.
+        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
+            expressed in yearly (annualized) terms or return series.
+        * nperiods (int): Frequency of returns (252 for daily, 12 for
+            monthly, etc.). Inferred from `returns` if not provided.
+        * annualized_trials (bool): Whether `trial_sharpe_ratios` are
+            annualized, as :func:`calc_sharpe` returns them by default.
+
+    Returns:
+        * float -- probability [0, 1] that the selected trial's Sharpe ratio
+          is greater than zero.
+
+    """
+    if nperiods is None:
+        nperiods = infer_nperiods(returns)
+
+    # Work in per-period terms; annualization cancels in the ratio below
+    sr = calc_sharpe(returns, rf=rf, nperiods=nperiods, annualize=False)
+    trials = pd.Series(np.asarray(trial_sharpe_ratios, dtype=float)).dropna()
+    if annualized_trials:
+        trials = trials / np.sqrt(nperiods or 1)
+
+    n = len(returns)
+    if n < 3 or pd.isnull(sr):
+        return np.nan
+
+    sr0 = calc_expected_max_sharpe(len(trials), trials.std(ddof=1))
+
+    # Probabilistic Sharpe ratio of the winner against that hurdle,
+    # adjusted for the skew and kurtosis of its returns
+    skew = returns.skew()
+    kurtosis = returns.kurt() + 3.0  # pandas reports excess kurtosis
+    variance_adj = 1 - skew * sr + (kurtosis - 1) / 4 * sr**2
+    if not variance_adj > 0:
+        return np.nan
+    return scipy.stats.norm.cdf((sr - sr0) * np.sqrt(n - 1) / np.sqrt(variance_adj))
+
+
 def resample_returns(returns, func, seed=0, num_trials=100):
     """
     Resample the returns and calculate any statistic on every new sample.
@@ -2550,6 +2644,7 @@ def extend_pandas():
     PandasObject.calc_calmar_ratio = calc_calmar_ratio
     PandasObject.calc_sharpe = calc_sharpe
     PandasObject.calc_sharpe_ratio = calc_sharpe
+    PandasObject.calc_deflated_sharpe_ratio = calc_deflated_sharpe_ratio
     PandasObject.to_excess_returns = to_excess_returns
     PandasObject.to_ulcer_index = to_ulcer_index
     PandasObject.to_ulcer_performance_index = to_ulcer_performance_index
