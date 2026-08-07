@@ -723,6 +723,20 @@ def test_calc_prob_mom_without_an_edge_is_half():
     assert np.isclose(returns.calc_prob_mom(returns), 0.5)
 
 
+def test_calc_prob_mom_ignores_unaligned_observations():
+    """Test that NaNs and non-overlapping dates don't count toward the sample size"""
+    returns, benchmark = _diff_series(250)
+    padded = returns.copy()
+    padded.iloc[0] = np.nan  # e.g. the leading NaN from to_returns()
+    short_benchmark = benchmark.iloc[:100]
+
+    # Only the 99 dates that are non-NaN in both series carry information, so
+    # the result must match the computation restricted to that window
+    expected = returns.iloc[1:100].calc_prob_mom(benchmark.iloc[1:100])
+
+    assert np.isclose(padded.calc_prob_mom(short_benchmark), expected)
+
+
 def test_calmar_ratio(df):
     cagr = df.calc_cagr()
     mdd = df.calc_max_drawdown()
