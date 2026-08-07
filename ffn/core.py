@@ -1472,7 +1472,14 @@ def calc_prob_mom(returns, other_returns):
     Source:
         http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/ # NOQA
     """
-    return t.cdf(returns.calc_information_ratio(other_returns), len(returns) - 1)
+    # t.cdf expects a t-statistic, and the information ratio is mean / std.
+    # Scaling by sqrt(n) turns it into one, so the probability reflects how
+    # much evidence there is rather than just the per-period edge. n counts
+    # the aligned, non-NaN differentials actually used in the information
+    # ratio, not the raw series length.
+    n = (returns - other_returns).count()
+    ir = returns.calc_information_ratio(other_returns)
+    return t.cdf(ir * np.sqrt(n), n - 1)
 
 
 def calc_total_return(prices):
