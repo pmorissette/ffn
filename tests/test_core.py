@@ -1170,5 +1170,5 @@ def test_infer_nperiods():
     assert ffn.core.infer_nperiods(secondly) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 60
     assert ffn.core.infer_nperiods(monthly) == 12
     assert ffn.core.infer_nperiods(yearly) == 1
-    assert ffn.core.infer_nperiods(minutely_30) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 30
+    assert ffn.core.infer_nperiods(minutely_30) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 / 30
     assert ffn.core.infer_nperiods(not_known) is None
