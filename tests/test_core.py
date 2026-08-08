@@ -816,6 +816,28 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
+def test_calc_information_ratio_dataframe():
+    returns = pd.DataFrame(
+        {
+            "varying": [0.03, 0.01, -0.02, 0.04],
+            "constant": [0.01, 0.01, 0.01, 0.01],
+        }
+    )
+    benchmark = pd.DataFrame(
+        {
+            "varying": [0.01, 0.0, -0.01, 0.02],
+            "constant": [0.01, 0.01, 0.01, 0.01],
+        }
+    )
+
+    actual = returns.calc_information_ratio(benchmark)
+    difference = returns - benchmark
+    expected = difference.mean() / difference.std(ddof=1)
+    expected["constant"] = 0.0
+
+    pd.testing.assert_series_equal(actual, expected)
+
+
 def test_deannualize():
     res = ffn.deannualize(0.05, 252)
     assert np.allclose(res, np.power(1.05, 1 / 252.0) - 1)
