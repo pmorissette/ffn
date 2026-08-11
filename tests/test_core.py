@@ -1038,6 +1038,20 @@ def test_group_stats_uses_each_series_own_calendar():
     aae(gs["SYM1"].monthly_sharpe, ffn.PerformanceStats(sym1).monthly_sharpe, 9)
 
 
+def test_group_stats_date_range_reset_restores_full_calendars():
+    dates = pd.date_range("2020-01-01", periods=8, freq="D")
+    early = pd.Series(range(100, 105), index=dates[:5], name="EARLY")
+    late = pd.Series(range(200, 206), index=dates[2:], name="LATE")
+
+    gs = ffn.GroupStats(early, late)
+    gs.set_date_range()
+
+    assert gs["EARLY"].start == dates[0]
+    assert gs["EARLY"].end == dates[4]
+    assert gs["LATE"].start == dates[2]
+    assert gs["LATE"].end == dates[-1]
+
+
 def test_resample_returns(df):
     num_years = 30
     num_months = num_years * 12
