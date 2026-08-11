@@ -838,6 +838,24 @@ def test_calc_information_ratio_dataframe():
     pd.testing.assert_series_equal(actual, expected)
 
 
+def test_calc_information_ratio_dataframe_with_series_benchmark():
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    returns = pd.DataFrame(
+        {
+            "fund_a": [0.03, 0.01, -0.02, 0.04],
+            "fund_b": [0.02, 0.02, -0.01, 0.03],
+        },
+        index=index,
+    )
+    benchmark = pd.Series([0.01, 0.0, -0.01, 0.02], index=index)
+
+    actual = returns.calc_information_ratio(benchmark)
+    difference = returns.sub(benchmark, axis="index")
+    expected = difference.mean() / difference.std(ddof=1)
+
+    pd.testing.assert_series_equal(actual, expected)
+
+
 def test_deannualize():
     res = ffn.deannualize(0.05, 252)
     assert np.allclose(res, np.power(1.05, 1 / 252.0) - 1)
