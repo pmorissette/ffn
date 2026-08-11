@@ -838,6 +838,20 @@ def test_calc_deflated_sharpe_ratio_zero_dispersion():
     quiet = pd.Series(np.random.default_rng(1).normal(0, 1e-8, 250))
     assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet, sharpes) <= 1
 
+    # A long, quiet series around a nonzero mean still has real dispersion. The
+    # zero-dispersion threshold must not grow with the sample size and swallow it.
+    quiet_nonzero = pd.Series(1.0 + np.random.default_rng(1).normal(0, 1e-12, 5000))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet_nonzero, sharpes, nperiods=252) <= 1
+
+    # Dispersion is measured after subtracting a series risk-free rate, matching the
+    # returns used to calculate Sharpe. Check both directions of that distinction.
+    rf = pd.Series(np.linspace(0.0001, 0.0002, 250))
+    constant_excess = rf + 0.001
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(constant_excess, sharpes, rf=rf, nperiods=252))
+
+    variable_excess = pd.Series([0.001] * 250)
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(variable_excess, sharpes, rf=rf, nperiods=252) <= 1
+
 
 def test_deannualize():
     res = ffn.deannualize(0.05, 252)

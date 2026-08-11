@@ -2562,20 +2562,13 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     if n < 3 or pd.isnull(sr):
         return np.nan
 
-    # A series with no dispersion has no Sharpe ratio, but it does not arrive here as
-    # a nan: the standard deviation of a constant series is floating-point residue
-    # rather than an exact zero, so a flat +0.1% series divides out to a Sharpe of
-    # 4.6e15 -- finite, and therefore past the check above and every isfinite guard
-    # after it. Deflating that returns 1.0, i.e. certainty of a real edge, for the one
-    # input carrying no information about one. Compare against the resolution of a
-    # float at the scale of the data, so a genuinely low-volatility series still gets
-    # a number.
-    # The residue grows with the number of terms summed, so the floor is n eps rather
-    # than eps: measured at most 1.96 eps x scale over constant series spanning values
-    # 1e-7..1e3 and lengths 3..10000, while a real series with sigma=1e-12 sits more
-    # than ten orders of magnitude above n eps x scale.
-    scale = float(np.abs(returns).max())
-    if not returns.std(ddof=1) > n * np.finfo(float).eps * scale:
+    # Use excess-return range instead of standard deviation so constant inputs are
+    # not obscured by accumulated rounding error. The bounded tolerance also handles
+    # cancellation residue from a varying risk-free return without growing with n.
+    excess_returns = returns.to_excess_returns(rf, nperiods=nperiods)
+    spread = float(excess_returns.max() - excess_returns.min())
+    scale = max(float(np.abs(returns).max()), float(np.abs(excess_returns).max()))
+    if not spread > 4 * np.finfo(float).eps * scale:
         return np.nan
 
     sr0 = calc_expected_max_sharpe(len(trials), trials.std(ddof=1))
