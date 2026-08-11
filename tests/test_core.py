@@ -1227,4 +1227,8 @@ def test_infer_nperiods():
     returns_30min = minutely_30.squeeze()
     expected_sharpe = returns_30min.mean() / returns_30min.std(ddof=1) * np.sqrt(expected_30min_periods)
     assert np.allclose(returns_30min.calc_sharpe(), expected_sharpe)
+
+    descending_30min = minutely_30.sort_index(ascending=False).squeeze()
+    assert ffn.core.infer_nperiods(descending_30min) == expected_30min_periods
+    assert np.allclose(descending_30min.calc_sharpe(), expected_sharpe)
     assert ffn.core.infer_nperiods(not_known) is None

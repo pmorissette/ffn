@@ -2349,7 +2349,7 @@ def infer_nperiods(data, annualization_factor=None):
             whole_periods_str = freq[-1]
             num_str = freq[:-1]
             num = int(num_str)
-            return _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor) / num
+            return _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor) / abs(num)
     except KeyboardInterrupt:
         raise
     except (TypeError, ValueError):
