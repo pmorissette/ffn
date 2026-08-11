@@ -1254,5 +1254,14 @@ def test_infer_nperiods():
     assert ffn.core.infer_nperiods(secondly) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 60
     assert ffn.core.infer_nperiods(monthly) == 12
     assert ffn.core.infer_nperiods(yearly) == 1
-    assert ffn.core.infer_nperiods(minutely_30) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 30
+    expected_30min_periods = ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 / 30
+    assert ffn.core.infer_nperiods(minutely_30) == expected_30min_periods
+
+    returns_30min = minutely_30.squeeze()
+    expected_sharpe = returns_30min.mean() / returns_30min.std(ddof=1) * np.sqrt(expected_30min_periods)
+    assert np.allclose(returns_30min.calc_sharpe(), expected_sharpe)
+
+    descending_30min = minutely_30.sort_index(ascending=False).squeeze()
+    assert ffn.core.infer_nperiods(descending_30min) == expected_30min_periods
+    assert np.allclose(descending_30min.calc_sharpe(), expected_sharpe)
     assert ffn.core.infer_nperiods(not_known) is None
