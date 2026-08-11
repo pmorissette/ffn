@@ -816,6 +816,23 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
+def test_calc_deflated_sharpe_ratio_zero_dispersion():
+    sharpes = [0.5, 1.0, 1.5, 2.0]
+
+    # A constant series has no dispersion, so no Sharpe ratio and no deflated one.
+    # Its standard deviation is floating-point residue rather than an exact zero, so
+    # the ratio comes out finite (~4.6e15) and reaches the deflation arithmetic, which
+    # answered 1.0 -- certainty of an edge, from the one input that cannot show one.
+    flat = pd.Series([0.001] * 250)
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(flat, sharpes))
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(pd.Series([0.0] * 250), sharpes))
+
+    # The guard is relative to the scale of the data: a real but very quiet series
+    # still gets a number.
+    quiet = pd.Series(np.random.default_rng(1).normal(0, 1e-8, 250))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet, sharpes) <= 1
+
+
 def test_deannualize():
     res = ffn.deannualize(0.05, 252)
     assert np.allclose(res, np.power(1.05, 1 / 252.0) - 1)

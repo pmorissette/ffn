@@ -2562,6 +2562,18 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     if n < 3 or pd.isnull(sr):
         return np.nan
 
+    # A series with no dispersion has no Sharpe ratio, but it does not arrive here as
+    # a nan: the standard deviation of a constant series is floating-point residue
+    # rather than an exact zero, so a flat +0.1% series divides out to a Sharpe of
+    # 4.6e15 -- finite, and therefore past the check above and every isfinite guard
+    # after it. Deflating that returns 1.0, i.e. certainty of a real edge, for the one
+    # input carrying no information about one. Compare against the resolution of a
+    # float at the scale of the data, so a genuinely low-volatility series still gets
+    # a number.
+    scale = float(np.abs(returns).max())
+    if returns.std(ddof=1) <= np.finfo(float).eps * scale:
+        return np.nan
+
     sr0 = calc_expected_max_sharpe(len(trials), trials.std(ddof=1))
 
     # Probabilistic Sharpe ratio of the winner against that hurdle,
