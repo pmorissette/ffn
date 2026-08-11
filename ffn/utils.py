@@ -15,8 +15,10 @@ def _memoize(func, *args, **kw):
     refresh_kw = func.mrefresh_keyword
 
     # kw is not always set - check args
-    if refresh_kw in func.__code__.co_varnames and args[func.__code__.co_varnames.index(refresh_kw)]:
-        refresh = True
+    if refresh_kw in func.__code__.co_varnames:
+        refresh_idx = func.__code__.co_varnames.index(refresh_kw)
+        if refresh_idx < len(args) and args[refresh_idx]:
+            refresh = True
 
     # check in kw if not already set above
     if not refresh and refresh_kw in kw and kw[refresh_kw]:

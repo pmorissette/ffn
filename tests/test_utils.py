@@ -2,6 +2,21 @@ import ffn.utils as utils
 import pandas as pd
 
 
+def test_memoize_handles_keyword_only_refresh():
+    calls = []
+
+    @utils.memoize
+    def cached(value, *, mrefresh=False):
+        calls.append((value, mrefresh))
+        return len(calls)
+
+    assert cached("value") == 1
+    assert cached("value") == 1
+    assert cached("value", mrefresh=True) == 2
+    assert cached("value", mrefresh=True) == 3
+    assert cached("value") == 1
+
+
 def test_parse_args():
     actual = utils.parse_arg('a,b,c')
     assert actual == ['a', 'b', 'c']
@@ -106,4 +121,3 @@ def test_as_format():
     assert actual.loc['msft', 'aapl'] == '218.24'
     assert actual.loc['aapl', 'msft'] == '23.39'
     assert actual.loc['msft', 'msft'] == '23.40'
-
