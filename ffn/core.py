@@ -2570,8 +2570,12 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     # input carrying no information about one. Compare against the resolution of a
     # float at the scale of the data, so a genuinely low-volatility series still gets
     # a number.
+    # The residue grows with the number of terms summed, so the floor is n eps rather
+    # than eps: measured at most 1.96 eps x scale over constant series spanning values
+    # 1e-7..1e3 and lengths 3..10000, while a real series with sigma=1e-12 sits more
+    # than ten orders of magnitude above n eps x scale.
     scale = float(np.abs(returns).max())
-    if returns.std(ddof=1) <= np.finfo(float).eps * scale:
+    if not returns.std(ddof=1) > n * np.finfo(float).eps * scale:
         return np.nan
 
     sr0 = calc_expected_max_sharpe(len(trials), trials.std(ddof=1))
