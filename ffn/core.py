@@ -831,8 +831,10 @@ class GroupStats(dict):
                 "have same name! Please provide unique names",
             )
 
-        self._start = self._prices.index[0]
-        self._end = self._prices.index[-1]
+        # Keep the full available range so set_date_range() can restore
+        # observations outside the shared cross-sectional calendar.
+        self._start = self._prices_full.first_valid_index()
+        self._end = self._prices_full.last_valid_index()
         # calculate stats for entire series
         self._update(self._prices, self._prices_full)
 
