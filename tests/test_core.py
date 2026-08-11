@@ -816,6 +816,43 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
+def test_calc_deflated_sharpe_ratio_zero_dispersion():
+    sharpes = [0.5, 1.0, 1.5, 2.0]
+
+    # A constant series has no dispersion, so no Sharpe ratio and no deflated one.
+    # Its standard deviation is floating-point residue rather than an exact zero, so
+    # the ratio comes out finite (~4.6e15) and reaches the deflation arithmetic, which
+    # answered 1.0 -- certainty of an edge, from the one input that cannot show one.
+    # Checked across values and lengths, not at one point: the residue depends on both,
+    # so a guard calibrated on a single series passes while still leaking elsewhere.
+    for value in (1e-7, 1e-4, 0.001, 0.01, 1.0, 100.0):
+        for n in (3, 10, 250, 5000):
+            flat = pd.Series([value] * n)
+            assert np.isnan(
+                ffn.calc_deflated_sharpe_ratio(flat, sharpes)
+            ), f"leaked at value={value}, n={n}"
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(pd.Series([0.0] * 250), sharpes))
+
+    # The guard is relative to the scale of the data: a real but very quiet series
+    # still gets a number.
+    quiet = pd.Series(np.random.default_rng(1).normal(0, 1e-8, 250))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet, sharpes) <= 1
+
+    # A long, quiet series around a nonzero mean still has real dispersion. The
+    # zero-dispersion threshold must not grow with the sample size and swallow it.
+    quiet_nonzero = pd.Series(1.0 + np.random.default_rng(1).normal(0, 1e-12, 5000))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet_nonzero, sharpes, nperiods=252) <= 1
+
+    # Dispersion is measured after subtracting a series risk-free rate, matching the
+    # returns used to calculate Sharpe. Check both directions of that distinction.
+    rf = pd.Series(np.linspace(0.0001, 0.0002, 250))
+    constant_excess = rf + 0.001
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(constant_excess, sharpes, rf=rf, nperiods=252))
+
+    variable_excess = pd.Series([0.001] * 250)
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(variable_excess, sharpes, rf=rf, nperiods=252) <= 1
+
+
 def test_deannualize():
     res = ffn.deannualize(0.05, 252)
     assert np.allclose(res, np.power(1.05, 1 / 252.0) - 1)
