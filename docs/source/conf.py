@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 #
 # ffn documentation build configuration file, created by
 # sphinx-quickstart on Fri Jun 20 14:35:17 2014.
@@ -12,8 +10,8 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
 
 # on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # if not on_rtd:
@@ -28,8 +26,9 @@ sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("../../ffn"))
 sys.path.insert(0, os.path.abspath("_themes/klink"))
 
-import ffn  # noqa: E402
-import klink  # noqa: E402
+import klink
+
+import ffn
 
 klink.convert_notebooks()
 

@@ -1,12 +1,15 @@
 TMPREPO=/tmp/docs/ffn
 
-.PHONY: clean dist docs pages serve notebooks klink test lint fix develop
+.PHONY: clean dist docs pages serve notebooks klink test benchmark lint fix develop
 
 develop:
 	python -m pip install -e .[dev]
 
 test:
 	python -m pytest -vvv tests --cov=ffn --junitxml=python_junit.xml --cov-report=xml --cov-branch --cov-report term
+
+benchmark:
+	python -m pytest -vv benchmarks --benchmark-only
 
 lint:
 	python -m ruff check ffn docs/source/conf.py

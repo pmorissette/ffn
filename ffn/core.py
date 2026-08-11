@@ -7,7 +7,7 @@ import scipy.stats
 import sklearn.cluster
 import sklearn.covariance
 import sklearn.manifold
-from matplotlib import pyplot as plt  # noqa
+from matplotlib import pyplot as plt
 from packaging.version import Version
 from pandas.core.base import PandasObject
 from scipy.optimize import minimize
@@ -32,7 +32,7 @@ else:
 TRADING_DAYS_PER_YEAR = 252
 
 
-class PerformanceStats(object):
+class PerformanceStats:
     """
     PerformanceStats is a convenience class used for the performance
     evaluation of a price series. It contains various helper functions
@@ -60,7 +60,7 @@ class PerformanceStats(object):
     """
 
     def __init__(self, prices, rf=0.0, annualization_factor=None):
-        super(PerformanceStats, self).__init__()
+        super().__init__()
         self.prices = prices
         self.name = self.prices.name
         self._start = self.prices.index[0]
@@ -509,9 +509,9 @@ class PerformanceStats(object):
         Displays an overview containing descriptive stats for the Series
         provided.
         """
-        print("Stats for %s from %s - %s" % (self.name, self.start, self.end))
+        print(f"Stats for {self.name} from {self.start} - {self.end}")
         if isinstance(self.rf, float):
-            print("Annual risk-free rate considered: %s" % (fmtp(self.rf)))
+            print(f"Annual risk-free rate considered: {fmtp(self.rf)}")
         print("Summary:")
         data = [
             [
@@ -641,9 +641,9 @@ class PerformanceStats(object):
 
     def _get_default_plot_title(self, name, freq, kind):
         if freq is None:
-            return "%s %s" % (name, kind)
+            return f"{name} {kind}"
         else:
-            return "%s %s %s" % (name, get_freq_name(freq), kind)
+            return f"{name} {get_freq_name(freq)} {kind}"
 
     def plot(self, freq=None, figsize=(15, 5), title=None, logy=False, **kwargs):
         """
@@ -709,12 +709,10 @@ class PerformanceStats(object):
         values = []
 
         for stat in stats:
-            k, n, f = stat
+            k, n, _ = stat
 
             # blank row
-            if k is None:
-                continue
-            elif k == "rf" and not isinstance(self.rf, float):
+            if k is None or k == "rf" and not isinstance(self.rf, float):
                 continue
 
             if n in short_names:
@@ -764,7 +762,7 @@ class PerformanceStats(object):
             elif f == "dt":
                 row.append(raw.strftime("%Y-%m-%d"))
             else:
-                raise NotImplementedError("unsupported format %s" % f)
+                raise NotImplementedError(f"unsupported format {f}")
 
             data.append(sep.join(row))
 
@@ -833,8 +831,10 @@ class GroupStats(dict):
                 "have same name! Please provide unique names",
             )
 
-        self._start = self._prices.index[0]
-        self._end = self._prices.index[-1]
+        # Keep the full available range so set_date_range() can restore
+        # observations outside the shared cross-sectional calendar.
+        self._start = self._prices_full.first_valid_index()
+        self._end = self._prices_full.last_valid_index()
         # calculate stats for entire series
         self._update(self._prices, self._prices_full)
 
@@ -927,9 +927,9 @@ class GroupStats(dict):
 
     def _get_default_plot_title(self, freq, kind):
         if freq is None:
-            return "%s" % kind
+            return kind
         else:
-            return "%s %s" % (get_freq_name(freq), kind)
+            return f"{get_freq_name(freq)} {kind}"
 
     def set_riskfree_rate(self, rf):
         """
@@ -998,7 +998,7 @@ class GroupStats(dict):
                 elif f == "dt":
                     row.append(raw.strftime("%Y-%m-%d"))
                 else:
-                    raise NotImplementedError("unsupported format %s" % f)
+                    raise NotImplementedError(f"unsupported format {f}")
             data.append(row)
 
         print(tabulate(data, headers="firstrow"))
@@ -1136,7 +1136,7 @@ class GroupStats(dict):
                 elif f == "dt":
                     row.append(raw.strftime("%Y-%m-%d"))
                 else:
-                    raise NotImplementedError("unsupported format %s" % f)
+                    raise NotImplementedError(f"unsupported format {f}")
             data.append(sep.join(row))
 
         res = "\n".join(data)
@@ -1357,11 +1357,11 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     is_zero = drawdown == 0
     # find start dates (first day where dd is non-zero after a zero)
     start = ~is_zero & is_zero.shift(1)
-    start = list(start[start == True].index)  # NOQA
+    start = list(start[start == True].index)
 
     # find end dates (first day where dd is 0 after non-zero)
     end = is_zero & (~is_zero).shift(1)
-    end = list(end[end == True].index)  # NOQA
+    end = list(end[end == True].index)
 
     if len(start) == 0:  # start.empty
         return None
@@ -1381,9 +1381,9 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     if start[-1] > end[-1]:
         end.append(drawdown.index[-1])
 
-    result = pd.DataFrame(columns=("Start", "End", "Length", "drawdown"), index=range(0, len(start)))
+    result = pd.DataFrame(columns=("Start", "End", "Length", "drawdown"), index=range(len(start)))
 
-    for i in range(0, len(start)):
+    for i in range(len(start)):
         dd = drawdown[start[i] : end[i]].min()
 
         if index_type is pd.DatetimeIndex:
@@ -1437,7 +1437,7 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
         nperiods = infer_nperiods(returns)
 
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception("Must provide nperiods if rf != 0")
+        raise ValueError("Must provide nperiods if rf != 0")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
     std = er.std(ddof=1)
@@ -1474,7 +1474,14 @@ def calc_prob_mom(returns, other_returns):
     Source:
         http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/ # NOQA
     """
-    return t.cdf(returns.calc_information_ratio(other_returns), len(returns) - 1)
+    # t.cdf expects a t-statistic, and the information ratio is mean / std.
+    # Scaling by sqrt(n) turns it into one, so the probability reflects how
+    # much evidence there is rather than just the per-period edge. n counts
+    # the aligned, non-NaN differentials actually used in the information
+    # ratio, not the raw series length.
+    n = (returns - other_returns).count()
+    ir = returns.calc_information_ratio(other_returns)
+    return t.cdf(ir * np.sqrt(n), n - 1)
 
 
 def calc_total_return(prices):
@@ -1536,7 +1543,7 @@ def drop_duplicate_cols(df):
             # get subset of df w/ colname n
             sub = df[n]
             # make unique colnames
-            sub.columns = ["%s-%s" % (n, x) for x in range(sub.shape[1])]
+            sub.columns = [f"{n}-{x}" for x in range(sub.shape[1])]
             # get colname w/ max # of data
             keep = sub.count().idxmax()
             # drop all columns of name n from original df
@@ -1660,7 +1667,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
     )
     # check if success
     if not optimized.success:
-        raise Exception(optimized.message)
+        raise RuntimeError(optimized.message)
 
     # return weight vector
     return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
@@ -1717,7 +1724,7 @@ def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):
     )
     # check if success
     if not optimized.success:
-        raise Exception(optimized.message)
+        raise RuntimeError(optimized.message)
 
     # return weight vector
     return optimized.x
@@ -1772,7 +1779,7 @@ def _erc_weights_ccd(x0, cov, b, maximum_iterations, tolerance):
         x0 = x.copy()
 
     # no solution found
-    raise ValueError("No solution found after {0} iterations.".format(maximum_iterations))
+    raise ValueError(f"No solution found after {maximum_iterations} iterations.")
 
 
 def calc_erc_weights(
@@ -1931,7 +1938,7 @@ def calc_clusters(returns, n=None, plot=False):
                 break
 
     if plot:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.scatter(xy[:, 0], xy[:, 1], c=result[2], s=90)
         for i, txt in enumerate(returns.columns):
             ax.annotate(txt, (xy[i, 0], xy[i, 1]), size=14)
@@ -2064,7 +2071,7 @@ def limit_weights(weights, limit=0.1):
         weights = pd.Series(weights)
 
     if np.round(weights.sum(), 1) != 1.0:
-        raise ValueError("Expecting weights (that sum to 1) - sum is %s" % weights.sum())
+        raise ValueError(f"Expecting weights (that sum to 1) - sum is {weights.sum()}")
 
     res = np.round(weights.copy(), 4)
     to_rebalance = (res[res > limit] - limit).sum()
@@ -2295,7 +2302,7 @@ def infer_freq(data):
             return pd.infer_freq(data.index)
         else:
             return pd.infer_freq(data.index, warn=False)
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         return None
 
 
@@ -2345,7 +2352,7 @@ def infer_nperiods(data, annualization_factor=None):
             return _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor) / num
     except KeyboardInterrupt:
         raise
-    except BaseException:
+    except (TypeError, ValueError):
         return None
 
 
@@ -2362,7 +2369,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
     """
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
+        raise ValueError("nperiods must be set if rf != 0 and rf is not a price series")
 
     if nperiods is None:
         nperiods = infer_nperiods(returns)
@@ -2466,11 +2473,116 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
         nperiods = infer_nperiods(prices)
 
     if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise Exception("nperiods must be set if rf != 0 and rf is not a price series")
+        raise ValueError("nperiods must be set if rf != 0 and rf is not a price series")
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
 
-    return np.divide(er.mean(), prices.to_ulcer_index())
+    # to_ulcer_index is expressed in percentage points, so put the excess
+    # return on the same scale before dividing
+    return np.divide(er.mean() * 100.0, prices.to_ulcer_index())
+
+
+def calc_expected_max_sharpe(n_trials, sr_std):
+    """
+    Calculates the expected maximum `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_
+    of ``n_trials`` skill-less strategies, i.e. the hurdle the best of that
+    many trials is expected to clear by chance alone.
+
+    Searching over many strategies (or many parameter sets of one strategy)
+    and keeping the best is a multiple testing problem: even with no skill,
+    the maximum Sharpe ratio of the search grows with the number and the
+    dispersion of the trials.
+
+    ``sr_std`` and the returned value are expressed in the same terms, so
+    passing an annualized dispersion returns an annualized hurdle.
+
+    Args:
+        * n_trials (int): Number of trials (strategies or parameter sets) evaluated.
+        * sr_std (float): Standard deviation of the Sharpe ratios across those trials.
+
+    Returns:
+        * float -- expected maximum Sharpe ratio under the null of no skill.
+
+    """
+    if n_trials < 1:
+        raise ValueError("n_trials must be at least 1")
+    if n_trials == 1 or not sr_std > 0:
+        return 0.0
+    return sr_std * ((1 - np.euler_gamma) * scipy.stats.norm.ppf(1 - 1 / n_trials) + np.euler_gamma * scipy.stats.norm.ppf(1 - 1 / (n_trials * np.e)))
+
+
+def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=None, annualized_trials=True):
+    """
+    Calculates the `deflated Sharpe ratio <https://doi.org/10.3905/jpm.2014.40.5.094>`_
+    of a strategy selected as the best of several trials: the probability
+    that its true Sharpe ratio exceeds zero, after correcting for the
+    multiple testing of the selection and for the non-normality of the
+    returns.
+
+    Use it on the winner of a strategy search or a parameter optimization.
+    ``trial_sharpe_ratios`` must cover **all** trials that were evaluated,
+    not only the ones that were kept: their count and dispersion set the
+    hurdle (see :func:`calc_expected_max_sharpe`) that the winner is
+    measured against. Values close to 1 mean the winner clears the bar its
+    own search sets by chance; values below ~0.95 suggest the result may be
+    an artifact of having tried many candidates.
+
+    Where the trials are strongly correlated (e.g. a dense grid of similar
+    parameters), the effective number of independent trials is lower than
+    their count and the result is accordingly conservative.
+
+    Source: Bailey, D. and Lopez de Prado, M. (2014), "The Deflated Sharpe
+    Ratio: Correcting for Selection Bias, Backtest Overfitting, and
+    Non-Normality", Journal of Portfolio Management, 40(5), 94-107.
+
+    Args:
+        * returns (Series): Return series of the selected (best) trial.
+        * trial_sharpe_ratios (Series, array-like): Sharpe ratios of all
+            evaluated trials, e.g. as returned by :func:`calc_sharpe`.
+        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
+            expressed in yearly (annualized) terms or return series.
+        * nperiods (int): Frequency of returns (252 for daily, 12 for
+            monthly, etc.). Inferred from `returns` if not provided.
+        * annualized_trials (bool): Whether `trial_sharpe_ratios` are
+            annualized, as :func:`calc_sharpe` returns them by default.
+
+    Returns:
+        * float -- probability [0, 1] that the selected trial's Sharpe ratio
+          is greater than zero.
+
+    """
+    if nperiods is None:
+        nperiods = infer_nperiods(returns)
+
+    # Work in per-period terms; annualization cancels in the ratio below
+    sr = calc_sharpe(returns, rf=rf, nperiods=nperiods, annualize=False)
+    trials = pd.Series(np.asarray(trial_sharpe_ratios, dtype=float)).dropna()
+    if annualized_trials:
+        trials = trials / np.sqrt(nperiods or 1)
+
+    n = len(returns)
+    if n < 3 or pd.isnull(sr):
+        return np.nan
+
+    # Use excess-return range instead of standard deviation so constant inputs are
+    # not obscured by accumulated rounding error. The bounded tolerance also handles
+    # cancellation residue from a varying risk-free return without growing with n.
+    excess_returns = returns.to_excess_returns(rf, nperiods=nperiods)
+    spread = float(excess_returns.max() - excess_returns.min())
+    scale = max(float(np.abs(returns).max()), float(np.abs(excess_returns).max()))
+    if not spread > 4 * np.finfo(float).eps * scale:
+        return np.nan
+
+    sr0 = calc_expected_max_sharpe(len(trials), trials.std(ddof=1))
+
+    # Probabilistic Sharpe ratio of the winner against that hurdle,
+    # adjusted for the skew and kurtosis of its returns
+    skew = returns.skew()
+    kurtosis = returns.kurt() + 3.0  # pandas reports excess kurtosis
+    variance_adj = 1 - skew * sr + (kurtosis - 1) / 4 * sr**2
+    if not variance_adj > 0:
+        return np.nan
+    return scipy.stats.norm.cdf((sr - sr0) * np.sqrt(n - 1) / np.sqrt(variance_adj))
 
 
 def resample_returns(returns, func, seed=0, num_trials=100):
@@ -2550,6 +2662,7 @@ def extend_pandas():
     PandasObject.calc_calmar_ratio = calc_calmar_ratio
     PandasObject.calc_sharpe = calc_sharpe
     PandasObject.calc_sharpe_ratio = calc_sharpe
+    PandasObject.calc_deflated_sharpe_ratio = calc_deflated_sharpe_ratio
     PandasObject.to_excess_returns = to_excess_returns
     PandasObject.to_ulcer_index = to_ulcer_index
     PandasObject.to_ulcer_performance_index = to_ulcer_performance_index

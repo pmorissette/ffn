@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import pickle
 import re
-from typing import List, Sequence, Tuple, Union
+from collections.abc import Sequence
 
 import decorator
 import pandas as pd
@@ -13,14 +15,15 @@ def _memoize(func, *args, **kw):
     refresh_kw = func.mrefresh_keyword
 
     # kw is not always set - check args
-    if refresh_kw in func.__code__.co_varnames:
-        if args[func.__code__.co_varnames.index(refresh_kw)]:
+    positional_vars = func.__code__.co_varnames[: func.__code__.co_argcount]
+    if refresh_kw in positional_vars:
+        refresh_idx = positional_vars.index(refresh_kw)
+        if refresh_idx < len(args) and args[refresh_idx]:
             refresh = True
 
     # check in kw if not already set above
-    if not refresh and refresh_kw in kw:
-        if kw[refresh_kw]:
-            refresh = True
+    if not refresh and refresh_kw in kw and kw[refresh_kw]:
+        refresh = True
 
     key = pickle.dumps(args, 1) + pickle.dumps(kw, 1)
 
@@ -42,7 +45,7 @@ def memoize(f, refresh_keyword="mrefresh"):
     return decorator.decorator(_memoize, f)
 
 
-def parse_arg(arg: Union[str, List[str], Tuple[str]]):
+def parse_arg(arg: str | list[str] | tuple[str]):
     """
     Parses arguments for convenience. Argument can be a
     csv list ('a,b,c'), a string, a list, a tuple.
@@ -80,7 +83,7 @@ def clean_ticker(ticker: str) -> str:
     return res.lower()
 
 
-def clean_tickers(tickers: Sequence[str]) -> List[str]:
+def clean_tickers(tickers: Sequence[str]) -> list[str]:
     """
     Maps clean_ticker over tickers.
     """
@@ -114,7 +117,7 @@ def fmtn(number: float) -> str:
     return format(number, ".2f")
 
 
-def get_freq_name(period: str) -> Union[str, None]:
+def get_freq_name(period: str) -> str | None:
     period = period.upper()
     periods = {
         "B": "business day",
@@ -169,10 +172,10 @@ def scale(val: float, src: Sequence[float], dst: Sequence[float]) -> float:
 
 
 def as_percent(self, digits=2):
-    return as_format(self, ".%s%%" % digits)
+    return as_format(self, f".{digits}%")
 
 
-def as_format(item: Union[pd.DataFrame, pd.Series], format_str=".2f") -> Union[pd.DataFrame, pd.Series]:
+def as_format(item: pd.DataFrame | pd.Series, format_str=".2f") -> pd.DataFrame | pd.Series:
     """
     Map a format string over a pandas object.
     """
