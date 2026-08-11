@@ -711,6 +711,65 @@ def test_to_ulcer_performance_index_is_dimensionally_consistent():
     assert np.isclose(upi * prices.to_ulcer_index(), mean_excess_pct)
 
 
+def _diff_series(n, mean=0.001, std=0.01):
+    # A return series against a flat benchmark, with the differential's mean and
+    # standard deviation pinned so the information ratio is exactly mean / std
+    rng = np.random.default_rng(0)
+    raw = rng.normal(0, 1, n)
+    raw = (raw - raw.mean()) / raw.std(ddof=1)
+    idx = pd.date_range("2020-01-01", periods=n, freq="D")
+    return (
+        pd.Series(mean + std * raw, index=idx),
+        pd.Series(np.zeros(n), index=idx),
+    )
+
+
+def test_calc_prob_mom_increases_with_sample_size():
+    """Test that the same per-period edge observed for longer gives more confidence"""
+    probs = []
+    for n in (10, 50, 250, 1000):
+        returns, benchmark = _diff_series(n)
+        assert np.isclose(returns.calc_information_ratio(benchmark), 0.1)
+        probs.append(returns.calc_prob_mom(benchmark))
+
+    for earlier, later in zip(probs, probs[1:]):
+        assert later > earlier
+
+    assert probs[0] < 0.7
+    assert probs[-1] > 0.99
+
+
+def test_calc_prob_mom_matches_one_sample_t_test():
+    """Test that the probability is the t CDF of the information ratio scaled by sqrt(n)"""
+    # 250 observations at an information ratio of 0.1 give a t statistic of
+    # 0.1 * sqrt(250) = 1.5811 on 249 degrees of freedom
+    returns, benchmark = _diff_series(250)
+
+    assert np.isclose(returns.calc_prob_mom(benchmark), 0.942442, atol=1e-6)
+
+
+def test_calc_prob_mom_without_an_edge_is_half():
+    """Test that a series compared against itself carries no information"""
+    idx = pd.date_range("2020-01-01", periods=100, freq="D")
+    returns = pd.Series(np.linspace(0.001, 0.002, 100), index=idx)
+
+    assert np.isclose(returns.calc_prob_mom(returns), 0.5)
+
+
+def test_calc_prob_mom_ignores_unaligned_observations():
+    """Test that NaNs and non-overlapping dates don't count toward the sample size"""
+    returns, benchmark = _diff_series(250)
+    padded = returns.copy()
+    padded.iloc[0] = np.nan  # e.g. the leading NaN from to_returns()
+    short_benchmark = benchmark.iloc[:100]
+
+    # Only the 99 dates that are non-NaN in both series carry information, so
+    # the result must match the computation restricted to that window
+    expected = returns.iloc[1:100].calc_prob_mom(benchmark.iloc[1:100])
+
+    assert np.isclose(padded.calc_prob_mom(short_benchmark), expected)
+
+
 def test_calmar_ratio(df):
     cagr = df.calc_cagr()
     mdd = df.calc_max_drawdown()
@@ -752,6 +811,79 @@ def test_calc_sharpe(df):
     drf = ffn.deannualize(0.05, 252)
     ar = r - drf
     assert np.allclose(res, ar.mean() / ar.std() * np.sqrt(252))
+
+
+def test_calc_expected_max_sharpe():
+    # No dispersion, or a single trial, means no selection to correct for
+    assert ffn.calc_expected_max_sharpe(1, 0.5) == 0.0
+    assert ffn.calc_expected_max_sharpe(50, 0.0) == 0.0
+
+    # The hurdle grows with the number of trials and scales with their dispersion
+    assert ffn.calc_expected_max_sharpe(100, 0.5) > ffn.calc_expected_max_sharpe(10, 0.5)
+    aae(
+        ffn.calc_expected_max_sharpe(10, 1.0) * 0.5,
+        ffn.calc_expected_max_sharpe(10, 0.5),
+    )
+
+
+def test_calc_deflated_sharpe_ratio():
+    np.random.seed(0)
+    n_trials, n_periods = 40, 1000
+    index = pd.date_range(start="2015-01-01", periods=n_periods, freq="D")
+    # A search over trials that have no skill whatsoever
+    trials = pd.DataFrame(np.random.normal(0, 0.01, (n_periods, n_trials)), index=index)
+    sharpes = trials.calc_sharpe()
+    winner = trials[sharpes.idxmax()]
+
+    dsr = ffn.calc_deflated_sharpe_ratio(winner, sharpes)
+    assert 0 <= dsr <= 1
+    # The winner of a skill-less search must not survive deflation ...
+    assert dsr < 0.95
+    # ... though it looks significant when its selection is ignored
+    assert ffn.calc_deflated_sharpe_ratio(winner, [sharpes.max()]) > dsr
+
+    # More trials set a higher hurdle, hence a lower probability
+    assert ffn.calc_deflated_sharpe_ratio(winner, sharpes[:10]) > dsr
+
+    # Attached to pandas objects like the other metrics
+    aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
+
+
+def test_calc_deflated_sharpe_ratio_zero_dispersion():
+    sharpes = [0.5, 1.0, 1.5, 2.0]
+
+    # A constant series has no dispersion, so no Sharpe ratio and no deflated one.
+    # Its standard deviation is floating-point residue rather than an exact zero, so
+    # the ratio comes out finite (~4.6e15) and reaches the deflation arithmetic, which
+    # answered 1.0 -- certainty of an edge, from the one input that cannot show one.
+    # Checked across values and lengths, not at one point: the residue depends on both,
+    # so a guard calibrated on a single series passes while still leaking elsewhere.
+    for value in (1e-7, 1e-4, 0.001, 0.01, 1.0, 100.0):
+        for n in (3, 10, 250, 5000):
+            flat = pd.Series([value] * n)
+            assert np.isnan(
+                ffn.calc_deflated_sharpe_ratio(flat, sharpes)
+            ), f"leaked at value={value}, n={n}"
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(pd.Series([0.0] * 250), sharpes))
+
+    # The guard is relative to the scale of the data: a real but very quiet series
+    # still gets a number.
+    quiet = pd.Series(np.random.default_rng(1).normal(0, 1e-8, 250))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet, sharpes) <= 1
+
+    # A long, quiet series around a nonzero mean still has real dispersion. The
+    # zero-dispersion threshold must not grow with the sample size and swallow it.
+    quiet_nonzero = pd.Series(1.0 + np.random.default_rng(1).normal(0, 1e-12, 5000))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet_nonzero, sharpes, nperiods=252) <= 1
+
+    # Dispersion is measured after subtracting a series risk-free rate, matching the
+    # returns used to calculate Sharpe. Check both directions of that distinction.
+    rf = pd.Series(np.linspace(0.0001, 0.0002, 250))
+    constant_excess = rf + 0.001
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(constant_excess, sharpes, rf=rf, nperiods=252))
+
+    variable_excess = pd.Series([0.001] * 250)
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(variable_excess, sharpes, rf=rf, nperiods=252) <= 1
 
 
 def test_deannualize():
@@ -937,6 +1069,20 @@ def test_group_stats_uses_each_series_own_calendar():
     )
     gs.set_date_range()
     aae(gs["SYM1"].monthly_sharpe, ffn.PerformanceStats(sym1).monthly_sharpe, 9)
+
+
+def test_group_stats_date_range_reset_restores_full_calendars():
+    dates = pd.date_range("2020-01-01", periods=8, freq="D")
+    early = pd.Series(range(100, 105), index=dates[:5], name="EARLY")
+    late = pd.Series(range(200, 206), index=dates[2:], name="LATE")
+
+    gs = ffn.GroupStats(early, late)
+    gs.set_date_range()
+
+    assert gs["EARLY"].start == dates[0]
+    assert gs["EARLY"].end == dates[4]
+    assert gs["LATE"].start == dates[2]
+    assert gs["LATE"].end == dates[-1]
 
 
 def test_resample_returns(df):
