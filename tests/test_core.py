@@ -1071,6 +1071,21 @@ def test_group_stats_calc_stats(df):
     assert num_stats == num_unique_stats
 
 
+def test_calc_stats_annualization_factor(df):
+    prices = df[["AAPL", "MSFT"]]
+    stats = prices.calc_stats(annualization_factor=365)
+
+    assert stats["AAPL"].annualization_factor == 365
+    assert stats["MSFT"].annualization_factor == 365
+
+    stats.set_date_range(start=prices.index[10])
+    assert stats["AAPL"].annualization_factor == 365
+    assert stats["MSFT"].annualization_factor == 365
+
+    single_stats = prices["AAPL"].calc_stats(annualization_factor=365)
+    assert single_stats.annualization_factor == 365
+
+
 def test_group_stats_uses_each_series_own_calendar():
     # GH #155: a NaN row in one series should not drop that date from the
     # other series' individual stats
