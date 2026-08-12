@@ -849,6 +849,46 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
+def test_calc_information_ratio_dataframe():
+    returns = pd.DataFrame(
+        {
+            "varying": [0.03, 0.01, -0.02, 0.04],
+            "constant": [0.01, 0.01, 0.01, 0.01],
+        }
+    )
+    benchmark = pd.DataFrame(
+        {
+            "varying": [0.01, 0.0, -0.01, 0.02],
+            "constant": [0.01, 0.01, 0.01, 0.01],
+        }
+    )
+
+    actual = returns.calc_information_ratio(benchmark)
+    difference = returns - benchmark
+    expected = difference.mean() / difference.std(ddof=1)
+    expected["constant"] = 0.0
+
+    pd.testing.assert_series_equal(actual, expected)
+
+
+def test_calc_information_ratio_dataframe_with_series_benchmark():
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    returns = pd.DataFrame(
+        {
+            "fund_a": [0.03, 0.01, -0.02, 0.04],
+            "fund_b": [0.02, 0.02, -0.01, 0.03],
+        },
+        index=index,
+    )
+    benchmark = pd.Series([0.01, 0.0, -0.01, 0.02], index=index)
+
+    actual = returns.calc_information_ratio(benchmark)
+    difference = returns.sub(benchmark, axis="index")
+    expected = difference.mean() / difference.std(ddof=1)
+
+    pd.testing.assert_series_equal(actual, expected)
+
+
 def test_calc_deflated_sharpe_ratio_zero_dispersion():
     sharpes = [0.5, 1.0, 1.5, 2.0]
 

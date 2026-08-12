@@ -1455,8 +1455,17 @@ def calc_information_ratio(returns, benchmark_returns):
     """
     Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
-    diff_rets = returns - benchmark_returns
+    if isinstance(returns, pd.DataFrame) and isinstance(benchmark_returns, pd.Series):
+        diff_rets = returns.sub(benchmark_returns, axis="index")
+    else:
+        diff_rets = returns - benchmark_returns
     diff_std = diff_rets.std(ddof=1)
+
+    if isinstance(diff_std, pd.Series):
+        result = pd.Series(0.0, index=diff_std.index)
+        valid = diff_std.notna() & diff_std.ne(0)
+        result.loc[valid] = np.divide(diff_rets.mean().loc[valid], diff_std.loc[valid])
+        return result
 
     if pd.isna(diff_std) or diff_std == 0:
         return 0.0
