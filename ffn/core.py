@@ -392,15 +392,11 @@ class PerformanceStats:
             # -1 here to account for first return that will be nan
             self.win_year_perc = len(yr[yr > 0]) / float(len(yr) - 1)
 
-            # need at least 1 year of monthly returns
-            if mr.size > 11:
-                tot = 0
-                win = 0
-                for i in range(11, len(mr)):
-                    tot += 1
-                    if mp.iloc[i] / mp.iloc[i - 11] > 1:
-                        win += 1
-                self.twelve_month_win_perc = float(win) / tot
+            # need enough monthly bins for at least one twelve-month window
+            if mr.size > 12:
+                twelve_month_returns = (mp / mp.shift(12)).dropna()
+                if len(twelve_month_returns) > 0:
+                    self.twelve_month_win_perc = float((twelve_month_returns > 1).sum()) / len(twelve_month_returns)
 
         if r.index.to_series().diff().min() < pd.Timedelta("1097 days"):
             if len(yr) < 3:

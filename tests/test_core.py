@@ -798,6 +798,30 @@ def test_calc_stats(df):
     assert pd.isnull(stats["yearly_sharpe"])
 
 
+def test_twelve_month_win_perc_uses_twelve_month_window():
+    # 13 month end prices => exactly one full twelve month window,
+    # 2020-01-31 -> 2021-01-31, which returns 101 / 100 - 1 = +1%.
+    # The eleven month window 2020-01-31 -> 2020-12-31 is 99 / 100 - 1 = -1%,
+    # so measuring the wrong window flips the result.
+    index = pd.date_range("2020-01-31", periods=13, freq=ffn.core._MonthEnd)
+    prices = pd.Series([100.0] * 11 + [99.0, 101.0], index=index)
+
+    stats = ffn.calc_stats(prices).stats
+
+    assert stats["twelve_month_win_perc"] == 1.0
+
+    # 12 month end prices are only eleven monthly returns, which is not
+    # enough for a twelve month window
+    stats = ffn.calc_stats(prices.iloc[:12]).stats
+    assert pd.isnull(stats["twelve_month_win_perc"])
+
+    # Missing endpoint prices do not represent losing windows and are excluded.
+    full_index = pd.date_range("2020-01-31", periods=14, freq=ffn.core._MonthEnd)
+    prices = pd.Series(range(100, 113), index=full_index.delete(1))
+    stats = ffn.calc_stats(prices).stats
+    assert stats["twelve_month_win_perc"] == 1.0
+
+
 def test_calc_sharpe(df):
     x = pd.Series()
     assert np.isnan(x.calc_sharpe())
