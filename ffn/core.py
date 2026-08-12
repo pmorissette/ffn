@@ -831,8 +831,10 @@ class GroupStats(dict):
                 "have same name! Please provide unique names",
             )
 
-        self._start = self._prices.index[0]
-        self._end = self._prices.index[-1]
+        # Keep the full available range so set_date_range() can restore
+        # observations outside the shared cross-sectional calendar.
+        self._start = self._prices_full.first_valid_index()
+        self._end = self._prices_full.last_valid_index()
         # calculate stats for entire series
         self._update(self._prices, self._prices_full)
 
@@ -2356,7 +2358,7 @@ def infer_nperiods(data, annualization_factor=None):
             whole_periods_str = freq[-1]
             num_str = freq[:-1]
             num = int(num_str)
-            return num * _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor)
+            return _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor) / abs(num)
     except KeyboardInterrupt:
         raise
     except (TypeError, ValueError):
@@ -2383,7 +2385,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
-    negative_returns = er[1:].clip(upper=0.0)
+    negative_returns = er.clip(upper=0.0)
     downside_deviation = np.sqrt((negative_returns**2).mean())
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), downside_deviation)
@@ -2569,6 +2571,15 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
 
     n = len(returns)
     if n < 3 or pd.isnull(sr):
+        return np.nan
+
+    # Use excess-return range instead of standard deviation so constant inputs are
+    # not obscured by accumulated rounding error. The bounded tolerance also handles
+    # cancellation residue from a varying risk-free return without growing with n.
+    excess_returns = returns.to_excess_returns(rf, nperiods=nperiods)
+    spread = float(excess_returns.max() - excess_returns.min())
+    scale = max(float(np.abs(returns).max()), float(np.abs(excess_returns).max()))
+    if not spread > 4 * np.finfo(float).eps * scale:
         return np.nan
 
     sr0 = calc_expected_max_sharpe(len(trials), trials.std(ddof=1))
