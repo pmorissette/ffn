@@ -633,12 +633,45 @@ def test_calc_sortino_ratio(df):
     r = df.to_returns()
     a = r.calc_sortino_ratio(rf=rf, nperiods=p)
     er = r.to_excess_returns(rf, p)
-    negative_returns = er[1:].clip(upper=0.0)
+    negative_returns = er.clip(upper=0.0)
     downside_deviation = np.sqrt((negative_returns**2).mean())
     assert np.allclose(
         a, (er.mean() - rf) / downside_deviation * np.sqrt(p)
     )
 
+
+def test_calc_sortino_ratio_is_order_invariant():
+    # Both the mean and the downside deviation are symmetric functions of the
+    # sample, so reordering the same returns must not change the ratio.
+    idx = pd.date_range("2026-01-31", periods=4, freq=ffn.core._MonthEnd)
+    negative_first = pd.Series([-0.10, 0.02, 0.01, 0.03], index=idx)
+    negative_last = pd.Series([0.02, 0.01, 0.03, -0.10], index=idx)
+
+    assert np.isclose(
+        negative_first.calc_sortino_ratio(annualize=False), -0.2
+    )
+    assert np.isclose(
+        negative_last.calc_sortino_ratio(annualize=False), -0.2
+    )
+
+
+def test_calc_sortino_ratio_counts_first_period_downside():
+    # A series whose only losing period comes first still has downside risk.
+    idx = pd.date_range("2026-01-31", periods=4, freq=ffn.core._MonthEnd)
+    returns = pd.Series([-0.10, 0.02, 0.01, 0.03], index=idx)
+
+    assert np.isfinite(returns.calc_sortino_ratio(annualize=False))
+
+
+def test_calc_sortino_ratio_ignores_leading_nan(df):
+    # Returns built from prices carry a leading NaN, which pandas already skips
+    # in both the mean and the downside deviation.
+    r = df.to_returns()
+
+    assert np.allclose(
+        r.calc_sortino_ratio(annualize=False),
+        r[1:].calc_sortino_ratio(annualize=False),
+    )
 
 def test_to_ulcer_index_is_in_percentage_points():
     # 100 -> 90 -> 100 has drawdowns of 0%, -10%, 0%, so the ulcer index is
@@ -834,6 +867,43 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
+def test_calc_deflated_sharpe_ratio_zero_dispersion():
+    sharpes = [0.5, 1.0, 1.5, 2.0]
+
+    # A constant series has no dispersion, so no Sharpe ratio and no deflated one.
+    # Its standard deviation is floating-point residue rather than an exact zero, so
+    # the ratio comes out finite (~4.6e15) and reaches the deflation arithmetic, which
+    # answered 1.0 -- certainty of an edge, from the one input that cannot show one.
+    # Checked across values and lengths, not at one point: the residue depends on both,
+    # so a guard calibrated on a single series passes while still leaking elsewhere.
+    for value in (1e-7, 1e-4, 0.001, 0.01, 1.0, 100.0):
+        for n in (3, 10, 250, 5000):
+            flat = pd.Series([value] * n)
+            assert np.isnan(
+                ffn.calc_deflated_sharpe_ratio(flat, sharpes)
+            ), f"leaked at value={value}, n={n}"
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(pd.Series([0.0] * 250), sharpes))
+
+    # The guard is relative to the scale of the data: a real but very quiet series
+    # still gets a number.
+    quiet = pd.Series(np.random.default_rng(1).normal(0, 1e-8, 250))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet, sharpes) <= 1
+
+    # A long, quiet series around a nonzero mean still has real dispersion. The
+    # zero-dispersion threshold must not grow with the sample size and swallow it.
+    quiet_nonzero = pd.Series(1.0 + np.random.default_rng(1).normal(0, 1e-12, 5000))
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(quiet_nonzero, sharpes, nperiods=252) <= 1
+
+    # Dispersion is measured after subtracting a series risk-free rate, matching the
+    # returns used to calculate Sharpe. Check both directions of that distinction.
+    rf = pd.Series(np.linspace(0.0001, 0.0002, 250))
+    constant_excess = rf + 0.001
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(constant_excess, sharpes, rf=rf, nperiods=252))
+
+    variable_excess = pd.Series([0.001] * 250)
+    assert 0 <= ffn.calc_deflated_sharpe_ratio(variable_excess, sharpes, rf=rf, nperiods=252) <= 1
+
+
 def test_deannualize():
     res = ffn.deannualize(0.05, 252)
     assert np.allclose(res, np.power(1.05, 1 / 252.0) - 1)
@@ -1019,6 +1089,20 @@ def test_group_stats_uses_each_series_own_calendar():
     aae(gs["SYM1"].monthly_sharpe, ffn.PerformanceStats(sym1).monthly_sharpe, 9)
 
 
+def test_group_stats_date_range_reset_restores_full_calendars():
+    dates = pd.date_range("2020-01-01", periods=8, freq="D")
+    early = pd.Series(range(100, 105), index=dates[:5], name="EARLY")
+    late = pd.Series(range(200, 206), index=dates[2:], name="LATE")
+
+    gs = ffn.GroupStats(early, late)
+    gs.set_date_range()
+
+    assert gs["EARLY"].start == dates[0]
+    assert gs["EARLY"].end == dates[4]
+    assert gs["LATE"].start == dates[2]
+    assert gs["LATE"].end == dates[-1]
+
+
 def test_resample_returns(df):
     num_years = 30
     num_months = num_years * 12
@@ -1188,5 +1272,14 @@ def test_infer_nperiods():
     assert ffn.core.infer_nperiods(secondly) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 60
     assert ffn.core.infer_nperiods(monthly) == 12
     assert ffn.core.infer_nperiods(yearly) == 1
-    assert ffn.core.infer_nperiods(minutely_30) == ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 30
+    expected_30min_periods = ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 / 30
+    assert ffn.core.infer_nperiods(minutely_30) == expected_30min_periods
+
+    returns_30min = minutely_30.squeeze()
+    expected_sharpe = returns_30min.mean() / returns_30min.std(ddof=1) * np.sqrt(expected_30min_periods)
+    assert np.allclose(returns_30min.calc_sharpe(), expected_sharpe)
+
+    descending_30min = minutely_30.sort_index(ascending=False).squeeze()
+    assert ffn.core.infer_nperiods(descending_30min) == expected_30min_periods
+    assert np.allclose(descending_30min.calc_sharpe(), expected_sharpe)
     assert ffn.core.infer_nperiods(not_known) is None
