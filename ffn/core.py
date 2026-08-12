@@ -1203,10 +1203,22 @@ def to_price_index(returns, start=100):
         return cp
 
     # No leading NaN – prepend ``start`` so the first price equals start.
+    start_index = cp.index[0]
+    if isinstance(cp.index, pd.DatetimeIndex):
+        frequency = cp.index.freq
+        if frequency is None and len(cp.index) >= 3:
+            frequency = pd.infer_freq(cp.index)
+        if frequency is not None:
+            start_index -= pd.tseries.frequencies.to_offset(frequency)
+        elif len(cp.index) > 1:
+            start_index -= cp.index[1] - cp.index[0]
+        else:
+            start_index -= pd.Timedelta(days=1)
+
     if isinstance(cp, pd.DataFrame):
-        start_row = pd.DataFrame({c: [start] for c in cp.columns}, index=[cp.index[0]])
+        start_row = pd.DataFrame({c: [start] for c in cp.columns}, index=[start_index])
     else:
-        start_row = pd.Series([start], index=[cp.index[0]], name=cp.name)
+        start_row = pd.Series([start], index=[start_index], name=cp.name)
 
     return pd.concat([start_row, cp])
 
