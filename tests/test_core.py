@@ -142,6 +142,22 @@ def test_to_price_index(df):
     aae(actual["C"].iloc[9], 1.012, 3)
 
 
+def test_to_price_index_preserves_first_return_in_stats():
+    returns = pd.Series(
+        [0.10, -0.05, 0.02, 0.03],
+        index=pd.date_range("2024-01-08", periods=4, freq="B"),
+        name="strategy",
+    )
+
+    prices = returns.to_price_index()
+    stats = prices.calc_stats()
+
+    assert prices.index.is_unique
+    assert np.allclose(stats.returns.dropna(), returns)
+    assert np.isclose(stats.daily_mean, returns.mean() * 252)
+    assert np.isclose(stats.total_return, np.prod(1 + returns) - 1)
+
+
 def test_rebase(df):
     data = df
     actual = data.rebase()
