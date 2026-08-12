@@ -815,6 +815,12 @@ def test_twelve_month_win_perc_uses_twelve_month_window():
     stats = ffn.calc_stats(prices.iloc[:12]).stats
     assert pd.isnull(stats["twelve_month_win_perc"])
 
+    # Missing endpoint prices do not represent losing windows and are excluded.
+    full_index = pd.date_range("2020-01-31", periods=14, freq=ffn.core._MonthEnd)
+    prices = pd.Series(range(100, 113), index=full_index.delete(1))
+    stats = ffn.calc_stats(prices).stats
+    assert stats["twelve_month_win_perc"] == 1.0
+
 
 def test_calc_sharpe(df):
     x = pd.Series()
