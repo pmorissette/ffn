@@ -788,6 +788,7 @@ class GroupStats(dict):
 
     Args:
         * prices (Series): Multiple price series to be compared.
+        * annualization_factor (float): Annualization factor used for each series.
 
     Attributes:
         * stats (DataFrame): Dataframe containing stats for each
@@ -799,7 +800,8 @@ class GroupStats(dict):
 
     """
 
-    def __init__(self, *prices):
+    def __init__(self, *prices, annualization_factor=None):
+        self._annualization_factor_override = annualization_factor
         names = []
         for p in prices:
             if isinstance(p, pd.DataFrame):
@@ -853,7 +855,7 @@ class GroupStats(dict):
             full_data = data
         for c in data.columns:
             prc = full_data[c].dropna()
-            self[c] = PerformanceStats(prc)
+            self[c] = PerformanceStats(prc, annualization_factor=self._annualization_factor_override)
 
     def _stats(self):
         stats = [
@@ -1242,7 +1244,7 @@ def calc_perf_stats(prices, risk_free_rate=0.0, annualization_factor=252):
     return PerformanceStats(prices, rf=risk_free_rate, annualization_factor=annualization_factor)
 
 
-def calc_stats(prices):
+def calc_stats(prices, annualization_factor=None):
     """
     Calculates performance stats of a given object.
 
@@ -1252,11 +1254,15 @@ def calc_stats(prices):
 
     Args:
         * prices (Series, DataFrame): Set of prices
+        * annualization_factor (float): Annualization factor used in calculations
     """
     if isinstance(prices, pd.Series):
-        return PerformanceStats(prices)
+        return PerformanceStats(prices, annualization_factor=annualization_factor)
     elif isinstance(prices, pd.DataFrame):
-        return GroupStats(*[prices[x] for x in prices.columns])
+        return GroupStats(
+            *[prices[x] for x in prices.columns],
+            annualization_factor=annualization_factor,
+        )
     else:
         raise NotImplementedError("Unsupported type")
 
