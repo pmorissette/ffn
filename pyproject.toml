@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ffn"
 description = "Financial functions for Python"
-version = "1.1.5"
+version = "1.2.0"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
