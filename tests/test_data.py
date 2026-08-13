@@ -33,7 +33,7 @@ def test_fxmacrodata_fetches_spot_series():
         captured["timeout"] = timeout
         return FakeResponse(json.dumps(payload))
 
-    with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
         actual = ffn.data.fxmacrodata(
             "eur/usd",
             start="2024-01-01",
@@ -65,7 +65,7 @@ def test_fxmacrodata_requests_indicator_for_technical_field():
         captured["url"] = request.full_url
         return FakeResponse(json.dumps(payload))
 
-    with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
         actual = ffn.data.fxmacrodata("EURUSD", field="rsi_14", start="2024-01-01", mrefresh=True)
 
     assert captured["url"] == "https://api.fxmacrodata.com/v1/forex/eur/usd?start_date=2024-01-01&indicators=rsi_14"
@@ -82,7 +82,7 @@ def test_fxmacrodata_fetches_public_usd_indicator_without_api_key(monkeypatch):
         captured["api_key"] = request.get_header("X-api-key")
         return FakeResponse(json.dumps({"data": [{"date": "2024-01-31", "val": 3.1}]}))
 
-    with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
         actual = ffn.data.fxmacrodata("USD", field="inflation", start="2024-01-01", mrefresh=True)
 
     assert captured == {
@@ -102,7 +102,7 @@ def test_fxmacrodata_omits_api_key_header_when_not_configured(monkeypatch):
         captured["api_key"] = request.get_header("X-api-key")
         return FakeResponse(json.dumps({"data": [{"date": "2024-01-31", "val": 3.1}]}))
 
-    with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
         ffn.data.fxmacrodata("USD", field="inflation", mrefresh=True)
 
     assert "api_key" not in captured["url"]
@@ -119,7 +119,7 @@ def test_fxmacrodata_does_not_serialize_api_keys_into_cache_keys():
         return FakeResponse(json.dumps({"data": [{"date": "2024-01-03", "val": 1.092}]}))
 
     try:
-        with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+        with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
             ffn.data.fxmacrodata("EURUSD", api_key="first-placeholder")
             ffn.data.fxmacrodata("EURUSD", api_key="second-placeholder")
 
@@ -135,7 +135,7 @@ def test_fxmacrodata_integrates_with_get():
     def fake_urlopen(request, timeout):
         return FakeResponse(json.dumps(payload))
 
-    with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
         actual = ffn.get(
             "USD:inflation",
             provider=ffn.data.fxmacrodata,
@@ -158,7 +158,7 @@ def test_fxmacrodata_rejects_missing_rows():
     def fake_urlopen(request, timeout):
         return FakeResponse(json.dumps(payload))
 
-    with mock.patch.object(ffn.data, "urlopen", side_effect=fake_urlopen):
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
         with pytest.raises(ValueError, match="dated 'val' rows"):
             ffn.data.fxmacrodata("EURUSD", mrefresh=True)
 
@@ -172,7 +172,7 @@ def test_fxmacrodata_redacts_http_error_details():
         io.BytesIO(b"sensitive upstream details"),
     )
 
-    with mock.patch.object(ffn.data, "urlopen", side_effect=error):
+    with mock.patch("urllib.request.urlopen", side_effect=error):
         with pytest.raises(ffn.data.FXMacroDataError) as raised:
             ffn.data.fxmacrodata("EURUSD", api_key="placeholder-key")
 
@@ -181,12 +181,12 @@ def test_fxmacrodata_redacts_http_error_details():
 
 
 def test_fxmacrodata_wraps_network_errors():
-    with mock.patch.object(ffn.data, "urlopen", side_effect=URLError("unavailable")):
+    with mock.patch("urllib.request.urlopen", side_effect=URLError("unavailable")):
         with pytest.raises(ffn.data.FXMacroDataError, match="API request failed$"):
             ffn.data.fxmacrodata("EURUSD", mrefresh=True)
 
 
 def test_fxmacrodata_rejects_invalid_json():
-    with mock.patch.object(ffn.data, "urlopen", return_value=FakeResponse("not-json")):
+    with mock.patch("urllib.request.urlopen", return_value=FakeResponse("not-json")):
         with pytest.raises(ffn.data.FXMacroDataError, match="invalid JSON"):
             ffn.data.fxmacrodata("EURUSD", mrefresh=True)
