@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import json
 import os
 import warnings
-from typing import Sequence, Union
-from urllib.error import HTTPError
-from urllib.parse import urlencode
+from collections.abc import Sequence
+from urllib.error import HTTPError, URLError
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 import pandas as pd
@@ -122,7 +124,7 @@ def web(ticker: str, field=None, start=None, end=None, mrefresh=False, source="y
 
 
 @utils.memoize
-def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> Union[pd.Series, pd.DataFrame]:
+def yf(ticker: str, field, start=None, end=None, mrefresh=False) -> pd.Series | pd.DataFrame:
     if field is None:
         field = "Adj Close"
 
@@ -162,7 +164,12 @@ def csv(ticker: str, path="data.csv", field="", mrefresh=False, **kwargs) -> pd.
     return df[tf]
 
 
-FXMACRODATA_API_BASE_URL = "https://fxmacrodata.com/api/v1"
+FXMACRODATA_API_BASE_URL = "https://api.fxmacrodata.com/v1"
+
+
+class FXMacroDataError(ValueError):
+    """Raised when FXMacroData cannot return a usable response."""
+
 
 _FXMACRODATA_INDICATOR_FIELDS = {
     "sma_20": "sma_20",
@@ -194,19 +201,8 @@ def _format_fxmacrodata_date(value):
 def _split_fxmacrodata_pair(ticker: str) -> tuple[str, str]:
     normalized = "".join(char for char in ticker.upper() if char.isalpha())
     if len(normalized) != 6:
-        raise ValueError("FXMacroData tickers must look like 'EURUSD' or 'EUR/USD'")
+        raise ValueError("FXMacroData tickers must look like 'EURUSD', 'EUR/USD', or 'USD:inflation'")
     return normalized[:3], normalized[3:]
-
-
-def _read_fxmacrodata_error(error: HTTPError) -> str:
-    try:
-        body = error.read().decode("utf-8").strip()
-    except Exception:
-        body = ""
-    message = f"FXMacroData API error {error.code}"
-    if body:
-        message = f"{message}: {body}"
-    return message
 
 
 def _fxmacrodata_fetch(
@@ -218,9 +214,6 @@ def _fxmacrodata_fetch(
     base_url: str = FXMACRODATA_API_BASE_URL,
     timeout: float = 30,
 ) -> pd.Series:
-    base_currency, quote_currency = _split_fxmacrodata_pair(ticker)
-    output_field = field or "val"
-
     params = {}
     start_date = _format_fxmacrodata_date(start)
     end_date = _format_fxmacrodata_date(end)
@@ -229,13 +222,23 @@ def _fxmacrodata_fetch(
     if end_date:
         params["end_date"] = end_date
 
-    indicator = _FXMACRODATA_INDICATOR_FIELDS.get(output_field)
-    if indicator:
-        params["indicators"] = indicator
+    normalized = "".join(char for char in ticker.upper() if char.isalpha())
+    if len(normalized) == 3 and field:
+        output_field = "val"
+        series_label = f"{normalized}/{field}"
+        endpoint = f"announcements/{normalized.lower()}/{quote(field, safe='')}"
+    else:
+        base_currency, quote_currency = _split_fxmacrodata_pair(ticker)
+        output_field = field or "val"
+        series_label = f"{base_currency}/{quote_currency}"
+        endpoint = f"forex/{base_currency.lower()}/{quote_currency.lower()}"
+        indicator = _FXMACRODATA_INDICATOR_FIELDS.get(output_field)
+        if indicator:
+            params["indicators"] = indicator
 
     api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
     query = urlencode(params)
-    url = f"{base_url.rstrip('/')}/forex/{base_currency.lower()}/{quote_currency.lower()}"
+    url = f"{base_url.rstrip('/')}/{endpoint}"
     if query:
         url = f"{url}?{query}"
 
@@ -248,8 +251,14 @@ def _fxmacrodata_fetch(
             payload = json.load(response)
     except HTTPError as error:
         if error.code == 401:
-            raise PermissionError(_read_fxmacrodata_error(error)) from error
-        raise ValueError(_read_fxmacrodata_error(error)) from error
+            raise PermissionError("FXMacroData API authentication failed") from None
+        raise FXMacroDataError(f"FXMacroData API request failed with status {error.code}") from None
+    except TimeoutError:
+        raise FXMacroDataError("FXMacroData API request timed out") from None
+    except (URLError, OSError):
+        raise FXMacroDataError("FXMacroData API request failed") from None
+    except (json.JSONDecodeError, UnicodeError):
+        raise FXMacroDataError("FXMacroData API returned invalid JSON") from None
 
     rows = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(rows, list):
@@ -266,7 +275,7 @@ def _fxmacrodata_fetch(
         records.append((pd.Timestamp(date_value), series_value))
 
     if not records:
-        raise ValueError(f"FXMacroData response did not include dated '{output_field}' rows for {base_currency}/{quote_currency}")
+        raise ValueError(f"FXMacroData response did not include dated '{output_field}' rows for {series_label}")
 
     series = pd.Series(
         data=[value for _, value in records],
@@ -275,7 +284,7 @@ def _fxmacrodata_fetch(
     )
     series = pd.to_numeric(series, errors="coerce").dropna()
     if series.empty:
-        raise ValueError(f"FXMacroData response did not include numeric '{output_field}' rows for {base_currency}/{quote_currency}")
+        raise ValueError(f"FXMacroData response did not include numeric '{output_field}' rows for {series_label}")
 
     return series[~series.index.duplicated(keep="last")].sort_index()
 
@@ -305,30 +314,28 @@ def fxmacrodata(
     mrefresh=False,
 ) -> pd.Series:
     """
-    Data provider for FXMacroData daily FX spot rates.
+    Data provider for public USD macro series and daily FX spot rates.
 
     Use with :func:`ffn.get` by passing this function as the provider:
 
-    >>> prices = ffn.get("EURUSD", provider=ffn.data.fxmacrodata, start="2024-01-01", api_key="...")
+    >>> inflation = ffn.get("USD:inflation", provider=ffn.data.fxmacrodata, start="2024-01-01")
+    >>> prices = ffn.get("EURUSD", provider=ffn.data.fxmacrodata, start="2024-01-01", api_key="your-api-key")
 
-    ``ticker`` accepts six-character FX pairs such as ``EURUSD`` or separated
-    forms such as ``EUR/USD``. By default the returned series contains the
-    ``val`` field from the FXMacroData response. Technical fields such as
-    ``sma_20`` or ``rsi_14`` can be requested via ffn's ticker field syntax,
-    for example ``EURUSD:sma_20``. Pass ``api_key`` or set
-    ``FXMACRODATA_API_KEY`` or ``FXMD_API_KEY`` for protected pairs.
+    ``USD:<indicator>`` uses the always-free public USD announcement history
+    without an account or API key. Six-character FX pairs such as ``EURUSD``
+    or ``EUR/USD`` use the authenticated FX endpoint. By default the returned
+    series contains the ``val`` field. Technical fields such as ``sma_20`` or
+    ``rsi_14`` can be requested via ffn's ticker field syntax, for example
+    ``EURUSD:sma_20``. Pass ``api_key`` or set ``FXMACRODATA_API_KEY`` or
+    ``FXMD_API_KEY`` for FX pairs and other protected coverage.
 
     Public responses are memoized. Authenticated requests are intentionally not
     cached so an API key is never serialized into ffn's in-memory cache key.
     """
     api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
     if api_key:
-        return _fxmacrodata_fetch(
-            ticker, field=field, start=start, end=end, api_key=api_key, base_url=base_url, timeout=timeout
-        )
-    return _fxmacrodata_cached(
-        ticker, field=field, start=start, end=end, base_url=base_url, timeout=timeout, mrefresh=mrefresh
-    )
+        return _fxmacrodata_fetch(ticker, field=field, start=start, end=end, api_key=api_key, base_url=base_url, timeout=timeout)
+    return _fxmacrodata_cached(ticker, field=field, start=start, end=end, base_url=base_url, timeout=timeout, mrefresh=mrefresh)
 
 
 DEFAULT_PROVIDER = yf
