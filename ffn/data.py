@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-import json
-import os
 import warnings
 from collections.abc import Sequence
-from urllib.error import HTTPError, URLError
-from urllib.parse import quote, urlencode
-from urllib.request import Request, urlopen
 
 import pandas as pd
 import yfinance
@@ -214,6 +209,12 @@ def _fxmacrodata_fetch(
     base_url: str = FXMACRODATA_API_BASE_URL,
     timeout: float = 30,
 ) -> pd.Series:
+    import json
+    import os
+    from urllib.error import HTTPError, URLError
+    from urllib.parse import quote, urlencode
+    from urllib.request import Request, urlopen
+
     params = {}
     start_date = _format_fxmacrodata_date(start)
     end_date = _format_fxmacrodata_date(end)
@@ -332,6 +333,8 @@ def fxmacrodata(
     Public responses are memoized. Authenticated requests are intentionally not
     cached so an API key is never serialized into ffn's in-memory cache key.
     """
+    import os
+
     api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
     if api_key:
         return _fxmacrodata_fetch(ticker, field=field, start=start, end=end, api_key=api_key, base_url=base_url, timeout=timeout)
