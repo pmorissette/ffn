@@ -1,6 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
+import pytest
 from pytest import fixture
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
@@ -887,6 +888,107 @@ def test_calc_deflated_sharpe_ratio():
 
     # Attached to pandas objects like the other metrics
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
+
+
+def _trial_t_stats(panel):
+    return (panel.mean() / (panel.std(ddof=1) / np.sqrt(len(panel)))).abs()
+
+
+def test_calc_fdr_hurdle():
+    np.random.seed(0)
+    n_periods = 500
+    index = pd.date_range(start="2015-01-01", periods=n_periods, freq="D")
+    # A search over trials that have no skill whatsoever
+    trials = pd.DataFrame(np.random.normal(0, 0.01, (n_periods, 60)), index=index)
+
+    hurdle = ffn.calc_fdr_hurdle(trials, n_boot=400, seed=0)
+    assert hurdle > 0
+    # Nothing in a skill-less search may clear the bar that search itself implies
+    assert (_trial_t_stats(trials) >= hurdle).sum() == 0
+    # ... even though its best trial looks significant on its own
+    assert _trial_t_stats(trials).max() > 2.0
+
+    # Seeded, and attached to pandas objects like the other metrics
+    assert ffn.calc_fdr_hurdle(trials, n_boot=400, seed=0) == hurdle
+    assert trials.calc_fdr_hurdle(n_boot=400, seed=0) == hurdle
+
+
+def test_calc_fdr_hurdle_rises_with_the_size_of_the_search():
+    # The bar has to come from the multiplicity, so it must climb as more
+    # candidates are tried against the same real signal. Shown on a panel that
+    # holds discoveries: where nothing clears the target the hurdle collapses to
+    # just above the best observed t and stops describing the search at all.
+    np.random.seed(11)
+    n_periods = 500
+    panel = np.random.normal(0, 0.01, (n_periods, 60))
+    for j in range(3):
+        panel[:, j] = panel[:, j] + 0.01 * 6.0 / np.sqrt(n_periods)
+    panel = pd.DataFrame(panel)
+
+    hurdles = [
+        ffn.calc_fdr_hurdle(panel.iloc[:, :k], n_boot=400, seed=0)
+        for k in (5, 20, 60)
+    ]
+    assert hurdles[0] < hurdles[1] < hurdles[2]
+    # The planted trials are strong enough to survive the widest search
+    survivors = _trial_t_stats(panel) >= hurdles[-1]
+    assert survivors[:3].all()
+
+
+def test_calc_fdr_hurdle_finds_planted_signal():
+    np.random.seed(1)
+    n_periods, n_trials = 500, 20
+    panel = pd.DataFrame(np.random.normal(0, 0.01, (n_periods, n_trials)))
+    # One trial with an edge far beyond what this search can produce by chance
+    panel[0] = panel[0] + 0.01 * 6.0 / np.sqrt(n_periods)
+
+    hurdle = ffn.calc_fdr_hurdle(panel, n_boot=400, seed=0)
+    discoveries = _trial_t_stats(panel) >= hurdle
+    assert discoveries[0]
+    assert discoveries.sum() == 1
+
+
+def test_calc_fdr_hurdle_zero_dispersion():
+    # A constant column has no t-statistic, but floating-point residue gives it an
+    # enormous finite one; left in, it would be the strongest trial in the search.
+    flat = pd.DataFrame({"a": [0.001] * 250, "b": [0.001] * 250})
+    assert np.isnan(ffn.calc_fdr_hurdle(flat, n_boot=200))
+
+    np.random.seed(2)
+    real = np.random.normal(0, 0.01, (250, 2))
+    mixed = pd.DataFrame({"flat": [0.001] * 250, "a": real[:, 0], "b": real[:, 1]})
+    assert np.isfinite(ffn.calc_fdr_hurdle(mixed, n_boot=200, seed=0))
+
+    # Dropping leaves too few trials to speak of multiplicity at all
+    with pytest.raises(ValueError):
+        ffn.calc_fdr_hurdle(
+            pd.DataFrame({"flat": [0.001] * 250, "a": real[:, 0]}), n_boot=200
+        )
+
+    # A genuinely low-volatility panel is not degenerate and must still get a number,
+    # across scales and lengths rather than at the single point the floor was set on.
+    for scale in (1e-12, 1e-6, 1.0, 1e3):
+        for n in (50, 250, 1000):
+            np.random.seed(3)
+            tiny = pd.DataFrame(np.random.normal(0, scale, (n, 5)))
+            assert np.isfinite(ffn.calc_fdr_hurdle(tiny, n_boot=200, seed=0))
+
+
+def test_calc_fdr_hurdle_guards():
+    np.random.seed(4)
+    panel = pd.DataFrame(np.random.normal(0, 0.01, (100, 5)))
+    with pytest.raises(ValueError):
+        ffn.calc_fdr_hurdle(panel, target_fdr=0.0)
+    with pytest.raises(ValueError):
+        ffn.calc_fdr_hurdle(panel, target_fdr=1.0)
+    with pytest.raises(ValueError):
+        ffn.calc_fdr_hurdle(panel, n_boot=50)
+    with pytest.raises(ValueError):
+        ffn.calc_fdr_hurdle(panel, grid_step=0)
+    with pytest.raises(ValueError):
+        ffn.calc_fdr_hurdle(panel.iloc[:, :1])
+    # Too few observations to form a t-statistic
+    assert np.isnan(ffn.calc_fdr_hurdle(panel.iloc[:2], n_boot=200))
 
 
 def test_calc_information_ratio_dataframe():
