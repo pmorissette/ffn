@@ -2608,6 +2608,121 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     return scipy.stats.norm.cdf((sr - sr0) * np.sqrt(n - 1) / np.sqrt(variance_adj))
 
 
+def calc_fdr_hurdle(returns, target_fdr=0.05, n_boot=1000, seed=0, grid_step=0.05):
+    """
+    Calculates the t-statistic hurdle that a strategy search implies at a chosen
+    false discovery rate, following `Harvey and Liu (2020)
+    <https://doi.org/10.1111/jofi.12951>`_.
+
+    There is no universal cutoff. The bar a candidate must clear depends on how
+    many candidates were tried and on how correlated they were, so it has to be
+    derived from the search itself rather than read off a table. Pass the return
+    series of **every** trial that was evaluated, one per column: the count and
+    the joint behaviour of those columns set the hurdle, and a panel of only the
+    survivors will understate it.
+
+    The null is built by demeaning each column and resampling the time index,
+    drawing the **same** periods for every column so that cross-trial
+    correlation survives into the null. Every trial is treated as null when
+    counting expected false discoveries, which is conservative in the same way
+    Benjamini-Hochberg is with ``m0 = m``. The hurdle returned is the smallest
+    one for which the target also holds at every stricter hurdle, so it cannot
+    land on a dip in a noisy curve.
+
+    Because the alternative is never represented, this says nothing about
+    discoveries that were *missed*; it bounds false ones only.
+
+    Columns with no dispersion are dropped before the hurdle is computed. Such a
+    column has no t-statistic, yet floating-point residue gives it an enormous
+    finite one, and it would otherwise be counted as the strongest trial in the
+    search. Dropping changes the trial count, which is what sets the hurdle, so
+    the result is the hurdle for the trials that carry information.
+
+    Source: Harvey, C. R. and Liu, Y. (2020), "False (and Missed) Discoveries in
+    Financial Economics", Journal of Finance, 75(5), 2503-2553.
+
+    Args:
+        * returns (DataFrame): Return series of all evaluated trials, one
+            column per trial, sharing a time index.
+        * target_fdr (float): Share of the discoveries that may be false.
+            Harvey and Liu use 0.05.
+        * n_boot (int): Number of bootstrap draws used to build the null.
+        * seed (int): Seed for the bootstrap, so the hurdle is reproducible.
+        * grid_step (float): Resolution of the hurdle grid in t units.
+
+    Returns:
+        * float -- the |t| a trial must reach. Compare it against each column's
+          own t-statistic; columns at or above it are the discoveries. When no
+          trial clears the target the value sits just above the largest observed
+          |t|, marking that the panel holds no discovery rather than describing
+          the multiplicity.
+
+    """
+    if not 0.0 < target_fdr < 1.0:
+        raise ValueError("target_fdr must be between 0 and 1")
+    if n_boot < 100:
+        raise ValueError("n_boot below 100 makes the null too coarse to trust")
+    if grid_step <= 0:
+        raise ValueError("grid_step must be positive")
+
+    x = pd.DataFrame(returns).dropna(axis=0, how="any")
+    n, m = x.shape
+    if m < 2:
+        raise ValueError("need at least 2 trials; the hurdle comes from the multiplicity")
+    if n < 3:
+        return np.nan
+
+    values = x.to_numpy(dtype=float)
+
+    # A column with no dispersion has no t-statistic, but it does not arrive here as a
+    # nan: the standard deviation of a constant series is floating-point residue rather
+    # than an exact zero, so a flat column divides out to something enormous but finite
+    # and would be counted as the strongest trial in the search. Compare against the
+    # resolution of a float at the scale of that column, so a genuinely low-volatility
+    # trial still gets a number, and drop only the columns carrying no information.
+    scale = np.max(np.abs(values), axis=0)
+    keep = values.std(axis=0, ddof=1) > n * np.finfo(float).eps * np.maximum(scale, 1.0)
+    if not keep.any():
+        return np.nan
+    dropped = m - int(keep.sum())
+    values = values[:, keep]
+    m = values.shape[1]
+    if m < 2:
+        raise ValueError(f"only {m} of {m + dropped} trials carry dispersion; need 2")
+
+    root_n = np.sqrt(n)
+    obs = np.sort(np.abs(values.mean(axis=0) / (values.std(axis=0, ddof=1) / root_n)))
+
+    demeaned = values - values.mean(axis=0)
+    rng = np.random.default_rng(seed)
+    null = np.empty(n_boot * m, dtype=float)
+    for b in range(n_boot):
+        idx = rng.integers(0, n, size=n)  # one draw shared by every column
+        sample = demeaned[idx]
+        sd = sample.std(axis=0, ddof=1)
+        with np.errstate(divide="ignore", invalid="ignore"):
+            tb = np.abs(sample.mean(axis=0) / (sd / root_n))
+        null[b * m : (b + 1) * m] = np.where(np.isfinite(tb), tb, 0.0)
+    null.sort()
+
+    grid = np.arange(0.0, max(4.0, obs[-1] + 0.5) + grid_step, grid_step)
+    # Expected false discoveries at each hurdle, and the discoveries actually seen.
+    expected_false = (len(null) - np.searchsorted(null, grid, side="left")) / n_boot
+    discoveries = m - np.searchsorted(obs, grid, side="left")
+    with np.errstate(divide="ignore", invalid="ignore"):
+        fdr = np.where(discoveries > 0, np.minimum(1.0, expected_false / discoveries), 0.0)
+
+    # Walk down from the strictest hurdle and keep the smallest one whose whole tail
+    # still meets the target: a single dip in the curve must not be enough to pass.
+    hurdle = grid[-1]
+    tail_max = 0.0
+    for h, f in zip(grid[::-1], fdr[::-1]):
+        tail_max = max(tail_max, f)
+        if tail_max <= target_fdr:
+            hurdle = h
+    return float(hurdle)
+
+
 def resample_returns(returns, func, seed=0, num_trials=100):
     """
     Resample the returns and calculate any statistic on every new sample.
@@ -2686,6 +2801,7 @@ def extend_pandas():
     PandasObject.calc_sharpe = calc_sharpe
     PandasObject.calc_sharpe_ratio = calc_sharpe
     PandasObject.calc_deflated_sharpe_ratio = calc_deflated_sharpe_ratio
+    PandasObject.calc_fdr_hurdle = calc_fdr_hurdle
     PandasObject.to_excess_returns = to_excess_returns
     PandasObject.to_ulcer_index = to_ulcer_index
     PandasObject.to_ulcer_performance_index = to_ulcer_performance_index
