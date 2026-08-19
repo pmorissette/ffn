@@ -1360,3 +1360,47 @@ def test_infer_nperiods():
     assert ffn.core.infer_nperiods(descending_30min) == expected_30min_periods
     assert np.allclose(descending_30min.calc_sharpe(), expected_sharpe)
     assert ffn.core.infer_nperiods(not_known) is None
+
+
+def test_infer_nperiods_business_weekly_quarterly():
+    # pandas infers "B", "W-SUN" and "QE-DEC" for these; each used to fall
+    # through to None, which silently disabled annualization.
+    business = pd.DataFrame(np.random.randn(400),
+                            index=pd.bdate_range(start='2018-01-01', periods=400))
+    weekly = pd.DataFrame(np.random.randn(60),
+                          index=pd.date_range(start='2018-01-07', periods=60, freq='W'))
+    quarterly = pd.DataFrame(np.random.randn(20),
+                             index=pd.date_range(start='2018-03-31', periods=20, freq=ffn.core._QuarterEnd))
+
+    assert ffn.core.infer_nperiods(business) == ffn.core.TRADING_DAYS_PER_YEAR
+    assert ffn.core.infer_nperiods(weekly) == 52
+    assert ffn.core.infer_nperiods(quarterly) == 4
+
+    # Multipliers still divide, and an anchor does not break parsing.
+    biweekly = pd.DataFrame(np.random.randn(30),
+                            index=pd.date_range(start='2018-01-07', periods=30, freq='2W'))
+    assert ffn.core.infer_nperiods(biweekly) == 26
+
+
+def test_calc_sharpe_annualizes_business_daily():
+    # A business-day price series is the ordinary case for equities, and its
+    # Sharpe ratio must be scaled by sqrt(252) like a calendar-daily one.
+    index = pd.bdate_range(start='2018-01-01', periods=756)
+    returns = pd.Series(np.random.randn(756) / 100, index=index)
+
+    expected = returns.mean() / returns.std(ddof=1) * np.sqrt(ffn.core.TRADING_DAYS_PER_YEAR)
+    assert np.allclose(returns.calc_sharpe(), expected)
+
+    # Unannualized is unaffected by the frequency.
+    assert np.allclose(returns.calc_sharpe(annualize=False),
+                       returns.mean() / returns.std(ddof=1))
+
+
+def test_calc_sortino_annualizes_weekly():
+    index = pd.date_range(start='2018-01-07', periods=260, freq='W')
+    returns = pd.Series(np.random.randn(260) / 100, index=index)
+
+    downside = np.sqrt((returns.clip(upper=0.0) ** 2).mean())
+    expected = returns.mean() / downside * np.sqrt(52)
+    assert np.allclose(returns.calc_sortino_ratio(), expected)
+
