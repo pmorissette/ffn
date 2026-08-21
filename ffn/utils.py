@@ -118,38 +118,59 @@ def fmtn(number: float) -> str:
 
 
 def get_freq_name(period: str) -> str | None:
-    period = period.upper()
+    # pandas anchors some aliases to a month or weekday, e.g. "YE-DEC" or "W-SUN"
+    base = period.split("-", 1)[0]
+
+    # These aliases are case sensitive in pandas: "ms" is milliseconds while
+    # "MS" is month start, so they have to be matched before upper casing
+    case_sensitive = {
+        "min": "minutely",
+        "ms": "milliseconds",
+        "us": "microseconds",
+        "ns": "nanoseconds",
+    }
+    if base in case_sensitive:
+        return case_sensitive[base]
+
     periods = {
         "B": "business day",
         "C": "custom business day",
         "D": "daily",
         "W": "weekly",
         "M": "monthly",
+        "ME": "monthly",
         "BM": "business month end",
+        "BME": "business month end",
         "CBM": "custom business month end",
+        "CBME": "custom business month end",
         "MS": "month start",
         "BMS": "business month start",
         "CBMS": "custom business month start",
         "Q": "quarterly",
+        "QE": "quarterly",
         "BQ": "business quarter end",
+        "BQE": "business quarter end",
         "QS": "quarter start",
         "BQS": "business quarter start",
         "Y": "yearly",
+        "YE": "yearly",
         "A": "yearly",
         "BA": "business year end",
+        "BY": "business year end",
+        "BYE": "business year end",
         "AS": "year start",
+        "YS": "year start",
         "BAS": "business year start",
+        "BYS": "business year start",
         "H": "hourly",
         "T": "minutely",
         "S": "secondly",
-        "L": "milliseonds",
+        "L": "milliseconds",
         "U": "microseconds",
+        "N": "nanoseconds",
     }
 
-    if period in periods:
-        return periods[period]
-    else:
-        return None
+    return periods.get(base.upper())
 
 
 def scale(val: float, src: Sequence[float], dst: Sequence[float]) -> float:
