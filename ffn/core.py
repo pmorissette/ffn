@@ -1377,6 +1377,10 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     end = is_zero & (~is_zero).shift(1)
     end = list(end[end == True].index)
 
+    # A sliced series may already be underwater at its first observation.
+    if len(drawdown) > 0 and drawdown.iloc[0] < 0:
+        start.insert(0, drawdown.index[0])
+
     if len(start) == 0:  # start.empty
         return None
 
