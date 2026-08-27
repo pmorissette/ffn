@@ -142,6 +142,29 @@ def test_to_price_index(df):
     aae(actual["C"].iloc[9], 1.012, 3)
 
 
+def test_to_price_index_mixed_leading_nan_dataframe():
+    returns = pd.DataFrame(
+        {
+            "missing_first": [np.nan, 0.10, -0.05],
+            "valid_first": [0.20, -0.10, 0.05],
+        },
+        index=pd.date_range("2024-01-08", periods=3, freq="B"),
+    )
+
+    start = 250
+    prices = returns.to_price_index(start=start)
+
+    assert len(prices) == len(returns) + 1
+    assert prices.index.is_unique
+    assert prices.index[0] == returns.index[0] - pd.offsets.BusinessDay()
+    assert np.allclose(prices.iloc[0].to_numpy(), start)
+
+    roundtrip = prices.to_returns()
+    assert np.allclose(roundtrip["valid_first"].iloc[1:].to_numpy(), returns["valid_first"].to_numpy())
+    assert np.isclose(roundtrip["missing_first"].iloc[1], 0)
+    assert np.allclose(roundtrip["missing_first"].iloc[2:].to_numpy(), returns["missing_first"].iloc[1:].to_numpy())
+
+
 def test_to_price_index_preserves_first_return_in_stats():
     returns = pd.Series(
         [0.10, -0.05, 0.02, 0.03],
