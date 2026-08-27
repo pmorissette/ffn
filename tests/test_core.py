@@ -972,17 +972,60 @@ def test_deannualize():
 
 
 def test_to_excess_returns(df):
+    """Verify scalar risk-free rates preserve existing excess-return behavior."""
     rf = 0.05
     r = df.to_returns()
 
-    np.allclose(r.to_excess_returns(0), r)
+    assert np.allclose(r.to_excess_returns(0), r, equal_nan=True)
 
-    np.allclose(
+    # A float risk-free rate is annualized only when a period count is available.
+    assert np.allclose(
         r.to_excess_returns(rf, nperiods=252),
         r.to_excess_returns(ffn.deannualize(rf, 252)),
+        equal_nan=True,
     )
 
-    np.allclose(r.to_excess_returns(rf), r - rf)
+    assert np.allclose(r.to_excess_returns(rf), r - rf, equal_nan=True)
+
+
+def test_to_excess_returns_dataframe_with_series_risk_free():
+    """Align a time-indexed risk-free Series across DataFrame rows."""
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    returns = pd.DataFrame(
+        {
+            "fund_a": [0.03, 0.01, -0.02, 0.04],
+            "fund_b": [0.02, 0.02, -0.01, 0.03],
+        },
+        index=index,
+    )
+    risk_free = pd.Series([0.01, 0.03, 0.0, 0.04], index=index)
+    expected = pd.DataFrame(
+        {
+            "fund_a": returns["fund_a"] - risk_free,
+            "fund_b": returns["fund_b"] - risk_free,
+        },
+        index=index,
+    )
+
+    # Exercise both public paths before checking metrics built on excess returns.
+    pd.testing.assert_frame_equal(ffn.to_excess_returns(returns, risk_free), expected)
+    pd.testing.assert_frame_equal(returns.to_excess_returns(risk_free), expected)
+
+    # Each ratio is calculated independently from the expected aligned frame.
+    expected_sharpe = expected.mean() / expected.std(ddof=1)
+    pd.testing.assert_series_equal(ffn.calc_sharpe(returns, rf=risk_free, annualize=False), expected_sharpe)
+    pd.testing.assert_series_equal(returns.calc_sharpe(rf=risk_free, annualize=False), expected_sharpe)
+
+    downside_deviation = np.sqrt((expected.clip(upper=0.0) ** 2).mean())
+    expected_sortino = expected.mean() / downside_deviation
+    pd.testing.assert_series_equal(
+        ffn.calc_sortino_ratio(returns, rf=risk_free, annualize=False),
+        expected_sortino,
+    )
+    pd.testing.assert_series_equal(
+        returns.calc_sortino_ratio(rf=risk_free, annualize=False),
+        expected_sortino,
+    )
 
 
 def test_set_riskfree_rate(df):
