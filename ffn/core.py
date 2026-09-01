@@ -2627,6 +2627,9 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     parameters), the effective number of independent trials is lower than
     their count and the result is accordingly conservative.
 
+    Missing returns are excluded from the sample size, matching the
+    missing-aware Sharpe, skew, and kurtosis calculations.
+
     Source: Bailey, D. and Lopez de Prado, M. (2014), "The Deflated Sharpe
     Ratio: Correcting for Selection Bias, Backtest Overfitting, and
     Non-Normality", Journal of Portfolio Management, 40(5), 94-107.
@@ -2656,7 +2659,8 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     if annualized_trials:
         trials = trials / np.sqrt(nperiods or 1)
 
-    n = len(returns)
+    # Match the sample size to the missing-aware moments used by the statistic.
+    n = returns.count()
     if n < 3 or pd.isnull(sr):
         return np.nan
 
