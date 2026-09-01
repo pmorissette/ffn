@@ -1370,7 +1370,7 @@ def test_infer_nperiods_business_weekly_quarterly():
     weekly = pd.DataFrame(np.random.randn(60),
                           index=pd.date_range(start='2018-01-07', periods=60, freq='W'))
     quarterly = pd.DataFrame(np.random.randn(20),
-                             index=pd.date_range(start='2018-03-31', periods=20, freq=ffn.core._QuarterEnd))
+                             index=pd.date_range(start='2018-03-31', periods=20, freq=pd.offsets.QuarterEnd()))
 
     assert ffn.core.infer_nperiods(business) == ffn.core.TRADING_DAYS_PER_YEAR
     assert ffn.core.infer_nperiods(weekly) == 52
@@ -1380,6 +1380,16 @@ def test_infer_nperiods_business_weekly_quarterly():
     biweekly = pd.DataFrame(np.random.randn(30),
                             index=pd.date_range(start='2018-01-07', periods=30, freq='2W'))
     assert ffn.core.infer_nperiods(biweekly) == 26
+
+
+def test_infer_nperiods_distinguishes_subsecond_aliases_from_month_start():
+    for frequency, periods_per_second in (("ms", 1_000), ("us", 1_000_000), ("ns", 1_000_000_000)):
+        data = pd.Series(np.random.randn(10), index=pd.date_range("2018-01-01", periods=10, freq=frequency))
+        expected = ffn.core.TRADING_DAYS_PER_YEAR * 24 * 60 * 60 * periods_per_second
+        assert ffn.core.infer_nperiods(data) == expected
+
+    month_start = pd.Series(np.random.randn(10), index=pd.date_range("2018-01-01", periods=10, freq="MS"))
+    assert ffn.core.infer_nperiods(month_start) == 12
 
 
 def test_calc_sharpe_annualizes_business_daily():
@@ -1403,4 +1413,3 @@ def test_calc_sortino_annualizes_weekly():
     downside = np.sqrt((returns.clip(upper=0.0) ** 2).mean())
     expected = returns.mean() / downside * np.sqrt(52)
     assert np.allclose(returns.calc_sortino_ratio(), expected)
-

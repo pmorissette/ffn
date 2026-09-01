@@ -23,11 +23,9 @@ _PANDAS_TWO_TWO = Version(pd.__version__) >= Version("2.2")
 
 if _PANDAS_TWO_TWO:
     _MonthEnd = "ME"
-    _QuarterEnd = "QE"
     _YearEnd = "YE"
 else:
     _MonthEnd = "M"
-    _QuarterEnd = "Q"
     _YearEnd = "Y"
 
 # module level variable, can be different for non traditional markets (eg. crypto - 360)
@@ -2350,6 +2348,9 @@ _ANNUALIZATION_MULTIPLES = {
     "H": 24,
     "T": 24 * 60,
     "S": 24 * 60 * 60,
+    "L": 24 * 60 * 60 * 1_000,
+    "U": 24 * 60 * 60 * 1_000_000,
+    "N": 24 * 60 * 60 * 1_000_000_000,
 }
 
 
@@ -2367,9 +2368,10 @@ def _normalize_freq_code(freq):
     # "W-SUN", "QE-DEC", "YE-DEC" -> "W", "QE", "YE"
     code = freq.split("-", 1)[0]
 
-    # "min" is the pandas 2.2 spelling of "T"; normalise before casing.
-    if code.lower().endswith("min"):
-        code = code[: -len("min")] + "T"
+    # Modern sub-daily aliases are case sensitive: "ms" is milliseconds,
+    # while "MS" is month start. Normalize them before upper casing.
+    case_sensitive = {"min": "T", "ms": "L", "us": "U", "ns": "N"}
+    code = case_sensitive.get(code, code)
 
     code = code.upper()
 
