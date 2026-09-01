@@ -165,6 +165,37 @@ def test_to_price_index_mixed_leading_nan_dataframe():
     assert np.allclose(roundtrip["missing_first"].iloc[2:].to_numpy(), returns["missing_first"].iloc[1:].to_numpy())
 
 
+def test_to_price_index_mixed_leading_nan_range_index():
+    returns = pd.DataFrame({"missing_first": [np.nan, 0.10], "valid_first": [0.20, -0.10]})
+
+    prices = returns.to_price_index()
+
+    assert prices.index.equals(pd.Index([-1, 0, 1]))
+    assert np.allclose(prices.to_returns().iloc[1:].to_numpy(), returns.fillna(0).to_numpy())
+
+
+def test_to_price_index_preserves_duplicate_columns():
+    returns = pd.DataFrame(
+        [[np.nan, 0.20], [0.10, -0.10]],
+        columns=["duplicate", "duplicate"],
+        index=pd.date_range("2024-01-01", periods=2),
+    )
+
+    prices = returns.to_price_index()
+
+    assert prices.columns.equals(returns.columns)
+    assert np.allclose(prices.to_returns().iloc[1:].to_numpy(), returns.fillna(0).to_numpy())
+
+
+def test_to_price_index_nullable_series():
+    returns = pd.Series([pd.NA, 0.10], dtype="Float64")
+
+    prices = returns.to_price_index()
+
+    assert prices.index.equals(returns.index)
+    assert np.allclose(prices.to_numpy(dtype=float), [100, 110])
+
+
 def test_to_price_index_preserves_first_return_in_stats():
     returns = pd.Series(
         [0.10, -0.05, 0.02, 0.03],

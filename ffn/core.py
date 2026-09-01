@@ -1201,7 +1201,7 @@ def to_price_index(returns, start=100):
     if isinstance(returns, pd.DataFrame):
         has_leading_nan = returns.iloc[0].isna().all()
     else:
-        has_leading_nan = np.isnan(returns.iloc[0])
+        has_leading_nan = pd.isna(returns.iloc[0])
 
     if has_leading_nan:
         return cp
@@ -1218,9 +1218,11 @@ def to_price_index(returns, start=100):
             start_index -= cp.index[1] - cp.index[0]
         else:
             start_index -= pd.Timedelta(days=1)
+    elif isinstance(cp.index, pd.RangeIndex):
+        start_index -= cp.index.step
 
     if isinstance(cp, pd.DataFrame):
-        start_row = pd.DataFrame({c: [start] for c in cp.columns}, index=[start_index])
+        start_row = pd.DataFrame(start, columns=cp.columns, index=[start_index])
     else:
         start_row = pd.Series([start], index=[start_index], name=cp.name)
 
