@@ -1,6 +1,7 @@
-import ffn
-import ffn.utils as utils
 import pandas as pd
+
+import ffn
+from ffn import utils
 
 
 def test_memoize_handles_keyword_only_refresh():
@@ -139,6 +140,13 @@ def test_get_freq_name_anchored_aliases():
     assert utils.get_freq_name('W-SUN') == 'weekly'
 
 
+def test_get_freq_name_rejects_invalid_anchors():
+    assert utils.get_freq_name('D-NOTREAL') is None
+    assert utils.get_freq_name('ME-NOTREAL') is None
+    assert utils.get_freq_name('W-DEC') is None
+    assert utils.get_freq_name('YE-MON') is None
+
+
 def test_get_freq_name_is_case_sensitive_where_pandas_is():
     # 'ms' is milliseconds in pandas while 'MS' is month start
     assert utils.get_freq_name('ms') == 'milliseconds'
@@ -151,8 +159,13 @@ def test_get_freq_name_accepts_what_infer_freq_returns():
     # the round trip a default plot title actually takes
     for freq, expected in (
         (ffn.core._MonthEnd, 'monthly'),
+        (f'2{ffn.core._MonthEnd}', 'monthly'),
         (ffn.core._YearEnd, 'yearly'),
+        (f'2{ffn.core._YearEnd}', 'yearly'),
         ('D', 'daily'),
+        ('-1D', 'daily'),
+        ('2h', 'hourly'),
+        ('2ms', 'milliseconds'),
     ):
         idx = pd.date_range('2020-01-31', periods=8, freq=freq)
         assert utils.get_freq_name(pd.infer_freq(idx)) == expected
