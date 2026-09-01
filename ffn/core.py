@@ -2424,6 +2424,9 @@ def to_excess_returns(returns, rf, nperiods=None):
     """
     Given a series of returns, it will return the excess returns over rf.
 
+    A Series risk-free return is aligned to the return index. For DataFrame
+    returns, it is subtracted from every column by date.
+
     Args:
         * returns (Series, DataFrame): Returns
         * rf (float, Series): `Risk-Free rate(s) <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in annualized term or return series
@@ -2440,6 +2443,10 @@ def to_excess_returns(returns, rf, nperiods=None):
         _rf = deannualize(rf, nperiods)
     else:
         _rf = rf
+
+    # A time-indexed risk-free Series applies to every asset column by date.
+    if isinstance(returns, pd.DataFrame) and isinstance(_rf, pd.Series):
+        return returns.sub(_rf, axis="index")
 
     return returns - _rf
 
