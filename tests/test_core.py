@@ -943,6 +943,38 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
+def test_calc_deflated_sharpe_ratio_ignores_missing_returns():
+    """Exclude missing returns from the deflated Sharpe sample size."""
+    observed = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250))
+    trial_sharpes = pd.Series([0.0, 0.1, 0.2, 0.3])
+
+    # Independently evaluating the documented formula over 250 observations gives
+    # this probability; changing only their missing-value representation cannot change it.
+    expected = 0.9061936787765773
+    padding = pd.Series([np.nan] * len(observed))
+    internal = observed.repeat(2).reset_index(drop=True)
+    internal.iloc[1::2] = np.nan
+    padded_cases = {
+        "leading": pd.concat([padding, observed], ignore_index=True),
+        "trailing": pd.concat([observed, padding], ignore_index=True),
+        "internal": internal,
+    }
+
+    assert np.isclose(
+        ffn.calc_deflated_sharpe_ratio(observed, trial_sharpes, nperiods=252),
+        expected,
+    )
+    for name, padded in padded_cases.items():
+        module_result = ffn.calc_deflated_sharpe_ratio(
+            padded,
+            trial_sharpes,
+            nperiods=252,
+        )
+        assert np.isclose(module_result, expected), name
+        method_result = padded.calc_deflated_sharpe_ratio(trial_sharpes, nperiods=252)
+        assert method_result == module_result, name
+
+
 def test_calc_information_ratio_dataframe():
     returns = pd.DataFrame(
         {
