@@ -1183,28 +1183,30 @@ def to_price_index(returns, start=100):
     Assumes arithmetic returns.
 
     The first value of the returned price index is always ``start``.
-    When the return series begins with NaN (as produced by
-    :func:`to_returns`), the NaN position is replaced by ``start`` and
-    the output length equals the input length.  Otherwise ``start`` is
-    prepended so that every return is reflected in the prices and the
-    round-trip ``to_returns(to_price_index(r))`` recovers *r*.
+    When a Series begins with NaN, or every column of a DataFrame begins
+    with NaN (as produced by :func:`to_returns`), the NaN position is
+    replaced by ``start`` and the output length equals the input length.
+    Otherwise ``start`` is prepended so that every non-missing return is
+    reflected in the prices.  Missing returns are treated as zero, and
+    the round-trip ``to_returns(to_price_index(r))`` recovers the
+    non-missing returns.
 
     Formula is: start, start * cumprod(1+r)
     """
     r = returns.replace(to_replace=np.nan, value=0)
     cp = (1 + r).cumprod() * start
 
-    # If the first return was NaN (e.g. from to_returns()), the replace
-    # already turned it into 0 so cp starts at ``start``.  Just return.
+    # If all initial returns are missing (e.g. from to_returns()), the
+    # replacement turns them into 0 so cp starts at ``start``. Just return.
     if isinstance(returns, pd.DataFrame):
-        has_leading_nan = returns.iloc[0].isna().any()
+        has_leading_nan = returns.iloc[0].isna().all()
     else:
-        has_leading_nan = np.isnan(returns.iloc[0])
+        has_leading_nan = pd.isna(returns.iloc[0])
 
     if has_leading_nan:
         return cp
 
-    # No leading NaN – prepend ``start`` so the first price equals start.
+    # Prepend ``start`` so every output series starts at the same baseline.
     start_index = cp.index[0]
     if isinstance(cp.index, pd.DatetimeIndex):
         frequency = cp.index.freq
@@ -1216,9 +1218,11 @@ def to_price_index(returns, start=100):
             start_index -= cp.index[1] - cp.index[0]
         else:
             start_index -= pd.Timedelta(days=1)
+    elif isinstance(cp.index, pd.RangeIndex):
+        start_index -= cp.index.step
 
     if isinstance(cp, pd.DataFrame):
-        start_row = pd.DataFrame({c: [start] for c in cp.columns}, index=[start_index])
+        start_row = pd.DataFrame(start, columns=cp.columns, index=[start_index])
     else:
         start_row = pd.Series([start], index=[start_index], name=cp.name)
 
