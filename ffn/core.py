@@ -2337,20 +2337,75 @@ def infer_freq(data):
         return None
 
 
+# Number of periods in a year for offset aliases whose length is fixed.
+# Sub-daily and daily aliases depend on `annualization_factor` and are handled
+# in `_whole_periods_str_to_nperiods`.
+_FIXED_PERIODS_PER_YEAR = {
+    "Y": 1,
+    "A": 1,
+    "Q": 4,
+    "M": 12,
+    "W": 52,
+}
+
+# Daily-or-shorter aliases, as a multiple of `annualization_factor`.
+_ANNUALIZATION_MULTIPLES = {
+    "D": 1,
+    "B": 1,
+    "C": 1,
+    "H": 24,
+    "T": 24 * 60,
+    "S": 24 * 60 * 60,
+    "L": 24 * 60 * 60 * 1_000,
+    "U": 24 * 60 * 60 * 1_000_000,
+    "N": 24 * 60 * 60 * 1_000_000_000,
+}
+
+
+def _normalize_freq_code(freq):
+    """Reduce a pandas offset alias to a bare period code.
+
+    Strips the anchor suffix ("W-SUN" -> "W", "QE-DEC" -> "Q"), the start/end
+    suffix introduced in pandas 2.2 ("ME" -> "M", "YE" -> "Y") and a leading
+    business-day marker ("BME" -> "M"). Returns None if nothing recognisable
+    is left.
+    """
+    if not freq:
+        return None
+
+    # "W-SUN", "QE-DEC", "YE-DEC" -> "W", "QE", "YE"
+    code = freq.split("-", 1)[0]
+
+    # Modern sub-daily aliases are case sensitive: "ms" is milliseconds,
+    # while "MS" is month start. Normalize them before upper casing.
+    case_sensitive = {"min": "T", "ms": "L", "us": "U", "ns": "N"}
+    code = case_sensitive.get(code, code)
+
+    code = code.upper()
+
+    # A business-day marker on a longer period is still that period:
+    # "BME" (business month end) annualizes the same way as "M".
+    if len(code) > 1 and code.startswith("B") and code[1] in ("M", "Q", "Y", "A"):
+        code = code[1:]
+
+    # pandas 2.2 start/end suffixes: "ME", "MS", "QE", "QS", "YE", "YS", "AS".
+    if len(code) == 2 and code[1] in ("E", "S") and code[0] in ("M", "Q", "Y", "A"):
+        code = code[0]
+
+    return code or None
+
+
 def _whole_periods_str_to_nperiods(freq, annualization_factor=None):
     annualization_factor = TRADING_DAYS_PER_YEAR if annualization_factor is None else annualization_factor
-    if freq in ("Y", "A"):
-        return 1
-    if freq == "M":
-        return 12
-    if freq == "D":
-        return annualization_factor
-    if freq in ("H", "h"):
-        return annualization_factor * 24
-    if freq == "T":
-        return annualization_factor * 24 * 60
-    if freq in ("S", "s"):
-        return annualization_factor * 24 * 60 * 60
+
+    code = _normalize_freq_code(freq)
+    if code is None:
+        return None
+
+    if code in _FIXED_PERIODS_PER_YEAR:
+        return _FIXED_PERIODS_PER_YEAR[code]
+    if code in _ANNUALIZATION_MULTIPLES:
+        return annualization_factor * _ANNUALIZATION_MULTIPLES[code]
     return None
 
 
@@ -2361,30 +2416,33 @@ def infer_nperiods(data, annualization_factor=None):
     if freq is None:
         return None
 
-    if _PANDAS_TWO_TWO:
-        # pandas 2.2+ compatibility
-        if "min" in freq:
-            freq = freq.replace("min", "T")
-        if "ME" in freq:
-            freq = freq.replace("ME", "M")
-        if "YE" in freq:
-            freq = freq.replace("YE-DEC", "Y")
-            freq = freq.replace("YE", "Y")
+    # Split a leading multiplier off the alias, e.g. "30min" -> (30, "min").
+    # A descending index yields a negative multiplier, e.g. "-30min".
+    rest = freq
+    if rest[:1] in ("-", "+"):
+        rest = rest[1:]
 
-    if len(freq) == 1:
-        return _whole_periods_str_to_nperiods(freq, annualization_factor)
+    num_str = ""
+    while rest and rest[0].isdigit():
+        num_str += rest[0]
+        rest = rest[1:]
+
+    nperiods = _whole_periods_str_to_nperiods(rest, annualization_factor)
+    if nperiods is None:
+        return None
+
+    if not num_str:
+        return nperiods
+
     try:
-        if freq.startswith("A"):
-            return 1
-        else:
-            whole_periods_str = freq[-1]
-            num_str = freq[:-1]
-            num = int(num_str)
-            return _whole_periods_str_to_nperiods(whole_periods_str, annualization_factor) / abs(num)
-    except KeyboardInterrupt:
-        raise
+        num = int(num_str)
     except (TypeError, ValueError):
         return None
+
+    if num == 0:
+        return None
+
+    return nperiods / abs(num)
 
 
 def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
