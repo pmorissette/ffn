@@ -1378,7 +1378,7 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     end = list(end[end == True].index)
 
     # A sliced series may already be underwater at its first observation.
-    if len(drawdown) > 0 and drawdown.iloc[0] < 0:
+    if len(drawdown) > 0 and pd.notna(drawdown.iloc[0]) and drawdown.iloc[0] < 0:
         start.insert(0, drawdown.index[0])
 
     if len(start) == 0:  # start.empty
@@ -1402,7 +1402,7 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     result = pd.DataFrame(columns=("Start", "End", "Length", "drawdown"), index=range(len(start)))
 
     for i in range(len(start)):
-        dd = drawdown[start[i] : end[i]].min()
+        dd = drawdown.loc[start[i] : end[i]].min()
 
         if index_type is pd.DatetimeIndex:
             result.iloc[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
