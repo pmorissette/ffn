@@ -1,6 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
+import warnings
 import pytest
 from pytest import fixture
 from numpy.testing import assert_almost_equal as aae
@@ -925,10 +926,7 @@ def test_calc_fdr_hurdle_rises_with_the_size_of_the_search():
         panel[:, j] = panel[:, j] + 0.01 * 6.0 / np.sqrt(n_periods)
     panel = pd.DataFrame(panel)
 
-    hurdles = [
-        ffn.calc_fdr_hurdle(panel.iloc[:, :k], n_boot=400, seed=0)
-        for k in (5, 20, 60)
-    ]
+    hurdles = [ffn.calc_fdr_hurdle(panel.iloc[:, :k], n_boot=400, seed=0) for k in (5, 20, 60)]
     assert hurdles[0] < hurdles[1] < hurdles[2]
     # The planted trials are strong enough to survive the widest search
     survivors = _trial_t_stats(panel) >= hurdles[-1]
@@ -961,9 +959,7 @@ def test_calc_fdr_hurdle_zero_dispersion():
 
     # Dropping leaves too few trials to speak of multiplicity at all
     with pytest.raises(ValueError):
-        ffn.calc_fdr_hurdle(
-            pd.DataFrame({"flat": [0.001] * 250, "a": real[:, 0]}), n_boot=200
-        )
+        ffn.calc_fdr_hurdle(pd.DataFrame({"flat": [0.001] * 250, "a": real[:, 0]}), n_boot=200)
 
     # A genuinely low-volatility panel is not degenerate and must still get a number,
     # across scales and lengths rather than at the single point the floor was set on.
@@ -989,6 +985,52 @@ def test_calc_fdr_hurdle_guards():
         ffn.calc_fdr_hurdle(panel.iloc[:, :1])
     # Too few observations to form a t-statistic
     assert np.isnan(ffn.calc_fdr_hurdle(panel.iloc[:2], n_boot=200))
+
+
+def test_calc_fdr_hurdle_is_two_sided():
+    # Trials are ranked on |t|, so a strongly negative strategy is a discovery too.
+    # A caller screening for outperformance has to compare the positive-t columns only.
+    np.random.seed(6)
+    n_periods = 500
+    panel = pd.DataFrame(np.random.normal(0, 0.01, (n_periods, 20)))
+    panel[0] = panel[0] - 0.01 * 6.0 / np.sqrt(n_periods)
+
+    hurdle = ffn.calc_fdr_hurdle(panel, n_boot=400, seed=0)
+    t_stats = panel.mean() / (panel.std(ddof=1) / np.sqrt(n_periods))
+    assert t_stats[0] < 0
+    assert t_stats.abs()[0] >= hurdle
+    assert (t_stats >= hurdle).sum() == 0
+
+
+def test_calc_fdr_hurdle_complete_cases_only():
+    # The bootstrap draws one period for every column at once, so a period where any
+    # trial is missing cannot be used. Trials with staggered histories lose most of the
+    # sample that way, and the hurdle moves with it, so it must not happen quietly.
+    np.random.seed(12)
+    n_periods, n_trials = 400, 20
+    panel = np.random.normal(0, 0.01, (n_periods, n_trials))
+    for j in (0, 1):  # two trials with a real edge, so both windows hold discoveries
+        panel[:, j] = panel[:, j] + 0.01 * 9.0 / np.sqrt(100)
+    full = pd.DataFrame(panel)
+    staggered = full.copy()
+    staggered.iloc[:300, n_trials - 1] = np.nan  # one trial that started late
+
+    with pytest.warns(UserWarning, match="kept 100 of 400 periods"):
+        hurdle = ffn.calc_fdr_hurdle(staggered, n_boot=200, seed=0)
+
+    # The number returned is the one those 100 shared periods imply,
+    assert hurdle == ffn.calc_fdr_hurdle(full.iloc[300:], n_boot=200, seed=0)
+    # not the one the same twenty trials give over their whole history, and the
+    # difference reaches the answer: a trial that is a discovery on the full sample
+    # is not one here.
+    hurdle_full = ffn.calc_fdr_hurdle(full, n_boot=200, seed=0)
+    assert hurdle > hurdle_full
+    assert _trial_t_stats(full.iloc[300:]).ge(hurdle).sum() < _trial_t_stats(full).ge(hurdle_full).sum()
+
+    # A complete panel says nothing, since nothing was dropped.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        ffn.calc_fdr_hurdle(full, n_boot=200, seed=0)
 
 
 def test_calc_information_ratio_dataframe():
