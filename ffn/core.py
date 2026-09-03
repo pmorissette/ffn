@@ -1510,9 +1510,21 @@ def calc_prob_mom(returns, other_returns):
     # much evidence there is rather than just the per-period edge. n counts
     # the aligned, non-NaN differentials actually used in the information
     # ratio, not the raw series length.
-    n = (returns - other_returns).count()
+    if isinstance(returns, pd.DataFrame) and isinstance(other_returns, pd.Series):
+        diff_rets = returns.sub(other_returns, axis="index")
+    else:
+        diff_rets = returns - other_returns
+
+    n = diff_rets.count()
     ir = returns.calc_information_ratio(other_returns)
-    return t.cdf(ir * np.sqrt(n), n - 1)
+    t_stat = ir * np.sqrt(n)
+    prob = t.cdf(t_stat, n - 1)
+
+    # t.cdf drops the labels, so put them back for column-wise input
+    if isinstance(t_stat, pd.Series):
+        return pd.Series(prob, index=t_stat.index)
+
+    return prob
 
 
 def calc_total_return(prices):
