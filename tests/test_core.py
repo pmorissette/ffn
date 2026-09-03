@@ -840,6 +840,37 @@ def test_calc_prob_mom_ignores_unaligned_observations():
     assert np.isclose(padded.calc_prob_mom(short_benchmark), expected)
 
 
+def test_calc_prob_mom_dataframe_against_series_benchmark():
+    """Test that a Series benchmark aligns on the index, not on the columns"""
+    returns, benchmark = _diff_series(250)
+    frame = pd.DataFrame({"a": returns, "b": returns * 2})
+
+    result = frame.calc_prob_mom(benchmark)
+
+    assert isinstance(result, pd.Series)
+    assert list(result.index) == ["a", "b"]
+    # Each column must match the value its own Series carries
+    for col in frame:
+        assert np.isclose(result[col], frame[col].calc_prob_mom(benchmark))
+
+
+def test_calc_prob_mom_dataframe_ignores_unaligned_observations():
+    """Test that the per-column sample size still excludes NaN and non-overlapping dates"""
+    returns, benchmark = _diff_series(250)
+    padded = returns.copy()
+    padded.iloc[0] = np.nan  # e.g. the leading NaN from to_returns()
+    frame = pd.DataFrame({"a": returns, "b": padded})
+    short_benchmark = benchmark.iloc[:100]
+
+    result = frame.calc_prob_mom(short_benchmark)
+
+    # Column "b" only overlaps on 99 dates, column "a" on 100
+    assert np.isclose(result["a"], returns.iloc[:100].calc_prob_mom(short_benchmark))
+    assert np.isclose(
+        result["b"], returns.iloc[1:100].calc_prob_mom(benchmark.iloc[1:100])
+    )
+
+
 def test_calmar_ratio(df):
     cagr = df.calc_cagr()
     mdd = df.calc_max_drawdown()
