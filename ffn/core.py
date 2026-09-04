@@ -2528,12 +2528,25 @@ def to_ulcer_index(prices):
 
     See https://en.wikipedia.org/wiki/Ulcer_index
 
+    Method ignores all gaps of NaN's in the price series.
+
     Args:
-        prices (pandas.Series or numpy.ndarray): A series of investment returns.
+        prices (pandas.Series, pandas.DataFrame or numpy.ndarray): Prices.
 
     Returns:
-        float: The Ulcer Index.
+        float, or Series of floats for a DataFrame: The Ulcer Index.
     """
+
+    # Fill NaN's with previous values, as to_drawdown_series does.
+    #
+    # A missing price is a missing observation, not a new high water mark of
+    # NaN. Without this, np.maximum.accumulate propagates the first NaN
+    # forward over the whole tail of the series, and the subsequent
+    # Series.mean() skips those rows rather than propagating them. The
+    # function then returns the Ulcer Index of only the prefix before the
+    # gap, as a confident number rather than an error.
+    if isinstance(prices, (pd.Series, pd.DataFrame)):
+        prices = prices.ffill()
 
     # calculate the maximum value seen so far at each point in time
     max_values = np.maximum.accumulate(prices)
@@ -2545,7 +2558,9 @@ def to_ulcer_index(prices):
     squared_drawdowns = np.square(drawdowns)
 
     # calculate the average of the squared drawdowns
-    avg_squared_drawdowns = np.mean(squared_drawdowns)
+    # axis=0 so a DataFrame reduces per column, as every other ffn measure
+    # does, rather than pooling every column into one scalar
+    avg_squared_drawdowns = np.mean(squared_drawdowns, axis=0)
 
     # calculate the square root of the average squared drawdowns
     ulcer_index = np.sqrt(avg_squared_drawdowns)
