@@ -2454,14 +2454,15 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
         * returns (Series or DataFrame): Returns
         * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in yearly (annualized) terms or return series.
         * nperiods (int): Number of periods used for annualization. Must be
-            provided if rf is non-zero and rf is not a price series
+            provided or inferable if rf is a non-zero scalar
 
     """
-    if isinstance(rf, float) and rf != 0 and nperiods is None:
-        raise ValueError("nperiods must be set if rf != 0 and rf is not a price series")
-
+    # An inferable return frequency is sufficient to deannualize a scalar rate.
     if nperiods is None:
         nperiods = infer_nperiods(returns)
+
+    if isinstance(rf, float) and rf != 0 and nperiods is None:
+        raise ValueError("nperiods must be set or inferable if rf is a non-zero scalar")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
 
