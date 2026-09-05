@@ -737,7 +737,9 @@ def test_calc_sortino_ratio_infers_periods_before_deannualizing_risk_free_rate()
 
 def test_calc_sortino_ratio_requires_periods_for_uninferrable_scalar_rate():
     """Reject an annualized scalar rate when no period count can be inferred."""
-    returns = pd.Series([-0.02, 0.01, 0.03, -0.01])
+    returns = pd.Series(
+        [-0.02, 0.01, 0.03, -0.01], index=["a", "b", "c", "d"]
+    )
 
     with np.testing.assert_raises(ValueError):
         ffn.calc_sortino_ratio(returns, rf=0.05)
