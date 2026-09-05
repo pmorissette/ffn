@@ -866,9 +866,35 @@ def test_calc_prob_mom_dataframe_ignores_unaligned_observations():
 
     # Column "b" only overlaps on 99 dates, column "a" on 100
     assert np.isclose(result["a"], returns.iloc[:100].calc_prob_mom(short_benchmark))
-    assert np.isclose(
-        result["b"], returns.iloc[1:100].calc_prob_mom(benchmark.iloc[1:100])
-    )
+    assert np.isclose(result["b"], returns.iloc[1:100].calc_prob_mom(benchmark.iloc[1:100]))
+
+
+def test_calc_prob_mom_series_against_dataframe_benchmark():
+    """Test that a DataFrame benchmark aligns on the index, not on the columns"""
+    returns, benchmark = _diff_series(250)
+    frame = pd.DataFrame({"a": benchmark, "b": benchmark + 0.0005})
+
+    result = returns.calc_prob_mom(frame)
+
+    assert isinstance(result, pd.Series)
+    assert list(result.index) == ["a", "b"]
+    # Each benchmark column must match the value it carries on its own
+    for col in frame:
+        assert np.isclose(result[col], returns.calc_prob_mom(frame[col]))
+
+
+def test_calc_prob_mom_dataframe_against_dataframe_benchmark():
+    """Test that a column-wise result stays labelled by the frame's columns"""
+    returns, benchmark = _diff_series(250)
+    frame = pd.DataFrame({"a": returns, "b": returns * 2})
+    benchmarks = pd.DataFrame({"a": benchmark, "b": benchmark + 0.0005})
+
+    result = frame.calc_prob_mom(benchmarks)
+
+    assert isinstance(result, pd.Series)
+    assert list(result.index) == ["a", "b"]
+    for col in frame:
+        assert np.isclose(result[col], frame[col].calc_prob_mom(benchmarks[col]))
 
 
 def test_calmar_ratio(df):
@@ -1009,6 +1035,24 @@ def test_calc_information_ratio_dataframe_with_series_benchmark():
 
     actual = returns.calc_information_ratio(benchmark)
     difference = returns.sub(benchmark, axis="index")
+    expected = difference.mean() / difference.std(ddof=1)
+
+    pd.testing.assert_series_equal(actual, expected)
+
+
+def test_calc_information_ratio_series_with_dataframe_benchmark():
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    returns = pd.Series([0.03, 0.01, -0.02, 0.04], index=index)
+    benchmark = pd.DataFrame(
+        {
+            "bench_a": [0.01, 0.0, -0.01, 0.02],
+            "bench_b": [0.02, 0.01, 0.0, 0.01],
+        },
+        index=index,
+    )
+
+    actual = returns.calc_information_ratio(benchmark)
+    difference = benchmark.rsub(returns, axis="index")
     expected = difference.mean() / difference.std(ddof=1)
 
     pd.testing.assert_series_equal(actual, expected)

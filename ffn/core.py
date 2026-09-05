@@ -1473,14 +1473,29 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     return res
 
 
+def _diff_returns(returns, benchmark_returns):
+    """
+    Subtracts benchmark_returns from returns along the date index.
+
+    A bare ``-`` between a DataFrame and a Series aligns the Series against
+    the frame's *columns*, so a date-indexed benchmark silently produces an
+    all-NaN frame the size of the calendar plus the column labels. Subtract
+    along the index whenever the two arguments have different shapes.
+    """
+    if isinstance(returns, pd.DataFrame) and isinstance(benchmark_returns, pd.Series):
+        return returns.sub(benchmark_returns, axis="index")
+
+    if isinstance(returns, pd.Series) and isinstance(benchmark_returns, pd.DataFrame):
+        return benchmark_returns.rsub(returns, axis="index")
+
+    return returns - benchmark_returns
+
+
 def calc_information_ratio(returns, benchmark_returns):
     """
     Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
-    if isinstance(returns, pd.DataFrame) and isinstance(benchmark_returns, pd.Series):
-        diff_rets = returns.sub(benchmark_returns, axis="index")
-    else:
-        diff_rets = returns - benchmark_returns
+    diff_rets = _diff_returns(returns, benchmark_returns)
     diff_std = diff_rets.std(ddof=1)
 
     if isinstance(diff_std, pd.Series):
@@ -1510,12 +1525,7 @@ def calc_prob_mom(returns, other_returns):
     # much evidence there is rather than just the per-period edge. n counts
     # the aligned, non-NaN differentials actually used in the information
     # ratio, not the raw series length.
-    if isinstance(returns, pd.DataFrame) and isinstance(other_returns, pd.Series):
-        diff_rets = returns.sub(other_returns, axis="index")
-    else:
-        diff_rets = returns - other_returns
-
-    n = diff_rets.count()
+    n = _diff_returns(returns, other_returns).count()
     ir = returns.calc_information_ratio(other_returns)
     t_stat = ir * np.sqrt(n)
     prob = t.cdf(t_stat, n - 1)
