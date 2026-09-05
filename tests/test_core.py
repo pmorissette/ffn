@@ -1033,6 +1033,26 @@ def test_calc_fdr_hurdle_complete_cases_only():
         ffn.calc_fdr_hurdle(full, n_boot=200, seed=0)
 
 
+def test_calc_fdr_hurdle_ignores_a_period_no_trial_observed():
+    # to_returns() leaves a leading all-NaN row, so warning on any dropped period at
+    # all fires on the ordinary construction path and trains callers to filter the
+    # warning that matters. A period nobody observed is not a staggered history.
+    np.random.seed(14)
+    prices = pd.DataFrame(
+        100 * (1 + np.random.normal(0.0004, 0.01, (250, 10))).cumprod(axis=0),
+        index=pd.date_range("2020-01-01", periods=250, freq="B"),
+    )
+    returns = prices.to_returns()
+    assert returns.iloc[0].isna().all()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        hurdle = ffn.calc_fdr_hurdle(returns, n_boot=200, seed=0)
+
+    # The row still leaves the sample, so the hurdle is the one the observed periods imply
+    assert hurdle == ffn.calc_fdr_hurdle(returns.iloc[1:], n_boot=200, seed=0)
+
+
 def test_calc_information_ratio_dataframe():
     returns = pd.DataFrame(
         {

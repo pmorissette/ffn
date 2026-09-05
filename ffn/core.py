@@ -2651,9 +2651,10 @@ def calc_fdr_hurdle(returns, target_fdr=0.05, n_boot=1000, seed=0, grid_step=0.0
     columns at once, which is what keeps cross-trial correlation in the null,
     and there is nothing to draw where a column is missing. Trials with
     staggered histories can lose most of the sample this way, which moves the
-    hurdle, so the number of periods kept is reported in a warning whenever any
-    row goes. Align the panel yourself if you would rather make that trade-off
-    explicitly.
+    hurdle, so the number of periods kept is reported in a warning whenever a
+    period some trials observed is dropped. A period no trial observed, such as
+    the leading row ``to_returns`` leaves, is not that trade-off and passes
+    quietly. Align the panel yourself if you would rather make it explicitly.
 
     Columns with no dispersion are dropped before the hurdle is computed. Such a
     column has no t-statistic, yet floating-point residue gives it an enormous
@@ -2690,6 +2691,10 @@ def calc_fdr_hurdle(returns, target_fdr=0.05, n_boot=1000, seed=0, grid_step=0.0
         raise ValueError("grid_step must be positive")
 
     x = pd.DataFrame(returns)
+    # A period no trial observed carries nothing for any of them and is not the
+    # complete-case trade-off the warning below is about. Drop it before counting, so
+    # the leading NaN row that to_returns() leaves does not read as a staggered history.
+    x = x.dropna(axis=0, how="all")
     n_periods = len(x)
     # Complete cases only: the bootstrap draws one period for every trial at once, so a
     # period only exists for it when all of them have an observation there.
