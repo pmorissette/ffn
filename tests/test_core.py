@@ -759,6 +759,82 @@ def test_to_ulcer_index_without_drawdown_is_zero():
     assert np.isclose(prices.to_ulcer_index(), 0.0)
 
 
+def test_to_ulcer_index_ignores_a_gap_in_the_price_series():
+    # A missing close is a missing observation, not a new high water mark.
+    # Before the ffill, np.maximum.accumulate propagated the NaN over the
+    # whole tail and Series.mean() skipped those rows, so the result was the
+    # ulcer index of only the prefix before the gap.
+    idx = pd.date_range("2026-01-01", periods=6, freq="D")
+    prices = pd.Series([100.0, 90.0, 100.0, 80.0, 60.0, 100.0], index=idx)
+
+    gapped = prices.copy()
+    gapped.iloc[2] = np.nan
+
+    # Carrying the last known price across the gap is the honest reading, and
+    # is what to_drawdown_series already does.
+    assert np.isclose(gapped.to_ulcer_index(), gapped.ffill().to_ulcer_index())
+
+    # The old behaviour returned the ulcer index of the prefix alone, which
+    # missed the -40% drawdown that happens after the gap.
+    assert gapped.to_ulcer_index() > prices.iloc[:2].to_ulcer_index()
+
+
+def test_to_ulcer_index_gap_does_not_report_zero_risk():
+    # A NaN in the second position used to truncate the series to a single
+    # observation, giving an ulcer index of exactly 0.0 for a series that
+    # halves.
+    idx = pd.date_range("2026-01-01", periods=4, freq="D")
+    gapped = pd.Series([100.0, np.nan, 50.0, 50.0], index=idx)
+
+    assert gapped.to_ulcer_index() > 0.0
+
+
+def test_to_ulcer_index_ignores_a_leading_gap():
+    # A leading NaN is an observation that has not happened yet, not a price
+    # of NaN, so it drops out of the average instead of poisoning it. This is
+    # what to_drawdown_series already does with the same input.
+    idx = pd.date_range("2026-01-01", periods=4, freq="D")
+    prices = pd.Series([np.nan, 100.0, 90.0, 100.0], index=idx)
+
+    assert np.isclose(prices.to_ulcer_index(), prices.dropna().to_ulcer_index())
+
+
+def test_to_ulcer_index_handles_an_ndarray_gap_like_a_series():
+    # The docstring advertises ndarray support and promises that gaps are
+    # ignored, so an ndarray must not return NaN where a Series does not.
+    values = [100.0, 90.0, np.nan, 60.0, 100.0]
+
+    assert np.isclose(
+        ffn.core.to_ulcer_index(np.array(values)),
+        pd.Series(values).to_ulcer_index(),
+    )
+
+
+def test_to_ulcer_index_is_per_column_for_a_dataframe():
+    # Every other ffn measure reduces per column; this one pooled every
+    # column into a single scalar, while to_ulcer_performance_index returned
+    # a per-column Series divided by that pooled value.
+    idx = pd.date_range("2026-01-01", periods=3, freq="D")
+    df = pd.DataFrame({"a": [100.0, 90.0, 100.0], "b": [100.0, 50.0, 100.0]}, index=idx)
+
+    result = df.to_ulcer_index()
+
+    assert isinstance(result, pd.Series)
+    assert np.isclose(result["a"], df["a"].to_ulcer_index())
+    assert np.isclose(result["b"], df["b"].to_ulcer_index())
+
+
+def test_to_ulcer_index_unchanged_without_gaps():
+    idx = pd.date_range("2026-01-01", periods=8, freq="D")
+    prices = pd.Series([100.0, 110, 105, 120, 90, 95, 130, 125], index=idx)
+
+    max_values = np.maximum.accumulate(prices)
+    drawdowns = ((prices - max_values) / max_values) * 100
+    expected = np.sqrt(np.mean(np.square(drawdowns)))
+
+    assert np.isclose(prices.to_ulcer_index(), expected)
+
+
 def test_to_ulcer_performance_index_matches_ulcer_index_scale():
     # The ulcer index is expressed in percentage points, so the excess return
     # must be too. Mean excess return here is (-0.1 + 1/9) / 2 = 0.005555...,
@@ -769,6 +845,20 @@ def test_to_ulcer_performance_index_matches_ulcer_index_scale():
     expected = (0.5555555555555556) / np.sqrt(100 / 3)
 
     assert np.isclose(prices.to_ulcer_performance_index(), expected)
+
+
+def test_to_ulcer_performance_index_ignores_a_gap_in_the_price_series():
+    # Both halves of the ratio must see the same prices. The numerator used
+    # the raw series, whose gap makes two of the three returns NaN and leaves
+    # the mean return as the single +100% recovery, while the denominator's
+    # ulcer index was already computed over the filled series.
+    idx = pd.date_range("2026-01-01", periods=4, freq="D")
+    gapped = pd.Series([100.0, np.nan, 50.0, 100.0], index=idx)
+
+    assert np.isclose(
+        gapped.to_ulcer_performance_index(),
+        gapped.ffill().to_ulcer_performance_index(),
+    )
 
 
 def test_to_ulcer_performance_index_is_dimensionally_consistent():
