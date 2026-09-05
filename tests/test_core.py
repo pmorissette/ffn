@@ -975,6 +975,22 @@ def test_calc_deflated_sharpe_ratio_ignores_missing_returns():
         assert method_result == module_result, name
 
 
+def test_calc_deflated_sharpe_ratio_series_rf_sets_the_sample_size():
+    """A Series risk-free rate decides how many observations the statistic sees."""
+    # An rf that covers part of the return index aligns the rest away, so the
+    # Sharpe ratio, skew and kurtosis are all taken over fewer observations
+    # than the return series holds. The sample size has to follow them.
+    index = pd.date_range("2020-01-01", periods=250, freq="B")
+    returns = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250), index=index)
+    rf = pd.Series(0.0001, index=index[:100])
+    trial_sharpes = pd.Series([0.0, 0.1, 0.2, 0.3])
+
+    actual = ffn.calc_deflated_sharpe_ratio(returns, trial_sharpes, rf=rf, nperiods=252)
+    expected = ffn.calc_deflated_sharpe_ratio(returns.iloc[:100], trial_sharpes, rf=rf, nperiods=252)
+
+    assert np.isclose(actual, expected)
+
+
 def test_calc_information_ratio_dataframe():
     returns = pd.DataFrame(
         {
