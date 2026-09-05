@@ -2635,6 +2635,9 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     parameters), the effective number of independent trials is lower than
     their count and the result is accordingly conservative.
 
+    The sample size, Sharpe ratio, skew and kurtosis are all taken over the
+    excess returns, skipping missing observations.
+
     Source: Bailey, D. and Lopez de Prado, M. (2014), "The Deflated Sharpe
     Ratio: Correcting for Selection Bias, Backtest Overfitting, and
     Non-Normality", Journal of Portfolio Management, 40(5), 94-107.
@@ -2664,14 +2667,18 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     if annualized_trials:
         trials = trials / np.sqrt(nperiods or 1)
 
-    n = len(returns)
+    excess_returns = returns.to_excess_returns(rf, nperiods=nperiods)
+
+    # Every moment below is taken over the excess returns, so the sample size
+    # must be too. A Series risk-free rate can align away observations that the
+    # raw return series still counts, and len() counts missing ones as well.
+    n = excess_returns.count()
     if n < 3 or pd.isnull(sr):
         return np.nan
 
     # Use excess-return range instead of standard deviation so constant inputs are
     # not obscured by accumulated rounding error. The bounded tolerance also handles
     # cancellation residue from a varying risk-free return without growing with n.
-    excess_returns = returns.to_excess_returns(rf, nperiods=nperiods)
     spread = float(excess_returns.max() - excess_returns.min())
     scale = max(float(np.abs(returns).max()), float(np.abs(excess_returns).max()))
     if not spread > 4 * np.finfo(float).eps * scale:
@@ -2680,9 +2687,9 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     sr0 = calc_expected_max_sharpe(len(trials), trials.std(ddof=1))
 
     # Probabilistic Sharpe ratio of the winner against that hurdle,
-    # adjusted for the skew and kurtosis of its returns
-    skew = returns.skew()
-    kurtosis = returns.kurt() + 3.0  # pandas reports excess kurtosis
+    # adjusted for the skew and kurtosis of the same excess returns
+    skew = excess_returns.skew()
+    kurtosis = excess_returns.kurt() + 3.0  # pandas reports excess kurtosis
     variance_adj = 1 - skew * sr + (kurtosis - 1) / 4 * sr**2
     if not variance_adj > 0:
         return np.nan
