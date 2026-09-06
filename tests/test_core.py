@@ -710,6 +710,43 @@ def test_calc_sortino_ratio(df):
     )
 
 
+def test_calc_sortino_ratio_infers_periods_before_deannualizing_risk_free_rate():
+    """Infer a return frequency before validating an annualized scalar rate."""
+    index = pd.date_range("2025-01-01", periods=20, freq="B")
+    series = pd.Series(np.linspace(-0.02, 0.03, 20), index=index, name="strategy")
+    frame = pd.DataFrame({"strategy": series, "scaled": series * 0.8})
+    rf = 0.05
+    nperiods = 252
+
+    # Calculate the per-period hurdle directly so the expected ratios do not
+    # depend on the frequency-inference or deannualization paths under test.
+    period_rf = (1.0 + rf) ** (1.0 / nperiods) - 1.0
+    for returns in (series, frame):
+        excess_returns = returns - period_rf
+        downside_deviation = np.sqrt((excess_returns.clip(upper=0.0) ** 2).mean())
+        expected = excess_returns.mean() / downside_deviation * np.sqrt(nperiods)
+
+        assert np.allclose(ffn.calc_sortino_ratio(returns, rf=rf), expected)
+        for result in (
+            returns.calc_sortino_ratio(rf=rf),
+            returns.calc_sortino(rf=rf),
+        ):
+            assert isinstance(result, (float, pd.Series))
+            assert np.allclose(result, expected)
+
+
+def test_calc_sortino_ratio_requires_periods_for_uninferrable_scalar_rate():
+    """Reject an annualized scalar rate when no period count can be inferred."""
+    returns = pd.Series(
+        [-0.02, 0.01, 0.03, -0.01], index=["a", "b", "c", "d"]
+    )
+
+    with np.testing.assert_raises(ValueError):
+        ffn.calc_sortino_ratio(returns, rf=0.05)
+    with np.testing.assert_raises(ValueError):
+        returns.calc_sortino_ratio(rf=0.05)
+
+
 def test_calc_sortino_ratio_is_order_invariant():
     # Both the mean and the downside deviation are symmetric functions of the
     # sample, so reordering the same returns must not change the ratio.
