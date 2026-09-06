@@ -225,6 +225,56 @@ def test_rebase(df):
     aae(actual["C"].iloc[9], 101.199, 3)
 
 
+def test_rebase_uses_each_columns_first_valid_price():
+    """Rebase every DataFrame column from its own first observed price."""
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    prices = pd.DataFrame(
+        {
+            "complete": [100.0, 110.0, 121.0, 133.1],
+            "leading_gap": [np.nan, 50.0, 55.0, 60.5],
+            "internal_gap": [20.0, np.nan, 22.0, 24.2],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=index,
+    )
+    expected = pd.DataFrame(
+        {
+            "complete": [100.0, 110.0, 121.0, 133.1],
+            "leading_gap": [np.nan, 100.0, 110.0, 121.0],
+            "internal_gap": [100.0, np.nan, 110.0, 121.0],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=index,
+    )
+
+    module_result = ffn.rebase(prices)
+    method_result = prices.rebase()
+
+    assert isinstance(module_result, pd.DataFrame)
+    assert isinstance(method_result, pd.DataFrame)
+    pd.testing.assert_frame_equal(module_result, expected)
+    pd.testing.assert_frame_equal(method_result, expected)
+
+
+def test_rebase_nullable_series_uses_first_valid_price():
+    """Preserve nullable gaps while rebasing from the first observed price."""
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    prices = pd.Series(
+        [pd.NA, 50.0, 55.0, 60.5], index=index, dtype="Float64", name="asset"
+    )
+    expected = pd.Series(
+        [pd.NA, 100.0, 110.0, 121.0], index=index, dtype="Float64", name="asset"
+    )
+
+    module_result = ffn.rebase(prices)
+    method_result = prices.rebase()
+
+    assert isinstance(module_result, pd.Series)
+    assert isinstance(method_result, pd.Series)
+    pd.testing.assert_series_equal(module_result, expected)
+    pd.testing.assert_series_equal(method_result, expected)
+
+
 def test_to_drawdown_series_ts(ts):
     data = ts
     actual = data.to_drawdown_series()

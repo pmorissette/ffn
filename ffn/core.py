@@ -1231,17 +1231,18 @@ def to_price_index(returns, start=100):
 
 def rebase(prices, value=100):
     """
-    Rebase all series to a given intial value.
+    Rebase each price series to a given initial value.
 
-    This makes comparing/plotting different series
-    together easier.
+    Each series uses its first non-missing price as the baseline. Missing
+    prices remain missing in the returned object.
 
     Args:
-        * prices: Expects a price series
+        * prices: Expects a price Series or DataFrame
         * value (number): starting value for all series.
 
     """
-    return prices / prices.iloc[0] * value
+    # Backfill only the baseline lookup so returned missing prices stay missing.
+    return prices / prices.bfill().iloc[0] * value
 
 
 def calc_perf_stats(prices, risk_free_rate=0.0, annualization_factor=252):
