@@ -30,6 +30,7 @@ else:
 
 # module level variable, can be different for non traditional markets (eg. crypto - 360)
 TRADING_DAYS_PER_YEAR = 252
+_FLOATING_SCALAR_TYPES = (float, np.floating)
 
 
 class PerformanceStats:
@@ -42,8 +43,8 @@ class PerformanceStats:
     Args:
         * prices (Series): A price series. Unavailable outer observations are excluded from
             endpoint statistics when total return is available.
-        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
-            expressed as a yearly (annualized) return if it is a float. Otherwise
+        * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
+            expressed as a yearly (annualized) return if it is a floating scalar. Otherwise
             rf should be a *price* series — it is converted internally with
             to_returns(). Note this differs from calc_sharpe and
             calc_sortino_ratio, which take rf as a return series. Passing a
@@ -81,7 +82,7 @@ class PerformanceStats:
         Affects only this instance of the PerformanceStats.
 
         Args:
-            * rf (float, Series): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_,
+            * rf (float, np.floating, Series): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_,
                 or a risk-free *price* series (not returns)
         """
         self.rf = rf
@@ -244,7 +245,7 @@ class PerformanceStats:
             self.daily_mean = r.mean() * self.annualization_factor
             self.daily_vol = r.std(ddof=1) * np.sqrt(self.annualization_factor)
 
-            if isinstance(self.rf, float):
+            if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
                 self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=self.annualization_factor)
                 self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=self.annualization_factor)
             # rf is a price series
@@ -292,7 +293,7 @@ class PerformanceStats:
             self.monthly_mean = mr.mean() * 12
             self.monthly_vol = mr.std(ddof=1) * np.sqrt(12)
 
-            if isinstance(self.rf, float):
+            if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
                 self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
                 self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
             # rf is a price series
@@ -382,8 +383,7 @@ class PerformanceStats:
             self.yearly_mean = yr.mean()
             self.yearly_vol = yr.std(ddof=1)
 
-            # if type(self.rf) is float:
-            if isinstance(self.rf, float):
+            if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
                 if self.yearly_vol > 0:
                     self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
                 self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
@@ -514,7 +514,7 @@ class PerformanceStats:
         provided.
         """
         print(f"Stats for {self.name} from {self.start} - {self.end}")
-        if isinstance(self.rf, float):
+        if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
             print(f"Annual risk-free rate considered: {fmtp(self.rf)}")
         print("Summary:")
         data = [
@@ -716,7 +716,7 @@ class PerformanceStats:
             k, n, _ = stat
 
             # blank row
-            if k is None or k == "rf" and not isinstance(self.rf, float):
+            if k is None or k == "rf" and not isinstance(self.rf, _FLOATING_SCALAR_TYPES):
                 continue
 
             if n in short_names:
@@ -752,7 +752,7 @@ class PerformanceStats:
                 row = [""] * len(data[0])
                 data.append(sep.join(row))
                 continue
-            elif k == "rf" and not isinstance(self.rf, float):
+            elif k == "rf" and not isinstance(self.rf, _FLOATING_SCALAR_TYPES):
                 continue
 
             row = [n]
@@ -945,7 +945,7 @@ class GroupStats(dict):
         this GroupStats object.
 
         Args:
-            * rf (float, Series): Annual risk-free rate or risk-free rate *price*
+            * rf (float, np.floating, Series): Annual risk-free rate or risk-free rate *price*
                 series (not returns)
         """
 
@@ -993,7 +993,7 @@ class GroupStats(dict):
                 raw = getattr(self[key], k)
 
                 # if rf is a series print nan
-                if k == "rf" and not isinstance(raw, float):
+                if k == "rf" and not isinstance(raw, _FLOATING_SCALAR_TYPES):
                     row.append(np.nan)
                 elif f is None:
                     row.append(raw)
@@ -1263,7 +1263,7 @@ def calc_perf_stats(prices, risk_free_rate=0.0, annualization_factor=252):
 
     Args:
         * prices (Series): Series of prices
-        * risk_free_rate (float, Series): Annual risk-free rate or risk-free rate price series
+        * risk_free_rate (float, np.floating, Series): Annual risk-free rate or risk-free rate price series
         * annualization_factor (int): Annualizing factor. Default is 252 (trading days)
 
     """
@@ -1443,12 +1443,12 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     Calculates the `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_
     (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
 
-    If rf is non-zero and a float, you must specify nperiods. In this case, rf is assumed
+    If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed
     to be expressed in yearly (annualized) terms.
 
     Args:
         * returns (Series, DataFrame): Input return series
-        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed as a yearly (annualized) return or *return*
+        * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed as a yearly (annualized) return or *return*
             series (unlike PerformanceStats, which takes rf as a price series)
         * nperiods (int): Frequency of returns (252 for daily, 12 for monthly,
             etc.)
@@ -1457,7 +1457,7 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     if nperiods is None:
         nperiods = infer_nperiods(returns)
 
-    if isinstance(rf, float) and rf != 0 and nperiods is None:
+    if isinstance(rf, _FLOATING_SCALAR_TYPES) and rf != 0 and nperiods is None:
         raise ValueError("Must provide nperiods if rf != 0")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
@@ -2477,7 +2477,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
     Args:
         * returns (Series or DataFrame): Returns
-        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in yearly (annualized) terms or return series.
+        * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in yearly (annualized) terms or return series.
         * nperiods (int): Number of periods used for annualization. Must be
             provided or inferable if rf is a non-zero scalar
 
@@ -2486,7 +2486,7 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
     if nperiods is None:
         nperiods = infer_nperiods(returns)
 
-    if isinstance(rf, float) and rf != 0 and nperiods is None:
+    if isinstance(rf, _FLOATING_SCALAR_TYPES) and rf != 0 and nperiods is None:
         raise ValueError("nperiods must be set or inferable if rf is a non-zero scalar")
 
     er = returns.to_excess_returns(rf, nperiods=nperiods)
@@ -2513,9 +2513,9 @@ def to_excess_returns(returns, rf, nperiods=None):
 
     Args:
         * returns (Series, DataFrame): Returns
-        * rf (float, Series): `Risk-Free rate(s) <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in annualized term or return series
+        * rf (float, np.floating, Series): `Risk-Free rate(s) <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in annualized term or return series
         * nperiods (int): Optional. If provided, will convert rf to different
-            frequency using deannualize only if rf is a float
+            frequency using deannualize only if rf is a floating scalar
     Returns:
         * excess_returns (Series, DataFrame): Returns - rf
 
@@ -2523,8 +2523,11 @@ def to_excess_returns(returns, rf, nperiods=None):
     if nperiods is None:
         nperiods = infer_nperiods(returns)
 
-    if isinstance(rf, float) and nperiods is not None:
-        _rf = deannualize(rf, nperiods)
+    if isinstance(rf, _FLOATING_SCALAR_TYPES) and nperiods is not None:
+        # Promote low-precision NumPy scalars before calculating a much smaller
+        # per-period rate, which could otherwise round to zero.
+        scalar_rf = float(rf.item()) if isinstance(rf, np.floating) else rf
+        _rf = deannualize(scalar_rf, nperiods)
     else:
         _rf = rf
 
@@ -2589,7 +2592,7 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
 
     Args:
         * prices (Series, DataFrame): Prices
-        * rf (float, Series): `Risk-free rate of return <https://www.investopedia.com/terms/r/risk-freerate.asp>`_. Assumed to be expressed in
+        * rf (float, np.floating, Series): `Risk-free rate of return <https://www.investopedia.com/terms/r/risk-freerate.asp>`_. Assumed to be expressed in
             yearly (annualized) terms or return series
         * nperiods (int): Used to deannualize rf if rf is provided (non-zero)
 
@@ -2597,7 +2600,7 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
     if nperiods is None:
         nperiods = infer_nperiods(prices)
 
-    if isinstance(rf, float) and rf != 0 and nperiods is None:
+    if isinstance(rf, _FLOATING_SCALAR_TYPES) and rf != 0 and nperiods is None:
         raise ValueError("nperiods must be set if rf != 0 and rf is not a price series")
 
     # to_ulcer_index carries the last known price across a gap, so fill here
@@ -2672,7 +2675,7 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
         * returns (Series): Return series of the selected (best) trial.
         * trial_sharpe_ratios (Series, array-like): Sharpe ratios of all
             evaluated trials, e.g. as returned by :func:`calc_sharpe`.
-        * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
+        * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
             expressed in yearly (annualized) terms or return series.
         * nperiods (int): Frequency of returns (252 for daily, 12 for
             monthly, etc.). Inferred from `returns` if not provided.
