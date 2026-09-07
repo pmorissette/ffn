@@ -1305,14 +1305,8 @@ def to_drawdown_series(prices):
         * prices (Series or DataFrame): Series of prices.
 
     """
-    # make a copy so that we don't modify original data
-    drawdown = prices.copy()
-
     # Fill NaN's with previous values
-    drawdown = drawdown.ffill()
-
-    # Ignore problems with NaN's in the beginning
-    drawdown[pd.isna(drawdown)] = -np.inf
+    drawdown = prices.ffill()
 
     # Rolling maximum
     roll_max = drawdown.cummax()
