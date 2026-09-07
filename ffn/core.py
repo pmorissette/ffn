@@ -40,7 +40,8 @@ class PerformanceStats:
     statistics.
 
     Args:
-        * prices (Series): A price series.
+        * prices (Series): A price series. Unavailable outer observations are excluded from
+            endpoint statistics when total return is available.
         * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a float. Otherwise
             rf should be a *price* series — it is converted internally with
@@ -191,6 +192,13 @@ class PerformanceStats:
         self.start = obj.index[0]
         self.end = obj.index[-1]
 
+        # Keep full-period fields on observed raw prices; resampling can alter intraday endpoints.
+        observed_prices = obj.dropna()
+        if len(observed_prices) > 1:
+            self.start = observed_prices.index[0]
+            self.end = observed_prices.index[-1]
+            self.total_return = observed_prices.iloc[-1] / observed_prices.iloc[0] - 1
+
         # save daily prices for future use
         self.daily_prices = obj.resample("D").last()
         # resample('D') imputes na values for any day that didn't have a price
@@ -245,8 +253,6 @@ class PerformanceStats:
 
             self.best_day = r.max()
             self.worst_day = r.min()
-
-        self.total_return = obj.iloc[-1] / obj.iloc[0] - 1
 
         self.cagr = calc_cagr(dp)
         self.incep = self.cagr
