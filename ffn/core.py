@@ -1169,7 +1169,8 @@ def to_log_returns(prices):
         * prices: Expects a price series
 
     """
-    return np.log1p(prices.pct_change())
+    # A return requires observed prices at both adjacent positions.
+    return np.log1p(prices.pct_change(fill_method=None))
 
 
 def to_price_index(returns, start=100):

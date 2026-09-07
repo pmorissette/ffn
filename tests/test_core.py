@@ -118,6 +118,50 @@ def test_to_log_returns_df(df):
     aae(actual["C"].iloc[9], 0.004, 3)
 
 
+def test_to_log_returns_preserves_dataframe_missing_gaps():
+    """Require both adjacent prices before calculating each log return."""
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    prices = pd.DataFrame(
+        {
+            "complete": [100.0, 110.0, 121.0, 133.1],
+            "leading_gap": [np.nan, 50.0, 55.0, 60.5],
+            "internal_gap": [20.0, np.nan, 22.0, 24.2],
+            "trailing_gap": [30.0, 33.0, np.nan, np.nan],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=index,
+    )
+    change = np.log(1.1)
+    expected = pd.DataFrame(
+        {
+            "complete": [np.nan, change, change, change],
+            "leading_gap": [np.nan, np.nan, change, change],
+            "internal_gap": [np.nan, np.nan, np.nan, change],
+            "trailing_gap": [np.nan, change, np.nan, np.nan],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=index,
+    )
+
+    pd.testing.assert_frame_equal(ffn.to_log_returns(prices), expected)
+    pd.testing.assert_frame_equal(prices.to_log_returns(), expected)
+
+
+def test_to_log_returns_preserves_nullable_series_missing_gaps():
+    """Preserve nullable missing prices instead of filling across them."""
+    index = pd.date_range("2026-01-01", periods=4, freq="D")
+    prices = pd.Series([100.0, pd.NA, 110.0, 121.0], index=index, dtype="Float64", name="asset")
+    expected = pd.Series(
+        [pd.NA, pd.NA, pd.NA, np.log(1.1)],
+        index=index,
+        dtype="Float64",
+        name="asset",
+    )
+
+    pd.testing.assert_series_equal(ffn.to_log_returns(prices), expected)
+    pd.testing.assert_series_equal(prices.to_log_returns(), expected)
+
+
 def test_to_price_index(df):
     data = df
     rets = data.to_returns()
