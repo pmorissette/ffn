@@ -347,6 +347,26 @@ def test_to_drawdown_series_df(df):
     aae(actual["C"].iloc[9], -0.029, 3)
 
 
+def test_to_drawdown_series_handles_dataframe_gaps():
+    prices = pd.DataFrame(
+        {
+            "leading_gap": pd.Series([pd.NA, 100.0, 90.0, pd.NA, 110.0], dtype="Float64"),
+            "internal_gap": pd.Series([50.0, 45.0, pd.NA, 55.0, 44.0], dtype="Float64"),
+        }
+    )
+    expected = pd.DataFrame(
+        {
+            "leading_gap": pd.Series([pd.NA, 0.0, -0.1, -0.1, 0.0], dtype="Float64"),
+            "internal_gap": pd.Series([0.0, -0.1, -0.1, 0.0, -0.2], dtype="Float64"),
+        }
+    )
+    original = prices.copy()
+
+    pd.testing.assert_frame_equal(ffn.to_drawdown_series(prices), expected)
+    pd.testing.assert_frame_equal(prices.to_drawdown_series(), expected)
+    pd.testing.assert_frame_equal(prices, original)
+
+
 def test_max_drawdown_ts(ts):
     data = ts
     actual = data.calc_max_drawdown()
@@ -1539,6 +1559,7 @@ def test_set_riskfree_rate(df):
 def test_performance_stats(df):
     ps = ffn.PerformanceStats(df["AAPL"])
 
+    pd.testing.assert_series_equal(ps.log_returns, ps.daily_prices.to_log_returns())
     num_stats = len(ps.stats.keys())
     num_unique_stats = len(ps.stats.keys().drop_duplicates())
     assert num_stats == num_unique_stats

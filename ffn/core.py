@@ -216,11 +216,13 @@ class PerformanceStats:
 
         # stats using daily data
         self.returns = dp.to_returns()
-        self.log_returns = dp.to_log_returns()
+        self.log_returns = np.log1p(self.returns)
         r = self.returns
 
         if len(r) < 2:
             return
+
+        min_period = r.index.to_series().diff().min()
 
         # Auto-infer annualization factor from data frequency when not explicitly provided
         if self._annualization_factor_override is None:
@@ -230,7 +232,7 @@ class PerformanceStats:
 
         # Will calculate daily figures only if the input data has at least daily frequency or higher (e.g hourly)
         # Rather < 2 days than <= 1 days in case of data taken at different hours of the days
-        if r.index.to_series().diff().min() < pd.Timedelta("2 days"):
+        if min_period < pd.Timedelta("2 days"):
             self.daily_mean = r.mean() * self.annualization_factor
             self.daily_vol = r.std(ddof=1) * np.sqrt(self.annualization_factor)
 
@@ -264,7 +266,7 @@ class PerformanceStats:
         if len(r) < 4:
             return
 
-        if r.index.to_series().diff().min() <= pd.Timedelta("2 days"):
+        if min_period <= pd.Timedelta("2 days"):
             self.daily_skew = r.skew()
 
             # if all zero/nan kurt fails division by zero
@@ -280,7 +282,7 @@ class PerformanceStats:
 
         # Will calculate monthly figures only if the input data has at least monthly frequency or higher (e.g daily)
         # Rather < 32 days than <= 31 days in case of data taken at different hours of the days
-        if r.index.to_series().diff().min() < pd.Timedelta("32 days"):
+        if min_period < pd.Timedelta("32 days"):
             self.monthly_mean = mr.mean() * 12
             self.monthly_vol = mr.std(ddof=1) * np.sqrt(12)
 
@@ -330,7 +332,7 @@ class PerformanceStats:
                 arr = np.array(list(self.return_table[idx].values()))
                 self.return_table[idx][13] = np.prod(arr + 1) - 1
 
-        if r.index.to_series().diff().min() < pd.Timedelta("93 days"):
+        if min_period < pd.Timedelta("93 days"):
             if dp.index[0] > dp.index[-1] - pd.DateOffset(months=3):
                 return
 
@@ -338,7 +340,7 @@ class PerformanceStats:
             if len(denom) > 0:
                 self.three_month = dp.iloc[-1] / denom.iloc[-1] - 1
 
-        if r.index.to_series().diff().min() < pd.Timedelta("32 days"):
+        if min_period < pd.Timedelta("32 days"):
             if len(mr) < 4:
                 return
 
@@ -348,7 +350,7 @@ class PerformanceStats:
             if len(mr[(~pd.isna(mr)) & (mr != 0)]) > 0:
                 self.monthly_kurt = mr.kurt()
 
-        if r.index.to_series().diff().min() < pd.Timedelta("185 days"):
+        if min_period < pd.Timedelta("185 days"):
             if dp.index[0] > dp.index[-1] - pd.DateOffset(months=6):
                 return
 
@@ -359,7 +361,7 @@ class PerformanceStats:
 
         # Will calculate yearly figures only if the input data has at least yearly frequency or higher (e.g monthly)
         # Rather < 367 days than <= 366 days in case of data taken at different hours of the days
-        if r.index.to_series().diff().min() < pd.Timedelta("367 days"):
+        if min_period < pd.Timedelta("367 days"):
             self.yearly_returns = self.yearly_prices.to_returns()
             yr = self.yearly_returns
 
@@ -398,14 +400,14 @@ class PerformanceStats:
                 if len(twelve_month_returns) > 0:
                     self.twelve_month_win_perc = float((twelve_month_returns > 1).sum()) / len(twelve_month_returns)
 
-        if r.index.to_series().diff().min() < pd.Timedelta("1097 days"):
+        if min_period < pd.Timedelta("1097 days"):
             if len(yr) < 3:
                 return
 
             # annualize stat for over 1 year
             self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3) :])
 
-        if r.index.to_series().diff().min() < pd.Timedelta("367 days"):
+        if min_period < pd.Timedelta("367 days"):
             if len(yr) < 4:
                 return
 
@@ -415,12 +417,12 @@ class PerformanceStats:
             if len(yr[(~pd.isna(yr)) & (yr != 0)]) > 0:
                 self.yearly_kurt = yr.kurt()
 
-        if r.index.to_series().diff().min() < pd.Timedelta("1828 days"):
+        if min_period < pd.Timedelta("1828 days"):
             if len(yr) < 5:
                 return
             self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5) :])
 
-        if r.index.to_series().diff().min() < pd.Timedelta("3654 days"):
+        if min_period < pd.Timedelta("3654 days"):
             if len(yr) < 10:
                 return
             self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10) :])
@@ -1313,12 +1315,7 @@ def to_drawdown_series(prices):
     drawdown[pd.isna(drawdown)] = -np.inf
 
     # Rolling maximum
-    if isinstance(drawdown, pd.DataFrame):
-        roll_max = pd.DataFrame()
-        for col in drawdown:
-            roll_max[col] = np.maximum.accumulate(drawdown[col])
-    else:
-        roll_max = np.maximum.accumulate(drawdown)
+    roll_max = drawdown.cummax()
 
     drawdown = drawdown / roll_max - 1.0
     return drawdown
@@ -1405,17 +1402,17 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     if start[-1] > end[-1]:
         end.append(drawdown.index[-1])
 
-    result = pd.DataFrame(columns=("Start", "End", "Length", "drawdown"), index=range(len(start)))
+    result = []
 
     for i in range(len(start)):
         dd = drawdown.loc[start[i] : end[i]].min()
 
         if index_type is pd.DatetimeIndex:
-            result.iloc[i] = (start[i], end[i], (end[i] - start[i]).days, dd)
+            result.append((start[i], end[i], (end[i] - start[i]).days, dd))
         else:
-            result.iloc[i] = (start[i], end[i], (end[i] - start[i]), dd)
+            result.append((start[i], end[i], (end[i] - start[i]), dd))
 
-    return result
+    return pd.DataFrame(result, columns=("Start", "End", "Length", "drawdown"), dtype=object)
 
 
 def calc_cagr(prices):
@@ -1497,7 +1494,10 @@ def calc_information_ratio(returns, benchmark_returns):
     """
     Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
-    diff_rets = _diff_returns(returns, benchmark_returns)
+    return _calc_information_ratio(_diff_returns(returns, benchmark_returns))
+
+
+def _calc_information_ratio(diff_rets):
     diff_std = diff_rets.std(ddof=1)
 
     if isinstance(diff_std, pd.Series):
@@ -1527,8 +1527,9 @@ def calc_prob_mom(returns, other_returns):
     # much evidence there is rather than just the per-period edge. n counts
     # the aligned, non-NaN differentials actually used in the information
     # ratio, not the raw series length.
-    n = _diff_returns(returns, other_returns).count()
-    ir = returns.calc_information_ratio(other_returns)
+    diff_rets = _diff_returns(returns, other_returns)
+    n = diff_rets.count()
+    ir = _calc_information_ratio(diff_rets)
     t_stat = ir * np.sqrt(n)
     prob = t.cdf(t_stat, n - 1)
 
