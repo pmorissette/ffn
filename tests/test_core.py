@@ -670,6 +670,21 @@ def test_limit_weights():
     aae(actual["e"], 0.300, 3)
 
 
+def test_limit_weights_preserves_precision():
+    """Preserve the original budget during proportional redistribution."""
+    weights = pd.Series([0.50006, 0.29997, 0.19997], index=["a", "b", "c"])
+    expected = pd.Series(
+        [0.5, 0.3000060007200864, 0.1999939992799136],
+        index=weights.index,
+    )
+
+    actual = ffn.core.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(actual, expected)
+    assert actual.sum() == 1.0
+    assert actual.max() <= 0.5
+
+
 def test_random_weights():
     PANDAS_VERSION = Version(pd.__version__)
     PANDAS_210 = PANDAS_VERSION >= Version("2.1.0")
