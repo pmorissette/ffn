@@ -4,4 +4,4 @@ from .data import get
 
 core.extend_pandas()
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
