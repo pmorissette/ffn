@@ -40,7 +40,8 @@ class PerformanceStats:
     statistics.
 
     Args:
-        * prices (Series): A price series.
+        * prices (Series): A price series. Unavailable outer observations are excluded from
+            endpoint statistics when total return is available.
         * rf (float, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a float. Otherwise
             rf should be a *price* series — it is converted internally with
@@ -222,6 +223,11 @@ class PerformanceStats:
         if len(r) < 2:
             return
 
+        # Keep full-period fields on observed raw prices; resampling can alter intraday endpoints.
+        observed_prices = obj.dropna()
+        self.start = observed_prices.index[0]
+        self.end = observed_prices.index[-1]
+
         # Auto-infer annualization factor from data frequency when not explicitly provided
         if self._annualization_factor_override is None:
             inferred = infer_nperiods(r)
@@ -246,7 +252,7 @@ class PerformanceStats:
             self.best_day = r.max()
             self.worst_day = r.min()
 
-        self.total_return = obj.iloc[-1] / obj.iloc[0] - 1
+        self.total_return = observed_prices.iloc[-1] / observed_prices.iloc[0] - 1
 
         self.cagr = calc_cagr(dp)
         self.incep = self.cagr

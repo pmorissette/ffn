@@ -1544,6 +1544,47 @@ def test_performance_stats(df):
     assert num_stats == num_unique_stats
 
 
+def test_performance_stats_uses_observed_price_endpoints():
+    """Use observed outer prices for endpoint dates and total return."""
+    dates = pd.date_range("2025-01-01", periods=4, tz="UTC")
+    price_series = (
+        pd.Series([np.nan, 100.0, 105.0], index=dates[:3]),
+        pd.Series([100.0, 105.0, np.nan], index=dates[:3]),
+        pd.Series([pd.NA, 100.0, 105.0, pd.NA], index=dates, dtype="Float64"),
+    )
+
+    for prices in price_series:
+        observed = prices.dropna()
+        expected_total_return = observed.iloc[-1] / observed.iloc[0] - 1
+        results = (
+            ffn.PerformanceStats(prices),
+            ffn.calc_perf_stats(prices),
+            ffn.calc_stats(prices),
+            prices.calc_perf_stats(),
+            prices.calc_stats(),
+        )
+
+        for stats in results:
+            assert isinstance(stats, ffn.PerformanceStats)
+            assert stats.start == observed.index[0]
+            assert stats.end == observed.index[-1]
+            assert stats.total_return == expected_total_return
+
+
+def test_performance_stats_date_range_reset_uses_observed_endpoints():
+    """Restore observed endpoints when resetting a statistics date range."""
+    dates = pd.date_range("2025-01-01", periods=5)
+    prices = pd.Series([np.nan, 100.0, 105.0, 110.0, np.nan], index=dates)
+    stats = ffn.PerformanceStats(prices)
+
+    stats.set_date_range(start=dates[2], end=dates[3])
+    stats.set_date_range()
+
+    assert stats.start == dates[1]
+    assert stats.end == dates[3]
+    assert stats.total_return == 110.0 / 100.0 - 1
+
+
 def test_group_stats_calc_stats(df):
     gs = df.calc_stats()
 
