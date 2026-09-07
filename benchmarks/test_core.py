@@ -21,9 +21,26 @@ def prices(request):
     )
 
 
+@pytest.fixture(scope="module")
+def returns(prices):
+    return ffn.to_returns(prices).dropna()
+
+
+@pytest.fixture(scope="module")
+def drawdown(prices):
+    return ffn.to_drawdown_series(prices.iloc[:, 0])
+
+
 @pytest.mark.benchmark(group="returns")
 def test_to_returns(benchmark, prices):
     result = benchmark(ffn.to_returns, prices)
+
+    assert result.shape == prices.shape
+
+
+@pytest.mark.benchmark(group="returns")
+def test_to_log_returns(benchmark, prices):
+    result = benchmark(ffn.to_log_returns, prices)
 
     assert result.shape == prices.shape
 
@@ -36,8 +53,37 @@ def test_to_drawdown_series(benchmark, prices):
     assert result.max().max() <= 0.0
 
 
+@pytest.mark.benchmark(group="drawdown")
+def test_drawdown_details(benchmark, drawdown):
+    result = benchmark(ffn.drawdown_details, drawdown)
+
+    assert list(result.columns) == ["Start", "End", "Length", "drawdown"]
+
+
+@pytest.mark.benchmark(group="statistics")
+def test_calc_perf_stats(benchmark, prices):
+    result = benchmark(ffn.calc_perf_stats, prices.iloc[:, 0])
+
+    assert result.name == prices.columns[0]
+
+
 @pytest.mark.benchmark(group="statistics")
 def test_calc_stats(benchmark, prices):
     result = benchmark(ffn.calc_stats, prices)
 
     assert result.stats.shape[1] == prices.shape[1]
+
+
+@pytest.mark.benchmark(group="statistics")
+def test_calc_prob_mom(benchmark, returns):
+    result = benchmark(ffn.calc_prob_mom, returns, returns.iloc[:, 0])
+
+    assert result.index.equals(returns.columns)
+
+
+@pytest.mark.benchmark(group="weights")
+def test_calc_erc_weights(benchmark, returns):
+    result = benchmark(ffn.calc_erc_weights, returns)
+
+    assert result.index.equals(returns.columns)
+    assert result.sum() == pytest.approx(1.0)
