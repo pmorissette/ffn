@@ -192,6 +192,13 @@ class PerformanceStats:
         self.start = obj.index[0]
         self.end = obj.index[-1]
 
+        # Keep full-period fields on observed raw prices; resampling can alter intraday endpoints.
+        observed_prices = obj.dropna()
+        if len(observed_prices) > 1:
+            self.start = observed_prices.index[0]
+            self.end = observed_prices.index[-1]
+            self.total_return = observed_prices.iloc[-1] / observed_prices.iloc[0] - 1
+
         # save daily prices for future use
         self.daily_prices = obj.resample("D").last()
         # resample('D') imputes na values for any day that didn't have a price
@@ -223,11 +230,6 @@ class PerformanceStats:
         if len(r) < 2:
             return
 
-        # Keep full-period fields on observed raw prices; resampling can alter intraday endpoints.
-        observed_prices = obj.dropna()
-        self.start = observed_prices.index[0]
-        self.end = observed_prices.index[-1]
-
         # Auto-infer annualization factor from data frequency when not explicitly provided
         if self._annualization_factor_override is None:
             inferred = infer_nperiods(r)
@@ -251,8 +253,6 @@ class PerformanceStats:
 
             self.best_day = r.max()
             self.worst_day = r.min()
-
-        self.total_return = observed_prices.iloc[-1] / observed_prices.iloc[0] - 1
 
         self.cagr = calc_cagr(dp)
         self.incep = self.cagr

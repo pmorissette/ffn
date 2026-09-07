@@ -1551,6 +1551,7 @@ def test_performance_stats_uses_observed_price_endpoints():
         pd.Series([np.nan, 100.0, 105.0], index=dates[:3]),
         pd.Series([100.0, 105.0, np.nan], index=dates[:3]),
         pd.Series([pd.NA, 100.0, 105.0, pd.NA], index=dates, dtype="Float64"),
+        pd.Series([np.nan, 100.0, 105.0, np.nan], index=pd.date_range("2025-01-01 09:00", periods=4, freq="h", tz="UTC")),
     )
 
     for prices in price_series:
