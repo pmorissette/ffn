@@ -1374,43 +1374,56 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     is_zero = drawdown == 0
     # find start dates (first day where dd is non-zero after a zero)
     start = ~is_zero & is_zero.shift(1)
-    start = list(start[start == True].index)
+    start = list(np.flatnonzero(np.asarray(start.fillna(False), dtype=bool)))
 
     # find end dates (first day where dd is 0 after non-zero)
     end = is_zero & (~is_zero).shift(1)
-    end = list(end[end == True].index)
+    end = list(np.flatnonzero(np.asarray(end.fillna(False), dtype=bool)))
 
     # A sliced series may already be underwater at its first observation.
     if len(drawdown) > 0 and pd.notna(drawdown.iloc[0]) and drawdown.iloc[0] < 0:
-        start.insert(0, drawdown.index[0])
+        start.insert(0, 0)
 
     if len(start) == 0:  # start.empty
         return None
 
     # drawdown has no end (end period in dd)
     if len(end) == 0:  # end.empty
-        end.append(drawdown.index[-1])
+        end.append(len(drawdown) - 1)
 
     # if the first drawdown start is larger than the first drawdown end it
     # means the drawdown series begins in a drawdown and therefore we must add
     # the first index to the start series
     if start[0] > end[0]:
-        start.insert(0, drawdown.index[0])
+        start.insert(0, 0)
 
     # if the last start is greater than the end then we must add the last index
     # to the end series since the drawdown series must finish with a drawdown
     if start[-1] > end[-1]:
-        end.append(drawdown.index[-1])
+        end.append(len(drawdown) - 1)
+
+    start = np.asarray(start)
+    end = np.asarray(end)[np.arange(len(start))]
+    valid = start <= end
+    minimum = np.empty(len(start), dtype=object)
+    if (~valid).any():
+        minimum[~valid] = drawdown.iloc[:0].min()
+    if valid.any():
+        episode_bounds = np.empty(valid.sum() * 2, dtype=int)
+        episode_bounds[::2] = start[valid]
+        episode_bounds[1::2] = end[valid] + 1
+        values = np.append(drawdown.astype(float).values, np.nan)
+        minimum[valid] = np.fmin.reduceat(values, episode_bounds)[::2]
+    start = drawdown.index.take(start)
+    end = drawdown.index.take(end)
 
     result = []
 
     for i in range(len(start)):
-        dd = drawdown.loc[start[i] : end[i]].min()
-
         if index_type is pd.DatetimeIndex:
-            result.append((start[i], end[i], (end[i] - start[i]).days, dd))
+            result.append((start[i], end[i], (end[i] - start[i]).days, minimum[i]))
         else:
-            result.append((start[i], end[i], (end[i] - start[i]), dd))
+            result.append((start[i], end[i], (end[i] - start[i]), minimum[i]))
 
     return pd.DataFrame(result, columns=("Start", "End", "Length", "drawdown"), dtype=object)
 
