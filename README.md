@@ -1,17 +1,17 @@
-![](http://pmorissette.github.io/ffn/_static/logo.png)
+# ffn - Financial Functions for Python
+
+![ffn](docs/source/_static/logo.png)
 
 [![Build Status](https://github.com/pmorissette/ffn/workflows/Build%20Status/badge.svg)](https://github.com/pmorissette/ffn/actions/)
 [![PyPI Version](https://img.shields.io/pypi/v/ffn)](https://pypi.org/project/ffn/)
 [![PyPI License](https://img.shields.io/pypi/l/ffn)](https://pypi.org/project/ffn/)
 
-# ffn - Financial Functions for Python
-
-Alpha release - please let me know if you find any bugs!
-
 If you are looking for a full backtesting framework, please check out [bt](https://github.com/pmorissette/bt).
 bt is built atop ffn and makes it easy and fast to backtest quantitative strategies.
 
 ## Overview
+
+<a id="a-brief-introduction"></a>
 
 ffn is a library that contains many useful functions for those who work in **quantitative
 finance**. It stands on the shoulders of giants (Pandas, Numpy, Scipy, etc.) and provides
@@ -21,7 +21,12 @@ graphing and common data transformations.
 ```python
 import ffn
 returns = ffn.get('aapl,msft,c,gs,ge', start='2010-01-01').to_returns().dropna()
-returns.calc_mean_var_weights().as_format('.2%')
+print(returns.calc_mean_var_weights().as_format('.2%'))
+```
+
+Example output:
+
+```text
     aapl    62.54%
     c       -0.00%
     ge      36.19%
@@ -29,7 +34,6 @@ returns.calc_mean_var_weights().as_format('.2%')
     msft     1.26%
     dtype: object
 ```
-
 
 ## Installation
 
@@ -44,7 +48,13 @@ Since ffn has many dependencies, we strongly recommend installing the [Anaconda 
 
 ## Documentation
 
-Read the docs at http://pmorissette.github.io/ffn
+Read the docs at <https://pmorissette.github.io/ffn/>.
 
-- [Quickstart](http://pmorissette.github.io/ffn/quick.html)
-- [Full API](http://pmorissette.github.io/ffn/ffn.html)
+- [Introduction](docs/source/introduction.rst)
+- [Installation guide](docs/source/install.rst)
+- [Quickstart](docs/source/quick.rst)
+- [Full API](docs/source/ffn.rst)
+
+## Contribute
+
+See the [development guide](docs/development.md) for setup, tests, documentation builds, and Copier template updates.

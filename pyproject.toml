@@ -47,14 +47,25 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
+develop = [
     "build",
+    "bump-my-version",
+    "check-dist",
+    "codespell",
+    "copier",
+    "hatchling",
+    "mdformat",
+    "mdformat-tables>=1",
     "ruff",
     "pytest",
     "pytest-benchmark",
     "pytest-cov",
     "twine",
+    "ty",
+    "uv",
+    "wheel",
 ]
+dev = ["ffn[develop]"]
 test = [
     "pytest",
     "pytest-benchmark",
@@ -64,6 +75,34 @@ test = [
 [project.urls]
 Repository = "https://github.com/pmorissette/ffn"
 Homepage = "http://pmorissette.github.io/ffn/"
+Documentation = "https://pmorissette.github.io/ffn/"
+
+[tool.bumpversion]
+current_version = "1.2.1"
+commit = true
+tag = true
+commit_args = "-s"
+
+[[tool.bumpversion.files]]
+filename = "ffn/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+[tool.pytest.ini_options]
+addopts = ["-vvv", "--junitxml=junit.xml"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+exclude_also = ["raise NotImplementedError", "if __name__ == .__main__.:", "@(abc\\.)?abstractmethod"]
+fail_under = 50
 
 [tool.ruff]
 line-length = 180
@@ -81,3 +120,39 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["ffn"]
+
+[tool.check-dist]
+present = ["ffn/__init__.py", "ffn/core.py", "ffn/data.py", "ffn/utils.py"]
+absent = ["base/*", "bt/*", "reference/*", "tests/*", "benchmarks/*", "docs/*", "TODO.md"]
+
+[tool.check-dist.sdist]
+present = ["LICENSE", "README.md", "pyproject.toml"]
+
+[tool.yardang]
+title = "ffn - Financial Functions for Python"
+theme = "klink"
+docs-host = "https://pmorissette.github.io/ffn/"
+root = "README.md"
+pages = [
+    "docs/source/install.rst",
+    "docs/source/introduction.rst",
+    "docs/source/quick.rst",
+    "docs/source/ffn.rst",
+    "docs/development.md",
+]
+use-autoapi = false
+use-search = false
+nb-execution-mode = "off"
+exclude-patterns = ["**/*.ipynb", "docs/source/intro.rst", "docs/source/quickstart.rst", "TODO.md", "base", "bt", "reference", ".venv"]
+extensions = ["sphinx.ext.intersphinx"]
+
+[tool.yardang.html-theme-options]
+github = "pmorissette/ffn"
+
+[tool.yardang.redirects]
+install = "docs/source/install.html"
+intro = "docs/source/introduction.html"
+quick = "docs/source/quick.html"
+quickstart = "docs/source/quick.html"
+ffn = "docs/source/ffn.html"
+modules = "docs/source/modules.html"

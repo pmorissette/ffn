@@ -1,0 +1,12 @@
+# Changes here will be overwritten by Copier
+_commit: e712b7e
+_src_path: https://github.com/python-project-templates/base.git
+add_docs: true
+add_extension: python
+add_wiki: false
+email: morissette.philippe@gmail.com
+github: pmorissette
+project_description: Financial functions for Python
+project_name: ffn
+python_version_primary: '3.11'
+team: Philippe Morissette
