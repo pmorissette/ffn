@@ -5,7 +5,7 @@ import pytest
 import ffn
 
 
-@pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64"])
+@pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", object])
 @pytest.mark.parametrize("duplicate_columns", [False, True])
 def test_information_ratio_preserves_columnwise_results(dtype, duplicate_columns):
     index = pd.date_range("2024-01-01", periods=5)
@@ -38,7 +38,7 @@ def test_information_ratio_preserves_columnwise_results(dtype, duplicate_columns
 
 
 @pytest.mark.parametrize("shape", [(0, 0), (0, 3), (3, 0)])
-@pytest.mark.parametrize("dtype", ["float64", "Float64"])
+@pytest.mark.parametrize("dtype", ["float64", "Float64", object])
 def test_information_ratio_preserves_empty_frames(shape, dtype):
     returns = pd.DataFrame(index=range(shape[0]), columns=range(shape[1]), dtype=dtype)
 

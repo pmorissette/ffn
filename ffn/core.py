@@ -246,13 +246,13 @@ class PerformanceStats:
             self.daily_vol = r.std(ddof=1) * np.sqrt(self.annualization_factor)
 
             if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
-                self.daily_sharpe = r.calc_sharpe(rf=self.rf, nperiods=self.annualization_factor)
-                self.daily_sortino = calc_sortino_ratio(r, rf=self.rf, nperiods=self.annualization_factor)
+                rf = self.rf
             # rf is a price series
             else:
-                _rf_daily_price_returns = self.rf.to_returns()
-                self.daily_sharpe = r.calc_sharpe(rf=_rf_daily_price_returns, nperiods=self.annualization_factor)
-                self.daily_sortino = calc_sortino_ratio(r, rf=_rf_daily_price_returns, nperiods=self.annualization_factor)
+                rf = self.rf.to_returns()
+            er = r.to_excess_returns(rf, nperiods=self.annualization_factor)
+            self.daily_sharpe = _calc_sharpe(er, nperiods=self.annualization_factor)
+            self.daily_sortino = _calc_sortino_ratio(er, nperiods=self.annualization_factor)
 
             self.best_day = r.max()
             self.worst_day = r.min()
@@ -294,13 +294,13 @@ class PerformanceStats:
             self.monthly_vol = mr.std(ddof=1) * np.sqrt(12)
 
             if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
-                self.monthly_sharpe = mr.calc_sharpe(rf=self.rf, nperiods=12)
-                self.monthly_sortino = calc_sortino_ratio(mr, rf=self.rf, nperiods=12)
+                rf = self.rf
             # rf is a price series
             else:
-                _rf_monthly_price_returns = self.rf.resample(_MonthEnd).last().to_returns()
-                self.monthly_sharpe = mr.calc_sharpe(rf=_rf_monthly_price_returns, nperiods=12)
-                self.monthly_sortino = calc_sortino_ratio(mr, rf=_rf_monthly_price_returns, nperiods=12)
+                rf = self.rf.resample(_MonthEnd).last().to_returns()
+            er = mr.to_excess_returns(rf, nperiods=12)
+            self.monthly_sharpe = _calc_sharpe(er, nperiods=12)
+            self.monthly_sortino = _calc_sortino_ratio(er, nperiods=12)
             self.best_month = mr.max()
             self.worst_month = mr.min()
 
@@ -385,15 +385,14 @@ class PerformanceStats:
             self.yearly_vol = yr.std(ddof=1)
 
             if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
-                if self.yearly_vol > 0:
-                    self.yearly_sharpe = yr.calc_sharpe(rf=self.rf, nperiods=1)
-                self.yearly_sortino = calc_sortino_ratio(yr, rf=self.rf, nperiods=1)
+                rf = self.rf
             # rf is a price series
             else:
-                _rf_yearly_price_returns = self.rf.resample(_YearEnd).last().to_returns()
-                if self.yearly_vol > 0:
-                    self.yearly_sharpe = yr.calc_sharpe(rf=_rf_yearly_price_returns, nperiods=1)
-                self.yearly_sortino = calc_sortino_ratio(yr, rf=_rf_yearly_price_returns, nperiods=1)
+                rf = self.rf.resample(_YearEnd).last().to_returns()
+            er = yr.to_excess_returns(rf, nperiods=1)
+            if self.yearly_vol > 0:
+                self.yearly_sharpe = _calc_sharpe(er, nperiods=1)
+            self.yearly_sortino = _calc_sortino_ratio(er, nperiods=1)
 
             self.best_year = yr.max()
             self.worst_year = yr.min()
@@ -1360,7 +1359,12 @@ def calc_max_drawdown(prices):
     Calculates the max drawdown of a price series. If you want the
     actual drawdown series, please use to_drawdown_series.
     """
-    return (prices / prices.expanding(min_periods=1).max()).min() - 1
+    # Expanding maxima promote other dtypes to float64 and treat infinities as missing.
+    if np.all(prices.dtypes == np.dtype("float64")) and not np.isinf(prices.to_numpy()).any():
+        maximum = prices.cummax()
+    else:
+        maximum = prices.expanding(min_periods=1).max()
+    return (prices / maximum).min() - 1
 
 
 def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
@@ -1429,11 +1433,11 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
 
     result = []
 
-    for i in range(len(start)):
+    for first, last, value in zip(start.array, end.array, minimum):
         if index_type is pd.DatetimeIndex:
-            result.append((start[i], end[i], (end[i] - start[i]).days, minimum[i]))
+            result.append((first, last, (last - first).days, value))
         else:
-            result.append((start[i], end[i], (end[i] - start[i]), minimum[i]))
+            result.append((first, last, (last - first), value))
 
     return pd.DataFrame(result, columns=("Start", "End", "Length", "drawdown"), dtype=object)
 
@@ -1483,7 +1487,11 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     if isinstance(rf, _FLOATING_SCALAR_TYPES) and rf != 0 and nperiods is None:
         raise ValueError("Must provide nperiods if rf != 0")
 
-    er = returns.to_excess_returns(rf, nperiods=nperiods)
+    return _calc_sharpe(returns.to_excess_returns(rf, nperiods=nperiods), nperiods, annualize)
+
+
+def _calc_sharpe(er, nperiods, annualize=True):
+    """Calculate Sharpe from already aligned excess returns."""
     std = er.std(ddof=1)
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), std)
@@ -1529,8 +1537,8 @@ def _calc_information_ratio(diff_rets):
         if diff_mean.dtype.kind == "f" and diff_mean.dtype.itemsize <= 8:
             return np.divide(diff_mean, diff_std).where(valid, 0.0).astype(float)
 
-        # Retain assignment semantics for object, complex, and extended-precision data.
-        result = pd.Series(0.0, index=diff_std.index)
+        # Allocate object results explicitly: pandas 3 no longer upcasts on assignment.
+        result = pd.Series(0.0, index=diff_std.index, dtype=object if diff_mean.dtype == object else float)
         result.loc[valid] = np.divide(diff_mean.loc[valid], diff_std.loc[valid])
         return result
 
@@ -2513,9 +2521,15 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
     if isinstance(rf, _FLOATING_SCALAR_TYPES) and rf != 0 and nperiods is None:
         raise ValueError("nperiods must be set or inferable if rf is a non-zero scalar")
 
-    er = returns.to_excess_returns(rf, nperiods=nperiods)
+    return _calc_sortino_ratio(returns.to_excess_returns(rf, nperiods=nperiods), nperiods, annualize)
 
-    negative_returns = er.clip(upper=0.0)
+
+def _calc_sortino_ratio(er, nperiods, annualize=True):
+    """Calculate Sortino from already aligned excess returns."""
+    if isinstance(er, pd.Series) and er.dtype.kind == "f":
+        negative_returns = np.minimum(er, 0.0)
+    else:
+        negative_returns = er.clip(upper=0.0)
     downside_deviation = np.sqrt((negative_returns**2).mean())
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), downside_deviation)
