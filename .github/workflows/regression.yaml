@@ -8,43 +8,48 @@ on:
   workflow_dispatch:
 
 concurrency:
-   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
-   cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     environment: dev
-
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ['3.10']
-        os: [ubuntu-latest]
-        pandas_version:
-          - '>=2.2'
-          - '<2'
-        numpy_version:
-          - '<2'
-          - '>=2'
-        exclude:
-          - numpy_version: '>=2'
-            pandas_version: '<2'
-
+        include:
+          - python: '3.9'
+            pandas: '>=1.5,<2'
+            numpy: '<2'
+          - python: '3.11'
+            pandas: '>=1.5,<2'
+            numpy: '<2'
+          - python: '3.11'
+            pandas: '>=2.2,<3'
+            numpy: '<2'
+          - python: '3.11'
+            pandas: '>=2.2,<3'
+            numpy: '>=2,<3'
+          - python: '3.11'
+            pandas: '>=3,<4'
+            numpy: '>=2,<3'
     steps:
-    - name: Checkout
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-        cache-dependency-path: 'pyproject.toml'
+      - name: Setup Python
+        uses: actions-ext/python/setup@ec67f82b3bd863948308a41ecb9e70547cbb19c7
+        with:
+          version: ${{ matrix.python }}
 
-    - name: Install dependencies
-      run: |
-        make develop
-        python -m pip install -U "numpy${{ matrix.numpy_version }}" "pandas${{ matrix.pandas_version}}"
+      - name: Install dependencies
+        run: uv pip install -e '.[test]' "pandas${{ matrix.pandas }}" "numpy${{ matrix.numpy }}"
 
-    - name: Test
-      run: make test
+      - name: Test
+        run: make test

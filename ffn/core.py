@@ -1686,10 +1686,8 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
         * returns (DataFrame): Returns for multiple securities.
         * weight_bounds ((low, high)): Weigh limits for optimization.
         * rf (float): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in utility calculation
-        * covar_method (str): Covariance matrix estimation method.
-            Currently supported:
-                - `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_
-                - standard
+        * covar_method (str): Covariance matrix estimation method:
+          `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_ or ``standard``.
         * options (dict): options for minimizing, e.g. {'maxiter': 10000 }
 
     Returns:
@@ -1868,14 +1866,11 @@ def calc_erc_weights(
         * returns (DataFrame): Returns for multiple securities.
         * initial_weights (list): Starting asset weights [default inverse vol].
         * risk_weights (list): Risk target weights [default equal weight].
-        * covar_method (str): Covariance matrix estimation method.
-            Currently supported:
-                - `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_ [default]
-                - standard
-        * risk_parity_method (str): Risk parity estimation method.
-            Currently supported:
-                - ccd (cyclical coordinate descent)[default]
-                - slsqp (scipy's implementation of sequential least squares programming)
+        * covar_method (str): Covariance matrix estimation method:
+          `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_ (default) or ``standard``.
+        * risk_parity_method (str): Risk parity estimation method:
+          ``ccd`` (cyclical coordinate descent, default) or ``slsqp``
+          (scipy's implementation of sequential least squares programming).
         * maximum_iterations (int): Maximum iterations in iterative solutions.
         * tolerance (float): Tolerance level in iterative solutions.
 
@@ -2361,10 +2356,11 @@ def deannualize(returns, nperiods):
 
 def infer_freq(data):
     """
-        Infer the most likely frequency given the input index. If the frequency is
+    Infer the most likely frequency given the input index. If the frequency is
     uncertain or index is not DateTime like, just return None
-        Args:
-            * data (DataFrame, Series): Any timeseries dataframe or series
+
+    Args:
+        * data (DataFrame, Series): Any timeseries dataframe or series
     """
     try:
         if _PANDAS_TWO:
