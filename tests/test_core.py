@@ -1446,6 +1446,165 @@ def test_to_excess_returns_dataframe_with_series_risk_free():
     )
 
 
+def test_numpy_floating_risk_free_rates_match_python_float():
+    """Apply annualized-rate semantics to every NumPy floating scalar."""
+    index = pd.date_range("2025-01-01", periods=20, freq="B")
+    series = pd.Series(np.linspace(-0.02, 0.03, 20), index=index, name="strategy")
+    frame = pd.DataFrame({"strategy": series, "scaled": series * 0.8})
+    prices = (1.0 + series).cumprod() * 100.0
+    annual_rate = 0.0625
+    nperiods = 252
+
+    for scalar_name in ("float16", "float32", "float64"):
+        risk_free = getattr(np, scalar_name)(annual_rate)
+        # Derive the per-period hurdle independently of ffn's type-dispatch and
+        # deannualization paths, using the exact value represented by each dtype.
+        period_rate = (1.0 + float(risk_free)) ** (1.0 / nperiods) - 1.0
+
+        for returns in (series, frame):
+            expected_excess = returns - period_rate
+            expected_sharpe = expected_excess.mean() / expected_excess.std(ddof=1) * np.sqrt(nperiods)
+            downside_deviation = np.sqrt((expected_excess.clip(upper=0.0) ** 2).mean())
+            expected_sortino = expected_excess.mean() / downside_deviation * np.sqrt(nperiods)
+
+            for actual in (
+                ffn.to_excess_returns(returns, risk_free, nperiods=nperiods),
+                returns.to_excess_returns(risk_free, nperiods=nperiods),
+                ffn.to_excess_returns(returns, risk_free),
+                returns.to_excess_returns(risk_free),
+            ):
+                assert (actual == expected_excess).to_numpy().all()
+
+            for actual in (
+                ffn.calc_sharpe(returns, rf=risk_free, nperiods=nperiods),
+                returns.calc_sharpe(rf=risk_free, nperiods=nperiods),
+                returns.calc_sharpe_ratio(rf=risk_free, nperiods=nperiods),
+                ffn.calc_sharpe(returns, rf=risk_free),
+                returns.calc_sharpe(rf=risk_free),
+                returns.calc_sharpe_ratio(rf=risk_free),
+            ):
+                if isinstance(actual, pd.Series):
+                    assert (actual == expected_sharpe).all()
+                else:
+                    assert actual == expected_sharpe
+
+            for actual in (
+                ffn.calc_sortino_ratio(returns, rf=risk_free, nperiods=nperiods),
+                returns.calc_sortino_ratio(rf=risk_free, nperiods=nperiods),
+                returns.calc_sortino(rf=risk_free, nperiods=nperiods),
+                ffn.calc_sortino_ratio(returns, rf=risk_free),
+                returns.calc_sortino_ratio(rf=risk_free),
+                returns.calc_sortino(rf=risk_free),
+            ):
+                if isinstance(actual, pd.Series):
+                    assert (actual == expected_sortino).all()
+                else:
+                    assert actual == expected_sortino
+
+        price_returns = prices.pct_change(fill_method=None)
+        expected_excess = price_returns - period_rate
+        drawdowns = prices / prices.cummax() - 1.0
+        ulcer_index = ((drawdowns * 100.0) ** 2).mean() ** 0.5
+        expected_upi = expected_excess.mean() * 100.0 / ulcer_index
+        aae(
+            ffn.to_ulcer_performance_index(prices, rf=risk_free, nperiods=nperiods),
+            expected_upi,
+        )
+        aae(
+            prices.to_ulcer_performance_index(rf=risk_free, nperiods=nperiods),
+            expected_upi,
+        )
+        aae(
+            ffn.to_ulcer_performance_index(prices, rf=risk_free),
+            expected_upi,
+        )
+        aae(
+            prices.to_ulcer_performance_index(rf=risk_free),
+            expected_upi,
+        )
+
+
+def test_numpy_floating_risk_free_rates_require_periods():
+    """Reject nonzero NumPy floating rates when periods are unavailable."""
+    # A non-datetime index leaves the observation frequency deliberately
+    # uninferrable, so each public ratio must require nperiods explicitly.
+    returns = pd.Series([-0.02, 0.01, 0.03, -0.01], index=["a", "b", "c", "d"])
+    prices = pd.Series([100.0, 98.0, 99.0, 102.0], index=["a", "b", "c", "d"])
+
+    for scalar_name in ("float16", "float32", "float64"):
+        risk_free = getattr(np, scalar_name)(0.0625)
+        with np.testing.assert_raises(ValueError):
+            ffn.calc_sharpe(returns, rf=risk_free)
+        with np.testing.assert_raises(ValueError):
+            ffn.calc_sortino_ratio(returns, rf=risk_free)
+        with np.testing.assert_raises(ValueError):
+            ffn.to_ulcer_performance_index(prices, rf=risk_free)
+
+
+def test_numpy_floating_risk_free_rates_work_in_stats():
+    """Keep NumPy floating rates on scalar statistics and output paths."""
+    import contextlib
+    import io
+
+    annual_rate = 0.0625
+    # Four years of business-daily prices exercise the daily, monthly, and
+    # yearly PerformanceStats risk-free branches in one deterministic sample.
+    index = pd.bdate_range("2020-01-02", periods=1000)
+    returns = np.tile([-0.0125, -0.00625, 0.003125, 0.009375, 0.015625], 200)
+    asset_a_prices = pd.Series(
+        (1.0 + returns).cumprod() * 100.0,
+        index=index,
+        name="asset_a",
+    )
+    prices = pd.DataFrame(
+        {
+            "asset_a": asset_a_prices,
+            "asset_b": (1.0 + returns * 0.8).cumprod() * 100.0,
+        },
+        index=index,
+    )
+    expected_stats = ffn.PerformanceStats(asset_a_prices, rf=annual_rate)
+
+    for scalar_name in ("float16", "float32", "float64"):
+        risk_free = getattr(np, scalar_name)(annual_rate)
+        stats = ffn.PerformanceStats(asset_a_prices, rf=risk_free)
+
+        for field in (
+            "daily_sharpe",
+            "daily_sortino",
+            "monthly_sharpe",
+            "monthly_sortino",
+            "yearly_sharpe",
+            "yearly_sortino",
+        ):
+            assert np.isclose(getattr(stats, field), getattr(expected_stats, field))
+
+        assert stats.stats["rf"] == risk_free
+        csv = stats.to_csv()
+        assert csv is not None
+        assert "Risk-free rate,6.25%" in csv
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            stats.display()
+        assert "Annual risk-free rate considered: 6.25%" in output.getvalue()
+
+        group = ffn.GroupStats(prices)
+        group.set_riskfree_rate(risk_free)
+        assert (group.stats.loc["rf"] == annual_rate).all()
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            group.display()
+        risk_free_row = next(line for line in output.getvalue().splitlines() if line.startswith("Risk-free rate"))
+        assert risk_free_row.split() == ["Risk-free", "rate", "6.25%", "6.25%"]
+
+        # Zero still exercises scalar classification even though its
+        # deannualized value is numerically unchanged.
+        zero_rate = getattr(np, scalar_name)(0.0)
+        zero_stats = ffn.PerformanceStats(asset_a_prices, rf=zero_rate)
+        expected_zero = ffn.PerformanceStats(asset_a_prices, rf=0.0)
+        assert zero_stats.daily_sharpe == expected_zero.daily_sharpe
+
+
 def test_set_riskfree_rate(df):
     r = df.to_returns()
 
