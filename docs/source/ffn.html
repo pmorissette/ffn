@@ -248,7 +248,7 @@ statistics.</p>
 <li><p><strong>prices</strong> (<em>*</em>) – A price series. Unavailable outer observations are excluded from
 endpoint statistics when total return is available.</p></li>
 <li><p><strong>rf</strong> (<em>*</em>) – <p><a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> used in various calculation. Should be
-expressed as a yearly (annualized) return if it is a float. Otherwise
+expressed as a yearly (annualized) return if it is a floating scalar. Otherwise
 rf should be a <em>price</em> series — it is converted internally with
 to_returns(). Note this differs from calc_sharpe and
 calc_sortino_ratio, which take rf as a return series. Passing a
@@ -728,7 +728,7 @@ is going to outperform the other”.</p>
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_sharpe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_sharpe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_sharpe" title="Link to this definition">¶</a></dt>
 <dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/s/sharperatio.asp">Sharpe ratio</a>
 (see <a class="reference external" href="https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp">Sharpe vs. Sortino</a>).</p>
-<p>If rf is non-zero and a float, you must specify nperiods. In this case, rf is assumed
+<p>If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed
 to be expressed in yearly (annualized) terms.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -1069,7 +1069,7 @@ returns, it is subtracted from every column by date.</p>
 <li><p><strong>returns</strong> (<em>*</em>) – Returns</p></li>
 <li><p><strong>rf</strong> (<em>*</em>) – <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-Free rate(s)</a> expressed in annualized term or return series</p></li>
 <li><p><strong>nperiods</strong> (<em>*</em>) – Optional. If provided, will convert rf to different
-frequency using deannualize only if rf is a float</p></li>
+frequency using deannualize only if rf is a floating scalar</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

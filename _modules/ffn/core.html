@@ -476,6 +476,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="c1"># module level variable, can be different for non traditional markets (eg. crypto - 360)</span>
 <span class="n">TRADING_DAYS_PER_YEAR</span> <span class="o">=</span> <span class="mi">252</span>
+<span class="n">_FLOATING_SCALAR_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="PerformanceStats">
@@ -490,8 +491,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Args:</span>
 <span class="sd">        * prices (Series): A price series. Unavailable outer observations are excluded from</span>
 <span class="sd">            endpoint statistics when total return is available.</span>
-<span class="sd">        * rf (float, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ used in various calculation. Should be</span>
-<span class="sd">            expressed as a yearly (annualized) return if it is a float. Otherwise</span>
+<span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ used in various calculation. Should be</span>
+<span class="sd">            expressed as a yearly (annualized) return if it is a floating scalar. Otherwise</span>
 <span class="sd">            rf should be a *price* series — it is converted internally with</span>
 <span class="sd">            to_returns(). Note this differs from calc_sharpe and</span>
 <span class="sd">            calc_sortino_ratio, which take rf as a return series. Passing a</span>
@@ -531,7 +532,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Affects only this instance of the PerformanceStats.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            * rf (float, Series): Annual `risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_,</span>
+<span class="sd">            * rf (float, np.floating, Series): Annual `risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_,</span>
 <span class="sd">                or a risk-free *price* series (not returns)</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rf</span> <span class="o">=</span> <span class="n">rf</span>
@@ -695,7 +696,7 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">daily_mean</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">daily_vol</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">daily_sharpe</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">calc_sharpe</span><span class="p">(</span><span class="n">rf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">daily_sortino</span> <span class="o">=</span> <span class="n">calc_sortino_ratio</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span><span class="p">)</span>
             <span class="c1"># rf is a price series</span>
@@ -743,7 +744,7 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">monthly_mean</span> <span class="o">=</span> <span class="n">mr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="mi">12</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">monthly_vol</span> <span class="o">=</span> <span class="n">mr</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">monthly_sharpe</span> <span class="o">=</span> <span class="n">mr</span><span class="o">.</span><span class="n">calc_sharpe</span><span class="p">(</span><span class="n">rf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">monthly_sortino</span> <span class="o">=</span> <span class="n">calc_sortino_ratio</span><span class="p">(</span><span class="n">mr</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
             <span class="c1"># rf is a price series</span>
@@ -833,8 +834,7 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="o">.</span><span class="n">yearly_mean</span> <span class="o">=</span> <span class="n">yr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">yearly_vol</span> <span class="o">=</span> <span class="n">yr</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-            <span class="c1"># if type(self.rf) is float:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">yearly_vol</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">yearly_sharpe</span> <span class="o">=</span> <span class="n">yr</span><span class="o">.</span><span class="n">calc_sharpe</span><span class="p">(</span><span class="n">rf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">yearly_sortino</span> <span class="o">=</span> <span class="n">calc_sortino_ratio</span><span class="p">(</span><span class="n">yr</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -970,7 +970,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        provided.</span>
 <span class="sd">        """</span>
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Stats for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">end</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Annual risk-free rate considered: </span><span class="si">{</span><span class="n">fmtp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Summary:"</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
@@ -1185,7 +1185,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stat</span>
 
             <span class="c1"># blank row</span>
-            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                 <span class="k">continue</span>
 
             <span class="k">if</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">short_names</span><span class="p">:</span>
@@ -1223,7 +1223,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="s2">""</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                 <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
                 <span class="k">continue</span>
-            <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">elif</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                 <span class="k">continue</span>
 
             <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">]</span>
@@ -1422,7 +1422,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        this GroupStats object.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            * rf (float, Series): Annual risk-free rate or risk-free rate *price*</span>
+<span class="sd">            * rf (float, np.floating, Series): Annual risk-free rate or risk-free rate *price*</span>
 <span class="sd">                series (not returns)</span>
 <span class="sd">        """</span>
 
@@ -1476,7 +1476,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">raw</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">k</span><span class="p">)</span>
 
                 <span class="c1"># if rf is a series print nan</span>
-                <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                     <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
                 <span class="k">elif</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
@@ -1780,7 +1780,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Args:</span>
 <span class="sd">        * prices (Series): Series of prices</span>
-<span class="sd">        * risk_free_rate (float, Series): Annual risk-free rate or risk-free rate price series</span>
+<span class="sd">        * risk_free_rate (float, np.floating, Series): Annual risk-free rate or risk-free rate price series</span>
 <span class="sd">        * annualization_factor (int): Annualizing factor. Default is 252 (trading days)</span>
 
 <span class="sd">    """</span>
@@ -2000,12 +2000,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Calculates the `Sharpe ratio &lt;https://www.investopedia.com/terms/s/sharperatio.asp&gt;`_</span>
 <span class="sd">    (see `Sharpe vs. Sortino &lt;https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp&gt;`_).</span>
 
-<span class="sd">    If rf is non-zero and a float, you must specify nperiods. In this case, rf is assumed</span>
+<span class="sd">    If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed</span>
 <span class="sd">    to be expressed in yearly (annualized) terms.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        * returns (Series, DataFrame): Input return series</span>
-<span class="sd">        * rf (float, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed as a yearly (annualized) return or *return*</span>
+<span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed as a yearly (annualized) return or *return*</span>
 <span class="sd">            series (unlike PerformanceStats, which takes rf as a price series)</span>
 <span class="sd">        * nperiods (int): Frequency of returns (252 for daily, 12 for monthly,</span>
 <span class="sd">            etc.)</span>
@@ -2014,7 +2014,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">nperiods</span> <span class="o">=</span> <span class="n">infer_nperiods</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rf</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rf</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Must provide nperiods if rf != 0"</span><span class="p">)</span>
 
     <span class="n">er</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">to_excess_returns</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="n">nperiods</span><span class="p">)</span>
@@ -3108,7 +3108,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Args:</span>
 <span class="sd">        * returns (Series or DataFrame): Returns</span>
-<span class="sd">        * rf (float, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed in yearly (annualized) terms or return series.</span>
+<span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed in yearly (annualized) terms or return series.</span>
 <span class="sd">        * nperiods (int): Number of periods used for annualization. Must be</span>
 <span class="sd">            provided or inferable if rf is a non-zero scalar</span>
 
@@ -3117,7 +3117,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">nperiods</span> <span class="o">=</span> <span class="n">infer_nperiods</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rf</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rf</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"nperiods must be set or inferable if rf is a non-zero scalar"</span><span class="p">)</span>
 
     <span class="n">er</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">to_excess_returns</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="n">nperiods</span><span class="p">)</span>
@@ -3147,9 +3147,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Args:</span>
 <span class="sd">        * returns (Series, DataFrame): Returns</span>
-<span class="sd">        * rf (float, Series): `Risk-Free rate(s) &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed in annualized term or return series</span>
+<span class="sd">        * rf (float, np.floating, Series): `Risk-Free rate(s) &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed in annualized term or return series</span>
 <span class="sd">        * nperiods (int): Optional. If provided, will convert rf to different</span>
-<span class="sd">            frequency using deannualize only if rf is a float</span>
+<span class="sd">            frequency using deannualize only if rf is a floating scalar</span>
 <span class="sd">    Returns:</span>
 <span class="sd">        * excess_returns (Series, DataFrame): Returns - rf</span>
 
@@ -3157,8 +3157,11 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">nperiods</span> <span class="o">=</span> <span class="n">infer_nperiods</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">_rf</span> <span class="o">=</span> <span class="n">deannualize</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">)</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Promote low-precision NumPy scalars before calculating a much smaller</span>
+        <span class="c1"># per-period rate, which could otherwise round to zero.</span>
+        <span class="n">scalar_rf</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rf</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="k">else</span> <span class="n">rf</span>
+        <span class="n">_rf</span> <span class="o">=</span> <span class="n">deannualize</span><span class="p">(</span><span class="n">scalar_rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">_rf</span> <span class="o">=</span> <span class="n">rf</span>
 
@@ -3232,7 +3235,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Args:</span>
 <span class="sd">        * prices (Series, DataFrame): Prices</span>
-<span class="sd">        * rf (float, Series): `Risk-free rate of return &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_. Assumed to be expressed in</span>
+<span class="sd">        * rf (float, np.floating, Series): `Risk-free rate of return &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_. Assumed to be expressed in</span>
 <span class="sd">            yearly (annualized) terms or return series</span>
 <span class="sd">        * nperiods (int): Used to deannualize rf if rf is provided (non-zero)</span>
 
@@ -3240,7 +3243,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">nperiods</span> <span class="o">=</span> <span class="n">infer_nperiods</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rf</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rf</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"nperiods must be set if rf != 0 and rf is not a price series"</span><span class="p">)</span>
 
     <span class="c1"># to_ulcer_index carries the last known price across a gap, so fill here</span>
@@ -3321,7 +3324,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * returns (Series): Return series of the selected (best) trial.</span>
 <span class="sd">        * trial_sharpe_ratios (Series, array-like): Sharpe ratios of all</span>
 <span class="sd">            evaluated trials, e.g. as returned by :func:`calc_sharpe`.</span>
-<span class="sd">        * rf (float, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_</span>
+<span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_</span>
 <span class="sd">            expressed in yearly (annualized) terms or return series.</span>
 <span class="sd">        * nperiods (int): Frequency of returns (252 for daily, 12 for</span>
 <span class="sd">            monthly, etc.). Inferred from `returns` if not provided.</span>
