@@ -810,6 +810,8 @@ class GroupStats(dict):
 
     def __init__(self, *prices, annualization_factor=None):
         self._annualization_factor_override = annualization_factor
+        # Preserve configuration when date-range updates rebuild the child statistics.
+        self._riskfree_rate = 0.0
         names = []
         for p in prices:
             if isinstance(p, pd.DataFrame):
@@ -863,7 +865,11 @@ class GroupStats(dict):
             full_data = data
         for c in data.columns:
             prc = full_data[c].dropna()
-            self[c] = PerformanceStats(prc, annualization_factor=self._annualization_factor_override)
+            self[c] = PerformanceStats(
+                prc,
+                rf=self._riskfree_rate,
+                annualization_factor=self._annualization_factor_override,
+            )
 
     def _stats(self):
         stats = [
@@ -954,6 +960,9 @@ class GroupStats(dict):
 
         # calculate stats for entire series
         self._update_stats()
+
+        # A failed recalculation must not become the default for later rebuilds.
+        self._riskfree_rate = rf
 
     def set_date_range(self, start=None, end=None):
         """
