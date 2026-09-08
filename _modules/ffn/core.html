@@ -2228,24 +2228,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    For example, if last data point in Jan is on the 29th,</span>
 <span class="sd">    that date will be used instead of the 31st.</span>
 <span class="sd">    """</span>
-    <span class="n">orig</span> <span class="o">=</span> <span class="n">series</span>
-    <span class="n">is_series</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
-        <span class="n">is_series</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="n">series</span><span class="o">.</span><span class="n">name</span> <span class="k">else</span> <span class="s2">"data"</span>
-        <span class="n">orig</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="n">series</span><span class="p">})</span>
-
-    <span class="c1"># add date column</span>
-    <span class="n">t</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">orig</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">"dt"</span><span class="p">:</span> <span class="n">orig</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">},</span> <span class="n">index</span><span class="o">=</span><span class="n">orig</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-    <span class="c1"># fetch dates</span>
-    <span class="n">dts</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="n">how</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">)[</span><span class="s2">"dt"</span><span class="p">]</span>
-
-    <span class="n">res</span> <span class="o">=</span> <span class="n">orig</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dts</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
-
-    <span class="k">if</span> <span class="n">is_series</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">res</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">res</span></div>
+    <span class="c1"># Resample the index itself so timezones and user labels remain untouched.</span>
+    <span class="n">dates</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_series</span><span class="p">()</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">freq</span><span class="o">=</span><span class="n">freq</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="n">how</span><span class="p">,</span> <span class="n">normalize</span><span class="o">=</span><span class="n">normalize</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dates</span><span class="o">.</span><span class="n">array</span><span class="p">]</span></div>
 
 
 
