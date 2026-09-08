@@ -54,6 +54,14 @@ def test_to_drawdown_series(benchmark, prices):
 
 
 @pytest.mark.benchmark(group="drawdown")
+def test_calc_max_drawdown(benchmark, prices):
+    result = benchmark(ffn.calc_max_drawdown, prices)
+
+    assert result.index.equals(prices.columns)
+    assert (result <= 0.0).all()
+
+
+@pytest.mark.benchmark(group="drawdown")
 def test_drawdown_details(benchmark, drawdown):
     result = benchmark(ffn.drawdown_details, drawdown)
 
@@ -80,6 +88,13 @@ def test_calc_information_ratio(benchmark, returns):
 
     assert result.index.equals(returns.columns)
     assert result.iloc[0] == 0.0
+
+
+@pytest.mark.benchmark(group="statistics")
+def test_calc_sortino_ratio(benchmark, returns):
+    result = benchmark(ffn.calc_sortino_ratio, returns.iloc[:, 0], nperiods=252)
+
+    assert np.isfinite(result)
 
 
 @pytest.mark.benchmark(group="statistics")

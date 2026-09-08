@@ -104,3 +104,26 @@ def test_drawdown_details_with_initial_drawdown_and_range_index(values, expected
     assert result is not None
     assert len(result) == 1
     assert result.iloc[0].drawdown == expected_minimum
+
+
+@pytest.mark.parametrize("index_kind", ["datetime", "integer", "float32"])
+def test_drawdown_details_preserves_timestamp_and_duration_types(index_kind):
+    if index_kind == "datetime":
+        index = pd.date_range("2024-03-09", periods=6, freq="17h", tz="America/New_York")
+    elif index_kind == "integer":
+        index = pd.Index([0, 2, 5, 9, 14, 20])
+    else:
+        index = pd.Index([0, 0.1, 0.3, 0.9, 1.4, 2.1], dtype="float32")
+    drawdown = pd.Series([0.0, -0.1, -0.2, 0.0, -0.3, -0.1], index=index)
+    original = drawdown.copy()
+    index_type = pd.DatetimeIndex if index_kind == "datetime" else type(index)
+    rows = []
+    for start, end, minimum in [(1, 3, -0.2), (4, 5, -0.3)]:
+        duration = index[end] - index[start]
+        if index_kind == "datetime":
+            duration = duration.days
+        rows.append((index[start], index[end], duration, minimum))
+    expected = pd.DataFrame(rows, columns=["Start", "End", "Length", "drawdown"], dtype=object)
+
+    pd.testing.assert_frame_equal(ffn.drawdown_details(drawdown, index_type=index_type), expected, check_exact=True)
+    pd.testing.assert_series_equal(drawdown, original)
