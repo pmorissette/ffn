@@ -305,12 +305,13 @@ class PerformanceStats:
             self.worst_month = mr.min()
 
             # -1 here to account for first return that will be nan
-            self.pos_month_perc = len(mr[mr > 0]) / float(len(mr) - 1)
-            self.avg_up_month = mr[mr > 0].mean()
+            up_months = mr[mr > 0]
+            self.pos_month_perc = len(up_months) / float(len(mr) - 1)
+            self.avg_up_month = up_months.mean()
             self.avg_down_month = mr[mr <= 0].mean()
 
-            # return_table
-            for idx in mr.index:
+            # Preserve NumPy scalar precision when populating the return table.
+            for idx, value in zip(mr.index, mr.array):
                 if idx.year not in self.return_table:
                     self.return_table[idx.year] = {
                         1: 0,
@@ -326,8 +327,8 @@ class PerformanceStats:
                         11: 0,
                         12: 0,
                     }
-                if not pd.isna(mr[idx]):
-                    self.return_table[idx.year][idx.month] = mr[idx]
+                if not pd.isna(value):
+                    self.return_table[idx.year][idx.month] = value
             # add first month
             fidx = mr.index[0]
             try:
@@ -1523,9 +1524,14 @@ def _calc_information_ratio(diff_rets):
     diff_std = diff_rets.std(ddof=1)
 
     if isinstance(diff_std, pd.Series):
-        result = pd.Series(0.0, index=diff_std.index)
+        diff_mean = diff_rets.mean()
         valid = diff_std.notna() & diff_std.ne(0)
-        result.loc[valid] = np.divide(diff_rets.mean().loc[valid], diff_std.loc[valid])
+        if diff_mean.dtype.kind == "f" and diff_mean.dtype.itemsize <= 8:
+            return np.divide(diff_mean, diff_std).where(valid, 0.0).astype(float)
+
+        # Retain assignment semantics for object, complex, and extended-precision data.
+        result = pd.Series(0.0, index=diff_std.index)
+        result.loc[valid] = np.divide(diff_mean.loc[valid], diff_std.loc[valid])
         return result
 
     if pd.isna(diff_std) or diff_std == 0:

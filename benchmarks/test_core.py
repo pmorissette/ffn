@@ -75,6 +75,14 @@ def test_calc_stats(benchmark, prices):
 
 
 @pytest.mark.benchmark(group="statistics")
+def test_calc_information_ratio(benchmark, returns):
+    result = benchmark(ffn.calc_information_ratio, returns, returns.iloc[:, 0])
+
+    assert result.index.equals(returns.columns)
+    assert result.iloc[0] == 0.0
+
+
+@pytest.mark.benchmark(group="statistics")
 def test_calc_prob_mom(benchmark, returns):
     result = benchmark(ffn.calc_prob_mom, returns, returns.iloc[:, 0])
 
