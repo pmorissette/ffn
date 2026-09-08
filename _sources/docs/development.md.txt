@@ -1,0 +1,52 @@
+# How to develop ffn
+
+Use Python 3.11 for development and documentation tools. ffn's runtime supports Python 3.9 and later. Install uv, then create an environment:
+
+```bash
+uv venv --python 3.11
+source .venv/bin/activate
+make develop
+make lint
+make checks
+make coverage
+make build
+make test-dist
+```
+
+On Windows, activate with `.venv\Scripts\activate`. Run `make help` for available targets. `make test` runs the unit tests; `make benchmark` runs the separate performance benchmarks. Type checking (`make check-types`) is advisory and does not gate CI. The `dev` extra remains an alias for `develop`.
+
+## Build documentation
+
+```bash
+make docs-develop
+make docs
+make serve
+```
+
+Open <http://localhost:9087>. Yardang reads configuration from `pyproject.toml` and uses `README.md` as the homepage. Klink supplies the theme; generated HTML goes into `docs/html`. Builds treat warnings as errors.
+
+Edit the installation guide, quickstart, and API reference under `docs/source`. Keep API reference separate from the tutorials and contributor instructions. Existing page URLs are preserved by redirects in `[tool.yardang.redirects]`.
+
+The notebook exports and images are checked in. Builds use saved outputs without executing notebooks or downloading market data. After editing a notebook, install Pandoc and regenerate its exports with Klink:
+
+```bash
+uv pip install nbconvert
+cd docs/source
+python -c 'import klink; klink.convert_notebooks()'
+```
+
+Review and commit the changed notebooks, RST exports, and images together. Run `make docs` and check navigation, images, and API links before submitting changes.
+
+Pull requests build an HTML artifact. Successful documentation builds on `master` publish to the existing `gh-pages` branch.
+
+## Update the template
+
+From a clean branch with development dependencies installed, run:
+
+```bash
+copier update --answers-file .copier-answers.yaml --trust
+```
+
+Resolve conflicts and review the generated diff before running the checks above. Keep ffn's MIT license, version, Python runtime floor, package metadata, top-level tests, benchmarks, and Ruff line length when accepting template changes. `.copier-answers.yaml` records the pure-Python variant of `python-project-templates/base` and the pinned template revision.
+
+The Python Templates Copier Update GitHub App can propose updates once installed for this repository. The answers file also supports manual updates with the command above.

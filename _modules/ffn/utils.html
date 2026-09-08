@@ -1,18 +1,433 @@
-
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="en" data-content_root="../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ffn.utils &#8212; ffn 0.3.6 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../../_static/css/klink.css" />
-    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
-    <script src="../../_static/jquery.js"></script>
-    <script src="../../_static/underscore.js"></script>
-    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
-    <script src="../../_static/doctools.js"></script>
+    <title>ffn.utils &#8212; ffn — Financial Functions for Python</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/klink.css?v=f4590041" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/custom.css?v=890fd012" />
+    <script src="../../_static/documentation_options.js?v=ca842793"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.12.1/dist/mermaid.esm.min.mjs";
+
+
+import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.2.0/dist/mermaid-layout-elk.esm.min.mjs"
+
+
+
+
+const initStyles = () => {
+    const defaultStyle = document.createElement('style');
+    defaultStyle.textContent = "pre.mermaid {\n    /* Same as .mermaid-container > pre */\n    display: block;\n    width: 100%;\n}\n\npre.mermaid > svg {\n    /* Same as .mermaid-container > pre > svg */\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}";
+    document.head.appendChild(defaultStyle);
+
+    const fullscreenStyle = document.createElement('style');
+    fullscreenStyle.textContent = ".mermaid-container {\n    position: relative;\n    display: flex;\n    flex-direction: row;\n    width: 100%;\n}\n\n.mermaid-container > pre {\n    display: block;\n    width: 100%;\n}\n\n.mermaid-container > pre > svg {\n    height: 500px;\n    width: 100%;\n    max-width: 100% !important;\n}\n\n.mermaid-fullscreen-btn {\n    position: absolute;\n    width: 28px;\n    height: 28px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.3);\n    border-radius: 4px;\n    cursor: pointer;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    transition: all 0.2s;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);\n    font-size: 14px;\n    line-height: 1;\n    padding: 0;\n    color: #333;\n}\n\n.mermaid-fullscreen-btn:hover {\n    opacity: 100% !important;\n    background: rgba(255, 255, 255, 1);\n    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-btn.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.3);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-btn.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 3px 10px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal {\n    display: none;\n    position: fixed !important;\n    top: 0 !important;\n    left: 0 !important;\n    width: 95vw;\n    height: 100vh;\n    background: rgba(255, 255, 255, 0.98);\n    z-index: 9999;\n    padding: 20px;\n    overflow: auto;\n}\n\n.mermaid-fullscreen-modal.dark-theme {\n    background: rgba(0, 0, 0, 0.98);\n}\n\n.mermaid-fullscreen-modal.active {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen {\n    position: relative;\n    width: 95vw;\n    height: 90vh;\n    max-width: 95vw;\n    max-height: 90vh;\n    background: white;\n    border-radius: 8px;\n    padding: 20px;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);\n    overflow: auto;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen.dark-theme {\n    background: #1a1a1a;\n    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);\n}\n\n.mermaid-container-fullscreen pre.mermaid {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n}\n\n.mermaid-container-fullscreen .mermaid svg {\n    height: 100% !important;\n    width: 100% !important;\n    cursor: grab;\n}\n\n.mermaid-fullscreen-close {\n    position: fixed !important;\n    top: 20px !important;\n    right: 20px !important;\n    width: 40px;\n    height: 40px;\n    background: rgba(255, 255, 255, 0.95);\n    border: 1px solid rgba(0, 0, 0, 0.2);\n    border-radius: 50%;\n    cursor: pointer;\n    z-index: 10000;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    transition: all 0.2s;\n    font-size: 24px;\n    line-height: 1;\n    color: #333;\n}\n\n.mermaid-fullscreen-close:hover {\n    background: white;\n    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);\n    transform: scale(1.1);\n}\n\n.mermaid-fullscreen-close.dark-theme {\n    background: rgba(50, 50, 50, 0.95);\n    border: 1px solid rgba(255, 255, 255, 0.2);\n    color: #e0e0e0;\n}\n\n.mermaid-fullscreen-close.dark-theme:hover {\n    background: rgba(60, 60, 60, 1);\n    box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);\n}\n\n.mermaid-fullscreen-modal .mermaid-fullscreen-btn {\n    display: none !important;\n}";
+    document.head.appendChild(fullscreenStyle);
+}
+
+// Detect if page has dark background
+const isDarkTheme = () => {
+    // We use a set of heuristics:
+    // 1. Check for common dark mode classes or attributes
+    // 2. Check computed background color brightness
+    if (document.documentElement.classList.contains('dark') ||
+        document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark') ||
+        document.body.getAttribute('data-theme') === 'dark') {
+        // console.log("Dark theme detected via class/attribute");
+        return true;
+    }
+    if (document.documentElement.classList.contains('light') ||
+        document.documentElement.getAttribute('data-theme') === 'light' ||
+        document.body.classList.contains('light') ||
+        document.body.getAttribute('data-theme') === 'light') {
+        // console.log("Light theme detected via class/attribute");
+        return false;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // console.log("Dark theme detected via prefers-color-scheme");
+        return true;
+    }
+    const bgColor = window.getComputedStyle(document.body).backgroundColor;
+    const match = bgColor.match(/rgb\((\d+),\s*(\d+),\s*(\d+)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        // console.log("Background color brightness:", brightness);
+        return brightness < 128;
+    }
+    // console.log("No dark or light theme detected, defaulting to light theme");
+    return false;
+};
+
+let darkTheme = isDarkTheme();
+let modal = null;
+let modalContent = null;
+let previousScrollOffset = [window.scrollX, window.scrollY];
+let _lazyObserver = null;
+let _renderQueue = Promise.resolve();
+let closeModal = () => {};
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal?.classList.contains('active')) {
+        closeModal();
+    }
+});
+
+// Apply d3 zoom to each SVG. Idempotent: an SVG already wrapped is skipped,
+// so this is safe to call both for the initial batch and for diagrams that
+// render lazily once they become visible.
+const addZoomToSvgs = (svgs) => {
+    svgs.each(function() {
+        if (this.getAttribute('data-zoom-applied') === 'true') return;
+        var svg = d3.select(this);
+        svg.html("<g class='wrapper'>" + svg.html() + "</g>");
+        var inner = svg.select("g");
+        var zoom = d3.zoom().on("zoom", function(event) {
+            inner.attr("transform", event.transform);
+        });
+        svg.call(zoom);
+        this.setAttribute('data-zoom-applied', 'true');
+    });
+};
+
+const runMermaid = async (rerun) => {
+    console.log("Running mermaid diagrams, rerun =", rerun);
+    // clear all existing mermaid charts
+    let all_mermaids = document.querySelectorAll(".mermaid");
+
+    if (rerun) {
+        // Disconnect any previous lazy rendering observer
+        if (_lazyObserver) {
+            _lazyObserver.disconnect();
+            _lazyObserver = null;
+        }
+
+        all_mermaids.forEach((el) => {
+            el.removeAttribute('data-mermaid-deferred');
+            el.removeAttribute('data-mermaid-render-failed');
+            if(!el.hasAttribute("data-original-code")) {
+                // store original code
+                // console.log(`Storing original code for first run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+            if(el.getAttribute("data-processed") === "true") {
+                // remove and restore original
+                el.removeAttribute("data-processed");
+                // console.log(`Restoring original code for re-run: `, el.getAttribute('data-original-code'));
+                el.innerHTML = el.getAttribute('data-original-code');
+            } else {
+                // store original code
+                // console.log(`Storing original code for re-run: `, el.innerHTML);
+                el.setAttribute('data-original-code', el.innerHTML);
+            }
+        });
+
+        // Separate visible and hidden elements. Mermaid's layout engine measures
+        // text dimensions via the DOM, which fails for elements hidden by a parent
+        // (e.g., Reveal.js non-active slides, sphinx-design unopened tabs),
+        // producing broken SVGs. Render visible elements now, defer hidden ones.
+        const visible = [];
+        const hidden = [];
+        all_mermaids.forEach((el) => {
+            // offsetParent is null for display:none ancestors.
+            // getClientRects().length > 0 catches position:fixed elements
+            // (which also have null offsetParent but are still visible).
+            if (el.offsetParent !== null || el.getClientRects().length > 0) {
+                visible.push(el);
+            } else {
+                hidden.push(el);
+                el.setAttribute('data-mermaid-deferred', 'true');
+            }
+        });
+
+        if (visible.length > 0) {
+            try {
+                await mermaid.run({ nodes: visible });
+            } catch (e) {
+                console.error("Mermaid rendering failed:", e);
+            }
+        }
+
+        // Lazily render hidden elements when they become visible.
+        // Uses a promise chain (_renderQueue) to serialize rendering,
+        // since IntersectionObserver may report multiple entries at once
+        // and mermaid.run() is not safe to call concurrently.
+        if (hidden.length > 0) {
+            if (typeof IntersectionObserver === 'undefined') {
+                console.warn("IntersectionObserver not available; hidden mermaid diagrams will not render.");
+            } else {
+                _renderQueue = Promise.resolve();
+                _lazyObserver = new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.isIntersecting && entry.target.getAttribute("data-processed") !== "true") {
+                            _lazyObserver.unobserve(entry.target);
+                            const el = entry.target;
+                            _renderQueue = _renderQueue.then(async () => {
+                                try {
+                                    await mermaid.run({ nodes: [el] });
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    // Apply zoom to the now-rendered diagram, matching
+                                    // the decoration visible diagrams receive.
+                                    if (true) {
+                                        addZoomToSvgs(d3.selectAll(".mermaid").select(function() {
+                                            return this.querySelector("svg");
+                                        }));
+                                    }
+                                } catch (e) {
+                                    console.error("Mermaid deferred rendering failed:", e);
+                                    el.removeAttribute('data-mermaid-deferred');
+                                    el.setAttribute('data-mermaid-render-failed', 'true');
+                                }
+                            });
+                        }
+                    }
+                });
+                hidden.forEach((el) => _lazyObserver.observe(el));
+            }
+        }
+    }
+
+    all_mermaids = document.querySelectorAll(".mermaid");
+    // Exclude deferred (hidden) and render-failed elements from completion checks
+    const mermaids_active = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])");
+    const mermaids_processed = document.querySelectorAll(".mermaid:not([data-mermaid-deferred]):not([data-mermaid-render-failed])[data-processed='true']");
+
+    if (true) {
+        const mermaids_to_add_zoom = -1 === -1 ? mermaids_active.length : -1;
+        if(mermaids_to_add_zoom > 0) {
+            var svgs = d3.selectAll(".mermaid").select(function() {
+                return this.querySelector("svg");
+            });
+            // Wait until every active (visible) diagram has rendered. Deferred
+            // diagrams are excluded, so a fixed d3_node_count that counts a
+            // hidden diagram no longer loops forever waiting for its SVG.
+            if(mermaids_active.length !== mermaids_processed.length) {
+                setTimeout(() => runMermaid(false), 200);
+                return;
+            }
+            addZoomToSvgs(svgs);
+        }
+    } else if(mermaids_active.length !== mermaids_processed.length) {
+        // Wait for mermaid to process all diagrams
+        setTimeout(() => runMermaid(false), 200);
+        return;
+    }
+
+    // Stop here if not adding fullscreen capability
+    if (!true) return;
+
+    if (modal !== null ) {
+        // Destroy existing modal
+        modal.remove();
+        modal = null;
+        modalContent = null;
+    }
+
+    modal = document.createElement('div');
+    modal.className = 'mermaid-fullscreen-modal' + (darkTheme ? ' dark-theme' : '');
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Fullscreen diagram viewer');
+    modal.innerHTML = `
+        <button class="mermaid-fullscreen-close${darkTheme ? ' dark-theme' : ''}" aria-label="Close fullscreen">✕</button>
+        <div class="mermaid-container-fullscreen${darkTheme ? ' dark-theme' : ''}"></div>
+    `;
+    document.body.appendChild(modal);
+
+    modalContent = modal.querySelector('.mermaid-container-fullscreen');
+    const closeBtn = modal.querySelector('.mermaid-fullscreen-close');
+
+    closeModal = () => {
+        modal.classList.remove('active');
+        modalContent.innerHTML = '';
+        document.body.style.overflow = ''
+        window.scrollTo({left: previousScrollOffset[0], top: previousScrollOffset[1], behavior: 'instant'});
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    document.querySelectorAll('.mermaid').forEach((mermaidDiv) => {
+        if (mermaidDiv.parentNode.classList.contains('mermaid-container') ||
+            mermaidDiv.closest('.mermaid-fullscreen-modal')) {
+            // Already processed, adjust button class if needed
+            const existingBtn = mermaidDiv.parentNode.querySelector('.mermaid-fullscreen-btn');
+            if (existingBtn) {
+                existingBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+            }
+            return;
+        }
+
+        const container = document.createElement('div');
+        container.className = 'mermaid-container';
+        mermaidDiv.parentNode.insertBefore(container, mermaidDiv);
+        container.appendChild(mermaidDiv);
+
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'mermaid-fullscreen-btn' + (darkTheme ? ' dark-theme' : '');
+        fullscreenBtn.setAttribute('aria-label', 'View diagram in fullscreen');
+        fullscreenBtn.textContent = "\u26f6";
+        fullscreenBtn.style.opacity = "50%";
+
+        // Calculate dynamic position based on diagram's margin and padding
+        const diagramStyle = window.getComputedStyle(mermaidDiv);
+        const marginTop = parseFloat(diagramStyle.marginTop) || 0;
+        const marginRight = parseFloat(diagramStyle.marginRight) || 0;
+        const paddingTop = parseFloat(diagramStyle.paddingTop) || 0;
+        const paddingRight = parseFloat(diagramStyle.paddingRight) || 0;
+        fullscreenBtn.style.top = `${marginTop + paddingTop + 4}px`;
+        fullscreenBtn.style.right = `${marginRight + paddingRight + 4}px`;
+
+        fullscreenBtn.addEventListener('click', () => {
+            previousScrollOffset = [window.scrollX, window.scrollY];
+            const clone = mermaidDiv.cloneNode(true);
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
+
+            const svg = clone.querySelector('svg');
+            if (svg) {
+                svg.removeAttribute('width');
+                svg.removeAttribute('height');
+                svg.style.width = '100%';
+                svg.style.height = 'auto';
+                svg.style.maxWidth = '100%';
+                svg.style.display = 'block';
+
+                if (true) {
+                    setTimeout(() => {
+                        const g = svg.querySelector('g');
+                        if (g) {
+                            var svgD3 = d3.select(svg);
+                            svgD3.html("<g class='wrapper'>" + svgD3.html() + "</g>");
+                            var inner = svgD3.select("g");
+                            var zoom = d3.zoom().on("zoom", function(event) {
+                                inner.attr("transform", event.transform);
+                            });
+                            svgD3.call(zoom);
+                        }
+                    }, 100);
+                }
+            }
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        container.appendChild(fullscreenBtn);
+    });
+};
+
+
+// Resolves once the lazily-loaded zenuml plugin has registered (or immediately
+// when the page has no zenuml diagram). `load` awaits this before rendering.
+let zenumlReady = Promise.resolve();
+const pageHasZenuml = () => [...document.querySelectorAll(".mermaid")].some((el) => {
+    const code = el.getAttribute("data-original-code") || el.textContent || "";
+    const diagram = code
+        .replace(/^\s*---\s*\n[^]*?\n---\s*/, "")
+        .replace(/^\s*%%\{[^]*?\}%%\s*/, "");
+    return /^\s*zenuml\b/i.test(diagram);
+});
+
+
+const load = async () => {
+    initStyles();
+
+
+    // Wait for the zenuml plugin (loaded lazily below) to finish registering
+    // before rendering, so zenuml diagrams are recognised.
+    await zenumlReady;
+
+    await runMermaid(true);
+
+    const reRunIfThemeChanges = async () => {
+        const newDarkTheme = isDarkTheme();
+        if (newDarkTheme !== darkTheme) {
+            darkTheme = newDarkTheme;
+            console.log("Theme change detected, re-running mermaid with", darkTheme ? "dark" : "default", "theme");
+            await mermaid.initialize(
+                {...{"startOnLoad": false},
+                ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+                }
+            );
+            await runMermaid(true);
+        }
+    };
+
+    // Update theme classes when theme changes
+    const themeObserver = new MutationObserver(reRunIfThemeChanges);
+    themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+    themeObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['class', 'style', 'data-theme']
+    });
+};
+
+
+mermaid.registerLayoutLoaders(elkLayouts);
+
+
+
+// Only load and register the zenuml plugin when the page actually contains a
+// zenuml diagram. This avoids fetching the (large) zenuml bundle on every page,
+// and avoids its side effects where they are not needed. The import is kept off
+// the module's top level (no top-level await) so the "load" listener below is
+// still registered synchronously; `load` awaits `zenumlReady` before rendering.
+if (pageHasZenuml()) {
+    // The zenuml bundle injects a stylesheet that declares generic design tokens
+    // (--background, --border, --white, ...) on :root, clobbering identically-named
+    // tokens in the host theme (sphinxawesome, shibuya, ...) and causing a flash of
+    // restyled page content. Confine those declarations to the zenuml diagram
+    // subtree so they no longer leak onto the host page.
+    const descopeZenumlStyle = (node) => {
+        if (!node || node.tagName !== "STYLE" || node.hasAttribute("data-zenuml-descoped")) return;
+        const css = node.textContent || "";
+        if (!css.includes("--occurance-border")) return; // zenuml stylesheet signature
+        node.setAttribute("data-zenuml-descoped", "true");
+        node.textContent = css.replace(/:root\b/g, ".zenuml");
+    };
+    new MutationObserver((records) => {
+        for (const rec of records) {
+            for (const node of rec.addedNodes) descopeZenumlStyle(node);
+        }
+    }).observe(document.head, { childList: true });
+
+    zenumlReady = import("https://cdn.jsdelivr.net/npm/@mermaid-js/mermaid-zenuml@0.2.2/dist/mermaid-zenuml.esm.min.mjs").then(({ default: zenumlLayouts }) => {
+        mermaid.registerExternalDiagrams([zenumlLayouts]);
+    });
+}
+
+
+console.log("Initializing mermaid with", darkTheme ? "dark" : "default", "theme");
+mermaid.initialize(
+    {...{"startOnLoad": false},
+    ...{ darkMode: darkTheme, theme: darkTheme ? "dark" : "default" },
+    }
+);
+
+window.addEventListener("load", load);
+window.runMermaid = runMermaid;</script>
+    <script src="../../_static/js/custom.js?v=956e5d78"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
          
@@ -29,32 +444,32 @@
           <div class="body" role="main">
             
   <h1>Source code for ffn.utils</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
-<span class="kn">import</span> <span class="nn">decorator</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
 
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">cPickle</span> <span class="k">as</span> <span class="nn">pickle</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">decorator</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">packaging.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">Version</span>
 
 
-<span class="k">def</span> <span class="nf">_memoize</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_memoize</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
     <span class="c1"># should we refresh the cache?</span>
     <span class="n">refresh</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">refresh_kw</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">mrefresh_keyword</span>
 
     <span class="c1"># kw is not always set - check args</span>
-    <span class="k">if</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">func</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">refresh_kw</span><span class="p">)]:</span>
+    <span class="n">positional_vars</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_varnames</span><span class="p">[:</span> <span class="n">func</span><span class="o">.</span><span class="vm">__code__</span><span class="o">.</span><span class="n">co_argcount</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">positional_vars</span><span class="p">:</span>
+        <span class="n">refresh_idx</span> <span class="o">=</span> <span class="n">positional_vars</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">refresh_kw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">refresh_idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="ow">and</span> <span class="n">args</span><span class="p">[</span><span class="n">refresh_idx</span><span class="p">]:</span>
             <span class="n">refresh</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="c1"># check in kw if not already set above</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">refresh</span> <span class="ow">and</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">kw</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">kw</span><span class="p">[</span><span class="n">refresh_kw</span><span class="p">]:</span>
-            <span class="n">refresh</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">refresh</span> <span class="ow">and</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">kw</span> <span class="ow">and</span> <span class="n">kw</span><span class="p">[</span><span class="n">refresh_kw</span><span class="p">]:</span>
+        <span class="n">refresh</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">key</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -66,29 +481,34 @@
         <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="memoize"><a class="viewcode-back" href="../../ffn.html#ffn.utils.memoize">[docs]</a><span class="k">def</span> <span class="nf">memoize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">refresh_keyword</span><span class="o">=</span><span class="s2">&quot;mrefresh&quot;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="memoize">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.memoize">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">memoize</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">refresh_keyword</span><span class="o">=</span><span class="s2">"mrefresh"</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Memoize decorator. The refresh keyword is the keyword</span>
 <span class="sd">    used to bypass the cache (in the function call).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">f</span><span class="o">.</span><span class="n">mcache</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">f</span><span class="o">.</span><span class="n">mrefresh_keyword</span> <span class="o">=</span> <span class="n">refresh_keyword</span>
     <span class="k">return</span> <span class="n">decorator</span><span class="o">.</span><span class="n">decorator</span><span class="p">(</span><span class="n">_memoize</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="parse_arg"><a class="viewcode-back" href="../../ffn.html#ffn.utils.parse_arg">[docs]</a><span class="k">def</span> <span class="nf">parse_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="parse_arg">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.parse_arg">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Parses arguments for convenience. Argument can be a</span>
-<span class="sd">    csv list (&#39;a,b,c&#39;), a string, a list, a tuple.</span>
+<span class="sd">    csv list ('a,b,c'), a string, a list, a tuple.</span>
 
 <span class="sd">    Returns a list.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="c1"># handle string input</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="c1"># parse csv as tickers and create children</span>
-        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
-            <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">","</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span>
             <span class="n">arg</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">]</span>
         <span class="c1"># assume single string - create single item list</span>
         <span class="k">else</span><span class="p">:</span>
@@ -97,94 +517,147 @@
     <span class="k">return</span> <span class="n">arg</span></div>
 
 
-<div class="viewcode-block" id="clean_ticker"><a class="viewcode-back" href="../../ffn.html#ffn.utils.clean_ticker">[docs]</a><span class="k">def</span> <span class="nf">clean_ticker</span><span class="p">(</span><span class="n">ticker</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="clean_ticker">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.clean_ticker">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clean_ticker</span><span class="p">(</span><span class="n">ticker</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Cleans a ticker for easier use throughout MoneyTree</span>
 
 <span class="sd">    Splits by space and only keeps first bit. Also removes</span>
 <span class="sd">    any characters that are not letters. Returns as lowercase.</span>
 
-<span class="sd">    &gt;&gt;&gt; clean_ticker(&#39;^VIX&#39;)</span>
-<span class="sd">    &#39;vix&#39;</span>
-<span class="sd">    &gt;&gt;&gt; clean_ticker(&#39;SPX Index&#39;)</span>
-<span class="sd">    &#39;spx&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">&quot;[</span><span class="se">\\</span><span class="s2">W_]+&quot;</span><span class="p">)</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">ticker</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+<span class="sd">    &gt;&gt;&gt; clean_ticker('^VIX')</span>
+<span class="sd">    'vix'</span>
+<span class="sd">    &gt;&gt;&gt; clean_ticker('SPX Index')</span>
+<span class="sd">    'spx'</span>
+<span class="sd">    """</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s2">"[</span><span class="se">\\</span><span class="s2">W_]+"</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">""</span><span class="p">,</span> <span class="n">ticker</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" "</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
     <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span></div>
 
 
-<div class="viewcode-block" id="clean_tickers"><a class="viewcode-back" href="../../ffn.html#ffn.utils.clean_tickers">[docs]</a><span class="k">def</span> <span class="nf">clean_tickers</span><span class="p">(</span><span class="n">tickers</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="clean_tickers">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.clean_tickers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">clean_tickers</span><span class="p">(</span><span class="n">tickers</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Maps clean_ticker over tickers.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">clean_ticker</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tickers</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="fmtp"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtp">[docs]</a><span class="k">def</span> <span class="nf">fmtp</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="fmtp">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.fmtp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fmtp</span><span class="p">(</span><span class="n">number</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Formatting helper - percent</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;-&quot;</span>
-    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s2">&quot;.2%&quot;</span><span class="p">)</span></div>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"-"</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s2">".2%"</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fmtpn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtpn">[docs]</a><span class="k">def</span> <span class="nf">fmtpn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="fmtpn">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.fmtpn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fmtpn</span><span class="p">(</span><span class="n">number</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Formatting helper - percent no % sign</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;-&quot;</span>
-    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;.2f&quot;</span><span class="p">)</span></div>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"-"</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">".2f"</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="fmtn"><a class="viewcode-back" href="../../ffn.html#ffn.utils.fmtn">[docs]</a><span class="k">def</span> <span class="nf">fmtn</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="fmtn">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.fmtn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fmtn</span><span class="p">(</span><span class="n">number</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Formatting helper - float</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s2">&quot;-&quot;</span>
-    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s2">&quot;.2f&quot;</span><span class="p">)</span></div>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">"-"</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s2">".2f"</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="get_freq_name"><a class="viewcode-back" href="../../ffn.html#ffn.utils.get_freq_name">[docs]</a><span class="k">def</span> <span class="nf">get_freq_name</span><span class="p">(</span><span class="n">period</span><span class="p">):</span>
-    <span class="n">period</span> <span class="o">=</span> <span class="n">period</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+
+<div class="viewcode-block" id="get_freq_name">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.get_freq_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_freq_name</span><span class="p">(</span><span class="n">period</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?:-?\d+)?([A-Za-z]+)(?:-([A-Za-z]+))?"</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">base</span><span class="p">,</span> <span class="n">anchor</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">anchor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">base_upper</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="n">month_anchored</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Q"</span><span class="p">,</span> <span class="s2">"QE"</span><span class="p">,</span> <span class="s2">"BQ"</span><span class="p">,</span> <span class="s2">"BQE"</span><span class="p">,</span> <span class="s2">"QS"</span><span class="p">,</span> <span class="s2">"BQS"</span><span class="p">,</span> <span class="s2">"Y"</span><span class="p">,</span> <span class="s2">"YE"</span><span class="p">,</span> <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"BA"</span><span class="p">,</span> <span class="s2">"BY"</span><span class="p">,</span> <span class="s2">"BYE"</span><span class="p">,</span> <span class="s2">"AS"</span><span class="p">,</span> <span class="s2">"YS"</span><span class="p">,</span> <span class="s2">"BAS"</span><span class="p">,</span> <span class="s2">"BYS"</span><span class="p">}</span>
+        <span class="n">valid_anchors</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"MON"</span><span class="p">,</span> <span class="s2">"TUE"</span><span class="p">,</span> <span class="s2">"WED"</span><span class="p">,</span> <span class="s2">"THU"</span><span class="p">,</span> <span class="s2">"FRI"</span><span class="p">,</span> <span class="s2">"SAT"</span><span class="p">,</span> <span class="s2">"SUN"</span><span class="p">)</span> <span class="k">if</span> <span class="n">base_upper</span> <span class="o">==</span> <span class="s2">"W"</span> <span class="k">else</span> <span class="p">()</span>
+        <span class="k">if</span> <span class="n">base_upper</span> <span class="ow">in</span> <span class="n">month_anchored</span><span class="p">:</span>
+            <span class="n">valid_anchors</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"JAN"</span><span class="p">,</span> <span class="s2">"FEB"</span><span class="p">,</span> <span class="s2">"MAR"</span><span class="p">,</span> <span class="s2">"APR"</span><span class="p">,</span> <span class="s2">"MAY"</span><span class="p">,</span> <span class="s2">"JUN"</span><span class="p">,</span> <span class="s2">"JUL"</span><span class="p">,</span> <span class="s2">"AUG"</span><span class="p">,</span> <span class="s2">"SEP"</span><span class="p">,</span> <span class="s2">"OCT"</span><span class="p">,</span> <span class="s2">"NOV"</span><span class="p">,</span> <span class="s2">"DEC"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">anchor</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_anchors</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="c1"># These aliases are case sensitive in pandas: "ms" is milliseconds while</span>
+    <span class="c1"># "MS" is month start, so they have to be matched before upper casing</span>
+    <span class="n">case_sensitive</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"min"</span><span class="p">:</span> <span class="s2">"minutely"</span><span class="p">,</span>
+        <span class="s2">"ms"</span><span class="p">:</span> <span class="s2">"milliseconds"</span><span class="p">,</span>
+        <span class="s2">"us"</span><span class="p">:</span> <span class="s2">"microseconds"</span><span class="p">,</span>
+        <span class="s2">"ns"</span><span class="p">:</span> <span class="s2">"nanoseconds"</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">case_sensitive</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">case_sensitive</span><span class="p">[</span><span class="n">base</span><span class="p">]</span>
+
     <span class="n">periods</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="s2">&quot;business day&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;C&quot;</span><span class="p">:</span> <span class="s2">&quot;custom business day&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;D&quot;</span><span class="p">:</span> <span class="s2">&quot;daily&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;W&quot;</span><span class="p">:</span> <span class="s2">&quot;weekly&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;M&quot;</span><span class="p">:</span> <span class="s2">&quot;monthly&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;BM&quot;</span><span class="p">:</span> <span class="s2">&quot;business month end&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;CBM&quot;</span><span class="p">:</span> <span class="s2">&quot;custom business month end&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;MS&quot;</span><span class="p">:</span> <span class="s2">&quot;month start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;BMS&quot;</span><span class="p">:</span> <span class="s2">&quot;business month start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;CBMS&quot;</span><span class="p">:</span> <span class="s2">&quot;custom business month start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Q&quot;</span><span class="p">:</span> <span class="s2">&quot;quarterly&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;BQ&quot;</span><span class="p">:</span> <span class="s2">&quot;business quarter end&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;QS&quot;</span><span class="p">:</span> <span class="s2">&quot;quarter start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;BQS&quot;</span><span class="p">:</span> <span class="s2">&quot;business quarter start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;Y&quot;</span><span class="p">:</span> <span class="s2">&quot;yearly&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="s2">&quot;yearly&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;BA&quot;</span><span class="p">:</span> <span class="s2">&quot;business year end&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;AS&quot;</span><span class="p">:</span> <span class="s2">&quot;year start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;BAS&quot;</span><span class="p">:</span> <span class="s2">&quot;business year start&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;H&quot;</span><span class="p">:</span> <span class="s2">&quot;hourly&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;T&quot;</span><span class="p">:</span> <span class="s2">&quot;minutely&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;S&quot;</span><span class="p">:</span> <span class="s2">&quot;secondly&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;L&quot;</span><span class="p">:</span> <span class="s2">&quot;milliseonds&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;U&quot;</span><span class="p">:</span> <span class="s2">&quot;microseconds&quot;</span><span class="p">,</span>
+        <span class="s2">"B"</span><span class="p">:</span> <span class="s2">"business day"</span><span class="p">,</span>
+        <span class="s2">"C"</span><span class="p">:</span> <span class="s2">"custom business day"</span><span class="p">,</span>
+        <span class="s2">"D"</span><span class="p">:</span> <span class="s2">"daily"</span><span class="p">,</span>
+        <span class="s2">"W"</span><span class="p">:</span> <span class="s2">"weekly"</span><span class="p">,</span>
+        <span class="s2">"M"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">,</span>
+        <span class="s2">"ME"</span><span class="p">:</span> <span class="s2">"monthly"</span><span class="p">,</span>
+        <span class="s2">"BM"</span><span class="p">:</span> <span class="s2">"business month end"</span><span class="p">,</span>
+        <span class="s2">"BME"</span><span class="p">:</span> <span class="s2">"business month end"</span><span class="p">,</span>
+        <span class="s2">"CBM"</span><span class="p">:</span> <span class="s2">"custom business month end"</span><span class="p">,</span>
+        <span class="s2">"CBME"</span><span class="p">:</span> <span class="s2">"custom business month end"</span><span class="p">,</span>
+        <span class="s2">"MS"</span><span class="p">:</span> <span class="s2">"month start"</span><span class="p">,</span>
+        <span class="s2">"BMS"</span><span class="p">:</span> <span class="s2">"business month start"</span><span class="p">,</span>
+        <span class="s2">"CBMS"</span><span class="p">:</span> <span class="s2">"custom business month start"</span><span class="p">,</span>
+        <span class="s2">"Q"</span><span class="p">:</span> <span class="s2">"quarterly"</span><span class="p">,</span>
+        <span class="s2">"QE"</span><span class="p">:</span> <span class="s2">"quarterly"</span><span class="p">,</span>
+        <span class="s2">"BQ"</span><span class="p">:</span> <span class="s2">"business quarter end"</span><span class="p">,</span>
+        <span class="s2">"BQE"</span><span class="p">:</span> <span class="s2">"business quarter end"</span><span class="p">,</span>
+        <span class="s2">"QS"</span><span class="p">:</span> <span class="s2">"quarter start"</span><span class="p">,</span>
+        <span class="s2">"BQS"</span><span class="p">:</span> <span class="s2">"business quarter start"</span><span class="p">,</span>
+        <span class="s2">"Y"</span><span class="p">:</span> <span class="s2">"yearly"</span><span class="p">,</span>
+        <span class="s2">"YE"</span><span class="p">:</span> <span class="s2">"yearly"</span><span class="p">,</span>
+        <span class="s2">"A"</span><span class="p">:</span> <span class="s2">"yearly"</span><span class="p">,</span>
+        <span class="s2">"BA"</span><span class="p">:</span> <span class="s2">"business year end"</span><span class="p">,</span>
+        <span class="s2">"BY"</span><span class="p">:</span> <span class="s2">"business year end"</span><span class="p">,</span>
+        <span class="s2">"BYE"</span><span class="p">:</span> <span class="s2">"business year end"</span><span class="p">,</span>
+        <span class="s2">"AS"</span><span class="p">:</span> <span class="s2">"year start"</span><span class="p">,</span>
+        <span class="s2">"YS"</span><span class="p">:</span> <span class="s2">"year start"</span><span class="p">,</span>
+        <span class="s2">"BAS"</span><span class="p">:</span> <span class="s2">"business year start"</span><span class="p">,</span>
+        <span class="s2">"BYS"</span><span class="p">:</span> <span class="s2">"business year start"</span><span class="p">,</span>
+        <span class="s2">"H"</span><span class="p">:</span> <span class="s2">"hourly"</span><span class="p">,</span>
+        <span class="s2">"T"</span><span class="p">:</span> <span class="s2">"minutely"</span><span class="p">,</span>
+        <span class="s2">"S"</span><span class="p">:</span> <span class="s2">"secondly"</span><span class="p">,</span>
+        <span class="s2">"L"</span><span class="p">:</span> <span class="s2">"milliseconds"</span><span class="p">,</span>
+        <span class="s2">"U"</span><span class="p">:</span> <span class="s2">"microseconds"</span><span class="p">,</span>
+        <span class="s2">"N"</span><span class="p">:</span> <span class="s2">"nanoseconds"</span><span class="p">,</span>
     <span class="p">}</span>
 
-    <span class="k">if</span> <span class="n">period</span> <span class="ow">in</span> <span class="n">periods</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">periods</span><span class="p">[</span><span class="n">period</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span></div>
+    <span class="k">return</span> <span class="n">periods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="scale"><a class="viewcode-back" href="../../ffn.html#ffn.utils.scale">[docs]</a><span class="k">def</span> <span class="nf">scale</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="scale">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.scale">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">scale</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">src</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">dst</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Scale value from src range to dst range.</span>
 <span class="sd">    If value outside bounds, it is clipped and set to</span>
 <span class="sd">    the low or high bound of dst.</span>
@@ -193,7 +666,7 @@
 <span class="sd">        scale(0, (0.0, 99.0), (-1.0, 1.0)) == -1.0</span>
 <span class="sd">        scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
@@ -202,18 +675,32 @@
     <span class="k">return</span> <span class="p">((</span><span class="n">val</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">src</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">src</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span> <span class="o">*</span> <span class="p">(</span><span class="n">dst</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="n">dst</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
 
 
-<div class="viewcode-block" id="as_percent"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_percent">[docs]</a><span class="k">def</span> <span class="nf">as_percent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">as_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;.</span><span class="si">%s%%</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">digits</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="as_percent">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.as_percent">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">as_percent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">digits</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">as_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">".</span><span class="si">{</span><span class="n">digits</span><span class="si">}</span><span class="s2">%"</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="as_format"><a class="viewcode-back" href="../../ffn.html#ffn.utils.as_format">[docs]</a><span class="k">def</span> <span class="nf">as_format</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s2">&quot;.2f&quot;</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="as_format">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.as_format">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">as_format</span><span class="p">(</span><span class="n">item</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="s2">".2f"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Map a format string over a pandas object.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
+    <span class="n">PANDAS_VERSION</span> <span class="o">=</span> <span class="n">Version</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+    <span class="n">PANDAS_210</span> <span class="o">=</span> <span class="n">PANDAS_VERSION</span> <span class="o">&gt;=</span> <span class="n">Version</span><span class="p">(</span><span class="s2">"2.1.0"</span><span class="p">)</span>
+
+    <span class="n">select_map</span> <span class="o">=</span> <span class="s2">"map"</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">PANDAS_210</span><span class="p">:</span>
+        <span class="n">select_map</span> <span class="o">=</span> <span class="s2">"applymap"</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">select_map</span><span class="p">)(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">format</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">format_str</span><span class="p">))</span></div>
+
 </pre></div>
 
             <div class="clearer"></div>
@@ -226,20 +713,14 @@
             <a href="../../index.html" id="logo" title=ffn><img class="logo" src="../../_static/logo.png" width="150px" height="150px" title=ffn /></a>
             
             
-            <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../index.html">Overview</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../install.html">Installation Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../quick.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../ffn.html">API</a></li>
-</ul>
-
+            
 
             
             <ul>
                 <li><a href="https://github.com/pmorissette/ffn">Github</a></li>
             </ul>
             
-<div id="searchbox" style="display: none" role="search">
+<search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../../search.html" method="get">
@@ -247,29 +728,16 @@
       <input type="submit" value="Go" />
     </form>
     </div>
-</div>
+</search>
 <script>document.getElementById('searchbox').style.display = "block"</script>
         </aside>
     
       <div class="clearer"></div>
     </div>
         <div class="footer">
-            ffn was created by Philippe Morissette.
-If you find a bug, please <a href="https://github.com/pmorissette/ffn/issues/new" title="Open a new issue on Github">submit an issue</a> on Github.
-
+            Philippe Morissette
         </div>
 
-        
-        <script>
-            (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-            })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-            ga('create', 'UA-52308448-1', 'auto');
-            ga('require', 'displayfeatures');
-            ga('send', 'pageview');
-        </script>
         
   </body>
 </html>
