@@ -1715,6 +1715,78 @@ def test_set_riskfree_rate(df):
     aae(performanceStats.yearly_sharpe, groupStats["MSFT"].yearly_sharpe, 3)
 
 
+def test_group_stats_preserves_scalar_riskfree_rate_across_date_ranges():
+    """Preserve a scalar risk-free rate when GroupStats rebuilds its children."""
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 99.0, 102.0, 104.0, 103.0, 106.0, 108.0],
+            "B": [80.0, 79.0, 81.0, 82.0, 81.0, 84.0, 83.0, 86.0],
+        },
+        index=pd.date_range("2024-01-01", periods=8),
+    )
+    annual_rate = 0.05
+    annualization_factor = 252
+    # Convert the annual scalar independently using the established compounding convention.
+    period_rate = (1.0 + annual_rate) ** (1.0 / annualization_factor) - 1.0
+    start = prices.index[2]
+    stats = ffn.GroupStats(prices, annualization_factor=annualization_factor)
+    stats.set_riskfree_rate(annual_rate)
+
+    # Exercise both a partial rebuild and the no-argument full-range reset.
+    # Derive the expected ratios without reusing ffn's risk-free helpers.
+    for range_start, windowed_prices in ((start, prices.loc[start:]), (None, prices)):
+        stats.set_date_range(start=range_start)
+
+        for name in ("A", "B"):
+            returns = windowed_prices[name].pct_change()
+            expected_sharpe = (returns - period_rate).mean() / returns.std(ddof=1) * np.sqrt(annualization_factor)
+            child = stats[name]
+            assert child is not None
+            assert child.rf == annual_rate
+            assert -1e-12 < child.daily_sharpe - expected_sharpe < 1e-12
+
+        assert (stats.stats.loc["rf"] == annual_rate).all()
+
+
+def test_group_stats_preserves_series_riskfree_rate_across_date_ranges():
+    """Preserve risk-free prices when GroupStats rebuilds its children."""
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 99.0, 102.0, 104.0, 103.0, 106.0, 108.0],
+            "B": [80.0, 79.0, 81.0, 82.0, 81.0, 84.0, 83.0, 86.0],
+        },
+        index=pd.date_range("2024-01-01", periods=8),
+    )
+    annualization_factor = 252
+    risk_free_prices = pd.Series(
+        100.0 * np.cumprod(np.full(len(prices), 1.0 + 0.03 / annualization_factor)),
+        index=prices.index,
+        name="rf",
+    )
+    # Retain caller-owned input so the reconstruction can also prove non-mutation.
+    original_risk_free_prices = risk_free_prices.copy()
+    risk_free_returns = risk_free_prices.pct_change()
+    start = prices.index[2]
+    stats = ffn.GroupStats(prices, annualization_factor=annualization_factor)
+    stats.set_riskfree_rate(risk_free_prices)
+
+    # Exercise both a partial rebuild and the no-argument full-range reset.
+    # Derive the expected ratios without reusing ffn's risk-free helpers.
+    for range_start, windowed_prices in ((start, prices.loc[start:]), (None, prices)):
+        stats.set_date_range(start=range_start)
+
+        for name in ("A", "B"):
+            returns = windowed_prices[name].pct_change()
+            expected_sharpe = (returns - risk_free_returns).mean() / returns.std(ddof=1) * np.sqrt(annualization_factor)
+            child = stats[name]
+            assert child is not None
+            assert isinstance(child.rf, pd.Series)
+            pd.testing.assert_series_equal(child.rf, risk_free_prices)
+            assert -1e-12 < child.daily_sharpe - expected_sharpe < 1e-12
+
+    pd.testing.assert_series_equal(risk_free_prices, original_risk_free_prices)
+
+
 def test_performance_stats(df):
     ps = ffn.PerformanceStats(df["AAPL"])
 
