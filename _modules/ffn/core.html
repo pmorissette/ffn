@@ -1285,6 +1285,8 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">prices</span><span class="p">,</span> <span class="n">annualization_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_annualization_factor_override</span> <span class="o">=</span> <span class="n">annualization_factor</span>
+        <span class="c1"># Preserve configuration when date-range updates rebuild the child statistics.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_riskfree_rate</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">prices</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
@@ -1338,7 +1340,11 @@ window.runMermaid = runMermaid;</script>
             <span class="n">full_data</span> <span class="o">=</span> <span class="n">data</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="n">prc</span> <span class="o">=</span> <span class="n">full_data</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
-            <span class="bp">self</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">PerformanceStats</span><span class="p">(</span><span class="n">prc</span><span class="p">,</span> <span class="n">annualization_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_annualization_factor_override</span><span class="p">)</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">PerformanceStats</span><span class="p">(</span>
+                <span class="n">prc</span><span class="p">,</span>
+                <span class="n">rf</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_riskfree_rate</span><span class="p">,</span>
+                <span class="n">annualization_factor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_annualization_factor_override</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">stats</span> <span class="o">=</span> <span class="p">[</span>
@@ -1430,7 +1436,10 @@ window.runMermaid = runMermaid;</script>
             <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">set_riskfree_rate</span><span class="p">(</span><span class="n">rf</span><span class="p">)</span>
 
         <span class="c1"># calculate stats for entire series</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_stats</span><span class="p">()</span>
+
+        <span class="c1"># A failed recalculation must not become the default for later rebuilds.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_riskfree_rate</span> <span class="o">=</span> <span class="n">rf</span></div>
 
 
 <div class="viewcode-block" id="GroupStats.set_date_range">
