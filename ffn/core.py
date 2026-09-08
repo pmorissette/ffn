@@ -1662,7 +1662,7 @@ def asfreq_actual(series, freq, method="ffill", how="end", normalize=False):
     """
     # Resample the index itself so timezones and user labels remain untouched.
     dates = series.index.to_series().asfreq(freq=freq, method=method, how=how, normalize=normalize)
-    return series.loc[dates.tolist()]
+    return series.loc[dates.array]
 
 
 def calc_inv_vol_weights(returns):
