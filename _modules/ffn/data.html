@@ -539,7 +539,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">forward_fill</span><span class="p">:</span>
-        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s2">"ffill"</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">column_names</span><span class="p">:</span>
         <span class="n">cnames</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_arg</span><span class="p">(</span><span class="n">column_names</span><span class="p">)</span>
