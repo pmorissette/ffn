@@ -1660,24 +1660,9 @@ def asfreq_actual(series, freq, method="ffill", how="end", normalize=False):
     For example, if last data point in Jan is on the 29th,
     that date will be used instead of the 31st.
     """
-    orig = series
-    is_series = False
-    if isinstance(series, pd.Series):
-        is_series = True
-        name = series.name if series.name else "data"
-        orig = pd.DataFrame({name: series})
-
-    # add date column
-    t = pd.concat([orig, pd.DataFrame({"dt": orig.index.values}, index=orig.index.values)], axis=1)
-    # fetch dates
-    dts = t.asfreq(freq=freq, method=method, how=how, normalize=normalize)["dt"]
-
-    res = orig.loc[dts.values]
-
-    if is_series:
-        return res[name]
-    else:
-        return res
+    # Resample the index itself so timezones and user labels remain untouched.
+    dates = series.index.to_series().asfreq(freq=freq, method=method, how=how, normalize=normalize)
+    return series.loc[dates.array]
 
 
 def calc_inv_vol_weights(returns):

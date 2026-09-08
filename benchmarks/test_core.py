@@ -45,6 +45,16 @@ def test_to_log_returns(benchmark, prices):
     assert result.shape == prices.shape
 
 
+@pytest.mark.benchmark(group="resampling")
+@pytest.mark.parametrize("minutes", [1, 5])
+def test_asfreq_actual_intraday(benchmark, minutes):
+    prices = pd.Series(np.arange(100_000, dtype=float), index=pd.date_range("2020-01-01", periods=100_000, freq="min"), name="asset")
+
+    result = benchmark(ffn.asfreq_actual, prices, f"{minutes}min")
+
+    pd.testing.assert_series_equal(result, prices.iloc[::minutes], check_freq=False)
+
+
 @pytest.mark.benchmark(group="drawdown")
 def test_to_drawdown_series(benchmark, prices):
     result = benchmark(ffn.to_drawdown_series, prices)

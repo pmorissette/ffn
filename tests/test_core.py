@@ -564,6 +564,36 @@ def test_asfreq_actual():
     assert "2010-02-27" in actual
 
 
+def test_asfreq_actual_preserves_timezone():
+    """Test that actual-frequency conversion keeps timezone-aware labels."""
+    index = pd.to_datetime(["2020-01-30 16:00", "2020-02-27 16:00", "2020-03-30 16:00"]).tz_localize("UTC")
+    prices = pd.Series([10, 20, 30], index=index, name="asset")
+    expected = pd.Series([10, 20], index=index[:2], name="asset")
+
+    actual = ffn.asfreq_actual(prices, ffn.core._MonthEnd)
+
+    assert isinstance(actual, pd.Series)
+    pd.testing.assert_series_equal(actual, expected)
+
+
+def test_asfreq_actual_preserves_dataframe_columns():
+    """Test that an existing dt column remains ordinary user data."""
+    index = pd.to_datetime(["2020-01-30", "2020-02-27", "2020-03-30"])
+    frame = pd.DataFrame(
+        {
+            "dt": pd.Series([1, pd.NA, 3], index=index, dtype="Int64"),
+            "asset": [10.0, np.nan, 30.0],
+        },
+        index=index,
+    )
+    expected = frame.head(2)
+
+    actual = frame.asfreq_actual(ffn.core._MonthEnd)
+
+    assert isinstance(actual, pd.DataFrame)
+    pd.testing.assert_frame_equal(actual, expected)
+
+
 def test_to_monthly():
     a = pd.Series(range(100), index=pd.date_range("2010-01-01", periods=100))
     # to test for actual dates
@@ -575,6 +605,18 @@ def test_to_monthly():
     assert len(actual) == 3
     assert "2010-01-30" in actual
     assert actual["2010-01-30"] == 29
+
+
+def test_to_monthly_preserves_falsey_series_name():
+    """Test that actual monthly dates do not replace a falsey Series name."""
+    index = pd.to_datetime(["2020-01-30", "2020-02-27", "2020-03-30"])
+    prices = pd.Series([10, 20, 30], index=index, name=0)
+    expected = pd.Series([10, 20], index=index[:2], name=0)
+
+    actual = prices.to_monthly()
+
+    assert isinstance(actual, pd.Series)
+    pd.testing.assert_series_equal(actual, expected)
 
 
 def test_drop_duplicate_cols():
