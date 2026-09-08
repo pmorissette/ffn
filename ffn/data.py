@@ -91,7 +91,7 @@ def get(
         df = df.dropna()
 
     if forward_fill:
-        df = df.fillna(method="ffill")
+        df = df.ffill()
 
     if column_names:
         cnames = utils.parse_arg(column_names)
