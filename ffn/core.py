@@ -1473,6 +1473,9 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed
     to be expressed in yearly (annualized) terms.
 
+    Returns NaN when the aligned excess returns have no dispersion, independently for each
+    DataFrame column.
+
     Args:
         * returns (Series, DataFrame): Input return series
         * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed as a yearly (annualized) return or *return*
@@ -1491,8 +1494,26 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
 
 
 def _calc_sharpe(er, nperiods, annualize=True):
-    """Calculate Sharpe from already aligned excess returns."""
+    """Calculate Sharpe from already aligned excess returns.
+
+    A sample without meaningful dispersion has an undefined Sharpe ratio. Apply that
+    rule independently to each DataFrame column so a constant column does not affect
+    valid neighboring columns.
+    """
     std = er.std(ddof=1)
+
+    # Match the bounded range test established by calc_deflated_sharpe_ratio.
+    # Range identifies identical observations even when std retains rounding residue;
+    # the scale-aware, sample-count-independent floor preserves real quiet variation.
+    spread = er.max() - er.min()
+    scale = er.abs().max()
+    dispersion_floor = 4 * np.finfo(float).eps * scale
+
+    if isinstance(std, pd.Series):
+        std[spread <= dispersion_floor] = np.nan
+    # Short-circuit all-missing nullable Series before comparing pd.NA.
+    elif isinstance(er, pd.Series) and (er.count() == 0 or spread <= dispersion_floor):
+        std = np.nan
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), std)
 
