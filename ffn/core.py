@@ -1774,36 +1774,39 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
 
 def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):
     """
-    Calculates the equal risk contribution / risk parity weights given
-        a DataFrame of returns.
+    Calculates long-only risk-budget weights with SLSQP.
+
+    The objective matches each asset's raw component contribution to its
+    requested share of portfolio variance. Both the target and covariance are
+    normalized so equivalent target proportions and return units produce the
+    same optimization problem.
 
     Args:
-    * x0 (np.array): Starting asset weights.
-    * cov (np.array): covariance matrix.
-    * b (np.array): Risk target weights. By definition target total risk contributions are all equal which makes this redundant.
-    * maximum_iterations (int): Maximum iterations in iterative solutions.
-    * tolerance (float): Tolerance level in iterative solutions.
+        * x0 (np.array): Starting asset weights.
+        * cov (np.array): Covariance matrix.
+        * b (np.array): Relative risk target weights.
+        * maximum_iterations (int): Maximum iterations in iterative solutions.
+        * tolerance (float): Tolerance level in iterative solutions.
 
     Returns:
-    np.array {weight}
+        np.array {weight}
 
     You can read more about ERC at
     http://thierry-roncalli.com/download/erc.pdf
 
     """
+    b = np.asarray(b) / np.sum(b)
+    covariance_scale = np.mean(np.diagonal(cov))
+    # Keep SLSQP's absolute tolerance independent of the units used for returns.
+    if np.isfinite(covariance_scale) and covariance_scale > 0:
+        cov = cov / covariance_scale
 
     def fitness(weights, covar):
-        # total risk contributions
-        # trc = weights*np.matmul(covar,weights)/np.sqrt(np.matmul(weights.T,np.matmul(covar,weights)))
-
-        # instead of using the true definition for trc we will use the optimization on page 5
+        # Raw component contributions sum to portfolio variance.
         trc = weights * np.matmul(covar, weights)
-
-        # sum of squared differences of total risk contributions
-        # switched from squared deviations to absolute deviations to avoid numerical instability
-        sse = np.sum(np.abs(trc - trc.reshape((-1, 1))))
-        # minimizes metric
-        return sse
+        target_trc = b * trc.sum()
+        # Preserve the accepted absolute-deviation objective's numerical stability.
+        return np.sum(np.abs(trc - target_trc))
 
     # nonnegative
     bounds = [(0, None) for i in range(len(x0))]

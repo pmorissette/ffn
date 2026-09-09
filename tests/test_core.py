@@ -534,6 +534,103 @@ def test_calc_erc_weights(df):
     aae(actual["C"], 0.356, 3)
 
 
+def test_calc_erc_weights_slsqp_honors_risk_target():
+    """Honor a non-equal target through both public paths and covariance methods."""
+    target = np.array([0.8, 0.1, 0.1])
+    covariance = np.array([[0.04, 0.012, 0.008], [0.012, 0.09, 0.018], [0.008, 0.018, 0.16]])
+    returns = pd.DataFrame(
+        np.random.default_rng(20260909).multivariate_normal(np.zeros(3), covariance, 500),
+        columns=list("ABC"),
+    )
+    original_returns = returns.copy()
+    original_target = target.copy()
+
+    covariance_cases = (
+        ("standard", returns.cov().to_numpy(dtype=float)),
+        ("ledoit-wolf", ffn.core.sklearn.covariance.ledoit_wolf(returns)[0]),
+    )
+    for covar_method, estimated_covariance in covariance_cases:
+        assert isinstance(estimated_covariance, np.ndarray)
+        # CCD is the accepted control: it already applies the same relative target.
+        ccd = ffn.calc_erc_weights(
+            returns,
+            risk_weights=target,
+            covar_method=covar_method,
+            risk_parity_method="ccd",
+            tolerance=1e-9,
+        )
+        assert isinstance(ccd, pd.Series)
+        ccd_weights = ccd.to_numpy(dtype=float)
+        ccd_contributions = ccd_weights * (estimated_covariance @ ccd_weights)
+        # Allow CCD's established iterative accuracy; SLSQP is checked more tightly below.
+        np.testing.assert_allclose(ccd_contributions / ccd_contributions.sum(), target, atol=5e-6)
+
+        for actual in (
+            ffn.calc_erc_weights(
+                returns,
+                risk_weights=target,
+                covar_method=covar_method,
+                risk_parity_method="slsqp",
+                tolerance=1e-9,
+            ),
+            returns.calc_erc_weights(
+                risk_weights=target,
+                covar_method=covar_method,
+                risk_parity_method="slsqp",
+                tolerance=1e-9,
+            ),
+        ):
+            assert isinstance(actual, pd.Series)
+            weights = actual.to_numpy(dtype=float)
+            # Reconstruct the contribution shares independently from the optimizer objective.
+            contributions = weights * (estimated_covariance @ weights)
+            np.testing.assert_allclose(contributions / contributions.sum(), target, atol=1e-6)
+            assert isinstance(actual.index, pd.Index)
+            pd.testing.assert_index_equal(actual.index, returns.columns)
+            assert actual.name == "erc"
+            assert np.isfinite(weights).all()
+            assert (weights >= 0).all()
+            np.testing.assert_allclose(weights.sum(), 1.0, atol=1e-10)
+
+    pd.testing.assert_frame_equal(returns, original_returns)
+    np.testing.assert_array_equal(target, original_target)
+
+
+def test_calc_erc_weights_slsqp_matches_diagonal_risk_target():
+    """Match the diagonal oracle across equivalent target and return scales."""
+    signs = np.array(
+        [
+            [1.0, 1.0, 1.0],
+            [1.0, -1.0, -1.0],
+            [-1.0, 1.0, -1.0],
+            [-1.0, -1.0, 1.0],
+        ]
+    )
+    returns = pd.DataFrame(signs * np.array([0.01, 0.02, 0.04]), columns=list("ABC"))
+    target = np.array([0.8, 0.1, 0.1])
+    original_returns = returns.copy()
+    original_target = target.copy()
+
+    # Orthogonal centered columns give a diagonal sample covariance and a closed form.
+    covariance = returns.cov().to_numpy(dtype=float)
+    expected = np.sqrt(target / np.diag(covariance))
+    expected /= expected.sum()
+    for return_scale in (1.0, 1e-4):
+        for target_scale in (1.0, 10.0):
+            actual = ffn.calc_erc_weights(
+                returns * return_scale,
+                risk_weights=target * target_scale,
+                covar_method="standard",
+                risk_parity_method="slsqp",
+                tolerance=1e-9,
+            )
+            assert isinstance(actual, pd.Series)
+            np.testing.assert_allclose(actual.to_numpy(dtype=float), expected, atol=1e-6)
+
+    pd.testing.assert_frame_equal(returns, original_returns)
+    np.testing.assert_array_equal(target, original_target)
+
+
 def test_calc_total_return(df):
     prc = df.iloc[0:11]
     actual = prc.calc_total_return()
