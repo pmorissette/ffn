@@ -730,6 +730,8 @@ is going to outperform the other”.</p>
 (see <a class="reference external" href="https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp">Sharpe vs. Sortino</a>).</p>
 <p>If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed
 to be expressed in yearly (annualized) terms.</p>
+<p>Returns NaN when the aligned excess returns have no dispersion, independently for each
+DataFrame column.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

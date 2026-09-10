@@ -2017,6 +2017,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed</span>
 <span class="sd">    to be expressed in yearly (annualized) terms.</span>
 
+<span class="sd">    Returns NaN when the aligned excess returns have no dispersion, independently for each</span>
+<span class="sd">    DataFrame column.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        * returns (Series, DataFrame): Input return series</span>
 <span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed as a yearly (annualized) return or *return*</span>
@@ -2036,8 +2039,29 @@ window.runMermaid = runMermaid;</script>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_calc_sharpe</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">nperiods</span><span class="p">,</span> <span class="n">annualize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Calculate Sharpe from already aligned excess returns."""</span>
+<span class="w">    </span><span class="sd">"""Calculate Sharpe from already aligned excess returns.</span>
+
+<span class="sd">    A sample without meaningful dispersion has an undefined Sharpe ratio. Apply that</span>
+<span class="sd">    rule independently to each DataFrame column so a constant column does not affect</span>
+<span class="sd">    valid neighboring columns.</span>
+<span class="sd">    """</span>
     <span class="n">std</span> <span class="o">=</span> <span class="n">er</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Match the bounded range test established by calc_deflated_sharpe_ratio.</span>
+    <span class="c1"># Range identifies identical observations even when std retains rounding residue;</span>
+    <span class="c1"># the scale-aware, sample-count-independent floor preserves real quiet variation.</span>
+    <span class="c1"># Promote integer extrema before subtraction or abs can overflow.</span>
+    <span class="n">maximum</span> <span class="o">=</span> <span class="n">er</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1.0</span>
+    <span class="n">minimum</span> <span class="o">=</span> <span class="n">er</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1.0</span>
+    <span class="n">spread</span> <span class="o">=</span> <span class="n">maximum</span> <span class="o">-</span> <span class="n">minimum</span>
+    <span class="n">tolerance</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span>
+    <span class="n">no_dispersion</span> <span class="o">=</span> <span class="p">(</span><span class="n">spread</span> <span class="o">&lt;=</span> <span class="n">tolerance</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">maximum</span><span class="p">))</span> <span class="o">|</span> <span class="p">(</span><span class="n">spread</span> <span class="o">&lt;=</span> <span class="n">tolerance</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">minimum</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">std</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="n">std</span><span class="p">[</span><span class="n">no_dispersion</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="c1"># Short-circuit all-missing nullable Series before comparing pd.NA.</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">er</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">no_dispersion</span><span class="p">):</span>
+        <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">invalid</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">,</span> <span class="n">divide</span><span class="o">=</span><span class="s2">"ignore"</span><span class="p">):</span>
         <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">er</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">std</span><span class="p">)</span>
 
