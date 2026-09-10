@@ -2169,7 +2169,7 @@ def limit_weights(weights, limit=0.1):
     if np.round(weights.sum(), 1) != 1.0:
         raise ValueError(f"Expecting weights (that sum to 1) - sum is {weights.sum()}")
 
-    res = np.round(weights.copy(), 4)
+    res = weights.copy()
     to_rebalance = (res[res > limit] - limit).sum()
 
     ok = res[res < limit]
