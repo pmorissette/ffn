@@ -1505,14 +1505,17 @@ def _calc_sharpe(er, nperiods, annualize=True):
     # Match the bounded range test established by calc_deflated_sharpe_ratio.
     # Range identifies identical observations even when std retains rounding residue;
     # the scale-aware, sample-count-independent floor preserves real quiet variation.
-    spread = er.max() - er.min()
-    scale = er.abs().max()
-    dispersion_floor = 4 * np.finfo(float).eps * scale
+    # Promote integer extrema before subtraction or abs can overflow.
+    maximum = er.max() * 1.0
+    minimum = er.min() * 1.0
+    spread = maximum - minimum
+    tolerance = 4 * np.finfo(float).eps
+    no_dispersion = (spread <= tolerance * abs(maximum)) | (spread <= tolerance * abs(minimum))
 
     if isinstance(std, pd.Series):
-        std[spread <= dispersion_floor] = np.nan
+        std[no_dispersion] = np.nan
     # Short-circuit all-missing nullable Series before comparing pd.NA.
-    elif isinstance(er, pd.Series) and (er.count() == 0 or spread <= dispersion_floor):
+    elif isinstance(er, pd.Series) and (er.count() == 0 or no_dispersion):
         std = np.nan
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), std)

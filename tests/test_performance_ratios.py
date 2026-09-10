@@ -73,6 +73,31 @@ def test_sharpe_preserves_quiet_dispersion():
         assert actual == expected
 
 
+@pytest.mark.parametrize("dtype", ["int8", "int16", "int32", "int64", "Int8", "Int16", "Int32", "Int64"])
+@pytest.mark.parametrize("as_frame", [False, True])
+def test_sharpe_integer_dispersion_does_not_overflow(dtype, as_frame):
+    minimum = np.iinfo(dtype.lower()).min
+    returns = pd.Series([minimum, 0, -minimum - 1], dtype=dtype, name="varying")
+    constant = pd.Series([minimum] * 3, dtype=dtype, name="constant")
+    if as_frame:
+        missing = pd.Series([pd.NA] * 3, dtype="Float64", name="all_missing")
+        returns = pd.concat([returns, constant, missing], axis=1)
+    original = returns.copy()
+    expected = returns.mean() / returns.std(ddof=1) * np.sqrt(252)
+    if as_frame:
+        expected.iloc[1] = np.nan
+
+    actual = ffn.calc_sharpe(returns, rf=0, nperiods=252)
+
+    if as_frame:
+        pd.testing.assert_series_equal(actual, expected)
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        assert actual == expected
+        assert pd.isna(ffn.calc_sharpe(constant, rf=0, nperiods=252))
+        pd.testing.assert_series_equal(returns, original)
+
+
 def test_performance_stats_rejects_no_dispersion_sharpe():
     """Keep zero volatility and undefined Sharpe consistent in performance stats."""
     prices = pd.Series(2.0 ** np.arange(5), index=pd.bdate_range("2026-01-05", periods=5), name="asset")
