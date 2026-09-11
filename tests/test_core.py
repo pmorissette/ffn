@@ -2551,6 +2551,31 @@ def test_resample_returns(df):
     assert np.all(np.abs((sample_mean - resampled_mean) / std_resampled_means) < 3)
 
 
+def test_resample_returns_duplicate_labels():
+    """Sample Series and DataFrame rows positionally when labels repeat."""
+    returns = pd.Series([10.0, 20.0, 30.0], index=["a", "a", "b"])
+    original = returns.copy()
+    sample_sizes = ffn.resample_returns(returns, len, seed=0, num_trials=8)
+    sample_stats = ffn.resample_returns(returns, np.sum, seed=0, num_trials=8)
+
+    # Each expected value sums exactly three seeded row draws, including repeats.
+    expected = np.array([40.0, 40.0, 40.0, 60.0, 80.0, 80.0, 60.0, 60.0])
+    np.testing.assert_array_equal(sample_stats.to_numpy(dtype=float), expected)
+    np.testing.assert_array_equal(sample_sizes.to_numpy(dtype=int), np.full(8, 3))
+    pd.testing.assert_series_equal(returns, original)
+
+    dates = pd.to_datetime(["2024-01-02", "2024-01-02", "2024-01-03"])
+    returns = pd.DataFrame({"first": [10.0, 20.0, 30.0], "second": [1.0, 2.0, 3.0]}, index=dates)
+    original = returns.copy()
+    sample_sizes = ffn.resample_returns(returns, len, seed=0, num_trials=8)
+    sample_stats = ffn.resample_returns(returns, pd.DataFrame.sum, seed=0, num_trials=8)
+
+    expected = pd.DataFrame({"first": expected, "second": expected / 10}, dtype=object)
+    pd.testing.assert_frame_equal(sample_stats, expected)
+    np.testing.assert_array_equal(sample_sizes.to_numpy(dtype=int), np.full((8, 2), 3))
+    pd.testing.assert_frame_equal(returns, original)
+
+
 def test_monthly_returns():
     dates = [
         "31/12/2017",
