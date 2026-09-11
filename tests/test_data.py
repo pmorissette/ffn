@@ -10,6 +10,26 @@ def sample_provider(ticker, field):
     return pd.Series(prices[ticker], index=pd.date_range("2024-01-01", periods=4))
 
 
+def test_get_isolates_cached_data_from_caller_mutation():
+    """Keep caller assignments from changing data cached by ``ffn.get``."""
+    expected = pd.DataFrame(
+        {"abc": [10.0, 12.0]},
+        index=pd.date_range("2024-01-02", periods=2, freq="2D"),
+    )
+    ffn.get.mcache.clear()
+    try:
+        first = ffn.get("ABC", provider=sample_provider)
+        assert isinstance(first, pd.DataFrame)
+        first.iloc[0, 0] = 999.0
+        second = ffn.get("ABC", provider=sample_provider)
+
+        assert isinstance(second, pd.DataFrame)
+        assert second is not first
+        pd.testing.assert_frame_equal(second, expected)
+    finally:
+        ffn.get.mcache.clear()
+
+
 @pytest.mark.parametrize("forward_fill", [False, True])
 @pytest.mark.parametrize("common_dates", [False, True])
 def test_get_forward_fill(forward_fill, common_dates):

@@ -4,6 +4,68 @@ import ffn
 from ffn import utils
 
 
+def test_memoize_isolates_series_results():
+    """Keep caller assignments from changing a cached Series snapshot."""
+    index = pd.date_range("2024-01-01", periods=2, name="date")
+    expected = pd.Series([100.0, 101.0], index=index, name="price")
+    expected.attrs["provider"] = "fixture"
+    calls = []
+
+    @utils.memoize
+    def cached(value):
+        """Return fresh data when the decorated function runs."""
+        calls.append(value)
+        return expected.copy(deep=True)
+
+    first = cached("value")
+    assert isinstance(first, pd.Series)
+    first.iloc[0] = 999.0
+    second = cached("value")
+    assert isinstance(second, pd.Series)
+    assert second is not first
+    pd.testing.assert_series_equal(second, expected)
+    assert second.attrs == expected.attrs
+
+    second.iloc[-1] = -1.0
+    third = cached("value")
+    assert isinstance(third, pd.Series)
+    assert third is not second
+    pd.testing.assert_series_equal(third, expected)
+    assert third.attrs == expected.attrs
+    assert calls == ["value"]
+
+
+def test_memoize_isolates_dataframe_results():
+    """Keep caller assignments from changing a cached DataFrame snapshot."""
+    index = pd.date_range("2024-01-01", periods=2, name="date")
+    expected = pd.DataFrame({"price": [100.0, 101.0]}, index=index)
+    expected.attrs["provider"] = "fixture"
+    calls = []
+
+    @utils.memoize
+    def cached(value):
+        """Return fresh data when the decorated function runs."""
+        calls.append(value)
+        return expected.copy(deep=True)
+
+    first = cached("value")
+    assert isinstance(first, pd.DataFrame)
+    first.iloc[0, 0] = 999.0
+    second = cached("value")
+    assert isinstance(second, pd.DataFrame)
+    assert second is not first
+    pd.testing.assert_frame_equal(second, expected)
+    assert second.attrs == expected.attrs
+
+    second.iloc[-1, 0] = -1.0
+    third = cached("value")
+    assert isinstance(third, pd.DataFrame)
+    assert third is not second
+    pd.testing.assert_frame_equal(third, expected)
+    assert third.attrs == expected.attrs
+    assert calls == ["value"]
+
+
 def test_memoize_handles_keyword_only_refresh():
     calls = []
 
