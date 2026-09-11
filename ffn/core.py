@@ -34,6 +34,12 @@ TRADING_DAYS_PER_YEAR = 252
 _FLOATING_SCALAR_TYPES = (float, np.floating)
 
 
+def _validate_prices_index(prices):
+    """Require datetime price indexes to be monotonic increasing."""
+    if isinstance(prices, (pd.Series, pd.DataFrame)) and isinstance(prices.index, pd.DatetimeIndex) and not prices.index.is_monotonic_increasing:
+        raise ValueError("prices index must be monotonic increasing")
+
+
 class PerformanceStats:
     """
     PerformanceStats is a convenience class used for the performance
@@ -42,8 +48,9 @@ class PerformanceStats:
     statistics.
 
     Args:
-        * prices (Series): A price series. Unavailable outer observations are excluded from
-            endpoint statistics when total return is available.
+        * prices (Series): A price series. A DatetimeIndex must be monotonic increasing.
+            Unavailable outer observations are excluded from endpoint statistics when total
+            return is available.
         * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a floating scalar. Otherwise
             rf should be a *price* series — it is converted internally with
@@ -66,6 +73,7 @@ class PerformanceStats:
     """
 
     def __init__(self, prices, rf=0.0, annualization_factor=None):
+        _validate_prices_index(prices)
         super().__init__()
         self.prices = prices
         self.name = self.prices.name
@@ -807,7 +815,8 @@ class GroupStats(dict):
     merged calendar, keeping only dates where every series has data.
 
     Args:
-        * prices (Series): Multiple price series to be compared.
+        * prices (Series): Multiple price series to be compared. Each DatetimeIndex must be
+            monotonic increasing.
         * annualization_factor (float): Annualization factor used for each series.
 
     Raises:
@@ -824,6 +833,10 @@ class GroupStats(dict):
     """
 
     def __init__(self, *prices, annualization_factor=None):
+        # Validate before merge can normalize one input's row order.
+        for price in prices:
+            _validate_prices_index(price)
+
         self._annualization_factor_override = annualization_factor
         # Preserve configuration when date-range updates rebuild the child statistics.
         self._riskfree_rate = 0.0
@@ -1294,7 +1307,7 @@ def calc_perf_stats(prices, risk_free_rate=0.0, annualization_factor=252):
     A PerformanceStats object will be returned containing all the stats.
 
     Args:
-        * prices (Series): Series of prices
+        * prices (Series): Series of prices. A DatetimeIndex must be monotonic increasing.
         * risk_free_rate (float, np.floating, Series): Annual risk-free rate or risk-free rate price series
         * annualization_factor (int): Annualizing factor. Default is 252 (trading days)
 
@@ -1314,7 +1327,7 @@ def calc_stats(prices, annualization_factor=None):
     is returned.
 
     Args:
-        * prices (Series, DataFrame): Set of prices
+        * prices (Series, DataFrame): Set of prices. A DatetimeIndex must be monotonic increasing.
         * annualization_factor (float): Annualization factor used in calculations
 
     Raises:
