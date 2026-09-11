@@ -2349,36 +2349,44 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_erc_weights_slsqp</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">maximum_iterations</span><span class="p">,</span> <span class="n">tolerance</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Calculates the equal risk contribution / risk parity weights given</span>
-<span class="sd">        a DataFrame of returns.</span>
+<span class="sd">    Calculates long-only risk-budget weights with SLSQP.</span>
+
+<span class="sd">    The objective matches each asset's raw component contribution to its</span>
+<span class="sd">    requested share of portfolio variance. Both the target and covariance are</span>
+<span class="sd">    normalized so equivalent target proportions and return units produce the</span>
+<span class="sd">    same optimization problem.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">    * x0 (np.array): Starting asset weights.</span>
-<span class="sd">    * cov (np.array): covariance matrix.</span>
-<span class="sd">    * b (np.array): Risk target weights. By definition target total risk contributions are all equal which makes this redundant.</span>
-<span class="sd">    * maximum_iterations (int): Maximum iterations in iterative solutions.</span>
-<span class="sd">    * tolerance (float): Tolerance level in iterative solutions.</span>
+<span class="sd">        * x0 (np.array): Starting asset weights.</span>
+<span class="sd">        * cov (np.array): Covariance matrix.</span>
+<span class="sd">        * b (np.array): Relative risk target weights.</span>
+<span class="sd">        * maximum_iterations (int): Maximum iterations in iterative solutions.</span>
+<span class="sd">        * tolerance (float): Tolerance level in iterative solutions.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">    np.array {weight}</span>
+<span class="sd">        np.array {weight}</span>
 
 <span class="sd">    You can read more about ERC at</span>
 <span class="sd">    http://thierry-roncalli.com/download/erc.pdf</span>
 
 <span class="sd">    """</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="c1"># Keep SLSQP's finite-difference steps visible with low-precision targets.</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># Scale before summing so finite positive targets cannot overflow their total.</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="n">covariance_scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">cov</span><span class="p">))</span>
+    <span class="c1"># Keep SLSQP's absolute tolerance independent of the units used for returns.</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">covariance_scale</span><span class="p">)</span> <span class="ow">and</span> <span class="n">covariance_scale</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">cov</span> <span class="o">=</span> <span class="n">cov</span> <span class="o">/</span> <span class="n">covariance_scale</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fitness</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">covar</span><span class="p">):</span>
-        <span class="c1"># total risk contributions</span>
-        <span class="c1"># trc = weights*np.matmul(covar,weights)/np.sqrt(np.matmul(weights.T,np.matmul(covar,weights)))</span>
-
-        <span class="c1"># instead of using the true definition for trc we will use the optimization on page 5</span>
+        <span class="c1"># Raw component contributions sum to portfolio variance.</span>
         <span class="n">trc</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">covar</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
-
-        <span class="c1"># sum of squared differences of total risk contributions</span>
-        <span class="c1"># switched from squared deviations to absolute deviations to avoid numerical instability</span>
-        <span class="n">sse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">trc</span> <span class="o">-</span> <span class="n">trc</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))</span>
-        <span class="c1"># minimizes metric</span>
-        <span class="k">return</span> <span class="n">sse</span>
+        <span class="n">target_trc</span> <span class="o">=</span> <span class="n">b</span> <span class="o">*</span> <span class="n">trc</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="c1"># Preserve the accepted absolute-deviation objective's numerical stability.</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">trc</span> <span class="o">-</span> <span class="n">target_trc</span><span class="p">))</span>
 
     <span class="c1"># nonnegative</span>
     <span class="n">bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x0</span><span class="p">))]</span>
