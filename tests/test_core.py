@@ -615,17 +615,27 @@ def test_calc_erc_weights_slsqp_matches_diagonal_risk_target():
     covariance = returns.cov().to_numpy(dtype=float)
     expected = np.sqrt(target / np.diag(covariance))
     expected /= expected.sum()
+    equivalent_targets = (
+        target,
+        target * 10,
+        target.astype("float32"),
+        np.array([8_000_000_000_000_000_000, 1_000_000_000_000_000_000, 1_000_000_000_000_000_000], dtype="int64"),
+        np.array([3.2e38, 4e37, 4e37], dtype="float32"),
+        np.array([1.6e308, 2e307, 2e307]),
+    )
     for return_scale in (1.0, 1e-4):
-        for target_scale in (1.0, 10.0):
+        for scaled_target in equivalent_targets:
+            original_scaled_target = scaled_target.copy()
             actual = ffn.calc_erc_weights(
                 returns * return_scale,
-                risk_weights=target * target_scale,
+                risk_weights=scaled_target,
                 covar_method="standard",
                 risk_parity_method="slsqp",
                 tolerance=1e-9,
             )
             assert isinstance(actual, pd.Series)
             np.testing.assert_allclose(actual.to_numpy(dtype=float), expected, atol=1e-6)
+            np.testing.assert_array_equal(scaled_target, original_scaled_target)
 
     pd.testing.assert_frame_equal(returns, original_returns)
     np.testing.assert_array_equal(target, original_target)

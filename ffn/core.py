@@ -1795,7 +1795,12 @@ def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):
     http://thierry-roncalli.com/download/erc.pdf
 
     """
-    b = np.asarray(b) / np.sum(b)
+    b = np.asarray(b)
+    # Keep SLSQP's finite-difference steps visible with low-precision targets.
+    b = b.astype(np.result_type(b.dtype, np.float64), copy=False)
+    # Scale before summing so finite positive targets cannot overflow their total.
+    b = b / np.max(b)
+    b = b / np.sum(b)
     covariance_scale = np.mean(np.diagonal(cov))
     # Keep SLSQP's absolute tolerance independent of the units used for returns.
     if np.isfinite(covariance_scale) and covariance_scale > 0:
