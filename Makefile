@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: develop requirements build install lint-py lint-docs fix-py fix-docs lint lints fix format check-dist check-types checks check test tests coverage benchmark show-version patch minor major dist dist-build dist-check test-dist publish upload docs serve notebooks clean help
+.PHONY: develop requirements build install lint-py lint-docs fix-py fix-docs lint lints fix format check-dist check-types checks check test tests coverage benchmark show-version patch minor major dist dist-build dist-check publish upload docs serve notebooks clean help
 
 develop:  ## install development dependencies and library
 	uv pip install -e '.[develop]'
@@ -14,16 +14,16 @@ install:  ## install library
 	uv pip install .
 
 lint-py:  ## lint Python with ruff
-	python -m ruff check ffn .github/scripts
-	python -m ruff format --check ffn .github/scripts
+	python -m ruff check ffn
+	python -m ruff format --check ffn
 
 lint-docs:  ## lint contributor documentation
 	python -m mdformat --check README.md docs/development.md docs/source/*.md
 	python -m codespell_lib README.md docs/development.md docs/source/*.md
 
 fix-py:  ## autoformat Python code
-	python -m ruff check --fix ffn .github/scripts
-	python -m ruff format ffn .github/scripts
+	python -m ruff check --fix ffn
+	python -m ruff format ffn
 
 fix-docs:  ## autoformat contributor documentation
 	python -m mdformat README.md docs/development.md docs/source/*.md
@@ -71,9 +71,6 @@ dist-build:  ## build Python distributions
 
 dist-check:  ## check distribution metadata
 	python -m twine check dist/*
-
-test-dist:  ## test installed wheels and source distributions
-	python .github/scripts/test-distributions.py
 
 dist:  ## build and check distributions
 	$(MAKE) clean
