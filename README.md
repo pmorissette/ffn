@@ -50,10 +50,10 @@ Since ffn has many dependencies, we strongly recommend installing the [Anaconda 
 
 Read the docs at <https://pmorissette.github.io/ffn/>.
 
-- [Introduction](docs/source/introduction.rst)
-- [Installation guide](docs/source/install.rst)
-- [Quickstart](docs/source/quick.rst)
-- [Full API](docs/source/ffn.rst)
+- [Introduction](docs/source/introduction.md)
+- [Installation guide](docs/source/install.md)
+- [Quickstart](docs/source/quick.md)
+- [Full API](docs/source/ffn.md)
 
 ## Contribute
 
