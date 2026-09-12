@@ -25,17 +25,20 @@ make serve
 
 Open <http://localhost:9087>. Yardang reads configuration from `pyproject.toml` and uses `README.md` as the homepage. Klink supplies the theme; generated HTML goes into `docs/html`. Builds treat warnings as errors.
 
-Edit the installation guide, quickstart, and API reference under `docs/source`. Keep API reference separate from the tutorials and contributor instructions. Existing page URLs are preserved by redirects in `[tool.yardang.redirects]`.
+Edit the MyST Markdown installation guide, quickstart, and API reference under `docs/source`. Keep API reference separate from the tutorials and contributor instructions. Existing page URLs are preserved by redirects in `[tool.yardang.redirects]`.
 
-The notebook exports and images are checked in. Builds use saved outputs without executing notebooks or downloading market data. After editing a notebook, install Pandoc and regenerate its exports with Klink:
+Keep autodoc directives inside `{eval-rst}` fences in the Markdown API reference: autodoc generates reStructuredText from Python docstrings.
+
+The notebook Markdown exports and images are checked in. Builds use saved outputs without executing notebooks or downloading market data. After editing a notebook, regenerate its Markdown export and images without rerunning it:
 
 ```bash
-uv pip install nbconvert
+uv pip install nbconvert mdformat-myst
 cd docs/source
-python -c 'import klink; klink.convert_notebooks()'
+jupyter nbconvert --to markdown --NbConvertApp.output_files_dir=_static intro.ipynb quickstart.ipynb
+python -m mdformat intro.md quickstart.md
 ```
 
-Review and commit the changed notebooks, RST exports, and images together. Run `make docs` and check navigation, images, and API links before submitting changes.
+Use Markdown cells and MyST roles such as `{py:func}` for API links in notebooks. Pandoc is not required for Markdown exports. Review and commit the changed notebooks, Markdown exports, and images together. Run `make docs` and check navigation, images, and API links before submitting changes.
 
 Pull requests build an HTML artifact. Successful documentation builds on `master` publish to the existing `gh-pages` branch.
 

@@ -7,7 +7,7 @@
 
     <title>How to develop ffn &#8212; ffn — Financial Functions for Python</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/klink.css?v=f4590041" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/klink.css?v=010e5783" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -60,14 +60,16 @@ make<span class="w"> </span>serve
 </pre></div>
 </div>
 <p>Open <a class="reference external" href="http://localhost:9087">http://localhost:9087</a>. Yardang reads configuration from <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and uses <code class="docutils literal notranslate"><span class="pre">README.md</span></code> as the homepage. Klink supplies the theme; generated HTML goes into <code class="docutils literal notranslate"><span class="pre">docs/html</span></code>. Builds treat warnings as errors.</p>
-<p>Edit the installation guide, quickstart, and API reference under <code class="docutils literal notranslate"><span class="pre">docs/source</span></code>. Keep API reference separate from the tutorials and contributor instructions. Existing page URLs are preserved by redirects in <code class="docutils literal notranslate"><span class="pre">[tool.yardang.redirects]</span></code>.</p>
-<p>The notebook exports and images are checked in. Builds use saved outputs without executing notebooks or downloading market data. After editing a notebook, install Pandoc and regenerate its exports with Klink:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>nbconvert
+<p>Edit the MyST Markdown installation guide, quickstart, and API reference under <code class="docutils literal notranslate"><span class="pre">docs/source</span></code>. Keep API reference separate from the tutorials and contributor instructions. Existing page URLs are preserved by redirects in <code class="docutils literal notranslate"><span class="pre">[tool.yardang.redirects]</span></code>.</p>
+<p>Keep autodoc directives inside <code class="docutils literal notranslate"><span class="pre">{eval-rst}</span></code> fences in the Markdown API reference: autodoc generates reStructuredText from Python docstrings.</p>
+<p>The notebook Markdown exports and images are checked in. Builds use saved outputs without executing notebooks or downloading market data. After editing a notebook, regenerate its Markdown export and images without rerunning it:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>nbconvert<span class="w"> </span>mdformat-myst
 <span class="nb">cd</span><span class="w"> </span>docs/source
-python<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import klink; klink.convert_notebooks()'</span>
+jupyter<span class="w"> </span>nbconvert<span class="w"> </span>--to<span class="w"> </span>markdown<span class="w"> </span>--NbConvertApp.output_files_dir<span class="o">=</span>_static<span class="w"> </span>intro.ipynb<span class="w"> </span>quickstart.ipynb
+python<span class="w"> </span>-m<span class="w"> </span>mdformat<span class="w"> </span>intro.md<span class="w"> </span>quickstart.md
 </pre></div>
 </div>
-<p>Review and commit the changed notebooks, RST exports, and images together. Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">docs</span></code> and check navigation, images, and API links before submitting changes.</p>
+<p>Use Markdown cells and MyST roles such as <code class="docutils literal notranslate"><span class="pre">{py:func}</span></code> for API links in notebooks. Pandoc is not required for Markdown exports. Review and commit the changed notebooks, Markdown exports, and images together. Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">docs</span></code> and check navigation, images, and API links before submitting changes.</p>
 <p>Pull requests build an HTML artifact. Successful documentation builds on <code class="docutils literal notranslate"><span class="pre">master</span></code> publish to the existing <code class="docutils literal notranslate"><span class="pre">gh-pages</span></code> branch.</p>
 </section>
 <section id="update-the-template">
@@ -92,7 +94,18 @@ python<span class="w"> </span>-c<span class="w"> </span><span class="s1">'import
             <a href="../index.html" id="logo" title=ffn><img class="logo" src="../_static/logo.png" width="150px" height="150px" title=ffn /></a>
             
             
-            
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="source/install.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source/ffn.html">API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How to develop ffn</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#build-documentation">Build documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#update-the-template">Update the template</a></li>
+</ul>
+</li>
+</ul>
+
 
             
             <ul>
