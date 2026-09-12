@@ -10,10 +10,11 @@ make lint
 make checks
 make coverage
 make build
-make test-dist
 ```
 
 On Windows, activate with `.venv\Scripts\activate`. Run `make help` for available targets. `make test` runs the unit tests; `make benchmark` runs the separate performance benchmarks. Type checking (`make check-types`) is advisory and does not gate CI. The `dev` extra remains an alias for `develop`.
+
+CI uses the template's `actions-ext/python/test-wheel` and `actions-ext/python/test-sdist` actions to check distribution installation.
 
 ## Build documentation
 
