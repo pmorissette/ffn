@@ -1,3 +1,4 @@
+import itertools
 import random
 
 import matplotlib
@@ -2780,6 +2781,98 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     return scipy.stats.norm.cdf((sr - sr0) * np.sqrt(n - 1) / np.sqrt(variance_adj))
 
 
+def calc_prob_backtest_overfitting(trial_returns, n_blocks=16, metric=None, full_output=False):
+    """
+    Calculates the probability of `backtest overfitting <https://doi.org/10.21314/JCF.2015.325>`_
+    (PBO) of a strategy search via combinatorially symmetric cross validation
+    (CSCV).
+
+    Use it on the full matrix of trials a strategy search evaluated, with one
+    column per trial. The sample is split into ``n_blocks`` contiguous blocks
+    and, for every balanced combination of half the blocks used in-sample, the
+    in-sample winner's performance RANK is observed out-of-sample. If selecting
+    the in-sample best carried no information, that rank is uniform; PBO is the
+    fraction of combinations in which the in-sample winner performs below the
+    out-of-sample median. Pure noise yields a PBO near one half, genuine skill
+    drives it towards zero, and heavy selection over noise drives it above one
+    half.
+
+    This is the companion diagnostic to :func:`calc_deflated_sharpe_ratio`, and
+    they answer different questions: the deflated Sharpe ratio asks whether the
+    winner's performance clears the hurdle its own search sets by chance, whilst
+    PBO asks whether the act of selection transferred out of sample at all. A
+    strategy family with genuine common alpha can pass the first and still show
+    a PBO near one half because the parameter choice within the family was
+    arbitrary.
+
+    Source: Bailey, D., Borwein, J., Lopez de Prado, M. and Zhu, Q. (2017),
+    "The Probability of Backtest Overfitting", Journal of Computational
+    Finance, 20(4), 39-69.
+
+    Args:
+        * trial_returns (DataFrame): Return series of ALL evaluated trials,
+            one column per trial (configuration).
+        * n_blocks (int): Number of contiguous blocks for CSCV. Must be even
+            and at least 2; observations beyond a multiple of ``n_blocks`` are
+            truncated from the end. 16 gives 12,870 combinations; 12 or 8 run
+            faster on long samples.
+        * metric (callable): Performance measure mapping a return Series to a
+            float, used both to pick the in-sample winner and to rank out of
+            sample. Defaults to the per-period Sharpe ratio (mean over sample
+            standard deviation).
+        * full_output (bool): If True, also return the per-combination rank
+            logits and the mean out-of-sample rank of the in-sample winner.
+
+    Returns:
+        * float -- probability [0, 1] of backtest overfitting, or a dict with
+          keys ``pbo``, ``logits`` and ``mean_oos_rank`` when ``full_output``
+          is True.
+
+    """
+    if not isinstance(trial_returns, pd.DataFrame):
+        raise TypeError("trial_returns must be a DataFrame with one column per trial")
+    if n_blocks < 2 or n_blocks % 2:
+        raise ValueError("n_blocks must be even and at least 2")
+    if metric is None:
+
+        def metric(series):
+            std = series.std(ddof=1)
+            return series.mean() / std if std > 0 else np.nan
+
+    values = trial_returns.to_numpy(dtype=float)
+    n_obs, n_trials = values.shape
+    rows = (n_obs // n_blocks) * n_blocks
+    if rows < n_blocks or n_trials < 2:
+        raise ValueError("not enough observations or trials for the requested blocks")
+    blocks = np.array_split(values[:rows], n_blocks)
+
+    logits = []
+    ranks = []
+    indices = range(n_blocks)
+    for in_sample in itertools.combinations(indices, n_blocks // 2):
+        chosen = set(in_sample)
+        ins = np.vstack([blocks[i] for i in indices if i in chosen])
+        oos = np.vstack([blocks[i] for i in indices if i not in chosen])
+        is_perf = np.array([metric(pd.Series(ins[:, j])) for j in range(n_trials)])
+        oos_perf = np.array([metric(pd.Series(oos[:, j])) for j in range(n_trials)])
+        if np.isnan(is_perf).all():
+            continue
+        winner = np.nanargmax(is_perf)
+        # Relative rank of the winner's out-of-sample performance in (0, 1)
+        omega = np.sum(oos_perf <= oos_perf[winner]) / (n_trials + 1.0)
+        omega = min(max(omega, 1e-9), 1 - 1e-9)
+        logits.append(np.log(omega / (1.0 - omega)))
+        ranks.append(omega)
+
+    if not logits:
+        return np.nan
+    logits = pd.Series(logits)
+    pbo = float((logits <= 0.0).mean())
+    if full_output:
+        return {"pbo": pbo, "logits": logits, "mean_oos_rank": float(np.mean(ranks))}
+    return pbo
+
+
 def resample_returns(returns, func, seed=0, num_trials=100):
     """
     Resample the returns and calculate any statistic on every new sample.
@@ -2858,6 +2951,7 @@ def extend_pandas():
     PandasObject.calc_sharpe = calc_sharpe
     PandasObject.calc_sharpe_ratio = calc_sharpe
     PandasObject.calc_deflated_sharpe_ratio = calc_deflated_sharpe_ratio
+    PandasObject.calc_prob_backtest_overfitting = calc_prob_backtest_overfitting
     PandasObject.to_excess_returns = to_excess_returns
     PandasObject.to_ulcer_index = to_ulcer_index
     PandasObject.to_ulcer_performance_index = to_ulcer_performance_index

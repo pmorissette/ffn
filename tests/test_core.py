@@ -1382,6 +1382,41 @@ def test_calc_expected_max_sharpe():
     )
 
 
+def test_calc_prob_backtest_overfitting():
+    np.random.seed(0)
+    n_periods, n_trials = 640, 40
+    index = pd.date_range(start="2015-01-01", periods=n_periods, freq="D")
+
+    # Pure noise: selecting the in-sample best carries no information, so the
+    # winner's out-of-sample rank is uniform and PBO sits near one half.
+    noise = pd.DataFrame(np.random.normal(0, 0.01, (n_periods, n_trials)), index=index)
+    pbo_noise = ffn.calc_prob_backtest_overfitting(noise, n_blocks=8)
+    assert 0.15 < pbo_noise < 0.85
+
+    # One genuinely skilled trial: the in-sample winner keeps winning out of
+    # sample, so PBO collapses towards zero. This also guards the rank
+    # direction: with the ranking inverted, this case reports near one.
+    skilled = noise.copy()
+    skilled[7] = skilled[7] + 0.004
+    pbo_skilled = ffn.calc_prob_backtest_overfitting(skilled, n_blocks=8)
+    assert pbo_skilled < 0.1
+    assert pbo_noise - pbo_skilled > 0.15
+
+    # Accessible as a DataFrame method, with full diagnostics on request
+    full = skilled.calc_prob_backtest_overfitting(n_blocks=8, full_output=True)
+    assert full["pbo"] == pbo_skilled
+    assert len(full["logits"]) == 70  # C(8, 4) combinations
+    assert 0.0 < full["mean_oos_rank"] < 1.0
+
+    # Input validation
+    with np.testing.assert_raises(ValueError):
+        ffn.calc_prob_backtest_overfitting(noise, n_blocks=7)
+    with np.testing.assert_raises(TypeError):
+        ffn.calc_prob_backtest_overfitting(noise[3], n_blocks=8)
+    with np.testing.assert_raises(ValueError):
+        ffn.calc_prob_backtest_overfitting(noise.iloc[:4], n_blocks=8)
+
+
 def test_calc_deflated_sharpe_ratio():
     np.random.seed(0)
     n_trials, n_periods = 40, 1000
