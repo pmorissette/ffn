@@ -1331,28 +1331,47 @@ def to_drawdown_series(prices):
     return drawdown
 
 
+def _calc_current_period_return(daily_prices, period_prices):
+    """Calculate a period return with an observed-current-period fallback."""
+    if len(period_prices) == 1:
+        return daily_prices.iloc[-1] / daily_prices.iloc[0] - 1
+
+    previous_price = period_prices.iloc[-2]
+    if isinstance(previous_price, pd.Series):
+        if previous_price.isna().any():
+            current_prices = daily_prices[daily_prices.index > period_prices.index[-2]]
+            if not current_prices.empty:
+                # Each missing column needs two observations to define its current-period return.
+                fallback = current_prices.bfill().iloc[0].where(current_prices.count() > 1)
+                previous_price = previous_price.fillna(fallback)
+    elif pd.isna(previous_price):
+        current_prices = daily_prices[daily_prices.index > period_prices.index[-2]].dropna()
+        if len(current_prices) > 1:
+            previous_price = current_prices.iloc[0]
+
+    return daily_prices.iloc[-1] / previous_price - 1
+
+
 def calc_mtd(daily_prices, monthly_prices):
     """
     Calculates mtd return of a price series.
-    Use daily_prices if prices are only available from same month
-    else use monthly_prices
+    Use daily_prices if prices are only available from the same month. With
+    older periods present, use current-month prices when the prior month is
+    unavailable and the current month has at least two usable observations; else use
+    monthly_prices.
     """
-    if len(monthly_prices) == 1:
-        return daily_prices.iloc[-1] / daily_prices.iloc[0] - 1
-    else:
-        return daily_prices.iloc[-1] / monthly_prices.iloc[-2] - 1
+    return _calc_current_period_return(daily_prices, monthly_prices)
 
 
 def calc_ytd(daily_prices, yearly_prices):
     """
     Calculates ytd return of a price series.
-    Use daily_prices if prices are only available from same year
-    else use yearly_prices
+    Use daily_prices if prices are only available from the same year. With
+    older periods present, use current-year prices when the prior year is
+    unavailable and the current year has at least two usable observations; else use
+    yearly_prices.
     """
-    if len(yearly_prices) == 1:
-        return daily_prices.iloc[-1] / daily_prices.iloc[0] - 1
-    else:
-        return daily_prices.iloc[-1] / yearly_prices.iloc[-2] - 1
+    return _calc_current_period_return(daily_prices, yearly_prices)
 
 
 def calc_max_drawdown(prices):
