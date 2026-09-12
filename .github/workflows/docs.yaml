@@ -26,8 +26,8 @@ jobs:
         with:
           version: '3.11'
 
-      - name: Install documentation dependencies
-        run: uv pip install . -r docs/requirements.txt
+      - name: Install development dependencies
+        run: uv pip install '.[develop]'
 
       - name: Build documentation
         run: make docs

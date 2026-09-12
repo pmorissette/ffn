@@ -18,12 +18,16 @@ On Windows, activate with `.venv\Scripts\activate`. Run `make help` for availabl
 ## Build documentation
 
 ```bash
-make docs-develop
+make develop
 make docs
 make serve
 ```
 
 Open <http://localhost:9087>. Yardang reads configuration from `pyproject.toml` and uses `README.md` as the homepage. Klink supplies the theme; generated HTML goes into `docs/html`. Builds treat warnings as errors.
+
+Documentation dependencies live in `pyproject.toml` under the `develop` extra. Both local setup and documentation CI install that extra, including `klink>=0.1.13` and `yardang>=0.10.0`. There is no separate documentation requirements file.
+
+`make docs` runs `yardang build --warning-is-error`, then copies `docs/source/_static` into the built site's `_static` directory. No custom Python build wrapper is needed.
 
 Edit the MyST Markdown installation guide, quickstart, and API reference under `docs/source`. Keep API reference separate from the tutorials and contributor instructions. Existing page URLs are preserved by redirects in `[tool.yardang.redirects]`.
 
