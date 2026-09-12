@@ -47,10 +47,10 @@ make<span class="w"> </span>lint
 make<span class="w"> </span>checks
 make<span class="w"> </span>coverage
 make<span class="w"> </span>build
-make<span class="w"> </span>test-dist
 </pre></div>
 </div>
 <p>On Windows, activate with <code class="docutils literal notranslate"><span class="pre">.venv\Scripts\activate</span></code>. Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code> for available targets. <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">test</span></code> runs the unit tests; <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">benchmark</span></code> runs the separate performance benchmarks. Type checking (<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">check-types</span></code>) is advisory and does not gate CI. The <code class="docutils literal notranslate"><span class="pre">dev</span></code> extra remains an alias for <code class="docutils literal notranslate"><span class="pre">develop</span></code>.</p>
+<p>CI uses the template’s <code class="docutils literal notranslate"><span class="pre">actions-ext/python/test-wheel</span></code> and <code class="docutils literal notranslate"><span class="pre">actions-ext/python/test-sdist</span></code> actions to check distribution installation.</p>
 <section id="build-documentation">
 <h2>Build documentation<a class="headerlink" href="#build-documentation" title="Link to this heading">¶</a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>develop
