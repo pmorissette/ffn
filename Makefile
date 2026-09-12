@@ -18,16 +18,16 @@ lint-py:  ## lint Python with ruff
 	python -m ruff format --check ffn .github/scripts docs/build.py
 
 lint-docs:  ## lint contributor documentation
-	python -m mdformat --check README.md docs/development.md
-	python -m codespell_lib README.md docs/development.md
+	python -m mdformat --check README.md docs/development.md docs/source/*.md
+	python -m codespell_lib README.md docs/development.md docs/source/*.md
 
 fix-py:  ## autoformat Python code
 	python -m ruff check --fix ffn .github/scripts docs/build.py
 	python -m ruff format ffn .github/scripts docs/build.py
 
 fix-docs:  ## autoformat contributor documentation
-	python -m mdformat README.md docs/development.md
-	python -m codespell_lib --write README.md docs/development.md
+	python -m mdformat README.md docs/development.md docs/source/*.md
+	python -m codespell_lib --write README.md docs/development.md docs/source/*.md
 
 lint: lint-py lint-docs  ## run all linters
 lints: lint

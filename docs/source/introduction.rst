@@ -1,4 +1,0 @@
-Introduction
-============
-
-.. include:: intro.rst

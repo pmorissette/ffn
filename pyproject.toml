@@ -55,6 +55,7 @@ develop = [
     "copier",
     "hatchling",
     "mdformat",
+    "mdformat-myst",
     "mdformat-tables>=1",
     "ruff",
     "pytest",
@@ -110,6 +111,9 @@ line-length = 180
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401", "F403"]
 
+[tool.ruff.lint.isort]
+known-third-party = ["yardang"]
+
 [tool.hatch.build.targets.sdist]
 include = [
     "/ffn",
@@ -134,16 +138,16 @@ theme = "klink"
 docs-host = "https://pmorissette.github.io/ffn/"
 root = "README.md"
 pages = [
-    "docs/source/install.rst",
-    "docs/source/introduction.rst",
-    "docs/source/quick.rst",
-    "docs/source/ffn.rst",
+    "docs/source/install.md",
+    "docs/source/introduction.md",
+    "docs/source/quick.md",
+    "docs/source/ffn.md",
     "docs/development.md",
 ]
 use-autoapi = false
 use-search = false
 nb-execution-mode = "off"
-exclude-patterns = ["**/*.ipynb", "docs/source/intro.rst", "docs/source/quickstart.rst", "TODO.md", "base", "bt", "reference", ".venv"]
+exclude-patterns = ["**/*.ipynb", "docs/source/intro.md", "docs/source/quickstart.md", "TODO.md", "base", "bt", "klink", "yardang", "reference", ".venv"]
 extensions = ["sphinx.ext.intersphinx"]
 
 [tool.yardang.html-theme-options]
