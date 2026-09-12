@@ -5,9 +5,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>How to develop ffn &#8212; ffn — Financial Functions for Python</title>
+    <title>How to develop ffn &#8212; ffn - Financial Functions for Python v1.2.1</title>
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/klink.css?v=010e5783" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/klink.css?v=c1d18d48" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
@@ -21,7 +21,6 @@
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script src="../_static/design-tabs.js?v=f930bc37"></script>
     <script src="../_static/js/custom.js?v=956e5d78"></script>
-    <link rel="icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="API" href="source/ffn.html" />
@@ -54,12 +53,14 @@ make<span class="w"> </span>test-dist
 <p>On Windows, activate with <code class="docutils literal notranslate"><span class="pre">.venv\Scripts\activate</span></code>. Run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">help</span></code> for available targets. <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">test</span></code> runs the unit tests; <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">benchmark</span></code> runs the separate performance benchmarks. Type checking (<code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">check-types</span></code>) is advisory and does not gate CI. The <code class="docutils literal notranslate"><span class="pre">dev</span></code> extra remains an alias for <code class="docutils literal notranslate"><span class="pre">develop</span></code>.</p>
 <section id="build-documentation">
 <h2>Build documentation<a class="headerlink" href="#build-documentation" title="Link to this heading">¶</a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>docs-develop
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>develop
 make<span class="w"> </span>docs
 make<span class="w"> </span>serve
 </pre></div>
 </div>
 <p>Open <a class="reference external" href="http://localhost:9087">http://localhost:9087</a>. Yardang reads configuration from <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and uses <code class="docutils literal notranslate"><span class="pre">README.md</span></code> as the homepage. Klink supplies the theme; generated HTML goes into <code class="docutils literal notranslate"><span class="pre">docs/html</span></code>. Builds treat warnings as errors.</p>
+<p>Documentation dependencies live in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> under the <code class="docutils literal notranslate"><span class="pre">develop</span></code> extra. Both local setup and documentation CI install that extra, including <code class="docutils literal notranslate"><span class="pre">klink&gt;=0.1.13</span></code> and <code class="docutils literal notranslate"><span class="pre">yardang&gt;=0.10.0</span></code>. There is no separate documentation requirements file.</p>
+<p><code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">docs</span></code> runs <code class="docutils literal notranslate"><span class="pre">yardang</span> <span class="pre">build</span> <span class="pre">--warning-is-error</span></code>, then copies <code class="docutils literal notranslate"><span class="pre">docs/source/_static</span></code> into the built site’s <code class="docutils literal notranslate"><span class="pre">_static</span></code> directory. No custom Python build wrapper is needed.</p>
 <p>Edit the MyST Markdown installation guide, quickstart, and API reference under <code class="docutils literal notranslate"><span class="pre">docs/source</span></code>. Keep API reference separate from the tutorials and contributor instructions. Existing page URLs are preserved by redirects in <code class="docutils literal notranslate"><span class="pre">[tool.yardang.redirects]</span></code>.</p>
 <p>Keep autodoc directives inside <code class="docutils literal notranslate"><span class="pre">{eval-rst}</span></code> fences in the Markdown API reference: autodoc generates reStructuredText from Python docstrings.</p>
 <p>The notebook Markdown exports and images are checked in. Builds use saved outputs without executing notebooks or downloading market data. After editing a notebook, regenerate its Markdown export and images without rerunning it:</p>
@@ -88,7 +89,7 @@ python<span class="w"> </span>-m<span class="w"> </span>mdformat<span class="w">
           </div>
         </div>
       </div>
-        <aside>
+        <aside class="klink-sidebar">
 
             
             <a href="../index.html" id="logo" title=ffn><img class="logo" src="../_static/logo.png" width="150px" height="150px" title=ffn /></a>
