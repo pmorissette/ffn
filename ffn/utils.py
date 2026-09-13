@@ -29,16 +29,21 @@ def _memoize(func, *args, **kw):
 
     cache = func.mcache
     if not refresh and key in cache:
-        return cache[key]
-    else:
-        cache[key] = result = func(*args, **kw)
-        return result
+        result = cache[key]
+        return result.copy(deep=True) if isinstance(result, (pd.Series, pd.DataFrame)) else result
+
+    result = func(*args, **kw)
+    # Keep the cached pandas snapshot private from the caller receiving this result.
+    cache[key] = result.copy(deep=True) if isinstance(result, (pd.Series, pd.DataFrame)) else result
+    return result
 
 
 def memoize(f, refresh_keyword="mrefresh"):
     """
     Memoize decorator. The refresh keyword is the keyword
     used to bypass the cache (in the function call).
+    Pandas Series and DataFrame results are copied at the cache boundary
+    so assignments through returned containers do not change cached data.
     """
     f.mcache = {}
     f.mrefresh_keyword = refresh_keyword
