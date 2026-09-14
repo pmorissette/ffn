@@ -704,6 +704,63 @@ The object should be a Series of prices.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="ffn.core.calc_prob_backtest_overfitting">
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_prob_backtest_overfitting</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial_returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_blocks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_output</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_prob_backtest_overfitting"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_prob_backtest_overfitting" title="Link to this definition">¶</a></dt>
+<dd><p>Calculates the probability of <a class="reference external" href="https://doi.org/10.21314/JCF.2016.322">backtest overfitting</a>
+(PBO) of a strategy search via combinatorially symmetric cross validation
+(CSCV).</p>
+<p>Use it on the full matrix of trials a strategy search evaluated, with one
+column per trial. The sample is split into <code class="docutils literal notranslate"><span class="pre">n_blocks</span></code> contiguous blocks
+and, for every balanced combination of half the blocks used in-sample, the
+in-sample winner’s performance rank is observed out-of-sample. If selecting
+the in-sample best carried no information, that rank is uniform; PBO is the
+fraction of combinations in which the in-sample winner performs at or below
+the out-of-sample median (rank logit &lt;= 0). Out-of-sample ties receive their
+average rank; in-sample ties select the first column.</p>
+<p>This is the companion diagnostic to <a class="reference internal" href="#ffn.core.calc_deflated_sharpe_ratio" title="ffn.core.calc_deflated_sharpe_ratio"><code class="xref py py-func docutils literal notranslate"><span class="pre">calc_deflated_sharpe_ratio()</span></code></a>, and
+they answer different questions: the deflated Sharpe ratio asks whether the
+winner’s performance clears the hurdle its own search sets by chance, whilst
+PBO asks whether the act of selection transferred out of sample at all. A
+strategy family with genuine common alpha can pass the first and still show
+a PBO near one half because the parameter choice within the family was
+arbitrary.</p>
+<p>Source: Bailey, D., Borwein, J., Lopez de Prado, M. and Zhu, Q. (2017),
+“The Probability of Backtest Overfitting”, Journal of Computational
+Finance, 20(4), 39-69.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>trial_returns</strong> (<em>*</em>) – Return series of ALL evaluated trials,
+one column per trial (configuration), in chronological row order.</p></li>
+<li><p><strong>n_blocks</strong> (<em>*</em>) – Number of contiguous blocks for CSCV. Must be even
+and at least 2; observations beyond a multiple of <code class="docutils literal notranslate"><span class="pre">n_blocks</span></code> are
+truncated from the end. 16 gives 12,870 combinations; 12 or 8 run
+faster on long samples.</p></li>
+<li><p><strong>metric</strong> (<em>*</em>) – Performance measure mapping a return Series to a
+scalar, with larger values indicating better performance, used
+both to pick the in-sample winner and to rank out of sample. The
+Series retains its original index and column name. Defaults to the
+per-period Sharpe ratio (mean over sample standard deviation),
+skipping missing observations. Constant or insufficient data has
+an undefined Sharpe ratio.</p></li>
+<li><p><strong>full_output</strong> (<em>*</em>) – If True, also return the per-combination rank
+logits and the mean out-of-sample rank of the in-sample winner.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>float – probability [0, 1] of backtest overfitting, or a dict with
+keys <code class="docutils literal notranslate"><span class="pre">pbo</span></code>, <code class="docutils literal notranslate"><span class="pre">logits</span></code> and <code class="docutils literal notranslate"><span class="pre">mean_oos_rank</span></code> when <code class="docutils literal notranslate"><span class="pre">full_output</span></code>
+is True. If any trial has a non-finite metric in either half of a
+combination, that combination’s logit is NaN and both <code class="docutils literal notranslate"><span class="pre">pbo</span></code> and
+<code class="docutils literal notranslate"><span class="pre">mean_oos_rank</span></code> are NaN. Undefined combinations are not dropped.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="ffn.core.calc_prob_mom">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_prob_mom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">other_returns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_prob_mom"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_prob_mom" title="Link to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="http://cssanalytics.wordpress.com/2014/01/28/are-simple-momentum-strategies-too-dumb-introducing-probabilistic-momentum/">Probabilistic momentum</a> (see <a class="reference external" href="https://www.investopedia.com/terms/m/momentum_investing.asp">momentum investing</a>)</p>
