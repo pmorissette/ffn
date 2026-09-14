@@ -1,7 +1,130 @@
 import pandas as pd
+import pytest
 
 import ffn
 from ffn import utils
+
+
+def test_memoize_isolates_series_results():
+    """Keep caller assignments from changing a cached Series snapshot."""
+    index = pd.date_range("2024-01-01", periods=2, name="date")
+    expected = pd.Series([100.0, 101.0], index=index, name="price")
+    expected.attrs["provider"] = "fixture"
+    calls = []
+
+    @utils.memoize
+    def cached(value):
+        """Return fresh data when the decorated function runs."""
+        calls.append(value)
+        return expected.copy(deep=True)
+
+    first = cached("value")
+    assert isinstance(first, pd.Series)
+    first.iloc[0] = 999.0
+    second = cached("value")
+    assert isinstance(second, pd.Series)
+    assert second is not first
+    pd.testing.assert_series_equal(second, expected)
+    assert second.attrs == expected.attrs
+
+    second.iloc[-1] = -1.0
+    third = cached("value")
+    assert isinstance(third, pd.Series)
+    assert third is not second
+    pd.testing.assert_series_equal(third, expected)
+    assert third.attrs == expected.attrs
+    assert calls == ["value"]
+
+
+def test_memoize_isolates_dataframe_results():
+    """Keep caller assignments from changing a cached DataFrame snapshot."""
+    index = pd.date_range("2024-01-01", periods=2, name="date")
+    expected = pd.DataFrame({"price": [100.0, 101.0]}, index=index)
+    expected.attrs["provider"] = "fixture"
+    calls = []
+
+    @utils.memoize
+    def cached(value):
+        """Return fresh data when the decorated function runs."""
+        calls.append(value)
+        return expected.copy(deep=True)
+
+    first = cached("value")
+    assert isinstance(first, pd.DataFrame)
+    first.iloc[0, 0] = 999.0
+    second = cached("value")
+    assert isinstance(second, pd.DataFrame)
+    assert second is not first
+    pd.testing.assert_frame_equal(second, expected)
+    assert second.attrs == expected.attrs
+
+    second.iloc[-1, 0] = -1.0
+    third = cached("value")
+    assert isinstance(third, pd.DataFrame)
+    assert third is not second
+    pd.testing.assert_frame_equal(third, expected)
+    assert third.attrs == expected.attrs
+    assert calls == ["value"]
+
+
+@pytest.mark.parametrize("constructor,axis", [(pd.Series, "index"), (pd.DataFrame, "index"), (pd.DataFrame, "columns")])
+@pytest.mark.parametrize("cache_state", ["miss", "hit", "refresh"])
+def test_memoize_isolates_axis_metadata(constructor, axis, cache_state):
+    calls = []
+
+    @utils.memoize
+    def cached(mrefresh=False):
+        calls.append(mrefresh)
+        result = constructor([100.0, 101.0], index=pd.date_range("2024-01-01", periods=2))
+        if isinstance(result, pd.DataFrame):
+            result.columns = pd.date_range("2024-02-01", periods=1)
+        return result
+
+    result = cached()
+    if cache_state != "miss":
+        result = cached(mrefresh=cache_state == "refresh")
+    getattr(result, axis).freq = None
+
+    for snapshot in cached.mcache.values():
+        assert getattr(snapshot, axis).freq == pd.offsets.Day()
+    assert getattr(cached(), axis).freq == pd.offsets.Day()
+    assert calls == ([False, True] if cache_state == "refresh" else [False])
+
+
+@pytest.mark.parametrize("constructor", [pd.Series, pd.DataFrame])
+@pytest.mark.parametrize("cache_state", ["miss", "hit", "refresh"])
+def test_memoize_isolates_nested_attrs(constructor, cache_state):
+    calls = []
+
+    @utils.memoize
+    def cached(mrefresh=False):
+        calls.append(mrefresh)
+        result = constructor([100.0, 101.0])
+        result.attrs["provider"] = {"fields": ["price"]}
+        return result
+
+    result = cached()
+    if cache_state != "miss":
+        result = cached(mrefresh=cache_state == "refresh")
+    result.attrs["provider"]["fields"].append("volume")
+
+    for snapshot in cached.mcache.values():
+        assert snapshot.attrs == {"provider": {"fields": ["price"]}}
+    assert cached().attrs == {"provider": {"fields": ["price"]}}
+    assert calls == ([False, True] if cache_state == "refresh" else [False])
+
+
+def test_memoize_preserves_non_pandas_result_identity():
+    calls = []
+
+    @utils.memoize
+    def cached():
+        calls.append(True)
+        return {"prices": [100.0, 101.0]}
+
+    first = cached()
+    assert cached() is first
+    assert calls == [True]
 
 
 def test_memoize_handles_keyword_only_refresh():

@@ -3,10 +3,22 @@ from __future__ import annotations
 import pickle
 import re
 from collections.abc import Sequence
+from copy import deepcopy
 
 import decorator
 import pandas as pd
 from packaging.version import Version
+
+
+def _copy_memoized_result(result):
+    if isinstance(result, (pd.Series, pd.DataFrame)):
+        result = result.copy(deep=True)
+        # pandas can still share axis data and nested attrs after a deep copy.
+        result.index = result.index.copy(deep=True)
+        if isinstance(result, pd.DataFrame):
+            result.columns = result.columns.copy(deep=True)
+        result.attrs = deepcopy(result.attrs)
+    return result
 
 
 def _memoize(func, *args, **kw):
@@ -29,16 +41,22 @@ def _memoize(func, *args, **kw):
 
     cache = func.mcache
     if not refresh and key in cache:
-        return cache[key]
-    else:
-        cache[key] = result = func(*args, **kw)
-        return result
+        return _copy_memoized_result(cache[key])
+
+    result = func(*args, **kw)
+    # Keep the cached pandas snapshot private from the caller receiving this result.
+    cache[key] = _copy_memoized_result(result)
+    return result
 
 
 def memoize(f, refresh_keyword="mrefresh"):
     """
     Memoize decorator. The refresh keyword is the keyword
     used to bypass the cache (in the function call).
+    Pandas Series and DataFrame results are copied at the cache boundary
+    so assignments through returned containers do not change cached data.
+    Axes and attrs are copied independently. As with pandas deep copies,
+    mutable Python objects stored in cells are not recursively copied.
     """
     f.mcache = {}
     f.mrefresh_keyword = refresh_keyword
