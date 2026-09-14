@@ -1,7 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
-from pytest import fixture
+from pytest import fixture, mark
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
 
@@ -1415,6 +1415,114 @@ def test_calc_prob_backtest_overfitting():
         ffn.calc_prob_backtest_overfitting(noise[3], n_blocks=8)
     with np.testing.assert_raises(ValueError):
         ffn.calc_prob_backtest_overfitting(noise.iloc[:4], n_blocks=8)
+
+
+def test_calc_prob_backtest_overfitting_exact_ranks():
+    returns = pd.DataFrame([[3, 1, 2], [3, 2, 1], [1, 3, 2], [1, 2, 3]])
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=4, metric=pd.Series.mean, full_output=True)
+
+    # AB, AC, AD, BC, BD, CD; in-sample ties select the first column.
+    ranks = np.array([0.25, 0.5, 0.25, 0.25, 0.5, 0.375])
+    np.testing.assert_allclose(result["logits"], np.log(ranks / (1 - ranks)))
+    aae(result["mean_oos_rank"], ranks.mean())
+    assert result["pbo"] == 1.0
+
+
+def test_calc_prob_backtest_overfitting_identical_trials():
+    returns = pd.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=2, full_output=True)
+
+    np.testing.assert_array_equal(result["logits"], [0.0, 0.0])
+    assert result["mean_oos_rank"] == 0.5
+    assert result["pbo"] == 1.0  # The existing PBO convention includes the median.
+
+
+@mark.parametrize("value", [0.0, 0.1, np.nan])
+def test_calc_prob_backtest_overfitting_undefined_full_output(value):
+    returns = pd.DataFrame(value, index=range(40), columns=["a", "b"])
+
+    assert np.isnan(returns.calc_prob_backtest_overfitting(n_blocks=2))
+    result = returns.calc_prob_backtest_overfitting(n_blocks=2, full_output=True)
+
+    assert set(result) == {"pbo", "logits", "mean_oos_rank"}
+    assert np.isnan(result["pbo"])
+    assert np.isnan(result["mean_oos_rank"])
+    assert len(result["logits"]) == 2
+    assert result["logits"].isna().all()
+
+
+@mark.parametrize("invalid", [np.nan, np.inf, -np.inf])
+@mark.parametrize("trial", ["a", "b"])
+def test_calc_prob_backtest_overfitting_nonfinite_metric(invalid, trial):
+    returns = pd.DataFrame({"a": [11, 12, 13, 14], "b": [1, 2, 3, 4]})
+
+    def metric(series):
+        if series.iloc[0] == returns[trial].iloc[2]:
+            return invalid
+        return series.mean()
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=2, metric=metric, full_output=True)
+
+    assert np.isnan(result["pbo"])
+    assert np.isnan(result["mean_oos_rank"])
+    assert len(result["logits"]) == 2
+    assert result["logits"].isna().all()
+
+
+def test_calc_prob_backtest_overfitting_retains_undefined_folds():
+    returns = pd.DataFrame({"a": [1, 1, 1, 1, 3, 4, 5, 6], "b": [1, 2, 3, 4, 1, 2, 1, 2]})
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=4, full_output=True)
+
+    assert len(result["logits"]) == 6
+    assert result["logits"].iloc[[0, 5]].isna().all()
+    assert np.isfinite(result["logits"].iloc[1:5]).all()
+    assert np.isnan(result["pbo"])
+    assert np.isnan(result["mean_oos_rank"])
+
+
+@mark.parametrize("n_blocks", [np.int64(4), np.uint64(4)])
+def test_calc_prob_backtest_overfitting_custom_metric_preserves_labels(n_blocks):
+    returns = pd.DataFrame(
+        np.arange(18, dtype=float).reshape(9, 2),
+        index=pd.date_range("2020-01-01", periods=9, freq="2D", tz="UTC"),
+        columns=["a", "b"],
+    )
+    seen = []
+
+    def metric(series):
+        assert isinstance(series.index, pd.DatetimeIndex)
+        assert series.index.is_monotonic_increasing
+        assert returns.index[-1] not in series.index  # Truncate the ninth row.
+        pd.testing.assert_series_equal(series, returns.loc[series.index, series.name])
+        seen.append(series)
+        return series.mean()
+
+    assert returns.calc_prob_backtest_overfitting(n_blocks=n_blocks, metric=metric) == 0.0
+    assert len(seen) == 24  # Six folds, two halves, two trials.
+    assert all(len(series) == 4 for series in seen)
+
+
+@mark.parametrize("n_blocks", [0, 1, 3, -2, 2.0, 2.5, "2", None, np.nan, np.inf, True, False])
+def test_calc_prob_backtest_overfitting_invalid_block_count(n_blocks):
+    returns = pd.DataFrame(np.arange(16).reshape(8, 2))
+    with np.testing.assert_raises_regex(ValueError, "n_blocks"):
+        returns.calc_prob_backtest_overfitting(n_blocks=n_blocks)
+
+
+def test_calc_prob_backtest_overfitting_invalid_metric():
+    returns = pd.DataFrame(np.arange(8).reshape(4, 2))
+    with np.testing.assert_raises_regex(TypeError, "metric"):
+        returns.calc_prob_backtest_overfitting(n_blocks=2, metric=1)
+    with np.testing.assert_raises_regex(ValueError, "scalar"):
+        returns.calc_prob_backtest_overfitting(n_blocks=2, metric=lambda series: series.to_numpy())
+
+
+def test_calc_prob_backtest_overfitting_single_trial():
+    with np.testing.assert_raises(ValueError):
+        ffn.calc_prob_backtest_overfitting(pd.DataFrame({"a": range(8)}), n_blocks=2)
 
 
 def test_calc_deflated_sharpe_ratio():
