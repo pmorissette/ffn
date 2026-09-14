@@ -1377,7 +1377,11 @@ any characters that are not letters. Returns as lowercase.</p>
 <dt class="sig sig-object py" id="ffn.utils.memoize">
 <span class="sig-prename descclassname"><span class="pre">ffn.utils.</span></span><span class="sig-name descname"><span class="pre">memoize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">refresh_keyword</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mrefresh'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/utils.html#memoize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.utils.memoize" title="Link to this definition">¶</a></dt>
 <dd><p>Memoize decorator. The refresh keyword is the keyword
-used to bypass the cache (in the function call).</p>
+used to bypass the cache (in the function call).
+Pandas Series and DataFrame results are copied at the cache boundary
+so assignments through returned containers do not change cached data.
+Axes and attrs are copied independently. As with pandas deep copies,
+mutable Python objects stored in cells are not recursively copied.</p>
 </dd></dl>
 
 <dl class="py function">
