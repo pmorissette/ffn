@@ -70,6 +70,69 @@ def test_mtd_ytd(df):
     assert mtd_actual == ytd_actual == 0
 
 
+def test_mtd_uses_current_period_when_prior_month_is_unavailable():
+    """Ignore an empty prior month when the current month has enough prices."""
+    prices = pd.Series(
+        [90.0, 100.0, 110.0],
+        index=pd.to_datetime(["2024-01-31", "2024-03-01", "2024-03-15"]),
+    )
+    monthly_prices = prices.resample(ffn.core._MonthEnd).last()
+
+    # Adding unrelated January history must not change March's 110 / 100 - 1 return.
+    expected = 0.1
+    assert np.isclose(ffn.calc_mtd(prices, monthly_prices), expected)
+    assert np.isclose(ffn.PerformanceStats(prices).mtd, expected)
+
+
+def test_ytd_uses_current_period_when_prior_year_is_unavailable():
+    """Ignore an empty prior year when the current year has enough prices."""
+    prices = pd.Series(
+        [90.0, 100.0, 110.0],
+        index=pd.to_datetime(["2019-12-31", "2021-01-01", "2021-01-15"]),
+    )
+    yearly_prices = prices.resample(ffn.core._YearEnd).last()
+
+    # Adding unrelated 2019 history must not change 2021's 110 / 100 - 1 return.
+    expected = 0.1
+    assert np.isclose(ffn.calc_ytd(prices, yearly_prices), expected)
+    assert np.isclose(ffn.PerformanceStats(prices).ytd, expected)
+
+
+def test_mtd_ytd_select_current_period_fallback_per_column():
+    """Retain each available prior endpoint in mixed DataFrame inputs."""
+    cases = (
+        (ffn.calc_mtd, ffn.core._MonthEnd, ["2024-01-31", "2024-02-29", "2024-03-01", "2024-03-15"]),
+        (ffn.calc_ytd, ffn.core._YearEnd, ["2019-12-31", "2020-12-31", "2021-01-01", "2021-01-15"]),
+    )
+    for calculator, frequency, dates in cases:
+        daily_prices = pd.DataFrame(
+            {
+                "gap": [90.0, np.nan, 100.0, 110.0],
+                "prior": [10.0, 20.0, 30.0, 35.0],
+                "single": [90.0, np.nan, np.nan, 110.0],
+            },
+            index=pd.to_datetime(dates),
+        )
+        period_prices = daily_prices.resample(frequency).last()
+
+        # gap uses 110 / 100 - 1; prior keeps 35 / 20 - 1; single stays unavailable.
+        expected = pd.Series({"gap": 0.1, "prior": 0.75, "single": np.nan})
+        pd.testing.assert_series_equal(calculator(daily_prices, period_prices), expected)
+
+
+def test_mtd_ytd_keep_unavailable_with_one_current_period_price():
+    """Do not manufacture a zero return from one current-period observation."""
+    cases = (
+        (ffn.calc_mtd, ffn.core._MonthEnd, ["2024-01-31", "2024-03-15"]),
+        (ffn.calc_ytd, ffn.core._YearEnd, ["2019-12-31", "2021-01-15"]),
+    )
+    for calculator, frequency, dates in cases:
+        daily_prices = pd.Series([90.0, 110.0], index=pd.to_datetime(dates))
+        period_prices = daily_prices.resample(frequency).last()
+
+        assert pd.isna(calculator(daily_prices, period_prices))
+
+
 def test_to_returns_ts(ts):
     data = ts
     actual = data.to_returns()
