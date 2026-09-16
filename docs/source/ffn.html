@@ -682,8 +682,10 @@ actual drawdown series, please use to_drawdown_series.</p>
 <dt class="sig sig-object py" id="ffn.core.calc_mtd">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_mtd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">monthly_prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_mtd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_mtd" title="Link to this definition">¶</a></dt>
 <dd><p>Calculates mtd return of a price series.
-Use daily_prices if prices are only available from same month
-else use monthly_prices</p>
+Use daily_prices if prices are only available from the same month. With
+older periods present, use current-month prices when the prior month is
+unavailable and the current month has at least two usable observations; else use
+monthly_prices.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -848,8 +850,10 @@ is returned.</p>
 <dt class="sig sig-object py" id="ffn.core.calc_ytd">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_ytd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">daily_prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">yearly_prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_ytd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_ytd" title="Link to this definition">¶</a></dt>
 <dd><p>Calculates ytd return of a price series.
-Use daily_prices if prices are only available from same year
-else use yearly_prices</p>
+Use daily_prices if prices are only available from the same year. With
+older periods present, use current-year prices when the prior year is
+unavailable and the current year has at least two usable observations; else use
+yearly_prices.</p>
 </dd></dl>
 
 <dl class="py function">

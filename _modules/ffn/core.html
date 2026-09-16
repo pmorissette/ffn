@@ -1854,18 +1854,38 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_calc_current_period_return</span><span class="p">(</span><span class="n">daily_prices</span><span class="p">,</span> <span class="n">period_prices</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Calculate a period return with an observed-current-period fallback."""</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">period_prices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">previous_price</span> <span class="o">=</span> <span class="n">period_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">previous_price</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">previous_price</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+            <span class="n">current_prices</span> <span class="o">=</span> <span class="n">daily_prices</span><span class="p">[</span><span class="n">daily_prices</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;</span> <span class="n">period_prices</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">current_prices</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+                <span class="c1"># Each missing column needs two observations to define its current-period return.</span>
+                <span class="n">fallback</span> <span class="o">=</span> <span class="n">current_prices</span><span class="o">.</span><span class="n">bfill</span><span class="p">()</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">current_prices</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">previous_price</span> <span class="o">=</span> <span class="n">previous_price</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">fallback</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">previous_price</span><span class="p">):</span>
+        <span class="n">current_prices</span> <span class="o">=</span> <span class="n">daily_prices</span><span class="p">[</span><span class="n">daily_prices</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;</span> <span class="n">period_prices</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]]</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_prices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">previous_price</span> <span class="o">=</span> <span class="n">current_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">previous_price</span> <span class="o">-</span> <span class="mi">1</span>
+
+
 <div class="viewcode-block" id="calc_mtd">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.calc_mtd">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">calc_mtd</span><span class="p">(</span><span class="n">daily_prices</span><span class="p">,</span> <span class="n">monthly_prices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Calculates mtd return of a price series.</span>
-<span class="sd">    Use daily_prices if prices are only available from same month</span>
-<span class="sd">    else use monthly_prices</span>
+<span class="sd">    Use daily_prices if prices are only available from the same month. With</span>
+<span class="sd">    older periods present, use current-month prices when the prior month is</span>
+<span class="sd">    unavailable and the current month has at least two usable observations; else use</span>
+<span class="sd">    monthly_prices.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">monthly_prices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">monthly_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span></div>
+    <span class="k">return</span> <span class="n">_calc_current_period_return</span><span class="p">(</span><span class="n">daily_prices</span><span class="p">,</span> <span class="n">monthly_prices</span><span class="p">)</span></div>
 
 
 
@@ -1874,13 +1894,12 @@ window.runMermaid = runMermaid;</script>
 <span class="k">def</span><span class="w"> </span><span class="nf">calc_ytd</span><span class="p">(</span><span class="n">daily_prices</span><span class="p">,</span> <span class="n">yearly_prices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Calculates ytd return of a price series.</span>
-<span class="sd">    Use daily_prices if prices are only available from same year</span>
-<span class="sd">    else use yearly_prices</span>
+<span class="sd">    Use daily_prices if prices are only available from the same year. With</span>
+<span class="sd">    older periods present, use current-year prices when the prior year is</span>
+<span class="sd">    unavailable and the current year has at least two usable observations; else use</span>
+<span class="sd">    yearly_prices.</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yearly_prices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">daily_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">yearly_prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span></div>
+    <span class="k">return</span> <span class="n">_calc_current_period_return</span><span class="p">(</span><span class="n">daily_prices</span><span class="p">,</span> <span class="n">yearly_prices</span><span class="p">)</span></div>
 
 
 
