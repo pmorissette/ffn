@@ -990,9 +990,7 @@ class GroupStats(dict):
         full_prices = self._prices_full.loc[start:end]
         # The shared calendar may be empty while every series still has usable data.
         if full_prices.count().eq(0).any():
-            raise ValueError(
-                "The selected date range contains no usable data for one or more series."
-            )
+            raise ValueError("The selected date range contains no usable data for one or more series.")
         self._update(prices, full_prices)
 
     def display(self):
