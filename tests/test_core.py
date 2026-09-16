@@ -1,7 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
-from pytest import fixture, mark
+from pytest import fixture, mark, raises
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
 
@@ -2206,6 +2206,107 @@ def test_performance_stats_date_range_reset_uses_observed_endpoints():
     assert stats.start == dates[1]
     assert stats.end == dates[3]
     assert stats.total_return == 110.0 / 100.0 - 1
+
+
+@mark.parametrize(
+    ("start", "end"),
+    (
+        ("2025-01-01T00:00:00Z", "2025-01-02T00:00:00Z"),
+        ("2024-01-02T00:00:00Z", "2024-01-02T00:00:00Z"),
+    ),
+)
+def test_performance_stats_empty_date_range_preserves_state(start, end):
+    dates = pd.date_range("2024-01-01", periods=4, tz="UTC")
+    prices = pd.Series([100.0, np.nan, 102.0, 103.0], index=dates, name="asset")
+    original_prices = prices.copy()
+    stats = ffn.PerformanceStats(prices, rf=0.03, annualization_factor=365)
+    original_scalars = (
+        stats.start,
+        stats.end,
+        stats.total_return,
+        stats.rf,
+        stats.annualization_factor,
+    )
+    original_daily = stats.daily_prices.copy()
+    original_monthly = stats.monthly_prices.copy()
+    original_yearly = stats.yearly_prices.copy()
+    original_stats = stats.stats.copy()
+    original_lookbacks = stats.lookback_returns.copy()
+    original_return_table = stats.return_table.copy()
+
+    with raises(ValueError, match="no usable data"):
+        stats.set_date_range(start=start, end=end)
+
+    assert (
+        stats.start,
+        stats.end,
+        stats.total_return,
+        stats.rf,
+        stats.annualization_factor,
+    ) == original_scalars
+    pd.testing.assert_series_equal(stats.daily_prices, original_daily)
+    pd.testing.assert_series_equal(stats.monthly_prices, original_monthly)
+    pd.testing.assert_series_equal(stats.yearly_prices, original_yearly)
+    pd.testing.assert_series_equal(stats.stats, original_stats)
+    pd.testing.assert_series_equal(stats.lookback_returns, original_lookbacks)
+    pd.testing.assert_frame_equal(stats.return_table, original_return_table)
+    pd.testing.assert_series_equal(prices, original_prices)
+
+
+def test_performance_stats_empty_date_range_guard_accepts_one_price():
+    dates = pd.date_range("2024-01-01", periods=3)
+    stats = ffn.PerformanceStats(pd.Series([100.0, 101.0, 102.0], index=dates))
+
+    stats.set_date_range(start=dates[1], end=dates[1])
+
+    assert stats.start == dates[1]
+    assert stats.end == dates[1]
+    assert len(stats.daily_prices) == 1
+    assert pd.isna(stats.total_return)
+
+
+@mark.parametrize("empty_column", ("A", "B"))
+def test_group_stats_empty_date_range_preserves_all_children(empty_column):
+    dates = pd.date_range("2024-01-01", periods=6, tz="UTC")
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0],
+            "B": [50.0, 51.0, 52.0, 53.0, 54.0, 55.0],
+        },
+        index=dates,
+    )
+    prices.loc[dates[:2], empty_column] = np.nan
+    original_prices = prices.copy()
+    stats = ffn.GroupStats(prices, annualization_factor=365)
+    stats.set_riskfree_rate(0.03)
+    original_group_prices = stats.prices.copy()
+    original_stats = stats.stats.copy()
+    original_lookbacks = stats.lookback_returns.copy()
+    original_children = {name: stats[name] for name in ("A", "B")}
+
+    with raises(ValueError, match="no usable data"):
+        stats.set_date_range(start=dates[0], end=dates[1])
+
+    pd.testing.assert_frame_equal(stats.prices, original_group_prices)
+    pd.testing.assert_frame_equal(stats.stats, original_stats)
+    pd.testing.assert_frame_equal(stats.lookback_returns, original_lookbacks)
+    assert all(stats[name] is original_children[name] for name in ("A", "B"))
+    assert stats._riskfree_rate == 0.03
+    assert stats._annualization_factor_override == 365
+    pd.testing.assert_frame_equal(prices, original_prices)
+
+
+def test_group_stats_empty_shared_date_range_keeps_usable_children():
+    dates = pd.date_range("2024-01-01", periods=2, tz="UTC")
+    first = pd.Series([100.0], index=dates[:1], name="first")
+    second = pd.Series([200.0], index=dates[1:], name="second")
+    stats = ffn.GroupStats(first, second)
+
+    stats.set_date_range()
+
+    assert stats.prices.empty
+    pd.testing.assert_series_equal(stats["first"].prices, first)
+    pd.testing.assert_series_equal(stats["second"].prices, second)
 
 
 def test_group_stats_calc_stats(df):
