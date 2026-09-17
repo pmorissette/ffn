@@ -196,6 +196,9 @@ range, just call with no args.</p>
 <li><p><strong>end</strong> (<em>*</em>) – end date</p></li>
 </ul>
 </dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If any series has no usable price in the selected range.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -383,6 +386,9 @@ range, just call with no args.</p>
 <li><p><strong>start</strong> (<em>*</em>) – start date</p></li>
 <li><p><strong>end</strong> (<em>*</em>) – end date</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If the selected range has no usable price.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1419,8 +1425,6 @@ scale(-5, (0.0, 99.0), (-1.0, 1.0)) == -1.0</p>
       </div>
         <aside class="klink-sidebar">
 
-            
-            <a href="../../index.html" id="logo" title=ffn><img class="logo" src="../../_static/logo.png" width="150px" height="150px" title=ffn /></a>
             
             
             <ul class="current">
