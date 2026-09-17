@@ -504,10 +504,16 @@ class PerformanceStats:
             * start (date): start date
             * end (end): end date
 
+        Raises:
+            * ValueError: If the selected range has no usable price.
+
         """
         start = self._start if start is None else pd.to_datetime(start)
         end = self._end if end is None else pd.to_datetime(end)
-        self._update(self.prices.loc[start:end])
+        prices = self.prices.loc[start:end]
+        if prices.dropna().empty:
+            raise ValueError("The selected date range contains no usable data.")
+        self._update(prices)
 
     def display(self):
         """
@@ -974,10 +980,18 @@ class GroupStats(dict):
         Args:
             * start (date): start date
             * end (end): end date
+
+        Raises:
+            * ValueError: If any series has no usable price in the selected range.
         """
         start = self._start if start is None else pd.to_datetime(start)
         end = self._end if end is None else pd.to_datetime(end)
-        self._update(self._prices.loc[start:end], self._prices_full.loc[start:end])
+        prices = self._prices.loc[start:end]
+        full_prices = self._prices_full.loc[start:end]
+        # The shared calendar may be empty while every series still has usable data.
+        if full_prices.count().eq(0).any():
+            raise ValueError("The selected date range contains no usable data for one or more series.")
+        self._update(prices, full_prices)
 
     def display(self):
         """
