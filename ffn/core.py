@@ -1745,14 +1745,16 @@ def calc_inv_vol_weights(returns):
     volatility resulting in a set of portfolio weights where each position
     has the same level of volatility.
 
-    Note, that assets with returns all equal to NaN or 0 are excluded from
-    the portfolio (their weight is set to NaN).
+    Assets with no non-missing returns or only one distinct non-missing return
+    are excluded from the portfolio (their weight is set to NaN).
 
     Returns:
         Series {col_name: weight}
     """
     # calc vols
-    vol = (1.0 / returns.std(ddof=1)).astype(float)
+    vol = (1.0 / pd.to_numeric(returns.std(ddof=1))).astype(float)
+    # Detect exact constants independently of std's dtype-dependent rounding residue.
+    vol[returns.max() == returns.min()] = np.nan
     vol[np.isinf(vol)] = np.nan
     volsum = vol.sum()
     return vol / volsum
