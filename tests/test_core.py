@@ -2576,6 +2576,34 @@ def test_resample_returns_duplicate_labels():
     pd.testing.assert_frame_equal(returns, original)
 
 
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize(
+    "index,positions,seed",
+    [
+        (pd.date_range("2024-01-31", periods=1, freq=ffn.core._MonthEnd, tz="UTC", name="date"), [0], 0),
+        (pd.date_range("2024-01-01", periods=3, tz="UTC", name="date"), [2, 1, 0], 6),
+        (pd.timedelta_range("0 days", periods=3, freq="D", name="elapsed"), [2, 1, 0], 6),
+    ],
+)
+def test_resample_returns_preserves_sampled_index_metadata(as_frame, index, positions, seed):
+    returns = pd.Series(np.arange(len(index), dtype=float), index=index, name="returns")
+    if as_frame:
+        returns = returns.to_frame()
+    expected = returns.iloc[positions].copy()
+    expected.index = pd.Index([index[position] for position in positions], name=index.name)
+
+    def statistic(sample):
+        # Label-based sampling did not infer frequency, which callbacks can use.
+        assert sample.index.freq is None
+        if as_frame:
+            pd.testing.assert_frame_equal(sample, expected)
+        else:
+            pd.testing.assert_series_equal(sample, expected)
+        return sample.sum()
+
+    ffn.resample_returns(returns, statistic, seed=seed, num_trials=1)
+
+
 def test_monthly_returns():
     dates = [
         "31/12/2017",

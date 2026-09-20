@@ -2956,7 +2956,9 @@ def resample_returns(returns, func, seed=0, num_trials=100):
     n = returns.shape[0]
     for i in range(num_trials):
         # Sample rows directly so duplicate index labels cannot expand a draw.
-        sample = resample(returns, n_samples=n, random_state=seed + i)
+        sample, sample_index = resample(returns, returns.index, n_samples=n, random_state=seed + i)
+        # Preserve label-sampling metadata; row sampling can infer a frequency.
+        sample.index = sample_index
         stats.loc[i] = func(sample)
 
     return stats
