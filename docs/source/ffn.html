@@ -645,8 +645,8 @@ for more clusters. Basically controls how similar
 <p>Returns weights that are inversely proportional to the column’s
 volatility resulting in a set of portfolio weights where each position
 has the same level of volatility.</p>
-<p>Note, that assets with returns all equal to NaN or 0 are excluded from
-the portfolio (their weight is set to NaN).</p>
+<p>Assets with no non-missing returns or only one distinct non-missing return
+are excluded from the portfolio (their weight is set to NaN).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p>weight}</p>
