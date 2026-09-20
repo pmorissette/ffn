@@ -1,7 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
-from pytest import fixture, mark, raises
+from pytest import approx, fixture, mark, raises
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
 
@@ -2281,6 +2281,77 @@ def test_group_stats_rejects_unusable_child(empty_column):
         prices.calc_stats()
 
     pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("positions", [[3, 2, 1, 0], [0, 2, 1, 3]], ids=["descending", "unsorted"])
+def test_performance_stats_rejects_nonmonotonic_prices(positions):
+    """Reject unsorted prices through every public Series statistics path."""
+    index = pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd)
+    prices = pd.Series([100.0, 110.0, 121.0, 133.1], index=index, name="asset").iloc[positions]
+    original = prices.copy()
+
+    for constructor in (ffn.PerformanceStats, ffn.calc_perf_stats, ffn.calc_stats):
+        with raises(ValueError, match="prices index must be monotonic increasing"):
+            constructor(prices)
+
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        prices.calc_perf_stats()
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        prices.calc_stats()
+    pd.testing.assert_series_equal(prices, original)
+
+
+def test_dataframe_stats_rejects_nonmonotonic_prices():
+    """Reject an unsorted DataFrame through module and pandas entry points."""
+    index = pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd)
+    prices = pd.DataFrame({"asset": [133.1, 121.0, 110.0, 100.0]}, index=index[::-1])
+    original = prices.copy()
+
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        ffn.GroupStats(prices)
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        ffn.calc_stats(prices)
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        prices.calc_stats()
+    pd.testing.assert_frame_equal(prices, original)
+
+
+def test_group_stats_rejects_nonmonotonic_component_before_merge():
+    """Reject an unsorted component before GroupStats can normalize its order."""
+    index = pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd)
+    ascending = pd.Series([100.0, 110.0, 121.0, 133.1], index=index, name="ascending")
+    descending = pd.Series([66.55, 60.5, 55.0, 50.0], index=index[::-1], name="descending")
+    original_ascending = ascending.copy()
+    original_descending = descending.copy()
+
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        ffn.GroupStats(ascending, descending)
+
+    pd.testing.assert_series_equal(ascending, original_ascending)
+    pd.testing.assert_series_equal(descending, original_descending)
+
+
+@mark.parametrize(
+    "index",
+    [
+        pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd),
+        pd.to_datetime(["2020-12-31", "2021-12-31", "2021-12-31", "2023-12-31"]),
+    ],
+    ids=["ascending", "duplicate-dates"],
+)
+def test_performance_stats_accepts_monotonic_prices(index):
+    """Preserve ascending and duplicate-date performance inputs."""
+    prices = pd.Series([100.0, 110.0, 121.0, 133.1], index=index, name="asset")
+    original = prices.copy()
+
+    stats = ffn.PerformanceStats(prices)
+    group = ffn.GroupStats(prices)
+    group_stats = group["asset"]
+
+    assert stats.total_return == approx(0.331)
+    assert group_stats is not None
+    assert group_stats.total_return == approx(0.331)
+    pd.testing.assert_series_equal(prices, original)
 
 
 def test_performance_stats_uses_observed_price_endpoints():
