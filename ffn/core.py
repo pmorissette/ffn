@@ -1778,7 +1778,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
     Calculates the mean-variance weights given a DataFrame of returns.
 
     Args:
-        * returns (DataFrame): Returns for multiple securities.
+        * returns (DataFrame): Returns for multiple securities with unique column labels.
         * weight_bounds ((low, high)): Weigh limits for optimization.
         * rf (float): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in utility calculation
         * covar_method (str): Covariance matrix estimation method:
@@ -1788,7 +1788,13 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
     Returns:
         Series {col_name: weight}
 
+    Raises:
+        * ValueError: If the returns have duplicate column labels.
+
     """
+
+    if not returns.columns.is_unique:
+        raise ValueError("returns columns must be unique")
 
     def fitness(weights, exp_rets, covar, rf):
         # portfolio mean

@@ -585,6 +585,23 @@ def test_calc_mean_var_weights(df):
     aae(actual["C"], 1.000, 3)
 
 
+@mark.parametrize("covar_method", ["ledoit-wolf", "standard"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_mean_var_weights_rejects_duplicate_columns(covar_method, use_pandas_method):
+    returns = pd.DataFrame(
+        [[0.01, 0.03], [0.02, -0.01], [-0.01, 0.02]],
+        columns=["same", "same"],
+    )
+    original = returns.copy()
+    calculate = returns.calc_mean_var_weights if use_pandas_method else ffn.calc_mean_var_weights
+    args = () if use_pandas_method else (returns,)
+
+    with raises(ValueError, match="returns columns must be unique"):
+        calculate(*args, covar_method=covar_method)
+
+    pd.testing.assert_frame_equal(returns, original)
+
+
 def test_calc_erc_weights(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
