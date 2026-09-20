@@ -2351,7 +2351,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Calculates the mean-variance weights given a DataFrame of returns.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * returns (DataFrame): Returns for multiple securities.</span>
+<span class="sd">        * returns (DataFrame): Returns for multiple securities with unique column labels.</span>
 <span class="sd">        * weight_bounds ((low, high)): Weigh limits for optimization.</span>
 <span class="sd">        * rf (float): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ used in utility calculation</span>
 <span class="sd">        * covar_method (str): Covariance matrix estimation method:</span>
@@ -2361,7 +2361,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Returns:</span>
 <span class="sd">        Series {col_name: weight}</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If the returns have duplicate column labels.</span>
+
 <span class="sd">    """</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">returns</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">is_unique</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"returns columns must be unique"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fitness</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">exp_rets</span><span class="p">,</span> <span class="n">covar</span><span class="p">,</span> <span class="n">rf</span><span class="p">):</span>
         <span class="c1"># portfolio mean</span>

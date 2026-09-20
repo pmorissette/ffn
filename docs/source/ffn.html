@@ -673,7 +673,7 @@ actual drawdown series, please use to_drawdown_series.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>returns</strong> (<em>*</em>) – Returns for multiple securities.</p></li>
+<li><p><strong>returns</strong> (<em>*</em>) – Returns for multiple securities with unique column labels.</p></li>
 <li><p><strong>weight_bounds</strong> (<em>*</em>) – Weigh limits for optimization.</p></li>
 <li><p><strong>rf</strong> (<em>*</em>) – <p><a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> used in utility calculation</p>
 </p></li>
@@ -688,6 +688,9 @@ actual drawdown series, please use to_drawdown_series.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Series {col_name</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If the returns have duplicate column labels.</p>
 </dd>
 </dl>
 </dd></dl>
