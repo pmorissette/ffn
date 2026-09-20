@@ -2166,6 +2166,80 @@ def test_performance_stats(df):
     assert num_stats == num_unique_stats
 
 
+@mark.parametrize(
+    "prices",
+    (
+        pd.Series([], index=pd.DatetimeIndex([]), dtype=float, name="asset"),
+        pd.Series(
+            [np.nan, np.nan],
+            index=pd.date_range("2025-01-01", periods=2),
+            name="asset",
+        ),
+        pd.Series(
+            [pd.NA, pd.NA],
+            index=pd.date_range("2025-01-01", periods=2),
+            dtype="Float64",
+            name="asset",
+        ),
+    ),
+)
+def test_performance_stats_rejects_prices_without_usable_values(prices):
+    original = prices.copy()
+
+    with raises(ValueError, match="at least one usable value"):
+        ffn.PerformanceStats(prices)
+
+    pd.testing.assert_series_equal(prices, original)
+
+
+def test_performance_stats_public_helpers_reject_empty_prices():
+    prices = pd.Series([], index=pd.DatetimeIndex([]), dtype=float, name="asset")
+    constructors = (
+        ffn.calc_perf_stats,
+        ffn.calc_stats,
+        lambda value: value.calc_perf_stats(),
+        lambda value: value.calc_stats(),
+    )
+
+    for constructor in constructors:
+        with raises(ValueError, match="at least one usable value"):
+            constructor(prices)
+
+
+def test_group_stats_rejects_empty_rows():
+    prices = pd.DataFrame(index=pd.DatetimeIndex([]), columns=["A", "B"], dtype=float)
+    original = prices.copy()
+    constructors = (
+        lambda value: ffn.GroupStats(value),
+        ffn.calc_stats,
+        lambda value: value.calc_stats(),
+    )
+
+    for constructor in constructors:
+        with raises(ValueError, match="at least one usable value"):
+            constructor(prices)
+
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("empty_column", ("A", "B"))
+def test_group_stats_rejects_unusable_child(empty_column):
+    prices = pd.DataFrame(
+        {"A": [100.0, 101.0], "B": [50.0, 51.0]},
+        index=pd.date_range("2025-01-01", periods=2),
+    )
+    prices[empty_column] = np.nan
+    original = prices.copy()
+
+    # Exercise both child orders so rejection cannot depend on a prior valid child.
+    with raises(ValueError, match="at least one usable value"):
+        ffn.GroupStats(prices)
+    with raises(ValueError, match="at least one usable value"):
+        prices.calc_stats()
+
+    pd.testing.assert_frame_equal(prices, original)
+
+
 def test_performance_stats_uses_observed_price_endpoints():
     """Use observed outer prices for endpoint dates and total return."""
     dates = pd.date_range("2025-01-01", periods=4, tz="UTC")

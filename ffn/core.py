@@ -51,6 +51,9 @@ class PerformanceStats:
             calc_sortino_ratio, which take rf as a return series. Passing a
             return series here silently behaves like rf=0.
 
+    Raises:
+        * ValueError: If the price series contains no usable value.
+
     Attributes:
         * name (str): Name, derived from price series name
         * return_table (DataFrame): A table of monthly returns with
@@ -66,6 +69,8 @@ class PerformanceStats:
         super().__init__()
         self.prices = prices
         self.name = self.prices.name
+        if self.prices.dropna().empty:
+            raise ValueError("Input prices must contain at least one usable value.")
         self._start = self.prices.index[0]
         self._end = self.prices.index[-1]
 
@@ -805,6 +810,9 @@ class GroupStats(dict):
         * prices (Series): Multiple price series to be compared.
         * annualization_factor (float): Annualization factor used for each series.
 
+    Raises:
+        * ValueError: If any price series contains no usable value.
+
     Attributes:
         * stats (DataFrame): Dataframe containing stats for each
             series provided.  Stats in rows, series in columns.
@@ -1290,6 +1298,9 @@ def calc_perf_stats(prices, risk_free_rate=0.0, annualization_factor=252):
         * risk_free_rate (float, np.floating, Series): Annual risk-free rate or risk-free rate price series
         * annualization_factor (int): Annualizing factor. Default is 252 (trading days)
 
+    Raises:
+        * ValueError: If the price series contains no usable value.
+
     """
     return PerformanceStats(prices, rf=risk_free_rate, annualization_factor=annualization_factor)
 
@@ -1305,6 +1316,9 @@ def calc_stats(prices, annualization_factor=None):
     Args:
         * prices (Series, DataFrame): Set of prices
         * annualization_factor (float): Annualization factor used in calculations
+
+    Raises:
+        * ValueError: If any input price series contains no usable value.
     """
     if isinstance(prices, pd.Series):
         return PerformanceStats(prices, annualization_factor=annualization_factor)
