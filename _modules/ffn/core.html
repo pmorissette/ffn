@@ -498,6 +498,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            calc_sortino_ratio, which take rf as a return series. Passing a</span>
 <span class="sd">            return series here silently behaves like rf=0.</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If the price series contains no usable value.</span>
+
 <span class="sd">    Attributes:</span>
 <span class="sd">        * name (str): Name, derived from price series name</span>
 <span class="sd">        * return_table (DataFrame): A table of monthly returns with</span>
@@ -513,6 +516,8 @@ window.runMermaid = runMermaid;</script>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Input prices must contain at least one usable value."</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
@@ -1279,6 +1284,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * prices (Series): Multiple price series to be compared.</span>
 <span class="sd">        * annualization_factor (float): Annualization factor used for each series.</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If any price series contains no usable value.</span>
+
 <span class="sd">    Attributes:</span>
 <span class="sd">        * stats (DataFrame): Dataframe containing stats for each</span>
 <span class="sd">            series provided.  Stats in rows, series in columns.</span>
@@ -1806,6 +1814,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * risk_free_rate (float, np.floating, Series): Annual risk-free rate or risk-free rate price series</span>
 <span class="sd">        * annualization_factor (int): Annualizing factor. Default is 252 (trading days)</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If the price series contains no usable value.</span>
+
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">PerformanceStats</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="n">risk_free_rate</span><span class="p">,</span> <span class="n">annualization_factor</span><span class="o">=</span><span class="n">annualization_factor</span><span class="p">)</span></div>
 
@@ -1824,6 +1835,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Args:</span>
 <span class="sd">        * prices (Series, DataFrame): Set of prices</span>
 <span class="sd">        * annualization_factor (float): Annualization factor used in calculations</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If any input price series contains no usable value.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">PerformanceStats</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">annualization_factor</span><span class="o">=</span><span class="n">annualization_factor</span><span class="p">)</span>

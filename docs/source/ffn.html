@@ -66,6 +66,9 @@ merged calendar, keeping only dates where every series has data.</p>
 <li><p><strong>annualization_factor</strong> (<em>*</em>) – Annualization factor used for each series.</p></li>
 </ul>
 </dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If any price series contains no usable value.</p>
+</dd>
 </dl>
 <dl class="py attribute">
 <dt class="sig sig-object py">
@@ -257,6 +260,9 @@ calc_sortino_ratio, which take rf as a return series. Passing a
 return series here silently behaves like rf=0.</p>
 </p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If the price series contains no usable value.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -708,6 +714,9 @@ The object should be a Series of prices.</p>
 <li><p><strong>annualization_factor</strong> (<em>*</em>) – Annualizing factor. Default is 252 (trading days)</p></li>
 </ul>
 </dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If the price series contains no usable value.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -841,6 +850,9 @@ is returned.</p>
 <li><p><strong>prices</strong> (<em>*</em>) – Set of prices</p></li>
 <li><p><strong>annualization_factor</strong> (<em>*</em>) – Annualization factor used in calculations</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If any input price series contains no usable value.</p>
 </dd>
 </dl>
 </dd></dl>
