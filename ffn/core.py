@@ -1738,7 +1738,7 @@ def calc_inv_vol_weights(returns):
         Series {col_name: weight}
     """
     # calc vols
-    vol = (1.0 / returns.std(ddof=1)).astype(float)
+    vol = (1.0 / pd.to_numeric(returns.std(ddof=1))).astype(float)
     # Detect exact constants independently of std's dtype-dependent rounding residue.
     vol[returns.max() == returns.min()] = np.nan
     vol[np.isinf(vol)] = np.nan

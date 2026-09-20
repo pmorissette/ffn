@@ -527,11 +527,12 @@ def test_calc_inv_vol_weights_object_regression_204(df):
     aae(actual["C"], 0.318, 3)
 
 
-@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64"])
-def test_calc_inv_vol_weights_excludes_constant_columns(dtype):
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", "object"])
+@mark.parametrize("constant", [0.0, 0.1])
+def test_calc_inv_vol_weights_excludes_constant_columns(dtype, constant):
     returns = pd.DataFrame(
         {
-            "constant": pd.Series([0.1] * 30, dtype=dtype),
+            "constant": pd.Series([constant] * 30, dtype=dtype),
             "variable": pd.Series(np.linspace(-0.075, 0.075, 30), dtype=dtype),
         }
     )
@@ -540,6 +541,27 @@ def test_calc_inv_vol_weights_excludes_constant_columns(dtype):
 
     # Identical stored returns have exact zero dispersion even when std retains residue.
     assert returns["constant"].nunique(dropna=True) == 1
+    for actual in (
+        ffn.calc_inv_vol_weights(returns),
+        returns.calc_inv_vol_weights(),
+    ):
+        pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", "object"])
+def test_calc_inv_vol_weights_excludes_insufficient_observations(dtype):
+    returns = pd.DataFrame(
+        {
+            "missing": pd.Series([np.nan, np.nan, np.nan], dtype=dtype),
+            "single": pd.Series([0.1, np.nan, np.nan], dtype=dtype),
+            "variable": pd.Series([-1e-7, 0.0, 1e-7], dtype=dtype),
+            "twice_variable": pd.Series([-2e-7, 0.0, 2e-7], dtype=dtype),
+        }
+    )
+    original = returns.copy()
+    expected = pd.Series([np.nan, np.nan, 2.0 / 3.0, 1.0 / 3.0], index=returns.columns)
+
     for actual in (
         ffn.calc_inv_vol_weights(returns),
         returns.calc_inv_vol_weights(),
