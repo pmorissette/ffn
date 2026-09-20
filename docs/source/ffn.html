@@ -62,7 +62,8 @@ merged calendar, keeping only dates where every series has data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prices</strong> (<em>*</em>) – Multiple price series to be compared.</p></li>
+<li><p><strong>prices</strong> (<em>*</em>) – Multiple price series to be compared. Each DatetimeIndex must be
+monotonic increasing.</p></li>
 <li><p><strong>annualization_factor</strong> (<em>*</em>) – Annualization factor used for each series.</p></li>
 </ul>
 </dd>
@@ -250,8 +251,9 @@ statistics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prices</strong> (<em>*</em>) – A price series. Unavailable outer observations are excluded from
-endpoint statistics when total return is available.</p></li>
+<li><p><strong>prices</strong> (<em>*</em>) – A price series. A DatetimeIndex must be monotonic increasing.
+Unavailable outer observations are excluded from endpoint statistics when total
+return is available.</p></li>
 <li><p><strong>rf</strong> (<em>*</em>) – <p><a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> used in various calculation. Should be
 expressed as a yearly (annualized) return if it is a floating scalar. Otherwise
 rf should be a <em>price</em> series — it is converted internally with
@@ -709,7 +711,7 @@ The object should be a Series of prices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prices</strong> (<em>*</em>) – Series of prices</p></li>
+<li><p><strong>prices</strong> (<em>*</em>) – Series of prices. A DatetimeIndex must be monotonic increasing.</p></li>
 <li><p><strong>risk_free_rate</strong> (<em>*</em>) – Annual risk-free rate or risk-free rate price series</p></li>
 <li><p><strong>annualization_factor</strong> (<em>*</em>) – Annualizing factor. Default is 252 (trading days)</p></li>
 </ul>
@@ -847,7 +849,7 @@ is returned.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>prices</strong> (<em>*</em>) – Set of prices</p></li>
+<li><p><strong>prices</strong> (<em>*</em>) – Set of prices. A DatetimeIndex must be monotonic increasing.</p></li>
 <li><p><strong>annualization_factor</strong> (<em>*</em>) – Annualization factor used in calculations</p></li>
 </ul>
 </dd>

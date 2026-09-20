@@ -479,6 +479,12 @@ window.runMermaid = runMermaid;</script>
 <span class="n">_FLOATING_SCALAR_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_prices_index</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Require datetime price indexes to be monotonic increasing."""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_monotonic_increasing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"prices index must be monotonic increasing"</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="PerformanceStats">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.PerformanceStats">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PerformanceStats</span><span class="p">:</span>
@@ -489,8 +495,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    statistics.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * prices (Series): A price series. Unavailable outer observations are excluded from</span>
-<span class="sd">            endpoint statistics when total return is available.</span>
+<span class="sd">        * prices (Series): A price series. A DatetimeIndex must be monotonic increasing.</span>
+<span class="sd">            Unavailable outer observations are excluded from endpoint statistics when total</span>
+<span class="sd">            return is available.</span>
 <span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ used in various calculation. Should be</span>
 <span class="sd">            expressed as a yearly (annualized) return if it is a floating scalar. Otherwise</span>
 <span class="sd">            rf should be a *price* series — it is converted internally with</span>
@@ -513,6 +520,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">annualization_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">_validate_prices_index</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">name</span>
@@ -1281,7 +1289,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    merged calendar, keeping only dates where every series has data.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * prices (Series): Multiple price series to be compared.</span>
+<span class="sd">        * prices (Series): Multiple price series to be compared. Each DatetimeIndex must be</span>
+<span class="sd">            monotonic increasing.</span>
 <span class="sd">        * annualization_factor (float): Annualization factor used for each series.</span>
 
 <span class="sd">    Raises:</span>
@@ -1298,6 +1307,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">prices</span><span class="p">,</span> <span class="n">annualization_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># Validate before merge can normalize one input's row order.</span>
+        <span class="k">for</span> <span class="n">price</span> <span class="ow">in</span> <span class="n">prices</span><span class="p">:</span>
+            <span class="n">_validate_prices_index</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_annualization_factor_override</span> <span class="o">=</span> <span class="n">annualization_factor</span>
         <span class="c1"># Preserve configuration when date-range updates rebuild the child statistics.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_riskfree_rate</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -1810,7 +1823,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    A PerformanceStats object will be returned containing all the stats.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * prices (Series): Series of prices</span>
+<span class="sd">        * prices (Series): Series of prices. A DatetimeIndex must be monotonic increasing.</span>
 <span class="sd">        * risk_free_rate (float, np.floating, Series): Annual risk-free rate or risk-free rate price series</span>
 <span class="sd">        * annualization_factor (int): Annualizing factor. Default is 252 (trading days)</span>
 
@@ -1833,7 +1846,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    is returned.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * prices (Series, DataFrame): Set of prices</span>
+<span class="sd">        * prices (Series, DataFrame): Set of prices. A DatetimeIndex must be monotonic increasing.</span>
 <span class="sd">        * annualization_factor (float): Annualization factor used in calculations</span>
 
 <span class="sd">    Raises:</span>
@@ -3600,8 +3613,11 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">n</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
-        <span class="n">random_indices</span> <span class="o">=</span> <span class="n">resample</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
-        <span class="n">stats</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">random_indices</span><span class="p">])</span>
+        <span class="c1"># Sample rows directly so duplicate index labels cannot expand a draw.</span>
+        <span class="n">sample</span><span class="p">,</span> <span class="n">sample_index</span> <span class="o">=</span> <span class="n">resample</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">returns</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="n">n</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span>
+        <span class="c1"># Preserve label-sampling metadata; row sampling can infer a frequency.</span>
+        <span class="n">sample</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">sample_index</span>
+        <span class="n">stats</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">stats</span></div>
 
