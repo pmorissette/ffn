@@ -527,6 +527,27 @@ def test_calc_inv_vol_weights_object_regression_204(df):
     aae(actual["C"], 0.318, 3)
 
 
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64"])
+def test_calc_inv_vol_weights_excludes_constant_columns(dtype):
+    returns = pd.DataFrame(
+        {
+            "constant": pd.Series([0.1] * 30, dtype=dtype),
+            "variable": pd.Series(np.linspace(-0.075, 0.075, 30), dtype=dtype),
+        }
+    )
+    original = returns.copy()
+    expected = pd.Series([np.nan, 1.0], index=returns.columns)
+
+    # Identical stored returns have exact zero dispersion even when std retains residue.
+    assert returns["constant"].nunique(dropna=True) == 1
+    for actual in (
+        ffn.calc_inv_vol_weights(returns),
+        returns.calc_inv_vol_weights(),
+    ):
+        pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_frame_equal(returns, original)
+
+
 def test_calc_mean_var_weights(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
