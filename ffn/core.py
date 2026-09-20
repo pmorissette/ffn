@@ -2397,7 +2397,11 @@ def _winsorize_wrapper(x, limits):
             return x
 
         notnanx = ~pd.isna(x)
-        x[notnanx] = scipy.stats.mstats.winsorize(x[notnanx], limits=limits)
+        observed = x[notnanx]
+        if isinstance(x.dtype, pd.api.extensions.ExtensionDtype) and pd.api.types.is_float_dtype(x.dtype):
+            # SciPy requires a NumPy dtype rather than a pandas nullable floating dtype.
+            observed = observed.to_numpy(dtype=float)
+        x[notnanx] = scipy.stats.mstats.winsorize(observed, limits=limits)
         return x
     else:
         return scipy.stats.mstats.winsorize(x, limits=limits)

@@ -1059,6 +1059,41 @@ def test_winsorize():
     assert x["b"].iloc[-1] == 19
 
 
+@mark.parametrize("dtype", ["Float32", "Float64"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_winsorize_nullable_series(dtype, use_pandas_method):
+    index = pd.Index(range(11), name="row")
+    values = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 100, pd.NA], index=index, dtype=dtype)
+    # Ten observed values and ten-percent limits replace one value at each tail.
+    expected = pd.Series([1, 1, 2, 3, 4, 5, 6, 7, 8, 8, pd.NA], index=index, dtype=dtype)
+    original = values.copy()
+    calculate = values.winsorize if use_pandas_method else ffn.winsorize
+    args = () if use_pandas_method else (values,)
+
+    actual = calculate(*args, limits=0.1)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(values, original)
+
+
+@mark.parametrize("axis", [0, 1])
+def test_winsorize_nullable_dataframe(axis):
+    values = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 100, pd.NA], dtype="Float64")
+    expected_values = pd.Series([1, 1, 2, 3, 4, 5, 6, 7, 8, 8, pd.NA], dtype="Float64")
+    # The all-missing slice must bypass SciPy while the observed slice is winsorized.
+    data = pd.DataFrame({"observed": values, "all_missing": pd.Series(pd.NA, index=values.index, dtype="Float64")})
+    expected = pd.DataFrame({"observed": expected_values, "all_missing": pd.Series(pd.NA, index=values.index, dtype="Float64")})
+    if axis == 1:
+        data = data.T
+        expected = expected.T
+    original = data.copy()
+
+    actual = data.winsorize(axis=axis, limits=0.1)
+
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+
+
 def test_rescale():
     x = pd.Series(range(10), dtype="float")
     res = x.rescale()
