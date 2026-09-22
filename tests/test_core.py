@@ -2261,6 +2261,21 @@ def test_performance_stats(df):
     assert num_stats == num_unique_stats
 
 
+def _assert_csv_row_width(output, sep, expected_width):
+    import csv
+    import io
+
+    rows = csv.reader(io.StringIO(output), delimiter=sep)
+    assert {len(row) for row in rows} == {expected_width}
+
+
+@mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
+def test_performance_stats_to_csv_preserves_row_width(df, sep):
+    stats = ffn.PerformanceStats(df["AAPL"])
+
+    _assert_csv_row_width(stats.to_csv(sep=sep), sep, expected_width=2)
+
+
 @mark.parametrize(
     "prices",
     (
@@ -2555,6 +2570,15 @@ def test_group_stats_calc_stats(df):
     num_stats = len(gs.stats.index)
     num_unique_stats = len(gs.stats.index.drop_duplicates())
     assert num_stats == num_unique_stats
+
+
+@mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
+def test_group_stats_to_csv_preserves_row_width(df, sep):
+    prices = df[["AAPL", "MSFT"]].rename(columns={"AAPL": "fund", "MSFT": "peer-with-a-long-name"})
+    stats = ffn.GroupStats(prices)
+
+    # Unequal name lengths ensure blank-row width cannot follow serialized text length.
+    _assert_csv_row_width(stats.to_csv(sep=sep), sep, expected_width=3)
 
 
 def test_calc_stats_annualization_factor(df):

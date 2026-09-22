@@ -769,7 +769,7 @@ class PerformanceStats:
 
             # blank row
             if k is None:
-                row = [""] * len(data[0])
+                row = [""] * len(first_row)
                 data.append(sep.join(row))
                 continue
             elif k == "rf" and not isinstance(self.rf, _FLOATING_SCALAR_TYPES):
@@ -1171,7 +1171,7 @@ class GroupStats(dict):
             k, n, f = stat
             # blank row
             if k is None:
-                row = [""] * len(data[0])
+                row = [""] * len(first_row)
                 data.append(sep.join(row))
                 continue
 
