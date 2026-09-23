@@ -2666,6 +2666,8 @@ def _calc_sortino_ratio(er, nperiods, annualize=True):
         negative_returns = np.minimum(er, 0.0)
     else:
         negative_returns = er.clip(upper=0.0)
+    # Promote fixed-width integers before squaring can overflow.
+    negative_returns = negative_returns * 1.0
     downside_deviation = np.sqrt((negative_returns**2).mean())
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), downside_deviation)

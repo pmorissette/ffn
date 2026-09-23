@@ -159,6 +159,36 @@ def test_sortino_preserves_degenerate_series(values, dtype):
         assert actual == expected
 
 
+@pytest.mark.parametrize("dtype", ["int8", "int16", "int32", "int64", "Int8", "Int16", "Int32", "Int64"])
+@pytest.mark.parametrize("as_frame", [False, True])
+def test_sortino_integer_downside_does_not_overflow(dtype, as_frame):
+    minimum = np.iinfo(dtype.lower()).min
+    returns = pd.Series([minimum, 0, -minimum - 1], dtype=dtype, name="varying")
+    if as_frame:
+        constant = pd.Series([minimum] * 3, dtype=dtype, name="constant")
+        missing = pd.Series([pd.NA] * 3, dtype="Float64", name="all_missing")
+        returns = pd.concat([returns, constant, missing], axis=1)
+    original = returns.copy()
+    risk_free = pd.Series([0, 0, 0], dtype=dtype)
+
+    # Promote the signed minimum before squaring, which cannot be represented
+    # as a positive value in its original fixed-width integer dtype.
+    excess = returns.astype("float64").sub(risk_free.astype("float64"), axis="index")
+    downside = excess.where(excess < 0, 0.0)
+    expected = np.divide(excess.mean(), np.sqrt((downside**2).mean()))
+    if as_frame:
+        expected = expected.astype("Float64")
+
+    actual = ffn.calc_sortino_ratio(returns, rf=risk_free, nperiods=252, annualize=False)
+
+    if as_frame:
+        pd.testing.assert_series_equal(actual, expected)
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        assert actual == expected
+        pd.testing.assert_series_equal(returns, original)
+
+
 @pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64"])
 @pytest.mark.parametrize("risk_free_kind", ["zero", "scalar", "numpy_scalar", "prices"])
 @pytest.mark.parametrize("annualization_factor", [None, 365])
