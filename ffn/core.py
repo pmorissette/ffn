@@ -1505,14 +1505,26 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
 
 def calc_cagr(prices):
     """
-    Calculates the `CAGR (compound annual growth rate) <https://www.investopedia.com/terms/c/cagr.asp>`_ for a given price series.
+    Calculates the `CAGR (compound annual growth rate) <https://www.investopedia.com/terms/c/cagr.asp>`_ for given prices.
+
+    Each Series or DataFrame column uses its first and last observed prices and
+    their dates when at least two observations are available.
 
     Args:
-        * prices (pandas.Series): A Series of prices.
+        * prices (pandas.Series, pandas.DataFrame): Prices.
     Returns:
-        * float -- cagr.
+        * float or pandas.Series -- cagr.
 
     """
+    # Nonempty frames need per-column endpoints; empty shapes retain their prior behavior.
+    if isinstance(prices, pd.DataFrame) and not prices.empty:
+        return prices.apply(calc_cagr)
+
+    observed = prices.dropna()
+    # Preserve the established insufficient-data behavior outside this fix.
+    if len(observed) >= 2:
+        prices = observed
+
     start = prices.index[0]
     end = prices.index[-1]
     return (prices.iloc[-1] / prices.iloc[0]) ** (1 / year_frac(start, end)) - 1
@@ -1663,10 +1675,22 @@ def calc_prob_mom(returns, other_returns):
 
 def calc_total_return(prices):
     """
-    Calculates the total return of a series.
+    Calculates the total return of given prices.
+
+    Each Series or DataFrame column uses its first and last observed prices when
+    at least two observations are available.
 
     last / first - 1
     """
+    # Nonempty frames need per-column endpoints; empty shapes retain their prior behavior.
+    if isinstance(prices, pd.DataFrame) and not prices.empty:
+        return prices.apply(calc_total_return)
+
+    observed = prices.dropna()
+    # Preserve the established insufficient-data behavior outside this fix.
+    if len(observed) >= 2:
+        prices = observed
+
     return (prices.iloc[-1] / prices.iloc[0]) - 1
 
 

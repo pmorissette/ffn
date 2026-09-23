@@ -467,6 +467,43 @@ def test_cagr_df(df):
     aae(actual["C"], -0.205, 3)
 
 
+def test_calc_cagr_uses_observed_price_endpoints():
+    dates = pd.date_range("2020-01-01", periods=4, freq="YS", tz="UTC")
+    prices = pd.DataFrame(
+        {
+            "a": [np.nan, 100.0, 121.0, np.nan],
+            "b": [100.0, 110.0, np.nan, np.nan],
+            "internal_gap": [100.0, np.nan, np.nan, 121.0],
+            "one_observation": [np.nan, 100.0, np.nan, np.nan],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=dates,
+    )
+    original = prices.copy()
+
+    # Each CAGR uses the elapsed time between that column's observed endpoints.
+    year_a = (dates[2] - dates[1]) / pd.Timedelta(days=365.25)
+    year_b = (dates[1] - dates[0]) / pd.Timedelta(days=365.25)
+    year_internal = (dates[3] - dates[0]) / pd.Timedelta(days=365.25)
+    expected = pd.Series(
+        {
+            "a": (121.0 / 100.0) ** (1 / year_a) - 1,
+            "b": (110.0 / 100.0) ** (1 / year_b) - 1,
+            "internal_gap": (121.0 / 100.0) ** (1 / year_internal) - 1,
+            "one_observation": np.nan,
+            "all_missing": np.nan,
+        }
+    )
+
+    pd.testing.assert_series_equal(ffn.calc_cagr(prices), expected)
+    pd.testing.assert_series_equal(prices.calc_cagr(), expected)
+    assert np.isclose(ffn.calc_cagr(prices["a"]), expected["a"])
+    assert np.isclose(prices["a"].calc_cagr(), expected["a"])
+    assert np.isclose(ffn.calc_cagr(prices["a"].astype("Float64")), expected["a"])
+    assert np.isclose(ffn.PerformanceStats(prices["a"]).cagr, expected["a"])
+    pd.testing.assert_frame_equal(prices, original)
+
+
 def test_merge():
     a = pd.Series(index=pd.date_range("2010-01-01", periods=5), data=100, name="a")
     b = pd.Series(index=pd.date_range("2010-01-02", periods=5), data=200, name="b")
@@ -772,6 +809,38 @@ def test_calc_total_return(df):
     aae(actual["AAPL"], -0.079, 3)
     aae(actual["MSFT"], -0.038, 3)
     aae(actual["C"], 0.012, 3)
+
+
+def test_calc_total_return_uses_observed_price_endpoints():
+    dates = pd.date_range("2020-01-01", periods=4, freq="YS")
+    prices = pd.DataFrame(
+        {
+            "a": [np.nan, 100.0, 121.0, np.nan],
+            "b": [100.0, 110.0, np.nan, np.nan],
+            "internal_gap": [100.0, np.nan, np.nan, 121.0],
+            "one_observation": [np.nan, 100.0, np.nan, np.nan],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=dates,
+    )
+    original = prices.copy()
+    expected = pd.Series(
+        {
+            "a": 0.21,
+            "b": 0.10,
+            "internal_gap": 0.21,
+            "one_observation": np.nan,
+            "all_missing": np.nan,
+        }
+    )
+
+    pd.testing.assert_series_equal(ffn.calc_total_return(prices), expected)
+    pd.testing.assert_series_equal(prices.calc_total_return(), expected)
+    assert np.isclose(ffn.calc_total_return(prices["a"]), expected["a"])
+    assert np.isclose(prices["a"].calc_total_return(), expected["a"])
+    assert np.isclose(ffn.calc_total_return(prices["a"].astype("Float64")), expected["a"])
+    assert np.isclose(ffn.PerformanceStats(prices["a"]).total_return, expected["a"])
+    pd.testing.assert_frame_equal(prices, original)
 
 
 def test_get_num_days_required():
