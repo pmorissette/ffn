@@ -1503,16 +1503,49 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     return pd.DataFrame(result, columns=("Start", "End", "Length", "drawdown"), dtype=object)
 
 
+def _observed_frame_endpoints(prices):
+    first_row = prices.iloc[0]
+    last_row = prices.iloc[-1]
+    first, last = [], []
+    starts, ends = [], []
+    for i in range(prices.shape[1]):
+        column = prices.iloc[:, i]
+        observed = column.dropna()
+        if len(observed) >= 2:
+            column = observed
+        first.append(column.iloc[0])
+        last.append(column.iloc[-1])
+        starts.append(column.index[0])
+        ends.append(column.index[-1])
+    first = pd.Series(first, index=prices.columns, dtype=first_row.dtype, name=first_row.name)
+    last = pd.Series(last, index=prices.columns, dtype=last_row.dtype, name=last_row.name)
+    return first, last, starts, ends
+
+
 def calc_cagr(prices):
     """
-    Calculates the `CAGR (compound annual growth rate) <https://www.investopedia.com/terms/c/cagr.asp>`_ for a given price series.
+    Calculates the `CAGR (compound annual growth rate) <https://www.investopedia.com/terms/c/cagr.asp>`_ for given prices.
+
+    Each Series or DataFrame column uses its first and last observed prices and
+    their dates when at least two observations are available.
 
     Args:
-        * prices (pandas.Series): A Series of prices.
+        * prices (pandas.Series, pandas.DataFrame): Prices.
     Returns:
-        * float -- cagr.
+        * float or pandas.Series -- cagr.
 
     """
+    # Keep vectorized endpoint arithmetic unless an endpoint is missing.
+    if not prices.empty and prices.iloc[[0, -1]].isna().to_numpy().any():
+        if isinstance(prices, pd.DataFrame):
+            first, last, starts, ends = _observed_frame_endpoints(prices)
+            exponents = np.array([1 / year_frac(start, end) for start, end in zip(starts, ends)])
+            return (last / first) ** exponents - 1
+        observed = prices.dropna()
+        # Preserve the established insufficient-data behavior outside this fix.
+        if len(observed) >= 2:
+            prices = observed
+
     start = prices.index[0]
     end = prices.index[-1]
     return (prices.iloc[-1] / prices.iloc[0]) ** (1 / year_frac(start, end)) - 1
@@ -1663,10 +1696,23 @@ def calc_prob_mom(returns, other_returns):
 
 def calc_total_return(prices):
     """
-    Calculates the total return of a series.
+    Calculates the total return of given prices.
+
+    Each Series or DataFrame column uses its first and last observed prices when
+    at least two observations are available.
 
     last / first - 1
     """
+    # Keep vectorized endpoint arithmetic unless an endpoint is missing.
+    if not prices.empty and prices.iloc[[0, -1]].isna().to_numpy().any():
+        if isinstance(prices, pd.DataFrame):
+            first, last, _, _ = _observed_frame_endpoints(prices)
+            return last / first - 1
+        observed = prices.dropna()
+        # Preserve the established insufficient-data behavior outside this fix.
+        if len(observed) >= 2:
+            prices = observed
+
     return (prices.iloc[-1] / prices.iloc[0]) - 1
 
 
