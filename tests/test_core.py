@@ -972,17 +972,46 @@ def test_drop_duplicate_cols():
     # second version of a w/ less data
     a2 = pd.Series(index=pd.date_range("2010-01-02", periods=4), data=900, name="a")
     b = pd.Series(index=pd.date_range("2010-01-02", periods=5), data=200, name="b")
-    actual = ffn.merge(a, a2, b)
+    data = ffn.merge(a, a2, b)
+    original = data.copy()
+    expected = ffn.merge(a, b)
 
-    assert actual["a"].shape[1] == 2
-    assert len(actual.columns) == 3
+    assert data["a"].shape[1] == 2
+    assert len(data.columns) == 3
 
-    actual = actual.drop_duplicate_cols()
+    actual = data.drop_duplicate_cols()
 
-    assert len(actual.columns) == 2
-    assert "a" in actual
-    assert "b" in actual
-    assert len(actual["a"].dropna()) == 5
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+
+    # The returned selection must not expose the caller's values to mutation.
+    actual.iloc[0, 0] = -1
+    pd.testing.assert_frame_equal(data, original)
+
+
+def test_drop_duplicate_cols_keeps_first_tied_column():
+    data = pd.DataFrame(
+        [[1, 10, 100, 1000], [2, 20, 200, 2000]],
+        columns=["a", "b", "a", "a"],
+    )
+    expected = data.iloc[:, :2]
+
+    # All three a columns tie, so retain the first one in first-label order.
+    actual = data.drop_duplicate_cols()
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_drop_duplicate_cols_preserves_unique_columns():
+    data = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    original = data.copy()
+
+    actual = data.drop_duplicate_cols()
+    pd.testing.assert_frame_equal(actual, original)
+
+    actual.iloc[0, 0] = -1
+
+    pd.testing.assert_frame_equal(data, original)
 
 
 def test_limit_weights():
