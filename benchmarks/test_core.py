@@ -79,6 +79,17 @@ def test_drawdown_details(benchmark, drawdown):
 
 
 @pytest.mark.benchmark(group="statistics")
+@pytest.mark.parametrize("calculate", [ffn.calc_cagr, ffn.calc_total_return], ids=["cagr", "total-return"])
+@pytest.mark.parametrize("as_series", [False, True], ids=["frame", "series"])
+def test_return_helpers(benchmark, prices, calculate, as_series):
+    data = prices.iloc[:, 0] if as_series else prices
+
+    result = benchmark(calculate, data)
+
+    assert np.isfinite(result).all()
+
+
+@pytest.mark.benchmark(group="statistics")
 def test_calc_perf_stats(benchmark, prices):
     result = benchmark(ffn.calc_perf_stats, prices.iloc[:, 0])
 

@@ -467,6 +467,55 @@ def test_cagr_df(df):
     aae(actual["C"], -0.205, 3)
 
 
+@mark.parametrize("calculate", [ffn.calc_cagr, ffn.calc_total_return], ids=["cagr", "total-return"])
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", "Int64", "object"])
+def test_return_helpers_preserve_complete_endpoints(calculate, dtype):
+    dates = pd.date_range("2020-01-01", periods=3, freq="YS")
+    prices = pd.DataFrame({"a": [100, None, 121], "b": [50, None, 55]}, index=dates, dtype=dtype)
+    prices.columns.name = "asset"
+    original = prices.copy()
+    expected = prices.iloc[-1] / prices.iloc[0]
+    if calculate is ffn.calc_cagr:
+        years = (dates[-1] - dates[0]) / pd.Timedelta(days=365.25)
+        expected = expected ** (1 / years)
+    expected = expected - 1
+
+    pd.testing.assert_series_equal(calculate(prices), expected)
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("calculate", [ffn.calc_cagr, ffn.calc_total_return], ids=["cagr", "total-return"])
+@mark.parametrize("missing", [[None, None, None], [None, 100.0, None]], ids=["all-missing", "one-observation"])
+def test_return_helpers_preserve_object_frame_arithmetic(calculate, missing):
+    dates = pd.date_range("2020-01-01", periods=3, freq="YS")
+    prices = pd.DataFrame({"valid": [100.0, 110.0, 121.0], "missing": missing}, index=dates, dtype=object)
+    original = prices.copy()
+    expected = prices.iloc[-1] / prices.iloc[0]
+    if calculate is ffn.calc_cagr:
+        years = (dates[-1] - dates[0]) / pd.Timedelta(days=365.25)
+        expected = expected ** (1 / years)
+    expected = expected - 1
+
+    pd.testing.assert_series_equal(calculate(prices), expected)
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("calculate", [ffn.calc_cagr, ffn.calc_total_return], ids=["cagr", "total-return"])
+@mark.parametrize("dtype", ["Float64", pd.SparseDtype(float)], ids=["nullable", "sparse"])
+def test_return_helpers_preserve_ragged_frame_dtypes(calculate, dtype):
+    dates = pd.date_range("2020-01-01", periods=3, freq="YS")
+    prices = pd.DataFrame({"a": [None, 100.0, 121.0], "b": [100.0, 110.0, None]}, index=dates, dtype=dtype)
+    original = prices.copy()
+    expected = pd.Series([121.0, 110.0], index=prices.columns, dtype=dtype) / 100.0
+    if calculate is ffn.calc_cagr:
+        years = np.array([(dates[2] - dates[1]), (dates[1] - dates[0])]) / pd.Timedelta(days=365.25)
+        expected = expected ** (1 / years)
+    expected = expected - 1
+
+    pd.testing.assert_series_equal(calculate(prices), expected)
+    pd.testing.assert_frame_equal(prices, original)
+
+
 def test_calc_cagr_uses_observed_price_endpoints():
     dates = pd.date_range("2020-01-01", periods=4, freq="YS", tz="UTC")
     prices = pd.DataFrame(

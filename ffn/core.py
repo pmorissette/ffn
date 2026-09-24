@@ -1503,6 +1503,25 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
     return pd.DataFrame(result, columns=("Start", "End", "Length", "drawdown"), dtype=object)
 
 
+def _observed_frame_endpoints(prices):
+    first_row = prices.iloc[0]
+    last_row = prices.iloc[-1]
+    first, last = [], []
+    starts, ends = [], []
+    for i in range(prices.shape[1]):
+        column = prices.iloc[:, i]
+        observed = column.dropna()
+        if len(observed) >= 2:
+            column = observed
+        first.append(column.iloc[0])
+        last.append(column.iloc[-1])
+        starts.append(column.index[0])
+        ends.append(column.index[-1])
+    first = pd.Series(first, index=prices.columns, dtype=first_row.dtype, name=first_row.name)
+    last = pd.Series(last, index=prices.columns, dtype=last_row.dtype, name=last_row.name)
+    return first, last, starts, ends
+
+
 def calc_cagr(prices):
     """
     Calculates the `CAGR (compound annual growth rate) <https://www.investopedia.com/terms/c/cagr.asp>`_ for given prices.
@@ -1516,14 +1535,16 @@ def calc_cagr(prices):
         * float or pandas.Series -- cagr.
 
     """
-    # Nonempty frames need per-column endpoints; empty shapes retain their prior behavior.
-    if isinstance(prices, pd.DataFrame) and not prices.empty:
-        return prices.apply(calc_cagr)
-
-    observed = prices.dropna()
-    # Preserve the established insufficient-data behavior outside this fix.
-    if len(observed) >= 2:
-        prices = observed
+    # Keep vectorized endpoint arithmetic unless an endpoint is missing.
+    if not prices.empty and prices.iloc[[0, -1]].isna().to_numpy().any():
+        if isinstance(prices, pd.DataFrame):
+            first, last, starts, ends = _observed_frame_endpoints(prices)
+            exponents = np.array([1 / year_frac(start, end) for start, end in zip(starts, ends)])
+            return (last / first) ** exponents - 1
+        observed = prices.dropna()
+        # Preserve the established insufficient-data behavior outside this fix.
+        if len(observed) >= 2:
+            prices = observed
 
     start = prices.index[0]
     end = prices.index[-1]
@@ -1682,14 +1703,15 @@ def calc_total_return(prices):
 
     last / first - 1
     """
-    # Nonempty frames need per-column endpoints; empty shapes retain their prior behavior.
-    if isinstance(prices, pd.DataFrame) and not prices.empty:
-        return prices.apply(calc_total_return)
-
-    observed = prices.dropna()
-    # Preserve the established insufficient-data behavior outside this fix.
-    if len(observed) >= 2:
-        prices = observed
+    # Keep vectorized endpoint arithmetic unless an endpoint is missing.
+    if not prices.empty and prices.iloc[[0, -1]].isna().to_numpy().any():
+        if isinstance(prices, pd.DataFrame):
+            first, last, _, _ = _observed_frame_endpoints(prices)
+            return last / first - 1
+        observed = prices.dropna()
+        # Preserve the established insufficient-data behavior outside this fix.
+        if len(observed) >= 2:
+            prices = observed
 
     return (prices.iloc[-1] / prices.iloc[0]) - 1
 
