@@ -2038,18 +2038,51 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_observed_frame_endpoints</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
+    <span class="n">first_row</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">last_row</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">first</span><span class="p">,</span> <span class="n">last</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">starts</span><span class="p">,</span> <span class="n">ends</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="n">observed</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">observed</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">column</span> <span class="o">=</span> <span class="n">observed</span>
+        <span class="n">first</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">last</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">starts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">ends</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">first_row</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">first_row</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">last</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">last</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">last_row</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">last_row</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">first</span><span class="p">,</span> <span class="n">last</span><span class="p">,</span> <span class="n">starts</span><span class="p">,</span> <span class="n">ends</span>
+
+
 <div class="viewcode-block" id="calc_cagr">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.calc_cagr">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">calc_cagr</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Calculates the `CAGR (compound annual growth rate) &lt;https://www.investopedia.com/terms/c/cagr.asp&gt;`_ for a given price series.</span>
+<span class="sd">    Calculates the `CAGR (compound annual growth rate) &lt;https://www.investopedia.com/terms/c/cagr.asp&gt;`_ for given prices.</span>
+
+<span class="sd">    Each Series or DataFrame column uses its first and last observed prices and</span>
+<span class="sd">    their dates when at least two observations are available.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * prices (pandas.Series): A Series of prices.</span>
+<span class="sd">        * prices (pandas.Series, pandas.DataFrame): Prices.</span>
 <span class="sd">    Returns:</span>
-<span class="sd">        * float -- cagr.</span>
+<span class="sd">        * float or pandas.Series -- cagr.</span>
 
 <span class="sd">    """</span>
+    <span class="c1"># Keep vectorized endpoint arithmetic unless an endpoint is missing.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prices</span><span class="o">.</span><span class="n">empty</span> <span class="ow">and</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">first</span><span class="p">,</span> <span class="n">last</span><span class="p">,</span> <span class="n">starts</span><span class="p">,</span> <span class="n">ends</span> <span class="o">=</span> <span class="n">_observed_frame_endpoints</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+            <span class="n">exponents</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span> <span class="o">/</span> <span class="n">year_frac</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">)</span> <span class="k">for</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">starts</span><span class="p">,</span> <span class="n">ends</span><span class="p">)])</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">last</span> <span class="o">/</span> <span class="n">first</span><span class="p">)</span> <span class="o">**</span> <span class="n">exponents</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">observed</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="c1"># Preserve the established insufficient-data behavior outside this fix.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">observed</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">prices</span> <span class="o">=</span> <span class="n">observed</span>
+
     <span class="n">start</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">end</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="k">return</span> <span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">year_frac</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span></div>
@@ -2215,10 +2248,23 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.calc_total_return">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">calc_total_return</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Calculates the total return of a series.</span>
+<span class="sd">    Calculates the total return of given prices.</span>
+
+<span class="sd">    Each Series or DataFrame column uses its first and last observed prices when</span>
+<span class="sd">    at least two observations are available.</span>
 
 <span class="sd">    last / first - 1</span>
 <span class="sd">    """</span>
+    <span class="c1"># Keep vectorized endpoint arithmetic unless an endpoint is missing.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">prices</span><span class="o">.</span><span class="n">empty</span> <span class="ow">and</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">first</span><span class="p">,</span> <span class="n">last</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_observed_frame_endpoints</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">last</span> <span class="o">/</span> <span class="n">first</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">observed</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="c1"># Preserve the established insufficient-data behavior outside this fix.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">observed</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">prices</span> <span class="o">=</span> <span class="n">observed</span>
+
     <span class="k">return</span> <span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">-</span> <span class="mi">1</span></div>
 
 

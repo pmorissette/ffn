@@ -456,14 +456,16 @@ that date will be used instead of the 31st.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ffn.core.calc_cagr">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_cagr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_cagr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_cagr" title="Link to this definition">¶</a></dt>
-<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/c/cagr.asp">CAGR (compound annual growth rate)</a> for a given price series.</p>
+<dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/c/cagr.asp">CAGR (compound annual growth rate)</a> for given prices.</p>
+<p>Each Series or DataFrame column uses its first and last observed prices and
+their dates when at least two observations are available.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>prices</strong> (<em>*</em>) – A Series of prices.</p>
+<dd class="field-odd"><p><strong>prices</strong> (<em>*</em>) – Prices.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p>float – cagr.</p></li>
+<li><p>float or pandas.Series – cagr.</p></li>
 </ul>
 </p>
 </dd>
@@ -865,7 +867,9 @@ is returned.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ffn.core.calc_total_return">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_total_return</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_total_return"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_total_return" title="Link to this definition">¶</a></dt>
-<dd><p>Calculates the total return of a series.</p>
+<dd><p>Calculates the total return of given prices.</p>
+<p>Each Series or DataFrame column uses its first and last observed prices when
+at least two observations are available.</p>
 <p>last / first - 1</p>
 </dd></dl>
 
