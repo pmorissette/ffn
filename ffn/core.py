@@ -1770,7 +1770,7 @@ def drop_duplicate_cols(df):
         else:
             keep.append(positions[0])
 
-    return df.iloc[:, keep]
+    return df.iloc[:, keep].copy()
 
 
 def to_monthly(series, method="ffill", how="end"):

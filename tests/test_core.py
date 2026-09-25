@@ -1014,6 +1014,27 @@ def test_drop_duplicate_cols_preserves_unique_columns():
     pd.testing.assert_frame_equal(data, original)
 
 
+@mark.parametrize("dtype", ["Float64", "Int64"])
+@mark.parametrize("duplicate", [False, True], ids=["unique", "duplicate"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_drop_duplicate_cols_isolates_nullable_values(dtype, duplicate, use_pandas_method):
+    columns = ["a", "b", "a"] if duplicate else ["a", "b", "c"]
+    data = pd.DataFrame([[1, 10, 100], [pd.NA, 20, 200]], columns=columns, dtype=dtype)
+    original = data.copy()
+    keep = [2, 1] if duplicate else [0, 1, 2]
+    expected = data.iloc[:, keep].copy()
+
+    actual = data.drop_duplicate_cols() if use_pandas_method else ffn.drop_duplicate_cols(data)
+
+    pd.testing.assert_frame_equal(actual, expected)
+    actual.iloc[0, 0] = -1
+    pd.testing.assert_frame_equal(data, original)
+
+    result_snapshot = actual.copy()
+    data.iloc[1, keep[0]] = -2
+    pd.testing.assert_frame_equal(actual, result_snapshot)
+
+
 def test_limit_weights():
     w = {"a": 0.3, "b": 0.1, "c": 0.05, "d": 0.05, "e": 0.5}
     actual_exp = {"a": 0.3, "b": 0.2, "c": 0.1, "d": 0.1, "e": 0.3}
