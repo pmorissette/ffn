@@ -972,17 +972,67 @@ def test_drop_duplicate_cols():
     # second version of a w/ less data
     a2 = pd.Series(index=pd.date_range("2010-01-02", periods=4), data=900, name="a")
     b = pd.Series(index=pd.date_range("2010-01-02", periods=5), data=200, name="b")
-    actual = ffn.merge(a, a2, b)
+    data = ffn.merge(a, a2, b)
+    original = data.copy()
+    expected = ffn.merge(a, b)
 
-    assert actual["a"].shape[1] == 2
-    assert len(actual.columns) == 3
+    assert data["a"].shape[1] == 2
+    assert len(data.columns) == 3
 
-    actual = actual.drop_duplicate_cols()
+    actual = data.drop_duplicate_cols()
 
-    assert len(actual.columns) == 2
-    assert "a" in actual
-    assert "b" in actual
-    assert len(actual["a"].dropna()) == 5
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+
+    # The returned selection must not expose the caller's values to mutation.
+    actual.iloc[0, 0] = -1
+    pd.testing.assert_frame_equal(data, original)
+
+
+def test_drop_duplicate_cols_keeps_first_tied_column():
+    data = pd.DataFrame(
+        [[1, 10, 100, 1000], [2, 20, 200, 2000]],
+        columns=["a", "b", "a", "a"],
+    )
+    expected = data.iloc[:, :2]
+
+    # All three a columns tie, so retain the first one in first-label order.
+    actual = data.drop_duplicate_cols()
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_drop_duplicate_cols_preserves_unique_columns():
+    data = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    original = data.copy()
+
+    actual = data.drop_duplicate_cols()
+    pd.testing.assert_frame_equal(actual, original)
+
+    actual.iloc[0, 0] = -1
+
+    pd.testing.assert_frame_equal(data, original)
+
+
+@mark.parametrize("dtype", ["Float64", "Int64"])
+@mark.parametrize("duplicate", [False, True], ids=["unique", "duplicate"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_drop_duplicate_cols_isolates_nullable_values(dtype, duplicate, use_pandas_method):
+    columns = ["a", "b", "a"] if duplicate else ["a", "b", "c"]
+    data = pd.DataFrame([[1, 10, 100], [pd.NA, 20, 200]], columns=columns, dtype=dtype)
+    original = data.copy()
+    keep = [2, 1] if duplicate else [0, 1, 2]
+    expected = data.iloc[:, keep].copy()
+
+    actual = data.drop_duplicate_cols() if use_pandas_method else ffn.drop_duplicate_cols(data)
+
+    pd.testing.assert_frame_equal(actual, expected)
+    actual.iloc[0, 0] = -1
+    pd.testing.assert_frame_equal(data, original)
+
+    result_snapshot = actual.copy()
+    data.iloc[1, keep[0]] = -2
+    pd.testing.assert_frame_equal(actual, result_snapshot)
 
 
 def test_limit_weights():

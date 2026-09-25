@@ -1756,25 +1756,21 @@ def merge(*series):
 
 
 def drop_duplicate_cols(df):
-    """
-    Removes duplicate columns from a dataframe
-    and keeps column w/ longest history
-    """
-    names = set(df.columns)
-    for n in names:
-        if len(df[n].shape) > 1:
-            # get subset of df w/ colname n
-            sub = df[n]
-            # make unique colnames
-            sub.columns = [f"{n}-{x}" for x in range(sub.shape[1])]
-            # get colname w/ max # of data
-            keep = sub.count().idxmax()
-            # drop all columns of name n from original df
-            del df[n]
-            # update original df w/ longest col with name n
-            df[n] = sub[keep]
+    """Remove duplicate columns without modifying the input DataFrame.
 
-    return df
+    For each label, keep the first column with the most non-missing values.
+    Retained labels remain in first-occurrence order.
+    """
+    keep = []
+    for label in df.columns.drop_duplicates():
+        positions = df.columns.get_indexer_for([label])
+        if len(positions) > 1:
+            counts = df.iloc[:, positions].count()
+            keep.append(positions[counts.argmax()])
+        else:
+            keep.append(positions[0])
+
+    return df.iloc[:, keep].copy()
 
 
 def to_monthly(series, method="ffill", how="end"):
