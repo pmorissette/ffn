@@ -184,9 +184,10 @@ def test_sortino_preserves_degenerate_series(values, dtype):
 @pytest.mark.parametrize("risk_free_value", [0, 1])
 def test_sortino_integer_arithmetic_does_not_overflow(dtype, as_frame, risk_free_value):
     limits = np.iinfo(dtype.lower())
-    returns = pd.Series([limits.min, 0, limits.max], dtype=dtype, name="varying")
+    values = np.array([limits.min, 0, limits.max], dtype=dtype.lower())
+    returns = pd.Series(values, dtype=dtype, name="varying")
     if as_frame:
-        constant = pd.Series([limits.min] * 3, dtype=dtype, name="constant")
+        constant = pd.Series(np.full(3, limits.min, dtype=dtype.lower()), dtype=dtype, name="constant")
         missing = pd.Series([pd.NA] * 3, dtype="Float64", name="all_missing")
         returns = pd.concat([returns, constant, missing], axis=1)
     original = returns.copy()
