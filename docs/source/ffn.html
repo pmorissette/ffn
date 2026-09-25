@@ -928,8 +928,9 @@ drawdown for each drawdown in a drawdown series.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ffn.core.drop_duplicate_cols">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">drop_duplicate_cols</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#drop_duplicate_cols"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.drop_duplicate_cols" title="Link to this definition">¶</a></dt>
-<dd><p>Removes duplicate columns from a dataframe
-and keeps column w/ longest history</p>
+<dd><p>Remove duplicate columns without modifying the input DataFrame.</p>
+<p>For each label, keep the first column with the most non-missing values.
+Retained labels remain in first-occurrence order.</p>
 </dd></dl>
 
 <dl class="py function">

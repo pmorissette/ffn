@@ -2317,25 +2317,21 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="drop_duplicate_cols">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.drop_duplicate_cols">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">drop_duplicate_cols</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Removes duplicate columns from a dataframe</span>
-<span class="sd">    and keeps column w/ longest history</span>
-<span class="sd">    """</span>
-    <span class="n">names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="c1"># get subset of df w/ colname n</span>
-            <span class="n">sub</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
-            <span class="c1"># make unique colnames</span>
-            <span class="n">sub</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
-            <span class="c1"># get colname w/ max # of data</span>
-            <span class="n">keep</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">idxmax</span><span class="p">()</span>
-            <span class="c1"># drop all columns of name n from original df</span>
-            <span class="k">del</span> <span class="n">df</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
-            <span class="c1"># update original df w/ longest col with name n</span>
-            <span class="n">df</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+<span class="w">    </span><span class="sd">"""Remove duplicate columns without modifying the input DataFrame.</span>
 
-    <span class="k">return</span> <span class="n">df</span></div>
+<span class="sd">    For each label, keep the first column with the most non-missing values.</span>
+<span class="sd">    Retained labels remain in first-occurrence order.</span>
+<span class="sd">    """</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">():</span>
+        <span class="n">positions</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">get_indexer_for</span><span class="p">([</span><span class="n">label</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">positions</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+            <span class="n">keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="n">counts</span><span class="o">.</span><span class="n">argmax</span><span class="p">()])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
 
 
 
