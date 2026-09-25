@@ -2662,12 +2662,14 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
 def _calc_sortino_ratio(er, nperiods, annualize=True):
     """Calculate Sortino from already aligned excess returns."""
+    dtypes = (er.dtype,) if isinstance(er, pd.Series) else er.dtypes
+    if all(dtype.kind in "iuf" for dtype in dtypes) and any(dtype.kind in "iu" for dtype in dtypes):
+        # Promote before both the mean and squared-downside reductions.
+        er = er.astype(float)
     if isinstance(er, pd.Series) and er.dtype.kind == "f":
         negative_returns = np.minimum(er, 0.0)
     else:
         negative_returns = er.clip(upper=0.0)
-    # Promote fixed-width integers before squaring can overflow.
-    negative_returns = negative_returns * 1.0
     downside_deviation = np.sqrt((negative_returns**2).mean())
     with np.errstate(invalid="ignore", divide="ignore"):
         res = np.divide(er.mean(), downside_deviation)

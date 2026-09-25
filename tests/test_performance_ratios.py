@@ -176,8 +176,6 @@ def test_sortino_integer_downside_does_not_overflow(dtype, as_frame):
     excess = returns.astype("float64").sub(risk_free.astype("float64"), axis="index")
     downside = excess.where(excess < 0, 0.0)
     expected = np.divide(excess.mean(), np.sqrt((downside**2).mean()))
-    if as_frame:
-        expected = expected.astype("Float64")
 
     actual = ffn.calc_sortino_ratio(returns, rf=risk_free, nperiods=252, annualize=False)
 
