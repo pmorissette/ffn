@@ -2459,7 +2459,7 @@ def winsorize(x, axis=0, limits=0.01):
     if isinstance(x, pd.DataFrame):
         return x.apply(_winsorize_wrapper, axis=axis, args=(limits,))
     else:
-        return pd.Series(_winsorize_wrapper(x, limits).values, index=x.index)
+        return pd.Series(_winsorize_wrapper(x, limits).values, index=x.index, name=x.name)
 
 
 def rescale(x, min=0.0, max=1.0, axis=0):
@@ -2480,7 +2480,7 @@ def rescale(x, min=0.0, max=1.0, axis=0):
             ),
         )
     else:
-        return pd.Series(innerfn(x, min, max), index=x.index)
+        return pd.Series(innerfn(x, min, max), index=x.index, name=x.name)
 
 
 def annualize(returns, durations, one_year=365.0):
