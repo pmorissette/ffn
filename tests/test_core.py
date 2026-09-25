@@ -1297,6 +1297,20 @@ def test_rescale():
     assert x["b"].iloc[-1] == 9
 
 
+# A falsey non-string name guards against conditional metadata propagation.
+@mark.parametrize("name", [None, "asset", 0], ids=["unnamed", "string-name", "falsey-name"])
+@mark.parametrize("method_name", ["winsorize", "rescale"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_series_value_transform_preserves_name(name, method_name, use_pandas_method):
+    values = pd.Series(range(10), dtype="float", name=name)
+    calculate = getattr(values, method_name) if use_pandas_method else getattr(ffn, method_name)
+    args = () if use_pandas_method else (values,)
+
+    actual = calculate(*args)
+
+    assert actual.name == name
+
+
 def test_annualize():
     assert ffn.annualize(0.1, 60) == (1.1 ** (1.0 / (60.0 / 365)) - 1)
 
