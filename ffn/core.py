@@ -2657,6 +2657,12 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
     if isinstance(rf, _FLOATING_SCALAR_TYPES) and rf != 0 and nperiods is None:
         raise ValueError("nperiods must be set or inferable if rf is a non-zero scalar")
 
+    dtypes = (returns.dtype,) if isinstance(returns, pd.Series) else returns.dtypes
+    if all(dtype.kind in "iuf" for dtype in dtypes) and any(dtype.kind in "iu" for dtype in dtypes):
+        # Promote before excess-return arithmetic and reductions can overflow.
+        returns = returns.astype(float)
+        if isinstance(rf, pd.Series) and rf.dtype.kind in "iu":
+            rf = rf.astype(float)
     return _calc_sortino_ratio(returns.to_excess_returns(rf, nperiods=nperiods), nperiods, annualize)
 
 

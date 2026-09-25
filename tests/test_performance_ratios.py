@@ -159,6 +159,57 @@ def test_sortino_preserves_degenerate_series(values, dtype):
         assert actual == expected
 
 
+@pytest.mark.parametrize(
+    "dtype",
+    [
+        "int8",
+        "int16",
+        "int32",
+        "int64",
+        "uint8",
+        "uint16",
+        "uint32",
+        "uint64",
+        "Int8",
+        "Int16",
+        "Int32",
+        "Int64",
+        "UInt8",
+        "UInt16",
+        "UInt32",
+        "UInt64",
+    ],
+)
+@pytest.mark.parametrize("as_frame", [False, True])
+@pytest.mark.parametrize("risk_free_value", [0, 1])
+def test_sortino_integer_arithmetic_does_not_overflow(dtype, as_frame, risk_free_value):
+    limits = np.iinfo(dtype.lower())
+    values = np.array([limits.min, 0, limits.max], dtype=dtype.lower())
+    returns = pd.Series(values, dtype=dtype, name="varying")
+    if as_frame:
+        constant = pd.Series(np.full(3, limits.min, dtype=dtype.lower()), dtype=dtype, name="constant")
+        missing = pd.Series([pd.NA] * 3, dtype="Float64", name="all_missing")
+        returns = pd.concat([returns, constant, missing], axis=1)
+    original = returns.copy()
+    risk_free = pd.Series([risk_free_value] * 3, dtype=dtype)
+
+    # Promote before subtracting or squaring values that cannot be represented
+    # in their original fixed-width integer dtype.
+    excess = returns.astype("float64").sub(risk_free.astype("float64"), axis="index")
+    downside = excess.where(excess < 0, 0.0)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        expected = np.divide(excess.mean(), np.sqrt((downside**2).mean()))
+
+    actual = ffn.calc_sortino_ratio(returns, rf=risk_free, nperiods=252, annualize=False)
+
+    if as_frame:
+        pd.testing.assert_series_equal(actual, expected)
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        assert actual == expected
+        pd.testing.assert_series_equal(returns, original)
+
+
 @pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64"])
 @pytest.mark.parametrize("risk_free_kind", ["zero", "scalar", "numpy_scalar", "prices"])
 @pytest.mark.parametrize("annualization_factor", [None, 365])
