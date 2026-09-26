@@ -2772,6 +2772,22 @@ def test_group_stats_calc_stats(df):
     assert num_stats == num_unique_stats
 
 
+def test_group_stats_integer_labels_take_precedence_over_positions(df):
+    prices = df[["AAPL", "MSFT"]].rename(columns={"AAPL": 1, "MSFT": 0})
+    stats = ffn.GroupStats(prices)
+
+    # Reversed labels distinguish mapping lookup from positional lookup.
+    assert stats[0] is dict.__getitem__(stats, 0)
+    assert stats[1] is dict.__getitem__(stats, 1)
+
+
+def test_group_stats_integer_lookup_falls_back_to_position(df):
+    stats = ffn.GroupStats(df[["AAPL", "MSFT"]])
+
+    assert stats[0] is stats["AAPL"]
+    assert stats[-1] is stats["MSFT"]
+
+
 @mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
 def test_group_stats_to_csv_preserves_row_width(df, sep):
     prices = df[["AAPL", "MSFT"]].rename(columns={"AAPL": "fund", "MSFT": "peer-with-a-long-name"})
