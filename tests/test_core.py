@@ -1492,12 +1492,12 @@ def test_to_ulcer_index_unchanged_without_gaps():
 
 def test_to_ulcer_performance_index_matches_ulcer_index_scale():
     # The ulcer index is expressed in percentage points, so the excess return
-    # must be too. Mean excess return here is (-0.1 + 1/9) / 2 = 0.005555...,
-    # i.e. 0.5555...% against an ulcer index of sqrt(100 / 3).
-    idx = pd.date_range("2026-01-01", periods=3, freq="D")
-    prices = pd.Series([100.0, 90.0, 100.0], index=idx)
+    # must be too. Prices rise 10% over 365 days, an annualized return of
+    # 1.1 ** (365.25 / 365) - 1, against an ulcer index of sqrt(100 / 3).
+    idx = pd.DatetimeIndex(["2025-01-01", "2025-07-02", "2026-01-01"])
+    prices = pd.Series([100.0, 90.0, 110.0], index=idx)
 
-    expected = (0.5555555555555556) / np.sqrt(100 / 3)
+    expected = (1.1 ** (365.25 / 365) - 1) * 100 / np.sqrt(100 / 3)
 
     assert np.isclose(prices.to_ulcer_performance_index(), expected)
 
@@ -1521,9 +1521,27 @@ def test_to_ulcer_performance_index_is_dimensionally_consistent():
     prices = pd.Series([100.0, 110, 105, 120, 90, 95, 130, 125], index=idx)
 
     upi = prices.to_ulcer_performance_index()
-    mean_excess_pct = prices.to_returns().mean() * 100
+    annualized_return_pct = prices.calc_cagr() * 100
 
-    assert np.isclose(upi * prices.to_ulcer_index(), mean_excess_pct)
+    assert np.isclose(upi * prices.to_ulcer_index(), annualized_return_pct)
+
+
+@mark.parametrize("risk_free", [0.0, 0.05])
+def test_to_ulcer_performance_index_does_not_depend_on_sampling_frequency(risk_free):
+    # The same year of prices sampled daily and monthly, with the same first
+    # and last dates. The Ulcer Index barely moves, and the annualized excess
+    # return is identical. A per-period mean return in the numerator made the
+    # daily UPI about 20x smaller than the monthly one.
+    idx = pd.date_range("2024-01-01", "2024-12-31", freq="D")
+    t = np.arange(len(idx))
+    daily = pd.Series(100 * np.exp(0.08 * t / 365) * (1 - 0.15 * np.exp(-(((t - 150) / 30) ** 2))), index=idx)
+    monthly = daily[daily.index.is_month_start | (daily.index == daily.index[-1])]
+
+    numerator_daily = daily.to_ulcer_performance_index(rf=risk_free, nperiods=365) * daily.to_ulcer_index()
+    numerator_monthly = monthly.to_ulcer_performance_index(rf=risk_free, nperiods=12) * monthly.to_ulcer_index()
+
+    assert np.isclose(numerator_daily, numerator_monthly)
+    assert np.isclose(numerator_daily, (daily.calc_cagr() - risk_free) * 100)
 
 
 def _diff_series(n, mean=0.001, std=0.01):
@@ -2148,11 +2166,11 @@ def test_numpy_floating_risk_free_rates_match_python_float():
                 else:
                     assert actual == expected_sortino
 
-        price_returns = prices.pct_change(fill_method=None)
-        expected_excess = price_returns - period_rate
         drawdowns = prices / prices.cummax() - 1.0
         ulcer_index = ((drawdowns * 100.0) ** 2).mean() ** 0.5
-        expected_upi = expected_excess.mean() * 100.0 / ulcer_index
+        years = (prices.index[-1] - prices.index[0]).total_seconds() / 31557600
+        growth = prices.iloc[-1] / prices.iloc[0]
+        expected_upi = (growth ** (1.0 / years) - 1.0 - float(risk_free)) * 100.0 / ulcer_index
         aae(
             ffn.to_ulcer_performance_index(prices, rf=risk_free, nperiods=nperiods),
             expected_upi,
