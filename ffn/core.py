@@ -811,7 +811,8 @@ class GroupStats(dict):
 
     The order of the series passed in will be preserved.
     Individual PerformanceStats objects can be accessed via index
-    position or name via the [] accessor.
+    position or name via the [] accessor. An integer matching a stored
+    name is treated as a name; other integers use positional lookup.
 
     Each series' stats are computed from that series' own available
     observations, matching what PerformanceStats returns for the series
@@ -879,11 +880,9 @@ class GroupStats(dict):
         self._update(self._prices, self._prices_full)
 
     def __getitem__(self, key):
-        if isinstance(key, int):
-            # if type(key) == int:
-            return self[self._names[key]]
-        else:
-            return self.get(key)
+        if isinstance(key, int) and key not in self:
+            key = self._names[key]
+        return self.get(key)
 
     def _update(self, data, full_data=None):
         self._calculate(data, full_data)
