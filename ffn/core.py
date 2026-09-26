@@ -2764,6 +2764,9 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
 
     See https://en.wikipedia.org/wiki/Ulcer_index
 
+    The numerator is the annualized (compound) excess return, so the result
+    does not depend on how often the prices are sampled.
+
     Method ignores all gaps of NaN's in the price series.
 
     Args:
@@ -2786,9 +2789,16 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
 
     er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
 
+    # The UPI divides an annualized excess return by the Ulcer Index. The mean
+    # return per period scales with the sampling frequency while the Ulcer
+    # Index does not, so compound the excess returns into an index that starts
+    # at 1 on each series' first price and take its CAGR over the same dates
+    # calc_cagr uses.
+    excess_index = er.fillna(0).add(1).cumprod().where(prices.notna())
+
     # to_ulcer_index is expressed in percentage points, so put the excess
     # return on the same scale before dividing
-    return np.divide(er.mean() * 100.0, prices.to_ulcer_index())
+    return np.divide(calc_cagr(excess_index) * 100.0, prices.to_ulcer_index())
 
 
 def calc_expected_max_sharpe(n_trials, sr_std):
