@@ -1566,12 +1566,15 @@ def calc_cagr(prices):
     return (prices.iloc[-1] / prices.iloc[0]) ** (1 / year_frac(start, end)) - 1
 
 
-def calc_risk_return_ratio(returns):
+def calc_risk_return_ratio(returns, nperiods=None, annualize=True):
     """
     Calculates the return / risk ratio. Basically the
     `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_ without factoring in the `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_.
+
+    Supply nperiods when the return frequency cannot be inferred, or set
+    annualize=False for a per-period ratio. See :func:`calc_sharpe`.
     """
-    return calc_sharpe(returns)
+    return calc_sharpe(returns, nperiods=nperiods, annualize=annualize)
 
 
 def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
@@ -1579,8 +1582,9 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
     Calculates the `Sharpe ratio <https://www.investopedia.com/terms/s/sharperatio.asp>`_
     (see `Sharpe vs. Sortino <https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp>`_).
 
-    If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed
-    to be expressed in yearly (annualized) terms.
+    If rf is a non-zero floating scalar, nperiods must be supplied or inferable.
+    In this case, rf is assumed to be expressed in yearly (annualized) terms,
+    even when annualize=False.
 
     Returns NaN when the aligned excess returns have no dispersion, independently for each
     DataFrame column.
@@ -1590,7 +1594,13 @@ def calc_sharpe(returns, rf=0.0, nperiods=None, annualize=True):
         * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed as a yearly (annualized) return or *return*
             series (unlike PerformanceStats, which takes rf as a price series)
         * nperiods (int): Frequency of returns (252 for daily, 12 for monthly,
-            etc.)
+            etc.). Inferred from the index when omitted.
+        * annualize (bool): Annualize the result. Defaults to True.
+
+    Raises:
+        * ValueError: If nperiods cannot be inferred and is needed for annualization
+            or a non-zero scalar risk-free rate. Supply nperiods explicitly, or
+            use annualize=False for a per-period ratio with no scalar rate conversion.
 
     """
     if nperiods is None:
@@ -1609,6 +1619,9 @@ def _calc_sharpe(er, nperiods, annualize=True):
     rule independently to each DataFrame column so a constant column does not affect
     valid neighboring columns.
     """
+    if annualize and nperiods is None:
+        raise ValueError("Cannot infer return frequency. Pass nperiods or set annualize=False.")
+
     std = er.std(ddof=1)
 
     # Match the bounded range test established by calc_deflated_sharpe_ratio.
@@ -1630,8 +1643,6 @@ def _calc_sharpe(er, nperiods, annualize=True):
         res = np.divide(er.mean(), std)
 
     if annualize:
-        if nperiods is None:
-            nperiods = 1
         return res * np.sqrt(nperiods)
     return res
 
@@ -2554,6 +2565,9 @@ def infer_freq(data):
         * data (DataFrame, Series): Any timeseries dataframe or series
     """
     try:
+        # Older pandas interprets numeric row labels as nanosecond timestamps.
+        if data.index.inferred_type in ("integer", "floating", "mixed-integer-float"):
+            return None
         if _PANDAS_TWO:
             return pd.infer_freq(data.index)
         else:
@@ -2679,7 +2693,14 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
         * returns (Series or DataFrame): Returns
         * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ expressed in yearly (annualized) terms or return series.
         * nperiods (int): Number of periods used for annualization. Must be
-            provided or inferable if rf is a non-zero scalar
+            provided or inferable if annualize=True or rf is a non-zero scalar.
+        * annualize (bool): Annualize the result. Defaults to True. A non-zero
+            scalar risk-free rate still needs nperiods when annualize=False.
+
+    Raises:
+        * ValueError: If nperiods cannot be inferred and is needed for annualization
+            or a non-zero scalar risk-free rate. Supply nperiods explicitly, or
+            use annualize=False for a per-period ratio with no scalar rate conversion.
 
     """
     # An inferable return frequency is sufficient to deannualize a scalar rate.
@@ -2700,6 +2721,9 @@ def calc_sortino_ratio(returns, rf=0.0, nperiods=None, annualize=True):
 
 def _calc_sortino_ratio(er, nperiods, annualize=True):
     """Calculate Sortino from already aligned excess returns."""
+    if annualize and nperiods is None:
+        raise ValueError("Cannot infer return frequency. Pass nperiods or set annualize=False.")
+
     if isinstance(er, pd.Series) and er.dtype.kind == "f":
         negative_returns = np.minimum(er, 0.0)
     else:
@@ -2709,8 +2733,6 @@ def _calc_sortino_ratio(er, nperiods, annualize=True):
         res = np.divide(er.mean(), downside_deviation)
 
     if annualize:
-        if nperiods is None:
-            nperiods = 1
         return res * np.sqrt(nperiods)
 
     return res
@@ -3070,6 +3092,11 @@ def resample_returns(returns, func, seed=0, num_trials=100):
     Resample the returns and calculate any statistic on every new sample.
 
     https://en.wikipedia.org/wiki/Resampling_(statistics)
+
+    Sampled dates are shuffled and may repeat, so annualized ratio functions need
+    an explicit frequency, for example
+    ``lambda sample: calc_sharpe(sample, nperiods=252)``. Use ``annualize=False``
+    instead for per-period ratios.
 
     :param returns (Series, DataFrame): Returns
     :param func: Given the resampled returns calculate a statistic
