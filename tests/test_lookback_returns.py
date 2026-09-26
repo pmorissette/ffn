@@ -13,10 +13,10 @@ def _compounding(freq, end, rate=0.01):
 @pytest.mark.parametrize(
     "freq,end",
     [
-        ("ME", "2023-06-30"),
-        ("ME", "2023-11-30"),
-        ("ME", "2024-02-29"),
-        ("BME", "2023-09-29"),
+        (pd.offsets.MonthEnd(), "2023-06-30"),
+        (pd.offsets.MonthEnd(), "2023-11-30"),
+        (pd.offsets.MonthEnd(), "2024-02-29"),
+        (pd.offsets.BMonthEnd(), "2023-09-29"),
     ],
 )
 def test_month_end_lookbacks_span_whole_months(freq, end):
@@ -31,7 +31,7 @@ def test_month_end_lookbacks_span_whole_months(freq, end):
 
 
 def test_quarterly_lookbacks_span_whole_quarters():
-    stats = ffn.PerformanceStats(_compounding("QE", "2023-06-30"))
+    stats = ffn.PerformanceStats(_compounding(pd.offsets.QuarterEnd(), "2023-06-30"))
 
     assert np.isclose(stats.three_month, 0.01)
     assert np.isclose(stats.six_month, 1.01**2 - 1)
