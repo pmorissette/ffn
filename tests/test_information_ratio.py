@@ -46,3 +46,29 @@ def test_information_ratio_preserves_empty_frames(shape, dtype):
 
     expected = pd.Series(0.0, index=returns.columns, dtype=object if returns.mean().dtype == object else float)
     pd.testing.assert_series_equal(result, expected)
+
+
+def test_information_ratio_treats_rounding_residue_as_no_tracking_error():
+    # (r + c) - r is c plus rounding residue that scales with r. Dividing by that
+    # residue gave ratios near 1e15; it is the zero-tracking-error case.
+    index = pd.date_range("2024-01-01", periods=250, freq="B")
+    r = pd.Series(np.random.default_rng(0).normal(0.0, 0.02, 250), index=index)
+
+    assert ffn.calc_information_ratio(r + 0.0005, r) == 0.0
+    assert ffn.calc_information_ratio(pd.Series(0.001, index=index), pd.Series(0.0, index=index)) == 0.0
+    assert ffn.calc_prob_mom(r + 0.0005, r) == 0.5
+
+    frame = pd.DataFrame({"residue": r + 0.0005, "varying": r * 2})
+    result = ffn.calc_information_ratio(frame, r)
+    assert result["residue"] == 0.0
+    assert np.isclose(result["varying"], r.mean() / r.std(ddof=1))
+
+
+def test_information_ratio_keeps_a_small_real_tracking_error():
+    index = pd.date_range("2024-01-01", periods=6, freq="B")
+    benchmark = pd.Series([0.01, -0.02, 0.03, 0.0, 0.01, -0.01], index=index)
+    diff = pd.Series([1e-9, -1e-9, 2e-9, 0.0, 1e-9, 3e-9], index=index)
+
+    expected = diff.mean() / diff.std(ddof=1)
+
+    assert np.isclose(ffn.calc_information_ratio(benchmark + diff, benchmark), expected, rtol=1e-4)
