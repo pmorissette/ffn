@@ -355,12 +355,11 @@ class PerformanceStats:
                 self.return_table[idx][13] = np.prod(arr + 1) - 1
 
         if min_period < pd.Timedelta("93 days"):
-            if dp.index[0] > dp.index[-1] - pd.DateOffset(months=3):
+            denom = _lookback_prices(dp, 3)
+            if len(denom) == 0:
                 return
 
-            denom = dp[: dp.index[-1] - pd.DateOffset(months=3)]
-            if len(denom) > 0:
-                self.three_month = dp.iloc[-1] / denom.iloc[-1] - 1
+            self.three_month = dp.iloc[-1] / denom.iloc[-1] - 1
 
         if min_period < pd.Timedelta("32 days"):
             if len(mr) < 4:
@@ -373,13 +372,11 @@ class PerformanceStats:
                 self.monthly_kurt = mr.kurt()
 
         if min_period < pd.Timedelta("185 days"):
-            if dp.index[0] > dp.index[-1] - pd.DateOffset(months=6):
+            denom = _lookback_prices(dp, 6)
+            if len(denom) == 0:
                 return
 
-            denom = dp[: dp.index[-1] - pd.DateOffset(months=6)]
-
-            if len(denom) > 0:
-                self.six_month = dp.iloc[-1] / denom.iloc[-1] - 1
+            self.six_month = dp.iloc[-1] / denom.iloc[-1] - 1
 
         # Will calculate yearly figures only if the input data has at least yearly frequency or higher (e.g monthly)
         # Rather < 367 days than <= 366 days in case of data taken at different hours of the days
@@ -390,7 +387,7 @@ class PerformanceStats:
             if len(yr) < 2:
                 return
 
-            denom = dp[: dp.index[-1] - pd.DateOffset(years=1)]
+            denom = _lookback_prices(dp, 12)
 
             if len(denom) > 0:
                 self.one_year = dp.iloc[-1] / denom.iloc[-1] - 1
@@ -1393,6 +1390,22 @@ def _calc_current_period_return(daily_prices, period_prices):
             previous_price = current_prices.iloc[0]
 
     return daily_prices.iloc[-1] / previous_price - 1
+
+
+def _lookback_prices(prices, months):
+    """
+    Prices up to the start of a lookback of ``months`` ending at the last price.
+
+    A series that ends on the last business day of its month is anchored on the
+    month ``months`` earlier, not on the same day number: Jun 30 less three months
+    is Mar 30, and the last month-end price on or before that is Feb 28.
+    """
+    end = prices.index[-1]
+    last_business_day = pd.offsets.BMonthEnd().rollback(end + pd.offsets.MonthEnd(0))
+    if end.normalize() >= last_business_day.normalize():
+        months_elapsed = prices.index.year * 12 + prices.index.month
+        return prices[months_elapsed <= end.year * 12 + end.month - months]
+    return prices[: end - pd.DateOffset(months=months)]
 
 
 def calc_mtd(daily_prices, monthly_prices):
