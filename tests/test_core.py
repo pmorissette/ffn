@@ -1775,6 +1775,46 @@ def test_calc_prob_backtest_overfitting():
         ffn.calc_prob_backtest_overfitting(noise.iloc[:4], n_blocks=8)
 
 
+@mark.parametrize("order", ["permuted", "descending"])
+def test_calc_prob_backtest_overfitting_rejects_nonchronological_dates(order):
+    returns = pd.DataFrame(
+        np.random.default_rng(18).normal(0, 0.01, (24, 5)),
+        index=pd.date_range("2020-01-01", periods=24, tz="UTC"),
+    )
+    if order == "permuted":
+        returns = returns.sample(frac=1, random_state=4)
+    else:
+        returns = returns.iloc[::-1]
+    original = returns.copy()
+
+    with raises(ValueError, match="trial_returns index must be monotonic increasing"):
+        ffn.calc_prob_backtest_overfitting(returns, n_blocks=6)
+
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_prob_backtest_overfitting_validates_truncated_tail():
+    index = pd.date_range("2020-01-01", periods=25, tz="UTC")
+    returns = pd.DataFrame(np.arange(125).reshape(25, 5), index=index)
+    returns.index = index[:-1].append(pd.DatetimeIndex([index[0] - pd.Timedelta(days=1)]))
+
+    # The last row would be truncated for six blocks, but remains part of the caller's input.
+    with raises(ValueError, match="trial_returns index must be monotonic increasing"):
+        ffn.calc_prob_backtest_overfitting(returns, n_blocks=6)
+
+
+def test_calc_prob_backtest_overfitting_accepts_duplicate_dates():
+    returns = pd.DataFrame(
+        np.random.default_rng(18).normal(0, 0.01, (24, 5)),
+        index=pd.date_range("2020-01-01", periods=24),
+    )
+    expected = ffn.calc_prob_backtest_overfitting(returns.reset_index(drop=True), n_blocks=6)
+    returns.index = returns.index[:5].append(pd.DatetimeIndex([returns.index[4]])).append(returns.index[6:])
+
+    # Equal neighboring dates remain monotonic under the accepted datetime-index policy.
+    assert ffn.calc_prob_backtest_overfitting(returns, n_blocks=6) == expected
+
+
 def test_calc_prob_backtest_overfitting_exact_ranks():
     returns = pd.DataFrame([[3, 1, 2], [3, 2, 1], [1, 3, 2], [1, 2, 3]])
 
