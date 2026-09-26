@@ -48,11 +48,12 @@ def test_information_ratio_preserves_empty_frames(shape, dtype):
     pd.testing.assert_series_equal(result, expected)
 
 
-def test_information_ratio_treats_rounding_residue_as_no_tracking_error():
+@pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", object])
+def test_information_ratio_treats_rounding_residue_as_no_tracking_error(dtype):
     # (r + c) - r is c plus rounding residue that scales with r. Dividing by that
     # residue gave ratios near 1e15; it is the zero-tracking-error case.
     index = pd.date_range("2024-01-01", periods=250, freq="B")
-    r = pd.Series(np.random.default_rng(0).normal(0.0, 0.02, 250), index=index)
+    r = pd.Series(np.random.default_rng(0).normal(0.0, 0.02, 250), index=index, dtype=dtype)
 
     assert ffn.calc_information_ratio(r + 0.0005, r) == 0.0
     assert ffn.calc_information_ratio(pd.Series(0.001, index=index), pd.Series(0.0, index=index)) == 0.0
@@ -72,3 +73,61 @@ def test_information_ratio_keeps_a_small_real_tracking_error():
     expected = diff.mean() / diff.std(ddof=1)
 
     assert np.isclose(ffn.calc_information_ratio(benchmark + diff, benchmark), expected, rtol=1e-4)
+
+
+@pytest.mark.parametrize("metric", ["calc_information_ratio", "calc_prob_mom"])
+@pytest.mark.parametrize("shape", ["frame_series", "series_frame", "frame_frame"])
+@pytest.mark.parametrize("duplicate_columns", [False, True])
+def test_tracking_error_tolerance_is_columnwise(metric, shape, duplicate_columns):
+    quiet = pd.Series([1e-17, 2e-17, 4e-17, 3e-17])
+    frame = pd.DataFrame({"quiet": quiet, "large": quiet * 1e16})
+    if duplicate_columns:
+        frame.columns = ["asset", "asset"]
+    frame.columns.name = "assets"
+    benchmark = pd.Series(0.0, index=frame.index)
+    function = getattr(ffn, metric)
+    expected = pd.Series([function(frame.iloc[:, i], benchmark) for i in range(2)], index=frame.columns)
+    if shape == "series_frame":
+        result = function(benchmark, -frame)
+    else:
+        if shape == "frame_frame":
+            benchmark = frame * 0
+        result = function(frame, benchmark)
+    pd.testing.assert_series_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    "metric,dtype",
+    [("calc_information_ratio", "float64"), ("calc_information_ratio", "Float64"), ("calc_information_ratio", object), ("calc_prob_mom", "float64"), ("calc_prob_mom", "Float64")],
+)
+@pytest.mark.parametrize("missing", ["unaligned", "nan"])
+@pytest.mark.parametrize("reverse", [False, True])
+def test_tracking_error_tolerance_ignores_unpaired_observations(metric, dtype, missing, reverse):
+    returns = pd.Series([1e-17, 2e-17, 4e-17, 3e-17], dtype=dtype)
+    benchmark = pd.Series(0.0, index=returns.index, dtype=dtype)
+    if reverse:
+        returns, benchmark = benchmark, returns
+    function = getattr(ffn, metric)
+    expected = function(returns, benchmark)
+    returns.loc[4] = 1.0
+    if missing == "nan":
+        benchmark.loc[4] = np.nan
+
+    assert np.isclose(function(returns, benchmark), expected)
+    frame = pd.DataFrame({"asset": returns})
+    assert np.isclose(function(frame, benchmark).iloc[0], expected)
+
+
+@pytest.mark.parametrize("metric", ["calc_information_ratio", "calc_prob_mom"])
+def test_tracking_error_tolerance_preserves_each_columns_precision(metric):
+    benchmark = pd.Series(np.random.default_rng(0).normal(0.0, 0.02, 250))
+    quiet = pd.Series(np.resize([1e-10, 2e-10, 4e-10, 3e-10], len(benchmark)))
+    returns = pd.DataFrame({"single": (benchmark + 0.0005).astype("float32"), "double": benchmark + quiet})
+    benchmarks = pd.DataFrame({"single": benchmark.astype("float32"), "double": benchmark})
+    function = getattr(ffn, metric)
+    expected = pd.Series(
+        [0.0 if metric == "calc_information_ratio" else 0.5, function(returns["double"], benchmarks["double"])],
+        index=returns.columns,
+    )
+
+    pd.testing.assert_series_equal(function(returns, benchmarks), expected)

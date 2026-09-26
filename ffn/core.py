@@ -1645,29 +1645,32 @@ def calc_information_ratio(returns, benchmark_returns):
     """
     Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
-    return _calc_information_ratio(_diff_returns(returns, benchmark_returns), _max_abs(returns, benchmark_returns))
+    return _calc_information_ratio(_diff_returns(returns, benchmark_returns), returns, benchmark_returns)
 
 
-def _max_abs(*data):
-    """Largest absolute value across the inputs, ignoring missing values."""
-    largest = 0.0
-    for d in data:
-        values = d.to_numpy(dtype=float, na_value=np.nan) if isinstance(d, (pd.Series, pd.DataFrame)) else np.asarray(d, dtype=float)
-        largest = max(largest, float(np.fmax.reduce(np.abs(values), axis=None, initial=0.0)))
-    return largest
+def _return_roundoff(data):
+    """Per-observation rounding bound at each input column's precision."""
+    dtypes = data.dtypes if isinstance(data, pd.DataFrame) else [getattr(data, "dtype", np.dtype(float))]
+    eps = np.array([np.finfo(f"f{dtype.itemsize}").eps if dtype.kind == "f" else np.finfo(float).eps for dtype in dtypes])
+    if not isinstance(data, pd.DataFrame):
+        eps = eps[0]
+    # Scale before abs to avoid overflowing signed integer inputs.
+    return abs(np.multiply(data, 4 * eps))
 
 
-def _calc_information_ratio(diff_rets, scale=0.0):
+def _calc_information_ratio(diff_rets, returns, benchmark_returns):
     diff_std = diff_rets.std(ddof=1)
 
-    # A spread no wider than rounding residue is no tracking error. Measure it by
-    # range against the inputs, as calc_deflated_sharpe_ratio does: (r + c) - r
-    # carries residue that scales with r, not with c.
+    # Sum the input rounding bounds with the same alignment as the subtraction.
+    # Only paired observations in each column can affect its tracking error.
+    bounds = _diff_returns(_return_roundoff(returns), -_return_roundoff(benchmark_returns))
+    bounds = bounds.where(diff_rets.notna()).to_numpy(dtype=float, na_value=np.nan)
     values = diff_rets.to_numpy(dtype=float, na_value=np.nan)
     if values.ndim == 1:
         values = values[:, None]
+        bounds = bounds[:, None]
     spread = np.fmax.reduce(values, axis=0, initial=-np.inf) - np.fmin.reduce(values, axis=0, initial=np.inf)
-    no_spread = spread <= 4 * np.finfo(float).eps * max(scale, _max_abs(diff_rets))
+    no_spread = spread <= np.fmax.reduce(bounds, axis=0, initial=0.0)
 
     if isinstance(diff_std, pd.Series):
         diff_mean = diff_rets.mean()
@@ -1703,7 +1706,7 @@ def calc_prob_mom(returns, other_returns):
     # ratio, not the raw series length.
     diff_rets = _diff_returns(returns, other_returns)
     n = diff_rets.count()
-    ir = _calc_information_ratio(diff_rets, _max_abs(returns, other_returns))
+    ir = _calc_information_ratio(diff_rets, returns, other_returns)
     t_stat = ir * np.sqrt(n)
     prob = t.cdf(t_stat, n - 1)
 
