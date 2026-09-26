@@ -1714,11 +1714,11 @@ def test_twelve_month_win_perc_uses_twelve_month_window():
 
 def test_calc_sharpe(df):
     x = pd.Series()
-    assert np.isnan(x.calc_sharpe())
+    assert np.isnan(x.calc_sharpe(annualize=False))
 
     r = df.to_returns()
 
-    res = r.calc_sharpe()
+    res = r.calc_sharpe(annualize=False)
     assert np.allclose(res, r.mean() / r.std())
 
     res = r.calc_sharpe(rf=0.05, nperiods=252)
