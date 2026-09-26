@@ -2762,43 +2762,59 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
     """
     Converts from prices -> `ulcer performance index <https://www.investopedia.com/terms/u/ulcerindex.asp>`_.
 
-    See https://en.wikipedia.org/wiki/Ulcer_index
+    See https://www.tangotools.com/ui/ui.htm
 
-    The numerator is the annualized (compound) excess return, so the result
-    does not depend on how often the prices are sampled.
-
-    Method ignores all gaps of NaN's in the price series.
+    The numerator is the investment's compound annual return minus the annual
+    risk-free return. The Ulcer Index can still vary with sampling frequency.
+    Price gaps are forward-filled. Fewer than two prices, zero elapsed time,
+    or missing risk-free returns within the holding period produce NaN.
 
     Args:
         * prices (Series, DataFrame): Prices
-        * rf (float, np.floating, Series): `Risk-free rate of return <https://www.investopedia.com/terms/r/risk-freerate.asp>`_. Assumed to be expressed in
-            yearly (annualized) terms or return series
-        * nperiods (int): Used to deannualize rf if rf is provided (non-zero)
+        * rf (float, np.floating, Series): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ when scalar,
+            or per-period return Series aligned to the price index.
+        * nperiods (int): Positive periods per year, required for prices without
+            a datetime or timedelta index. Dated prices use elapsed calendar time.
 
     """
-    if nperiods is None:
-        nperiods = infer_nperiods(prices)
-
-    if isinstance(rf, _FLOATING_SCALAR_TYPES) and rf != 0 and nperiods is None:
-        raise ValueError("nperiods must be set if rf != 0 and rf is not a price series")
-
     # to_ulcer_index carries the last known price across a gap, so fill here
     # too. Otherwise the numerator is a return over the raw series while the
     # denominator is an Ulcer Index over the filled one.
     prices = prices.ffill()
 
-    er = prices.to_returns().to_excess_returns(rf, nperiods=nperiods)
+    def annual_excess_return(column):
+        column = column.dropna()
+        if len(column) < 2:
+            return np.nan
+        if isinstance(column.index, (pd.DatetimeIndex, pd.TimedeltaIndex)):
+            years = year_frac(column.index[0], column.index[-1])
+        else:
+            if nperiods is None or nperiods <= 0:
+                raise ValueError("nperiods must be positive for prices without a datetime or timedelta index")
+            years = (len(column) - 1) / nperiods
+        if years == 0:
+            return np.nan
 
-    # The UPI divides an annualized excess return by the Ulcer Index. The mean
-    # return per period scales with the sampling frequency while the Ulcer
-    # Index does not, so compound the excess returns into an index that starts
-    # at 1 on each series' first price and take its CAGR over the same dates
-    # calc_cagr uses.
-    excess_index = er.fillna(0).add(1).cumprod().where(prices.notna())
+        annual_return = np.power(np.divide(column.iloc[-1], column.iloc[0]), 1 / years) - 1
+        if isinstance(rf, _FLOATING_SCALAR_TYPES):
+            annual_rf = float(rf)
+        else:
+            # The first price anchors the period; its preceding return is excluded.
+            rates = rf.reindex(prices.index).iloc[len(prices) - len(column) + 1 :]
+            if rates.isna().any():
+                return np.nan
+            growth = np.prod(1.0 + rates.to_numpy(dtype=float))
+            annual_rf = np.power(growth, 1 / years) - 1
+        return annual_return - annual_rf
+
+    if isinstance(prices, pd.DataFrame):
+        annual_excess = pd.Series([annual_excess_return(prices.iloc[:, i]) for i in range(prices.shape[1])], index=prices.columns, dtype=float)
+    else:
+        annual_excess = annual_excess_return(prices)
 
     # to_ulcer_index is expressed in percentage points, so put the excess
     # return on the same scale before dividing
-    return np.divide(calc_cagr(excess_index) * 100.0, prices.to_ulcer_index())
+    return np.divide(annual_excess * 100.0, prices.to_ulcer_index())
 
 
 def calc_expected_max_sharpe(n_trials, sr_std):

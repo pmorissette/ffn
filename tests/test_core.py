@@ -1526,7 +1526,8 @@ def test_to_ulcer_performance_index_is_dimensionally_consistent():
     assert np.isclose(upi * prices.to_ulcer_index(), annualized_return_pct)
 
 
-def test_to_ulcer_performance_index_does_not_depend_on_sampling_frequency():
+@mark.parametrize("risk_free", [0.0, 0.05])
+def test_to_ulcer_performance_index_does_not_depend_on_sampling_frequency(risk_free):
     # The same year of prices sampled daily and monthly, with the same first
     # and last dates. The Ulcer Index barely moves, and the annualized excess
     # return is identical. A per-period mean return in the numerator made the
@@ -1536,11 +1537,11 @@ def test_to_ulcer_performance_index_does_not_depend_on_sampling_frequency():
     daily = pd.Series(100 * np.exp(0.08 * t / 365) * (1 - 0.15 * np.exp(-(((t - 150) / 30) ** 2))), index=idx)
     monthly = daily[daily.index.is_month_start | (daily.index == daily.index[-1])]
 
-    numerator_daily = daily.to_ulcer_performance_index() * daily.to_ulcer_index()
-    numerator_monthly = monthly.to_ulcer_performance_index() * monthly.to_ulcer_index()
+    numerator_daily = daily.to_ulcer_performance_index(rf=risk_free, nperiods=365) * daily.to_ulcer_index()
+    numerator_monthly = monthly.to_ulcer_performance_index(rf=risk_free, nperiods=12) * monthly.to_ulcer_index()
 
     assert np.isclose(numerator_daily, numerator_monthly)
-    assert np.isclose(numerator_daily, daily.calc_cagr() * 100)
+    assert np.isclose(numerator_daily, (daily.calc_cagr() - risk_free) * 100)
 
 
 def _diff_series(n, mean=0.001, std=0.01):
@@ -2165,13 +2166,11 @@ def test_numpy_floating_risk_free_rates_match_python_float():
                 else:
                     assert actual == expected_sortino
 
-        price_returns = prices.pct_change(fill_method=None)
-        expected_excess = price_returns - period_rate
         drawdowns = prices / prices.cummax() - 1.0
         ulcer_index = ((drawdowns * 100.0) ** 2).mean() ** 0.5
         years = (prices.index[-1] - prices.index[0]).total_seconds() / 31557600
-        excess_growth = (1.0 + expected_excess.fillna(0.0)).prod()
-        expected_upi = (excess_growth ** (1.0 / years) - 1.0) * 100.0 / ulcer_index
+        growth = prices.iloc[-1] / prices.iloc[0]
+        expected_upi = (growth ** (1.0 / years) - 1.0 - float(risk_free)) * 100.0 / ulcer_index
         aae(
             ffn.to_ulcer_performance_index(prices, rf=risk_free, nperiods=nperiods),
             expected_upi,
