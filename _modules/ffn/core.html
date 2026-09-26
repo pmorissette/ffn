@@ -1285,7 +1285,8 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    The order of the series passed in will be preserved.</span>
 <span class="sd">    Individual PerformanceStats objects can be accessed via index</span>
-<span class="sd">    position or name via the [] accessor.</span>
+<span class="sd">    position or name via the [] accessor. An integer matching a stored</span>
+<span class="sd">    name is treated as a name; other integers use positional lookup.</span>
 
 <span class="sd">    Each series' stats are computed from that series' own available</span>
 <span class="sd">    observations, matching what PerformanceStats returns for the series</span>
@@ -1353,11 +1354,9 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prices_full</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="c1"># if type(key) == int:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">full_data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_calculate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">full_data</span><span class="p">)</span>
@@ -2113,12 +2112,15 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="calc_risk_return_ratio">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.calc_risk_return_ratio">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">calc_risk_return_ratio</span><span class="p">(</span><span class="n">returns</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">calc_risk_return_ratio</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">annualize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Calculates the return / risk ratio. Basically the</span>
 <span class="sd">    `Sharpe ratio &lt;https://www.investopedia.com/terms/s/sharperatio.asp&gt;`_ without factoring in the `risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_.</span>
+
+<span class="sd">    Supply nperiods when the return frequency cannot be inferred, or set</span>
+<span class="sd">    annualize=False for a per-period ratio. See :func:`calc_sharpe`.</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">calc_sharpe</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">calc_sharpe</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="n">nperiods</span><span class="p">,</span> <span class="n">annualize</span><span class="o">=</span><span class="n">annualize</span><span class="p">)</span></div>
 
 
 
@@ -2129,8 +2131,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Calculates the `Sharpe ratio &lt;https://www.investopedia.com/terms/s/sharperatio.asp&gt;`_</span>
 <span class="sd">    (see `Sharpe vs. Sortino &lt;https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp&gt;`_).</span>
 
-<span class="sd">    If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed</span>
-<span class="sd">    to be expressed in yearly (annualized) terms.</span>
+<span class="sd">    If rf is a non-zero floating scalar, nperiods must be supplied or inferable.</span>
+<span class="sd">    In this case, rf is assumed to be expressed in yearly (annualized) terms,</span>
+<span class="sd">    even when annualize=False.</span>
 
 <span class="sd">    Returns NaN when the aligned excess returns have no dispersion, independently for each</span>
 <span class="sd">    DataFrame column.</span>
@@ -2140,7 +2143,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed as a yearly (annualized) return or *return*</span>
 <span class="sd">            series (unlike PerformanceStats, which takes rf as a price series)</span>
 <span class="sd">        * nperiods (int): Frequency of returns (252 for daily, 12 for monthly,</span>
-<span class="sd">            etc.)</span>
+<span class="sd">            etc.). Inferred from the index when omitted.</span>
+<span class="sd">        * annualize (bool): Annualize the result. Defaults to True.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If nperiods cannot be inferred and is needed for annualization</span>
+<span class="sd">            or a non-zero scalar risk-free rate. Supply nperiods explicitly, or</span>
+<span class="sd">            use annualize=False for a per-period ratio with no scalar rate conversion.</span>
 
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -2160,6 +2169,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    rule independently to each DataFrame column so a constant column does not affect</span>
 <span class="sd">    valid neighboring columns.</span>
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">annualize</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot infer return frequency. Pass nperiods or set annualize=False."</span><span class="p">)</span>
+
     <span class="n">std</span> <span class="o">=</span> <span class="n">er</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># Match the bounded range test established by calc_deflated_sharpe_ratio.</span>
@@ -2181,8 +2193,6 @@ window.runMermaid = runMermaid;</script>
         <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">er</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">std</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">annualize</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nperiods</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">res</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nperiods</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">res</span>
 
@@ -3176,6 +3186,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * data (DataFrame, Series): Any timeseries dataframe or series</span>
 <span class="sd">    """</span>
     <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Older pandas interprets numeric row labels as nanosecond timestamps.</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">inferred_type</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"integer"</span><span class="p">,</span> <span class="s2">"floating"</span><span class="p">,</span> <span class="s2">"mixed-integer-float"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">_PANDAS_TWO</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">infer_freq</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -3307,7 +3320,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * returns (Series or DataFrame): Returns</span>
 <span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ expressed in yearly (annualized) terms or return series.</span>
 <span class="sd">        * nperiods (int): Number of periods used for annualization. Must be</span>
-<span class="sd">            provided or inferable if rf is a non-zero scalar</span>
+<span class="sd">            provided or inferable if annualize=True or rf is a non-zero scalar.</span>
+<span class="sd">        * annualize (bool): Annualize the result. Defaults to True. A non-zero</span>
+<span class="sd">            scalar risk-free rate still needs nperiods when annualize=False.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If nperiods cannot be inferred and is needed for annualization</span>
+<span class="sd">            or a non-zero scalar risk-free rate. Supply nperiods explicitly, or</span>
+<span class="sd">            use annualize=False for a per-period ratio with no scalar rate conversion.</span>
 
 <span class="sd">    """</span>
     <span class="c1"># An inferable return frequency is sufficient to deannualize a scalar rate.</span>
@@ -3329,6 +3349,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_calc_sortino_ratio</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">nperiods</span><span class="p">,</span> <span class="n">annualize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Calculate Sortino from already aligned excess returns."""</span>
+    <span class="k">if</span> <span class="n">annualize</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Cannot infer return frequency. Pass nperiods or set annualize=False."</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="ow">and</span> <span class="n">er</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"f"</span><span class="p">:</span>
         <span class="n">negative_returns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -3338,8 +3361,6 @@ window.runMermaid = runMermaid;</script>
         <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">er</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">downside_deviation</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">annualize</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">nperiods</span> <span class="o">=</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">res</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">nperiods</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">res</span>
@@ -3722,6 +3743,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Resample the returns and calculate any statistic on every new sample.</span>
 
 <span class="sd">    https://en.wikipedia.org/wiki/Resampling_(statistics)</span>
+
+<span class="sd">    Sampled dates are shuffled and may repeat, so annualized ratio functions need</span>
+<span class="sd">    an explicit frequency, for example</span>
+<span class="sd">    ``lambda sample: calc_sharpe(sample, nperiods=252)``. Use ``annualize=False``</span>
+<span class="sd">    instead for per-period ratios.</span>
 
 <span class="sd">    :param returns (Series, DataFrame): Returns</span>
 <span class="sd">    :param func: Given the resampled returns calculate a statistic</span>

@@ -54,7 +54,8 @@ It is a wrapper around a dict of {price.name: PerformanceStats} and
 provides many convenience methods.</p>
 <p>The order of the series passed in will be preserved.
 Individual PerformanceStats objects can be accessed via index
-position or name via the [] accessor.</p>
+position or name via the [] accessor. An integer matching a stored
+name is treated as a name; other integers use positional lookup.</p>
 <p>Each series’ stats are computed from that series’ own available
 observations, matching what PerformanceStats returns for the series
 on its own. Cross-sectional views (prices, correlations) use the
@@ -798,9 +799,11 @@ is going to outperform the other”.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="ffn.core.calc_risk_return_ratio">
-<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_risk_return_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Link to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_risk_return_ratio</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_risk_return_ratio"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_risk_return_ratio" title="Link to this definition">¶</a></dt>
 <dd><p>Calculates the return / risk ratio. Basically the
 <a class="reference external" href="https://www.investopedia.com/terms/s/sharperatio.asp">Sharpe ratio</a> without factoring in the <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">risk-free rate</a>.</p>
+<p>Supply nperiods when the return frequency cannot be inferred, or set
+annualize=False for a per-period ratio. See <a class="reference internal" href="#ffn.core.calc_sharpe" title="ffn.core.calc_sharpe"><code class="xref py py-func docutils literal notranslate"><span class="pre">calc_sharpe()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -808,8 +811,9 @@ is going to outperform the other”.</p>
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">calc_sharpe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">annualize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#calc_sharpe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.calc_sharpe" title="Link to this definition">¶</a></dt>
 <dd><p>Calculates the <a class="reference external" href="https://www.investopedia.com/terms/s/sharperatio.asp">Sharpe ratio</a>
 (see <a class="reference external" href="https://www.investopedia.com/ask/answers/010815/what-difference-between-sharpe-ratio-and-sortino-ratio.asp">Sharpe vs. Sortino</a>).</p>
-<p>If rf is a non-zero floating scalar, you must specify nperiods. In this case, rf is assumed
-to be expressed in yearly (annualized) terms.</p>
+<p>If rf is a non-zero floating scalar, nperiods must be supplied or inferable.
+In this case, rf is assumed to be expressed in yearly (annualized) terms,
+even when annualize=False.</p>
 <p>Returns NaN when the aligned excess returns have no dispersion, independently for each
 DataFrame column.</p>
 <dl class="field-list simple">
@@ -820,8 +824,14 @@ DataFrame column.</p>
 series (unlike PerformanceStats, which takes rf as a price series)</p>
 </p></li>
 <li><p><strong>nperiods</strong> (<em>*</em>) – Frequency of returns (252 for daily, 12 for monthly,
-etc.)</p></li>
+etc.). Inferred from the index when omitted.</p></li>
+<li><p><strong>annualize</strong> (<em>*</em>) – Annualize the result. Defaults to True.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If nperiods cannot be inferred and is needed for annualization
+    or a non-zero scalar risk-free rate. Supply nperiods explicitly, or
+    use annualize=False for a per-period ratio with no scalar rate conversion.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -838,8 +848,15 @@ etc.)</p></li>
 <li><p><strong>rf</strong> (<em>*</em>) – <p><a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> expressed in yearly (annualized) terms or return series.</p>
 </p></li>
 <li><p><strong>nperiods</strong> (<em>*</em>) – Number of periods used for annualization. Must be
-provided or inferable if rf is a non-zero scalar</p></li>
+provided or inferable if annualize=True or rf is a non-zero scalar.</p></li>
+<li><p><strong>annualize</strong> (<em>*</em>) – Annualize the result. Defaults to True. A non-zero
+scalar risk-free rate still needs nperiods when annualize=False.</p></li>
 </ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If nperiods cannot be inferred and is needed for annualization
+    or a non-zero scalar risk-free rate. Supply nperiods explicitly, or
+    use annualize=False for a per-period ratio with no scalar rate conversion.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1085,6 +1102,10 @@ prices remain missing in the returned object.</p>
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">resample_returns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returns</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#resample_returns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.resample_returns" title="Link to this definition">¶</a></dt>
 <dd><p>Resample the returns and calculate any statistic on every new sample.</p>
 <p><a class="reference external" href="https://en.wikipedia.org/wiki/Resampling_(statistics">https://en.wikipedia.org/wiki/Resampling_(statistics</a>)</p>
+<p>Sampled dates are shuffled and may repeat, so annualized ratio functions need
+an explicit frequency, for example
+<code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">sample:</span> <span class="pre">calc_sharpe(sample,</span> <span class="pre">nperiods=252)</span></code>. Use <code class="docutils literal notranslate"><span class="pre">annualize=False</span></code>
+instead for per-period ratios.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
