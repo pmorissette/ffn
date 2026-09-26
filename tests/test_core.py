@@ -2763,6 +2763,21 @@ def test_group_stats_to_csv_preserves_row_width(df, sep):
     _assert_csv_row_width(stats.to_csv(sep=sep), sep, expected_width=3)
 
 
+def test_group_stats_to_csv_formats_series_riskfree_rate_as_unavailable(df):
+    prices = df[["AAPL", "MSFT"]]
+    risk_free_prices = pd.Series(np.linspace(100.0, 110.0, len(prices)), index=prices.index)
+    stats = ffn.GroupStats(prices)
+
+    assert "Risk-free rate,0.00%,0.00%" in stats.to_csv().splitlines()
+    stats.set_riskfree_rate(risk_free_prices)
+
+    output = stats.to_csv()
+
+    # A price series has no single annual percentage to place in the summary row.
+    assert "Risk-free rate,-,-" in output.splitlines()
+    _assert_csv_row_width(output, ",", expected_width=3)
+
+
 def test_calc_stats_annualization_factor(df):
     prices = df[["AAPL", "MSFT"]]
     stats = prices.calc_stats(annualization_factor=365)
