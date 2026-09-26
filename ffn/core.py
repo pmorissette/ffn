@@ -1178,6 +1178,8 @@ class GroupStats(dict):
             row = [n]
             for key in self._names:
                 raw = getattr(self[key], k)
+                if k == "rf" and not isinstance(raw, _FLOATING_SCALAR_TYPES):
+                    raw = np.nan
                 if f is None:
                     row.append(raw)
                 elif f == "p":
