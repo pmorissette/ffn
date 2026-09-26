@@ -1645,15 +1645,36 @@ def calc_information_ratio(returns, benchmark_returns):
     """
     Calculates the `Information ratio <https://www.investopedia.com/terms/i/informationratio.asp>`_ (or `from Wikipedia <http://en.wikipedia.org/wiki/Information_ratio>`_).
     """
-    return _calc_information_ratio(_diff_returns(returns, benchmark_returns))
+    return _calc_information_ratio(_diff_returns(returns, benchmark_returns), returns, benchmark_returns)
 
 
-def _calc_information_ratio(diff_rets):
+def _return_roundoff(data):
+    """Per-observation rounding bound at each input column's precision."""
+    dtypes = data.dtypes if isinstance(data, pd.DataFrame) else [getattr(data, "dtype", np.dtype(float))]
+    eps = np.array([np.finfo(f"f{dtype.itemsize}").eps if dtype.kind == "f" else np.finfo(float).eps for dtype in dtypes])
+    if not isinstance(data, pd.DataFrame):
+        eps = eps[0]
+    # Scale before abs to avoid overflowing signed integer inputs.
+    return abs(np.multiply(data, 4 * eps))
+
+
+def _calc_information_ratio(diff_rets, returns, benchmark_returns):
     diff_std = diff_rets.std(ddof=1)
+
+    # Sum the input rounding bounds with the same alignment as the subtraction.
+    # Only paired observations in each column can affect its tracking error.
+    bounds = _diff_returns(_return_roundoff(returns), -_return_roundoff(benchmark_returns))
+    bounds = bounds.where(diff_rets.notna()).to_numpy(dtype=float, na_value=np.nan)
+    values = diff_rets.to_numpy(dtype=float, na_value=np.nan)
+    if values.ndim == 1:
+        values = values[:, None]
+        bounds = bounds[:, None]
+    spread = np.fmax.reduce(values, axis=0, initial=-np.inf) - np.fmin.reduce(values, axis=0, initial=np.inf)
+    no_spread = spread <= np.fmax.reduce(bounds, axis=0, initial=0.0)
 
     if isinstance(diff_std, pd.Series):
         diff_mean = diff_rets.mean()
-        valid = diff_std.notna() & diff_std.ne(0)
+        valid = diff_std.notna() & diff_std.ne(0) & ~no_spread
         if diff_mean.dtype.kind == "f" and diff_mean.dtype.itemsize <= 8:
             return np.divide(diff_mean, diff_std).where(valid, 0.0).astype(float)
 
@@ -1662,7 +1683,7 @@ def _calc_information_ratio(diff_rets):
         result.loc[valid] = np.divide(diff_mean.loc[valid], diff_std.loc[valid])
         return result
 
-    if pd.isna(diff_std) or diff_std == 0:
+    if pd.isna(diff_std) or diff_std == 0 or no_spread[0]:
         return 0.0
 
     return np.divide(diff_rets.mean(), diff_std)
@@ -1685,7 +1706,7 @@ def calc_prob_mom(returns, other_returns):
     # ratio, not the raw series length.
     diff_rets = _diff_returns(returns, other_returns)
     n = diff_rets.count()
-    ir = _calc_information_ratio(diff_rets)
+    ir = _calc_information_ratio(diff_rets, returns, other_returns)
     t_stat = ir * np.sqrt(n)
     prob = t.cdf(t_stat, n - 1)
 
