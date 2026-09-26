@@ -424,8 +424,11 @@ class PerformanceStats:
             if len(yr) < 3:
                 return
 
-            # annualize stat for over 1 year
-            self.three_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=3) :])
+            # annualize stat for over 1 year. len(yr) counts calendar-year bins, so
+            # also require a price on or before the start of the window.
+            start = dp.index[-1] - pd.DateOffset(years=3)
+            if dp.index[0] <= start:
+                self.three_year = calc_cagr(dp[start:])
 
         if min_period < pd.Timedelta("367 days"):
             if len(yr) < 4:
@@ -440,12 +443,16 @@ class PerformanceStats:
         if min_period < pd.Timedelta("1828 days"):
             if len(yr) < 5:
                 return
-            self.five_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=5) :])
+            start = dp.index[-1] - pd.DateOffset(years=5)
+            if dp.index[0] <= start:
+                self.five_year = calc_cagr(dp[start:])
 
         if min_period < pd.Timedelta("3654 days"):
             if len(yr) < 10:
                 return
-            self.ten_year = calc_cagr(dp[dp.index[-1] - pd.DateOffset(years=10) :])
+            start = dp.index[-1] - pd.DateOffset(years=10)
+            if dp.index[0] <= start:
+                self.ten_year = calc_cagr(dp[start:])
 
         return
 
