@@ -3397,33 +3397,59 @@ window.runMermaid = runMermaid;</script>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Converts from prices -&gt; `ulcer performance index &lt;https://www.investopedia.com/terms/u/ulcerindex.asp&gt;`_.</span>
 
-<span class="sd">    See https://en.wikipedia.org/wiki/Ulcer_index</span>
+<span class="sd">    See https://www.tangotools.com/ui/ui.htm</span>
 
-<span class="sd">    Method ignores all gaps of NaN's in the price series.</span>
+<span class="sd">    The numerator is the investment's compound annual return minus the annual</span>
+<span class="sd">    risk-free return. The Ulcer Index can still vary with sampling frequency.</span>
+<span class="sd">    Price gaps are forward-filled. Fewer than two prices, zero elapsed time,</span>
+<span class="sd">    or missing risk-free returns within the holding period produce NaN.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        * prices (Series, DataFrame): Prices</span>
-<span class="sd">        * rf (float, np.floating, Series): `Risk-free rate of return &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_. Assumed to be expressed in</span>
-<span class="sd">            yearly (annualized) terms or return series</span>
-<span class="sd">        * nperiods (int): Used to deannualize rf if rf is provided (non-zero)</span>
+<span class="sd">        * rf (float, np.floating, Series): Annual `risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ when scalar,</span>
+<span class="sd">            or per-period return Series aligned to the price index.</span>
+<span class="sd">        * nperiods (int): Positive periods per year, required for prices without</span>
+<span class="sd">            a datetime or timedelta index. Dated prices use elapsed calendar time.</span>
 
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">nperiods</span> <span class="o">=</span> <span class="n">infer_nperiods</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">)</span> <span class="ow">and</span> <span class="n">rf</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"nperiods must be set if rf != 0 and rf is not a price series"</span><span class="p">)</span>
-
     <span class="c1"># to_ulcer_index carries the last known price across a gap, so fill here</span>
     <span class="c1"># too. Otherwise the numerator is a return over the raw series while the</span>
     <span class="c1"># denominator is an Ulcer Index over the filled one.</span>
     <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span>
 
-    <span class="n">er</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">to_excess_returns</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="n">nperiods</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">annual_excess_return</span><span class="p">(</span><span class="n">column</span><span class="p">):</span>
+        <span class="n">column</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">TimedeltaIndex</span><span class="p">)):</span>
+            <span class="n">years</span> <span class="o">=</span> <span class="n">year_frac</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">column</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">nperiods</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">nperiods</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"nperiods must be positive for prices without a datetime or timedelta index"</span><span class="p">)</span>
+            <span class="n">years</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">nperiods</span>
+        <span class="k">if</span> <span class="n">years</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+        <span class="n">annual_return</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">column</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">column</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">years</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
+            <span class="n">annual_rf</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">rf</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># The first price anchors the period; its preceding return is excluded.</span>
+            <span class="n">rates</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:]</span>
+            <span class="k">if</span> <span class="n">rates</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">growth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">rates</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">))</span>
+            <span class="n">annual_rf</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">growth</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">years</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">annual_return</span> <span class="o">-</span> <span class="n">annual_rf</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">annual_excess</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span> <span class="n">index</span><span class="o">=</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">annual_excess</span> <span class="o">=</span> <span class="n">annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
 
     <span class="c1"># to_ulcer_index is expressed in percentage points, so put the excess</span>
     <span class="c1"># return on the same scale before dividing</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">er</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">,</span> <span class="n">prices</span><span class="o">.</span><span class="n">to_ulcer_index</span><span class="p">())</span></div>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">annual_excess</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">,</span> <span class="n">prices</span><span class="o">.</span><span class="n">to_ulcer_index</span><span class="p">())</span></div>
 
 
 

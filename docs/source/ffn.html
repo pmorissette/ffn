@@ -1253,15 +1253,20 @@ non-missing returns.</p>
 <dt class="sig sig-object py" id="ffn.core.to_ulcer_performance_index">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_ulcer_performance_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nperiods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#to_ulcer_performance_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_ulcer_performance_index" title="Link to this definition">¶</a></dt>
 <dd><p>Converts from prices -&gt; <a class="reference external" href="https://www.investopedia.com/terms/u/ulcerindex.asp">ulcer performance index</a>.</p>
-<p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Ulcer_index">https://en.wikipedia.org/wiki/Ulcer_index</a></p>
-<p>Method ignores all gaps of NaN’s in the price series.</p>
+<p>See <a class="reference external" href="https://www.tangotools.com/ui/ui.htm">https://www.tangotools.com/ui/ui.htm</a></p>
+<p>The numerator is the investment’s compound annual return minus the annual
+risk-free return. The Ulcer Index can still vary with sampling frequency.
+Price gaps are forward-filled. Fewer than two prices, zero elapsed time,
+or missing risk-free returns within the holding period produce NaN.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>prices</strong> (<em>*</em>) – Prices</p></li>
-<li><p><strong>rf</strong> (<em>*</em>) – <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate of return</a>. Assumed to be expressed in
-yearly (annualized) terms or return series</p></li>
-<li><p><strong>nperiods</strong> (<em>*</em>) – Used to deannualize rf if rf is provided (non-zero)</p></li>
+<li><p><strong>rf</strong> (<em>*</em>) – <p>Annual <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">risk-free rate</a> when scalar,
+or per-period return Series aligned to the price index.</p>
+</p></li>
+<li><p><strong>nperiods</strong> (<em>*</em>) – Positive periods per year, required for prices without
+a datetime or timedelta index. Dated prices use elapsed calendar time.</p></li>
 </ul>
 </dd>
 </dl>
