@@ -2435,8 +2435,8 @@ def plot_heatmap(data, title="Heatmap", show_legend=True, show_labels=True, labe
 
     if show_labels:
         vals = data.values
-        for x in range(data.shape[0]):
-            for y in range(data.shape[1]):
+        for x in range(data.shape[1]):
+            for y in range(data.shape[0]):
                 plt.text(
                     x + 0.5,
                     y + 0.5,
