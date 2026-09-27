@@ -2917,7 +2917,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            - result is {a: 0.5, b: 0.33, c: 0.167}</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * weights (Series): A series describing the weights</span>
+<span class="sd">        * weights (Series): A series describing finite weights</span>
 <span class="sd">        * limit (float): Maximum weight allowed</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
@@ -2925,6 +2925,9 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">weights</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">na_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"weights must contain only finite values"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Expecting weights (that sum to 1) - sum is </span><span class="si">{</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
