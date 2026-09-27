@@ -2338,7 +2338,7 @@ def limit_weights(weights, limit=0.1):
     if isinstance(weights, dict):
         weights = pd.Series(weights)
 
-    if not np.isfinite(weights.to_numpy(dtype=float, na_value=np.nan)).all():
+    if weights.isna().any() or not np.isfinite(weights.to_numpy(dtype=float, na_value=np.nan)).all():
         raise ValueError("weights must contain only finite values")
 
     if np.round(weights.sum(), 1) != 1.0:

@@ -1090,8 +1090,9 @@ def test_limit_weights_preserves_precision():
         pd.Series([0.6, 0.4, np.nan], index=["a", "b", "c"]),
         pd.Series([0.6, 0.4, np.inf], index=["a", "b", "c"], dtype="Float64"),
         pd.Series([0.6, 0.4, -np.inf], index=["a", "b", "c"]),
+        pd.Series([0.6, 0.4, pd.NA], index=["a", "b", "c"], dtype=object),
     ],
-    ids=["nullable-missing", "float-nan", "nullable-positive-inf", "float-negative-inf"],
+    ids=["nullable-missing", "float-nan", "nullable-positive-inf", "float-negative-inf", "object-missing"],
 )
 def test_limit_weights_rejects_nonfinite_series(weights):
     original = weights.copy(deep=True)
@@ -1102,8 +1103,9 @@ def test_limit_weights_rejects_nonfinite_series(weights):
     pd.testing.assert_series_equal(weights, original)
 
 
-def test_limit_weights_rejects_nonfinite_dict():
-    weights = {"a": 0.6, "b": 0.4, "c": np.nan}
+@mark.parametrize("invalid", [np.nan, pd.NA, None, np.inf, -np.inf])
+def test_limit_weights_rejects_nonfinite_dict(invalid):
+    weights = {"a": 0.6, "b": 0.4, "c": invalid}
     original = pd.Series(weights)
 
     with np.testing.assert_raises_regex(ValueError, "finite"):
