@@ -2940,7 +2940,8 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
     Args:
         * returns (Series): Return series of the selected (best) trial.
         * trial_sharpe_ratios (Series, array-like): Sharpe ratios of all
-            evaluated trials, e.g. as returned by :func:`calc_sharpe`.
+            evaluated trials, e.g. as returned by :func:`calc_sharpe`. All
+            values must be finite; otherwise the result is ``NaN``.
         * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
             expressed in yearly (annualized) terms or return series.
         * nperiods (int): Frequency of returns (252 for daily, 12 for
@@ -2950,7 +2951,7 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
 
     Returns:
         * float -- probability [0, 1] that the selected trial's Sharpe ratio
-          is greater than zero.
+          is greater than zero, or ``NaN`` when the statistic is undefined.
 
     """
     if nperiods is None:
@@ -2958,7 +2959,13 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
 
     # Work in per-period terms; annualization cancels in the ratio below
     sr = calc_sharpe(returns, rf=rf, nperiods=nperiods, annualize=False)
-    trials = pd.Series(np.asarray(trial_sharpe_ratios, dtype=float)).dropna()
+    # Check missing pandas values before conversion to a NumPy float array.
+    if np.any(pd.isna(trial_sharpe_ratios)):
+        return np.nan
+    trial_values = np.asarray(trial_sharpe_ratios, dtype=float)
+    if not np.isfinite(trial_values).all():
+        return np.nan
+    trials = pd.Series(trial_values)
     if annualized_trials:
         trials = trials / np.sqrt(nperiods or 1)
 
