@@ -1946,19 +1946,29 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
-@mark.parametrize("invalid", [np.nan, np.inf, -np.inf])
+@mark.parametrize("invalid", [np.nan, np.inf, -np.inf, pd.NA, None])
 @mark.parametrize("annualized_trials", [True, False])
-def test_calc_deflated_sharpe_ratio_nonfinite_trials(invalid, annualized_trials):
+@mark.parametrize("dtype", [None, object, "Float32", "Float64"])
+def test_calc_deflated_sharpe_ratio_nonfinite_trials(invalid, annualized_trials, dtype):
     returns = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250))
+    trials = [0.0, 0.5, invalid]
+    if dtype is not None:
+        trials = pd.Series(trials, dtype=dtype)
+    original = trials.copy()
 
     result = ffn.calc_deflated_sharpe_ratio(
         returns,
-        [0.0, 0.5, invalid],
+        trials,
         nperiods=252,
         annualized_trials=annualized_trials,
     )
 
     assert np.isnan(result)
+    assert np.isnan(returns.calc_deflated_sharpe_ratio(trials, nperiods=252, annualized_trials=annualized_trials))
+    if isinstance(trials, pd.Series):
+        pd.testing.assert_series_equal(trials, original)
+    else:
+        assert trials == original
 
 
 def test_calc_deflated_sharpe_ratio_scalar_trial():
@@ -1967,7 +1977,8 @@ def test_calc_deflated_sharpe_ratio_scalar_trial():
     # Scalar inputs take the same public coercion path through a zero-dimensional
     # NumPy array, which must be validated before pandas boxes it as an object.
     assert np.isfinite(ffn.calc_deflated_sharpe_ratio(returns, 0.5, nperiods=252))
-    assert np.isnan(ffn.calc_deflated_sharpe_ratio(returns, np.nan, nperiods=252))
+    for invalid in (np.nan, np.inf, -np.inf, pd.NA, None):
+        assert np.isnan(ffn.calc_deflated_sharpe_ratio(returns, invalid, nperiods=252))
 
 
 def test_calc_deflated_sharpe_ratio_nonfinite_calculated_trials():

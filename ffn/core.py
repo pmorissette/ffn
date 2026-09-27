@@ -2959,6 +2959,9 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
 
     # Work in per-period terms; annualization cancels in the ratio below
     sr = calc_sharpe(returns, rf=rf, nperiods=nperiods, annualize=False)
+    # Check missing pandas values before conversion to a NumPy float array.
+    if np.any(pd.isna(trial_sharpe_ratios)):
+        return np.nan
     trial_values = np.asarray(trial_sharpe_ratios, dtype=float)
     if not np.isfinite(trial_values).all():
         return np.nan
