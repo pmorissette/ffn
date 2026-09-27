@@ -3677,6 +3677,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * full_output (bool): If True, also return the per-combination rank</span>
 <span class="sd">            logits and the mean out-of-sample rank of the in-sample winner.</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If a DatetimeIndex is not monotonic increasing.</span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        * float -- probability [0, 1] of backtest overfitting, or a dict with</span>
 <span class="sd">          keys ``pbo``, ``logits`` and ``mean_oos_rank`` when ``full_output``</span>
@@ -3697,6 +3700,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">rows</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_obs</span> <span class="o">//</span> <span class="n">n_blocks</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_blocks</span>
     <span class="k">if</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="n">n_blocks</span> <span class="ow">or</span> <span class="n">n_trials</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"not enough observations or trials for the requested blocks"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">trial_returns</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">trial_returns</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_monotonic_increasing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"trial_returns index must be monotonic increasing"</span><span class="p">)</span>
     <span class="n">trial_returns</span> <span class="o">=</span> <span class="n">trial_returns</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">rows</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">blocks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_split</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">rows</span><span class="p">),</span> <span class="n">n_blocks</span><span class="p">)</span>
 

@@ -772,8 +772,11 @@ an undefined Sharpe ratio.</p></li>
 logits and the mean out-of-sample rank of the in-sample winner.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If a DatetimeIndex is not monotonic increasing.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
 <li><p>float – probability [0, 1] of backtest overfitting, or a dict with
 keys <code class="docutils literal notranslate"><span class="pre">pbo</span></code>, <code class="docutils literal notranslate"><span class="pre">logits</span></code> and <code class="docutils literal notranslate"><span class="pre">mean_oos_rank</span></code> when <code class="docutils literal notranslate"><span class="pre">full_output</span></code>
 is True. If any trial has a non-finite metric in either half of a
