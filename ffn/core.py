@@ -245,7 +245,9 @@ class PerformanceStats:
         if len(r) < 2:
             return
 
-        min_period = r.index.to_series().diff().min()
+        # Gate each block on the typical spacing: one short gap, such as the row bt
+        # prepends a day before a weekly or monthly backtest, must not make it daily.
+        min_period = r.index.to_series().diff().median()
 
         # Auto-infer annualization factor from data frequency when not explicitly provided
         if self._annualization_factor_override is None:

@@ -110,6 +110,21 @@ def test_performance_stats_rejects_no_dispersion_sharpe():
     pd.testing.assert_series_equal(prices, original)
 
 
+@pytest.mark.parametrize("freq,daily", [("B", True), ("W-FRI", False), (ffn.core._MonthEnd, False)])
+def test_start_row_one_day_early_keeps_data_frequency(freq, daily):
+    """bt prepends a row a day before the first date; that one gap must not make weekly or monthly prices daily."""
+    index = pd.date_range("2020-01-07", periods=60, freq=freq)
+    prices = pd.Series(100 * np.cumprod(1 + 0.02 * np.sin(np.arange(60))), index=index, name="asset")
+    start_row = pd.Series([prices.iloc[0]], index=[index[0] - pd.Timedelta(days=1)], name="asset")
+
+    plain = ffn.PerformanceStats(prices)
+    stats = ffn.PerformanceStats(pd.concat([start_row, prices]))
+
+    for name in ("daily_mean", "daily_vol", "daily_sharpe", "best_day"):
+        assert np.isfinite(getattr(stats, name)) == daily
+    assert np.isclose(stats.monthly_sharpe, plain.monthly_sharpe)
+
+
 @pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", object])
 @pytest.mark.parametrize("as_frame", [False, True])
 @pytest.mark.parametrize("annualize", [False, True])
