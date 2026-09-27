@@ -485,6 +485,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * clean_tickers (bool): Should the tickers be 'cleaned' using</span>
 <span class="sd">            ffn.utils.clean_tickers? Basically remove non-standard</span>
 <span class="sd">            characters (^VIX -&gt; vix) and standardize to lower case.</span>
+<span class="sd">            Raises ValueError if distinct columns would clean to the</span>
+<span class="sd">            same name; disable cleaning or provide column_names to</span>
+<span class="sd">            preserve their identities.</span>
 <span class="sd">        * column_names (list): List of column names if clean_tickers</span>
 <span class="sd">            is not satisfactory.</span>
 <span class="sd">        * ticker_field_sep (char): separator used to determine the</span>
@@ -546,7 +549,10 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"column_names must be of same length as tickers"</span><span class="p">)</span>
         <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">cnames</span>
     <span class="k">elif</span> <span class="n">clean_tickers</span><span class="p">:</span>
-        <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">clean_ticker</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">cleaned_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">utils</span><span class="o">.</span><span class="n">clean_ticker</span><span class="p">(</span><span class="n">column</span><span class="p">)</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">cleaned_columns</span><span class="p">))</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cleaned ticker names are not unique; set clean_tickers=False or provide unique column_names"</span><span class="p">)</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">cleaned_columns</span>
 
     <span class="k">return</span> <span class="n">df</span></div>
 

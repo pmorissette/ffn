@@ -1350,7 +1350,10 @@ if common_dates is False, since common_dates will remove
 all nan’s, so no filling forward necessary.</p></li>
 <li><p><strong>clean_tickers</strong> (<em>*</em>) – Should the tickers be ‘cleaned’ using
 ffn.utils.clean_tickers? Basically remove non-standard
-characters (^VIX -&gt; vix) and standardize to lower case.</p></li>
+characters (^VIX -&gt; vix) and standardize to lower case.
+Raises ValueError if distinct columns would clean to the
+same name; disable cleaning or provide column_names to
+preserve their identities.</p></li>
 <li><p><strong>column_names</strong> (<em>*</em>) – List of column names if clean_tickers
 is not satisfactory.</p></li>
 <li><p><strong>ticker_field_sep</strong> (<em>*</em>) – separator used to determine the
