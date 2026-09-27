@@ -1946,6 +1946,53 @@ def test_calc_deflated_sharpe_ratio():
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
 
 
+@mark.parametrize("invalid", [np.nan, np.inf, -np.inf])
+@mark.parametrize("annualized_trials", [True, False])
+def test_calc_deflated_sharpe_ratio_nonfinite_trials(invalid, annualized_trials):
+    returns = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250))
+
+    result = ffn.calc_deflated_sharpe_ratio(
+        returns,
+        [0.0, 0.5, invalid],
+        nperiods=252,
+        annualized_trials=annualized_trials,
+    )
+
+    assert np.isnan(result)
+
+
+def test_calc_deflated_sharpe_ratio_scalar_trial():
+    returns = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250))
+
+    # Scalar inputs take the same public coercion path through a zero-dimensional
+    # NumPy array, which must be validated before pandas boxes it as an object.
+    assert np.isfinite(ffn.calc_deflated_sharpe_ratio(returns, 0.5, nperiods=252))
+    assert np.isnan(ffn.calc_deflated_sharpe_ratio(returns, np.nan, nperiods=252))
+
+
+def test_calc_deflated_sharpe_ratio_nonfinite_calculated_trials():
+    trial_returns = pd.DataFrame(
+        {
+            "varying_a": [0.01, -0.02, 0.03, 0.0],
+            "constant": [0.01] * 4,
+            "varying_b": [-0.01, 0.02, -0.005, 0.015],
+        }
+    )
+    trial_sharpes = trial_returns.calc_sharpe(nperiods=252)
+    original = trial_sharpes.copy()
+
+    # A constant evaluated trial has no Sharpe ratio, so the full search cannot
+    # define the dispersion used by the deflated-Sharpe hurdle.
+    assert trial_sharpes.isna().equals(pd.Series([False, True, False], index=trial_sharpes.index))
+    result = trial_returns["varying_a"].calc_deflated_sharpe_ratio(
+        trial_sharpes,
+        nperiods=252,
+    )
+
+    assert np.isnan(result)
+    pd.testing.assert_series_equal(trial_sharpes, original)
+
+
 def test_calc_deflated_sharpe_ratio_ignores_missing_returns():
     """Exclude missing returns from the deflated Sharpe sample size."""
     observed = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250))
