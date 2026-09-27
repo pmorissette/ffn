@@ -3035,6 +3035,9 @@ def calc_prob_backtest_overfitting(trial_returns, n_blocks=16, metric=None, full
         * full_output (bool): If True, also return the per-combination rank
             logits and the mean out-of-sample rank of the in-sample winner.
 
+    Raises:
+        * ValueError: If a DatetimeIndex is not monotonic increasing.
+
     Returns:
         * float -- probability [0, 1] of backtest overfitting, or a dict with
           keys ``pbo``, ``logits`` and ``mean_oos_rank`` when ``full_output``
@@ -3055,6 +3058,8 @@ def calc_prob_backtest_overfitting(trial_returns, n_blocks=16, metric=None, full
     rows = (n_obs // n_blocks) * n_blocks
     if rows < n_blocks or n_trials < 2:
         raise ValueError("not enough observations or trials for the requested blocks")
+    if isinstance(trial_returns.index, pd.DatetimeIndex) and not trial_returns.index.is_monotonic_increasing:
+        raise ValueError("trial_returns index must be monotonic increasing")
     trial_returns = trial_returns.iloc[:rows].astype(float)
     blocks = np.array_split(np.arange(rows), n_blocks)
 
