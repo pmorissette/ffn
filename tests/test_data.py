@@ -85,3 +85,74 @@ def test_get_forward_fill(forward_fill, common_dates):
             index=pd.date_range("2024-01-01", periods=4),
         )
     pd.testing.assert_frame_equal(result, expected, check_freq=False)
+
+
+@pytest.mark.parametrize(
+    ("tickers", "existing"),
+    [
+        (["A-B", "AB"], None),
+        (["A-B:Close", "AB:Close"], None),
+        (["AB"], pd.DataFrame({"A-B": [1.0, 2.0]}, index=pd.date_range("2024-01-01", periods=2))),
+    ],
+    ids=["requested-tickers", "ticker-fields", "existing-data"],
+)
+def test_get_rejects_clean_ticker_collisions(monkeypatch, tickers, existing):
+    index = pd.date_range("2024-01-01", periods=2)
+    prices = {"A-B": [1.0, 2.0], "AB": [10.0, 20.0]}
+    original = None if existing is None else existing.copy(deep=True)
+
+    def provider(ticker, field):
+        return pd.Series(prices[ticker], index=index)
+
+    monkeypatch.setattr(ffn.data, "DEFAULT_PROVIDER", provider)
+    with pytest.raises(
+        ValueError,
+        match="cleaned ticker names are not unique.*clean_tickers=False.*column_names",
+    ):
+        ffn.get(
+            tickers,
+            common_dates=False,
+            existing=existing,
+            mrefresh=True,
+        )
+
+    if existing is not None:
+        pd.testing.assert_frame_equal(existing, original)
+
+
+def test_get_clean_ticker_collision_controls(monkeypatch):
+    index = pd.date_range("2024-01-01", periods=2)
+    prices = {"A-B": [1.0, 2.0], "AB": [10.0, 20.0], "C_D": [100.0, 200.0]}
+    calls = []
+
+    def provider(ticker, field):
+        calls.append((ticker, field))
+        return pd.Series(prices[ticker], index=index)
+
+    monkeypatch.setattr(ffn.data, "DEFAULT_PROVIDER", provider)
+    ordinary = ffn.get(
+        ["A-B:Close", "C_D:Open"],
+        common_dates=False,
+        mrefresh=True,
+    )
+    uncleaned = ffn.get(
+        ["A-B", "AB"],
+        common_dates=False,
+        clean_tickers=False,
+        mrefresh=True,
+    )
+    renamed = ffn.get(
+        ["A-B", "AB"],
+        common_dates=False,
+        column_names=["hyphenated", "plain"],
+        mrefresh=True,
+    )
+
+    pd.testing.assert_frame_equal(
+        ordinary,
+        pd.DataFrame({"abclose": [1.0, 2.0], "cdopen": [100.0, 200.0]}, index=index),
+    )
+    assert calls[:2] == [("A-B", "Close"), ("C_D", "Open")]
+    assert uncleaned.columns.tolist() == ["A-B", "AB"]
+    assert renamed.columns.tolist() == ["hyphenated", "plain"]
+    assert uncleaned.to_numpy().tolist() == renamed.to_numpy().tolist()
