@@ -1222,6 +1222,56 @@ def test_random_weights_throws_error():
         assert True
 
 
+@mark.parametrize(
+    "values",
+    [
+        [[1.0, 2.0], [3.0, 4.0]],
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]],
+    ],
+    ids=["square", "wide", "tall"],
+)
+@mark.parametrize("path", ["package", "pandas"])
+def test_plot_heatmap_labels_each_cell(values, path, recwarn):
+    """Map every rectangular cell to its matching text and coordinates."""
+    data = pd.DataFrame(
+        values,
+        index=[f"row-{i}" for i in range(len(values))],
+        columns=[f"column-{i}" for i in range(len(values[0]))],
+    )
+    original = data.copy(deep=True)
+    expected = {(column + 0.5, row + 0.5): format(data.iloc[row, column], ".1f") for row in range(data.shape[0]) for column in range(data.shape[1])}
+
+    ffn.core.plt.close("all")
+    if path == "package":
+        result = ffn.plot_heatmap(data, show_legend=False, label_fmt=".1f")
+    else:
+        result = data.plot_heatmap(show_legend=False, label_fmt=".1f")
+    result.gcf().canvas.draw()
+
+    axes = result.gca()
+    actual = {text.get_position(): text.get_text() for text in axes.texts}
+    assert result is ffn.core.plt
+    assert actual == expected
+    assert [tick.get_text() for tick in axes.get_xticklabels()] == list(data.columns)
+    assert [tick.get_text() for tick in axes.get_yticklabels()] == list(data.index)
+    pd.testing.assert_frame_equal(data, original)
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
+def test_plot_heatmap_can_disable_cell_labels(recwarn):
+    data = pd.DataFrame([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+    ffn.core.plt.close("all")
+    result = ffn.plot_heatmap(data, show_legend=False, show_labels=False)
+    result.gcf().canvas.draw()
+
+    assert len(result.gca().texts) == 0
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
 def test_rollapply():
     a = pd.Series([1, 2, 3, 4, 5])
 
