@@ -1083,6 +1083,52 @@ def test_limit_weights_preserves_precision():
     assert actual.max() <= 0.5
 
 
+@mark.parametrize(
+    "weights",
+    [
+        pd.Series([0.6, 0.4, pd.NA], index=["a", "b", "c"], dtype="Float64"),
+        pd.Series([0.6, 0.4, np.nan], index=["a", "b", "c"]),
+        pd.Series([0.6, 0.4, np.inf], index=["a", "b", "c"], dtype="Float64"),
+        pd.Series([0.6, 0.4, -np.inf], index=["a", "b", "c"]),
+        pd.Series([0.6, 0.4, pd.NA], index=["a", "b", "c"], dtype=object),
+    ],
+    ids=["nullable-missing", "float-nan", "nullable-positive-inf", "float-negative-inf", "object-missing"],
+)
+def test_limit_weights_rejects_nonfinite_series(weights):
+    original = weights.copy(deep=True)
+
+    with np.testing.assert_raises_regex(ValueError, "finite"):
+        ffn.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(weights, original)
+
+
+@mark.parametrize("invalid", [np.nan, pd.NA, None, np.inf, -np.inf])
+def test_limit_weights_rejects_nonfinite_dict(invalid):
+    weights = {"a": 0.6, "b": 0.4, "c": invalid}
+    original = pd.Series(weights)
+
+    with np.testing.assert_raises_regex(ValueError, "finite"):
+        ffn.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(pd.Series(weights), original)
+
+
+def test_limit_weights_preserves_nullable_input_during_redistribution():
+    weights = pd.Series([0.6, 0.3, 0.1], index=["a", "b", "c"], dtype="Float64")
+    original = weights.copy(deep=True)
+    expected = pd.Series([0.5, 0.37499999999999994, 0.125], index=weights.index, dtype="Float64")
+
+    # This valid case reaches redistribution's internal mutations; they must
+    # remain isolated from the caller by the function's copy.
+    actual = ffn.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(weights, original)
+    assert actual.sum() == 1.0
+    assert actual.max() <= 0.5
+
+
 def test_random_weights():
     PANDAS_VERSION = Version(pd.__version__)
     PANDAS_210 = PANDAS_VERSION >= Version("2.1.0")

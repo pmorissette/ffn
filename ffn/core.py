@@ -2329,7 +2329,7 @@ def limit_weights(weights, limit=0.1):
             - result is {a: 0.5, b: 0.33, c: 0.167}
 
     Args:
-        * weights (Series): A series describing the weights
+        * weights (Series): A series describing finite weights
         * limit (float): Maximum weight allowed
     """
     if 1.0 / limit > len(weights):
@@ -2337,6 +2337,9 @@ def limit_weights(weights, limit=0.1):
 
     if isinstance(weights, dict):
         weights = pd.Series(weights)
+
+    if weights.isna().any() or not np.isfinite(weights.to_numpy(dtype=float, na_value=np.nan)).all():
+        raise ValueError("weights must contain only finite values")
 
     if np.round(weights.sum(), 1) != 1.0:
         raise ValueError(f"Expecting weights (that sum to 1) - sum is {weights.sum()}")
