@@ -38,6 +38,9 @@ def get(
         * clean_tickers (bool): Should the tickers be 'cleaned' using
             ffn.utils.clean_tickers? Basically remove non-standard
             characters (^VIX -> vix) and standardize to lower case.
+            Raises ValueError if distinct columns would clean to the
+            same name; disable cleaning or provide column_names to
+            preserve their identities.
         * column_names (list): List of column names if clean_tickers
             is not satisfactory.
         * ticker_field_sep (char): separator used to determine the
@@ -99,7 +102,10 @@ def get(
             raise ValueError("column_names must be of same length as tickers")
         df.columns = cnames
     elif clean_tickers:
-        df.columns = map(utils.clean_ticker, df.columns)
+        cleaned_columns = [utils.clean_ticker(column) for column in df.columns]
+        if len(set(cleaned_columns)) < len(set(df.columns)):
+            raise ValueError("cleaned ticker names are not unique; set clean_tickers=False or provide unique column_names")
+        df.columns = cleaned_columns
 
     return df
 

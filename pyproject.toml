@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 [project]
 name = "ffn"
 description = "Financial functions for Python"
-version = "1.2.1"
+version = "1.2.2"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -54,7 +54,9 @@ develop = [
     "codespell",
     "copier",
     "hatchling",
+    "klink>=0.1.13",
     "mdformat",
+    "mdformat-myst",
     "mdformat-tables>=1",
     "ruff",
     "pytest",
@@ -64,6 +66,7 @@ develop = [
     "ty",
     "uv",
     "wheel",
+    "yardang>=0.10.0",
 ]
 dev = ["ffn[develop]"]
 test = [
@@ -78,7 +81,7 @@ Homepage = "http://pmorissette.github.io/ffn/"
 Documentation = "https://pmorissette.github.io/ffn/"
 
 [tool.bumpversion]
-current_version = "1.2.1"
+current_version = "1.2.2"
 commit = true
 tag = true
 commit_args = "-s"
@@ -134,16 +137,16 @@ theme = "klink"
 docs-host = "https://pmorissette.github.io/ffn/"
 root = "README.md"
 pages = [
-    "docs/source/install.rst",
-    "docs/source/introduction.rst",
-    "docs/source/quick.rst",
-    "docs/source/ffn.rst",
+    "docs/source/install.md",
+    "docs/source/introduction.md",
+    "docs/source/quick.md",
+    "docs/source/ffn.md",
     "docs/development.md",
 ]
 use-autoapi = false
 use-search = false
 nb-execution-mode = "off"
-exclude-patterns = ["**/*.ipynb", "docs/source/intro.rst", "docs/source/quickstart.rst", "TODO.md", "base", "bt", "reference", ".venv"]
+exclude-patterns = ["**/*.ipynb", "docs/source/intro.md", "docs/source/quickstart.md", "TODO.md", "base", "bt", "klink", "yardang", "reference", ".venv"]
 extensions = ["sphinx.ext.intersphinx"]
 
 [tool.yardang.html-theme-options]

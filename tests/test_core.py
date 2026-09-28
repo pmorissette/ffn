@@ -1,7 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
-from pytest import fixture
+from pytest import approx, fixture, mark, raises
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
 
@@ -68,6 +68,69 @@ def test_mtd_ytd(df):
     ytd_actual = ffn.calc_ytd(dp, yp)
 
     assert mtd_actual == ytd_actual == 0
+
+
+def test_mtd_uses_current_period_when_prior_month_is_unavailable():
+    """Ignore an empty prior month when the current month has enough prices."""
+    prices = pd.Series(
+        [90.0, 100.0, 110.0],
+        index=pd.to_datetime(["2024-01-31", "2024-03-01", "2024-03-15"]),
+    )
+    monthly_prices = prices.resample(ffn.core._MonthEnd).last()
+
+    # Adding unrelated January history must not change March's 110 / 100 - 1 return.
+    expected = 0.1
+    assert np.isclose(ffn.calc_mtd(prices, monthly_prices), expected)
+    assert np.isclose(ffn.PerformanceStats(prices).mtd, expected)
+
+
+def test_ytd_uses_current_period_when_prior_year_is_unavailable():
+    """Ignore an empty prior year when the current year has enough prices."""
+    prices = pd.Series(
+        [90.0, 100.0, 110.0],
+        index=pd.to_datetime(["2019-12-31", "2021-01-01", "2021-01-15"]),
+    )
+    yearly_prices = prices.resample(ffn.core._YearEnd).last()
+
+    # Adding unrelated 2019 history must not change 2021's 110 / 100 - 1 return.
+    expected = 0.1
+    assert np.isclose(ffn.calc_ytd(prices, yearly_prices), expected)
+    assert np.isclose(ffn.PerformanceStats(prices).ytd, expected)
+
+
+def test_mtd_ytd_select_current_period_fallback_per_column():
+    """Retain each available prior endpoint in mixed DataFrame inputs."""
+    cases = (
+        (ffn.calc_mtd, ffn.core._MonthEnd, ["2024-01-31", "2024-02-29", "2024-03-01", "2024-03-15"]),
+        (ffn.calc_ytd, ffn.core._YearEnd, ["2019-12-31", "2020-12-31", "2021-01-01", "2021-01-15"]),
+    )
+    for calculator, frequency, dates in cases:
+        daily_prices = pd.DataFrame(
+            {
+                "gap": [90.0, np.nan, 100.0, 110.0],
+                "prior": [10.0, 20.0, 30.0, 35.0],
+                "single": [90.0, np.nan, np.nan, 110.0],
+            },
+            index=pd.to_datetime(dates),
+        )
+        period_prices = daily_prices.resample(frequency).last()
+
+        # gap uses 110 / 100 - 1; prior keeps 35 / 20 - 1; single stays unavailable.
+        expected = pd.Series({"gap": 0.1, "prior": 0.75, "single": np.nan})
+        pd.testing.assert_series_equal(calculator(daily_prices, period_prices), expected)
+
+
+def test_mtd_ytd_keep_unavailable_with_one_current_period_price():
+    """Do not manufacture a zero return from one current-period observation."""
+    cases = (
+        (ffn.calc_mtd, ffn.core._MonthEnd, ["2024-01-31", "2024-03-15"]),
+        (ffn.calc_ytd, ffn.core._YearEnd, ["2019-12-31", "2021-01-15"]),
+    )
+    for calculator, frequency, dates in cases:
+        daily_prices = pd.Series([90.0, 110.0], index=pd.to_datetime(dates))
+        period_prices = daily_prices.resample(frequency).last()
+
+        assert pd.isna(calculator(daily_prices, period_prices))
 
 
 def test_to_returns_ts(ts):
@@ -404,6 +467,92 @@ def test_cagr_df(df):
     aae(actual["C"], -0.205, 3)
 
 
+@mark.parametrize("calculate", [ffn.calc_cagr, ffn.calc_total_return], ids=["cagr", "total-return"])
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", "Int64", "object"])
+def test_return_helpers_preserve_complete_endpoints(calculate, dtype):
+    dates = pd.date_range("2020-01-01", periods=3, freq="YS")
+    prices = pd.DataFrame({"a": [100, None, 121], "b": [50, None, 55]}, index=dates, dtype=dtype)
+    prices.columns.name = "asset"
+    original = prices.copy()
+    expected = prices.iloc[-1] / prices.iloc[0]
+    if calculate is ffn.calc_cagr:
+        years = (dates[-1] - dates[0]) / pd.Timedelta(days=365.25)
+        expected = expected ** (1 / years)
+    expected = expected - 1
+
+    pd.testing.assert_series_equal(calculate(prices), expected)
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("calculate", [ffn.calc_cagr, ffn.calc_total_return], ids=["cagr", "total-return"])
+@mark.parametrize("missing", [[None, None, None], [None, 100.0, None]], ids=["all-missing", "one-observation"])
+def test_return_helpers_preserve_object_frame_arithmetic(calculate, missing):
+    dates = pd.date_range("2020-01-01", periods=3, freq="YS")
+    prices = pd.DataFrame({"valid": [100.0, 110.0, 121.0], "missing": missing}, index=dates, dtype=object)
+    original = prices.copy()
+    expected = prices.iloc[-1] / prices.iloc[0]
+    if calculate is ffn.calc_cagr:
+        years = (dates[-1] - dates[0]) / pd.Timedelta(days=365.25)
+        expected = expected ** (1 / years)
+    expected = expected - 1
+
+    pd.testing.assert_series_equal(calculate(prices), expected)
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("calculate", [ffn.calc_cagr, ffn.calc_total_return], ids=["cagr", "total-return"])
+@mark.parametrize("dtype", ["Float64", pd.SparseDtype(float)], ids=["nullable", "sparse"])
+def test_return_helpers_preserve_ragged_frame_dtypes(calculate, dtype):
+    dates = pd.date_range("2020-01-01", periods=3, freq="YS")
+    prices = pd.DataFrame({"a": [None, 100.0, 121.0], "b": [100.0, 110.0, None]}, index=dates, dtype=dtype)
+    original = prices.copy()
+    expected = pd.Series([121.0, 110.0], index=prices.columns, dtype=dtype) / 100.0
+    if calculate is ffn.calc_cagr:
+        years = np.array([(dates[2] - dates[1]), (dates[1] - dates[0])]) / pd.Timedelta(days=365.25)
+        expected = expected ** (1 / years)
+    expected = expected - 1
+
+    pd.testing.assert_series_equal(calculate(prices), expected)
+    pd.testing.assert_frame_equal(prices, original)
+
+
+def test_calc_cagr_uses_observed_price_endpoints():
+    dates = pd.date_range("2020-01-01", periods=4, freq="YS", tz="UTC")
+    prices = pd.DataFrame(
+        {
+            "a": [np.nan, 100.0, 121.0, np.nan],
+            "b": [100.0, 110.0, np.nan, np.nan],
+            "internal_gap": [100.0, np.nan, np.nan, 121.0],
+            "one_observation": [np.nan, 100.0, np.nan, np.nan],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=dates,
+    )
+    original = prices.copy()
+
+    # Each CAGR uses the elapsed time between that column's observed endpoints.
+    year_a = (dates[2] - dates[1]) / pd.Timedelta(days=365.25)
+    year_b = (dates[1] - dates[0]) / pd.Timedelta(days=365.25)
+    year_internal = (dates[3] - dates[0]) / pd.Timedelta(days=365.25)
+    expected = pd.Series(
+        {
+            "a": (121.0 / 100.0) ** (1 / year_a) - 1,
+            "b": (110.0 / 100.0) ** (1 / year_b) - 1,
+            "internal_gap": (121.0 / 100.0) ** (1 / year_internal) - 1,
+            "one_observation": np.nan,
+            "all_missing": np.nan,
+        }
+    )
+
+    pd.testing.assert_series_equal(ffn.calc_cagr(prices), expected)
+    pd.testing.assert_series_equal(prices.calc_cagr(), expected)
+    assert np.isclose(ffn.calc_cagr(prices["a"]), expected["a"])
+    assert np.isclose(prices["a"].calc_cagr(), expected["a"])
+    assert np.isclose(ffn.calc_cagr(prices["a"].astype("Float64")), expected["a"])
+    assert np.isclose(ffn.PerformanceStats(prices["a"]).cagr, expected["a"])
+    pd.testing.assert_frame_equal(prices, original)
+
+
 def test_merge():
     a = pd.Series(index=pd.date_range("2010-01-01", periods=5), data=100, name="a")
     b = pd.Series(index=pd.date_range("2010-01-02", periods=5), data=200, name="b")
@@ -464,6 +613,49 @@ def test_calc_inv_vol_weights_object_regression_204(df):
     aae(actual["C"], 0.318, 3)
 
 
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", "object"])
+@mark.parametrize("constant", [0.0, 0.1])
+def test_calc_inv_vol_weights_excludes_constant_columns(dtype, constant):
+    returns = pd.DataFrame(
+        {
+            "constant": pd.Series([constant] * 30, dtype=dtype),
+            "variable": pd.Series(np.linspace(-0.075, 0.075, 30), dtype=dtype),
+        }
+    )
+    original = returns.copy()
+    expected = pd.Series([np.nan, 1.0], index=returns.columns)
+
+    # Identical stored returns have exact zero dispersion even when std retains residue.
+    assert returns["constant"].nunique(dropna=True) == 1
+    for actual in (
+        ffn.calc_inv_vol_weights(returns),
+        returns.calc_inv_vol_weights(),
+    ):
+        pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", "object"])
+def test_calc_inv_vol_weights_excludes_insufficient_observations(dtype):
+    returns = pd.DataFrame(
+        {
+            "missing": pd.Series([np.nan, np.nan, np.nan], dtype=dtype),
+            "single": pd.Series([0.1, np.nan, np.nan], dtype=dtype),
+            "variable": pd.Series([-1e-7, 0.0, 1e-7], dtype=dtype),
+            "twice_variable": pd.Series([-2e-7, 0.0, 2e-7], dtype=dtype),
+        }
+    )
+    original = returns.copy()
+    expected = pd.Series([np.nan, np.nan, 2.0 / 3.0, 1.0 / 3.0], index=returns.columns)
+
+    for actual in (
+        ffn.calc_inv_vol_weights(returns),
+        returns.calc_inv_vol_weights(),
+    ):
+        pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_frame_equal(returns, original)
+
+
 def test_calc_mean_var_weights(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
@@ -477,6 +669,23 @@ def test_calc_mean_var_weights(df):
     aae(actual["AAPL"], 0.000, 3)
     aae(actual["MSFT"], 0.000, 3)
     aae(actual["C"], 1.000, 3)
+
+
+@mark.parametrize("covar_method", ["ledoit-wolf", "standard"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_mean_var_weights_rejects_duplicate_columns(covar_method, use_pandas_method):
+    returns = pd.DataFrame(
+        [[0.01, 0.03], [0.02, -0.01], [-0.01, 0.02]],
+        columns=["same", "same"],
+    )
+    original = returns.copy()
+    calculate = returns.calc_mean_var_weights if use_pandas_method else ffn.calc_mean_var_weights
+    args = () if use_pandas_method else (returns,)
+
+    with raises(ValueError, match="returns columns must be unique"):
+        calculate(*args, covar_method=covar_method)
+
+    pd.testing.assert_frame_equal(returns, original)
 
 
 def test_calc_erc_weights(df):
@@ -534,6 +743,113 @@ def test_calc_erc_weights(df):
     aae(actual["C"], 0.356, 3)
 
 
+def test_calc_erc_weights_slsqp_honors_risk_target():
+    """Honor a non-equal target through both public paths and covariance methods."""
+    target = np.array([0.8, 0.1, 0.1])
+    covariance = np.array([[0.04, 0.012, 0.008], [0.012, 0.09, 0.018], [0.008, 0.018, 0.16]])
+    returns = pd.DataFrame(
+        np.random.default_rng(20260909).multivariate_normal(np.zeros(3), covariance, 500),
+        columns=list("ABC"),
+    )
+    original_returns = returns.copy()
+    original_target = target.copy()
+
+    covariance_cases = (
+        ("standard", returns.cov().to_numpy(dtype=float)),
+        ("ledoit-wolf", ffn.core.sklearn.covariance.ledoit_wolf(returns)[0]),
+    )
+    for covar_method, estimated_covariance in covariance_cases:
+        assert isinstance(estimated_covariance, np.ndarray)
+        # CCD is the accepted control: it already applies the same relative target.
+        ccd = ffn.calc_erc_weights(
+            returns,
+            risk_weights=target,
+            covar_method=covar_method,
+            risk_parity_method="ccd",
+            tolerance=1e-9,
+        )
+        assert isinstance(ccd, pd.Series)
+        ccd_weights = ccd.to_numpy(dtype=float)
+        ccd_contributions = ccd_weights * (estimated_covariance @ ccd_weights)
+        # Allow CCD's established iterative accuracy; SLSQP is checked more tightly below.
+        np.testing.assert_allclose(ccd_contributions / ccd_contributions.sum(), target, atol=5e-6)
+
+        for actual in (
+            ffn.calc_erc_weights(
+                returns,
+                risk_weights=target,
+                covar_method=covar_method,
+                risk_parity_method="slsqp",
+                tolerance=1e-9,
+            ),
+            returns.calc_erc_weights(
+                risk_weights=target,
+                covar_method=covar_method,
+                risk_parity_method="slsqp",
+                tolerance=1e-9,
+            ),
+        ):
+            assert isinstance(actual, pd.Series)
+            weights = actual.to_numpy(dtype=float)
+            # Reconstruct the contribution shares independently from the optimizer objective.
+            contributions = weights * (estimated_covariance @ weights)
+            np.testing.assert_allclose(contributions / contributions.sum(), target, atol=1e-6)
+            assert isinstance(actual.index, pd.Index)
+            pd.testing.assert_index_equal(actual.index, returns.columns)
+            assert actual.name == "erc"
+            assert np.isfinite(weights).all()
+            assert (weights >= 0).all()
+            np.testing.assert_allclose(weights.sum(), 1.0, atol=1e-10)
+
+    pd.testing.assert_frame_equal(returns, original_returns)
+    np.testing.assert_array_equal(target, original_target)
+
+
+def test_calc_erc_weights_slsqp_matches_diagonal_risk_target():
+    """Match the diagonal oracle across equivalent target and return scales."""
+    signs = np.array(
+        [
+            [1.0, 1.0, 1.0],
+            [1.0, -1.0, -1.0],
+            [-1.0, 1.0, -1.0],
+            [-1.0, -1.0, 1.0],
+        ]
+    )
+    returns = pd.DataFrame(signs * np.array([0.01, 0.02, 0.04]), columns=list("ABC"))
+    target = np.array([0.8, 0.1, 0.1])
+    original_returns = returns.copy()
+    original_target = target.copy()
+
+    # Orthogonal centered columns give a diagonal sample covariance and a closed form.
+    covariance = returns.cov().to_numpy(dtype=float)
+    expected = np.sqrt(target / np.diag(covariance))
+    expected /= expected.sum()
+    equivalent_targets = (
+        target,
+        target * 10,
+        target.astype("float32"),
+        np.array([8_000_000_000_000_000_000, 1_000_000_000_000_000_000, 1_000_000_000_000_000_000], dtype="int64"),
+        np.array([3.2e38, 4e37, 4e37], dtype="float32"),
+        np.array([1.6e308, 2e307, 2e307]),
+    )
+    for return_scale in (1.0, 1e-4):
+        for scaled_target in equivalent_targets:
+            original_scaled_target = scaled_target.copy()
+            actual = ffn.calc_erc_weights(
+                returns * return_scale,
+                risk_weights=scaled_target,
+                covar_method="standard",
+                risk_parity_method="slsqp",
+                tolerance=1e-9,
+            )
+            assert isinstance(actual, pd.Series)
+            np.testing.assert_allclose(actual.to_numpy(dtype=float), expected, atol=1e-6)
+            np.testing.assert_array_equal(scaled_target, original_scaled_target)
+
+    pd.testing.assert_frame_equal(returns, original_returns)
+    np.testing.assert_array_equal(target, original_target)
+
+
 def test_calc_total_return(df):
     prc = df.iloc[0:11]
     actual = prc.calc_total_return()
@@ -542,6 +858,38 @@ def test_calc_total_return(df):
     aae(actual["AAPL"], -0.079, 3)
     aae(actual["MSFT"], -0.038, 3)
     aae(actual["C"], 0.012, 3)
+
+
+def test_calc_total_return_uses_observed_price_endpoints():
+    dates = pd.date_range("2020-01-01", periods=4, freq="YS")
+    prices = pd.DataFrame(
+        {
+            "a": [np.nan, 100.0, 121.0, np.nan],
+            "b": [100.0, 110.0, np.nan, np.nan],
+            "internal_gap": [100.0, np.nan, np.nan, 121.0],
+            "one_observation": [np.nan, 100.0, np.nan, np.nan],
+            "all_missing": [np.nan, np.nan, np.nan, np.nan],
+        },
+        index=dates,
+    )
+    original = prices.copy()
+    expected = pd.Series(
+        {
+            "a": 0.21,
+            "b": 0.10,
+            "internal_gap": 0.21,
+            "one_observation": np.nan,
+            "all_missing": np.nan,
+        }
+    )
+
+    pd.testing.assert_series_equal(ffn.calc_total_return(prices), expected)
+    pd.testing.assert_series_equal(prices.calc_total_return(), expected)
+    assert np.isclose(ffn.calc_total_return(prices["a"]), expected["a"])
+    assert np.isclose(prices["a"].calc_total_return(), expected["a"])
+    assert np.isclose(ffn.calc_total_return(prices["a"].astype("Float64")), expected["a"])
+    assert np.isclose(ffn.PerformanceStats(prices["a"]).total_return, expected["a"])
+    pd.testing.assert_frame_equal(prices, original)
 
 
 def test_get_num_days_required():
@@ -624,17 +972,67 @@ def test_drop_duplicate_cols():
     # second version of a w/ less data
     a2 = pd.Series(index=pd.date_range("2010-01-02", periods=4), data=900, name="a")
     b = pd.Series(index=pd.date_range("2010-01-02", periods=5), data=200, name="b")
-    actual = ffn.merge(a, a2, b)
+    data = ffn.merge(a, a2, b)
+    original = data.copy()
+    expected = ffn.merge(a, b)
 
-    assert actual["a"].shape[1] == 2
-    assert len(actual.columns) == 3
+    assert data["a"].shape[1] == 2
+    assert len(data.columns) == 3
 
-    actual = actual.drop_duplicate_cols()
+    actual = data.drop_duplicate_cols()
 
-    assert len(actual.columns) == 2
-    assert "a" in actual
-    assert "b" in actual
-    assert len(actual["a"].dropna()) == 5
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+
+    # The returned selection must not expose the caller's values to mutation.
+    actual.iloc[0, 0] = -1
+    pd.testing.assert_frame_equal(data, original)
+
+
+def test_drop_duplicate_cols_keeps_first_tied_column():
+    data = pd.DataFrame(
+        [[1, 10, 100, 1000], [2, 20, 200, 2000]],
+        columns=["a", "b", "a", "a"],
+    )
+    expected = data.iloc[:, :2]
+
+    # All three a columns tie, so retain the first one in first-label order.
+    actual = data.drop_duplicate_cols()
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_drop_duplicate_cols_preserves_unique_columns():
+    data = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    original = data.copy()
+
+    actual = data.drop_duplicate_cols()
+    pd.testing.assert_frame_equal(actual, original)
+
+    actual.iloc[0, 0] = -1
+
+    pd.testing.assert_frame_equal(data, original)
+
+
+@mark.parametrize("dtype", ["Float64", "Int64"])
+@mark.parametrize("duplicate", [False, True], ids=["unique", "duplicate"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_drop_duplicate_cols_isolates_nullable_values(dtype, duplicate, use_pandas_method):
+    columns = ["a", "b", "a"] if duplicate else ["a", "b", "c"]
+    data = pd.DataFrame([[1, 10, 100], [pd.NA, 20, 200]], columns=columns, dtype=dtype)
+    original = data.copy()
+    keep = [2, 1] if duplicate else [0, 1, 2]
+    expected = data.iloc[:, keep].copy()
+
+    actual = data.drop_duplicate_cols() if use_pandas_method else ffn.drop_duplicate_cols(data)
+
+    pd.testing.assert_frame_equal(actual, expected)
+    actual.iloc[0, 0] = -1
+    pd.testing.assert_frame_equal(data, original)
+
+    result_snapshot = actual.copy()
+    data.iloc[1, keep[0]] = -2
+    pd.testing.assert_frame_equal(actual, result_snapshot)
 
 
 def test_limit_weights():
@@ -668,6 +1066,67 @@ def test_limit_weights():
     aae(actual["c"], 0.114, 3)
     aae(actual["d"], 0.095, 3)
     aae(actual["e"], 0.300, 3)
+
+
+def test_limit_weights_preserves_precision():
+    """Preserve the original budget during proportional redistribution."""
+    weights = pd.Series([0.50006, 0.29997, 0.19997], index=["a", "b", "c"])
+    expected = pd.Series(
+        [0.5, 0.3000060007200864, 0.1999939992799136],
+        index=weights.index,
+    )
+
+    actual = ffn.core.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(actual, expected)
+    assert actual.sum() == 1.0
+    assert actual.max() <= 0.5
+
+
+@mark.parametrize(
+    "weights",
+    [
+        pd.Series([0.6, 0.4, pd.NA], index=["a", "b", "c"], dtype="Float64"),
+        pd.Series([0.6, 0.4, np.nan], index=["a", "b", "c"]),
+        pd.Series([0.6, 0.4, np.inf], index=["a", "b", "c"], dtype="Float64"),
+        pd.Series([0.6, 0.4, -np.inf], index=["a", "b", "c"]),
+        pd.Series([0.6, 0.4, pd.NA], index=["a", "b", "c"], dtype=object),
+    ],
+    ids=["nullable-missing", "float-nan", "nullable-positive-inf", "float-negative-inf", "object-missing"],
+)
+def test_limit_weights_rejects_nonfinite_series(weights):
+    original = weights.copy(deep=True)
+
+    with np.testing.assert_raises_regex(ValueError, "finite"):
+        ffn.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(weights, original)
+
+
+@mark.parametrize("invalid", [np.nan, pd.NA, None, np.inf, -np.inf])
+def test_limit_weights_rejects_nonfinite_dict(invalid):
+    weights = {"a": 0.6, "b": 0.4, "c": invalid}
+    original = pd.Series(weights)
+
+    with np.testing.assert_raises_regex(ValueError, "finite"):
+        ffn.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(pd.Series(weights), original)
+
+
+def test_limit_weights_preserves_nullable_input_during_redistribution():
+    weights = pd.Series([0.6, 0.3, 0.1], index=["a", "b", "c"], dtype="Float64")
+    original = weights.copy(deep=True)
+    expected = pd.Series([0.5, 0.37499999999999994, 0.125], index=weights.index, dtype="Float64")
+
+    # This valid case reaches redistribution's internal mutations; they must
+    # remain isolated from the caller by the function's copy.
+    actual = ffn.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(weights, original)
+    assert actual.sum() == 1.0
+    assert actual.max() <= 0.5
 
 
 def test_random_weights():
@@ -763,6 +1222,56 @@ def test_random_weights_throws_error():
         assert True
 
 
+@mark.parametrize(
+    "values",
+    [
+        [[1.0, 2.0], [3.0, 4.0]],
+        [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+        [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]],
+    ],
+    ids=["square", "wide", "tall"],
+)
+@mark.parametrize("path", ["package", "pandas"])
+def test_plot_heatmap_labels_each_cell(values, path, recwarn):
+    """Map every rectangular cell to its matching text and coordinates."""
+    data = pd.DataFrame(
+        values,
+        index=[f"row-{i}" for i in range(len(values))],
+        columns=[f"column-{i}" for i in range(len(values[0]))],
+    )
+    original = data.copy(deep=True)
+    expected = {(column + 0.5, row + 0.5): format(data.iloc[row, column], ".1f") for row in range(data.shape[0]) for column in range(data.shape[1])}
+
+    ffn.core.plt.close("all")
+    if path == "package":
+        result = ffn.plot_heatmap(data, show_legend=False, label_fmt=".1f")
+    else:
+        result = data.plot_heatmap(show_legend=False, label_fmt=".1f")
+    result.gcf().canvas.draw()
+
+    axes = result.gca()
+    actual = {text.get_position(): text.get_text() for text in axes.texts}
+    assert result is ffn.core.plt
+    assert actual == expected
+    assert [tick.get_text() for tick in axes.get_xticklabels()] == list(data.columns)
+    assert [tick.get_text() for tick in axes.get_yticklabels()] == list(data.index)
+    pd.testing.assert_frame_equal(data, original)
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
+def test_plot_heatmap_can_disable_cell_labels(recwarn):
+    data = pd.DataFrame([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
+
+    ffn.core.plt.close("all")
+    result = ffn.plot_heatmap(data, show_legend=False, show_labels=False)
+    result.gcf().canvas.draw()
+
+    assert len(result.gca().texts) == 0
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
 def test_rollapply():
     a = pd.Series([1, 2, 3, 4, 5])
 
@@ -814,6 +1323,41 @@ def test_winsorize():
     assert x["b"].iloc[-1] == 19
 
 
+@mark.parametrize("dtype", ["Float32", "Float64"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_winsorize_nullable_series(dtype, use_pandas_method):
+    index = pd.Index(range(11), name="row")
+    values = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 100, pd.NA], index=index, dtype=dtype)
+    # Ten observed values and ten-percent limits replace one value at each tail.
+    expected = pd.Series([1, 1, 2, 3, 4, 5, 6, 7, 8, 8, pd.NA], index=index, dtype=dtype)
+    original = values.copy()
+    calculate = values.winsorize if use_pandas_method else ffn.winsorize
+    args = () if use_pandas_method else (values,)
+
+    actual = calculate(*args, limits=0.1)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(values, original)
+
+
+@mark.parametrize("axis", [0, 1])
+def test_winsorize_nullable_dataframe(axis):
+    values = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 100, pd.NA], dtype="Float64")
+    expected_values = pd.Series([1, 1, 2, 3, 4, 5, 6, 7, 8, 8, pd.NA], dtype="Float64")
+    # The all-missing slice must bypass SciPy while the observed slice is winsorized.
+    data = pd.DataFrame({"observed": values, "all_missing": pd.Series(pd.NA, index=values.index, dtype="Float64")})
+    expected = pd.DataFrame({"observed": expected_values, "all_missing": pd.Series(pd.NA, index=values.index, dtype="Float64")})
+    if axis == 1:
+        data = data.T
+        expected = expected.T
+    original = data.copy()
+
+    actual = data.winsorize(axis=axis, limits=0.1)
+
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+
+
 def test_rescale():
     x = pd.Series(range(10), dtype="float")
     res = x.rescale()
@@ -847,6 +1391,20 @@ def test_rescale():
     assert x["b"].iloc[0] == 0
     assert x["b"].iloc[4] == 4
     assert x["b"].iloc[-1] == 9
+
+
+# A falsey non-string name guards against conditional metadata propagation.
+@mark.parametrize("name", [None, "asset", 0], ids=["unnamed", "string-name", "falsey-name"])
+@mark.parametrize("method_name", ["winsorize", "rescale"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_series_value_transform_preserves_name(name, method_name, use_pandas_method):
+    values = pd.Series(range(10), dtype="float", name=name)
+    calculate = getattr(values, method_name) if use_pandas_method else getattr(ffn, method_name)
+    args = () if use_pandas_method else (values,)
+
+    actual = calculate(*args)
+
+    assert actual.name == name
 
 
 def test_annualize():
@@ -1030,12 +1588,12 @@ def test_to_ulcer_index_unchanged_without_gaps():
 
 def test_to_ulcer_performance_index_matches_ulcer_index_scale():
     # The ulcer index is expressed in percentage points, so the excess return
-    # must be too. Mean excess return here is (-0.1 + 1/9) / 2 = 0.005555...,
-    # i.e. 0.5555...% against an ulcer index of sqrt(100 / 3).
-    idx = pd.date_range("2026-01-01", periods=3, freq="D")
-    prices = pd.Series([100.0, 90.0, 100.0], index=idx)
+    # must be too. Prices rise 10% over 365 days, an annualized return of
+    # 1.1 ** (365.25 / 365) - 1, against an ulcer index of sqrt(100 / 3).
+    idx = pd.DatetimeIndex(["2025-01-01", "2025-07-02", "2026-01-01"])
+    prices = pd.Series([100.0, 90.0, 110.0], index=idx)
 
-    expected = (0.5555555555555556) / np.sqrt(100 / 3)
+    expected = (1.1 ** (365.25 / 365) - 1) * 100 / np.sqrt(100 / 3)
 
     assert np.isclose(prices.to_ulcer_performance_index(), expected)
 
@@ -1059,9 +1617,27 @@ def test_to_ulcer_performance_index_is_dimensionally_consistent():
     prices = pd.Series([100.0, 110, 105, 120, 90, 95, 130, 125], index=idx)
 
     upi = prices.to_ulcer_performance_index()
-    mean_excess_pct = prices.to_returns().mean() * 100
+    annualized_return_pct = prices.calc_cagr() * 100
 
-    assert np.isclose(upi * prices.to_ulcer_index(), mean_excess_pct)
+    assert np.isclose(upi * prices.to_ulcer_index(), annualized_return_pct)
+
+
+@mark.parametrize("risk_free", [0.0, 0.05])
+def test_to_ulcer_performance_index_does_not_depend_on_sampling_frequency(risk_free):
+    # The same year of prices sampled daily and monthly, with the same first
+    # and last dates. The Ulcer Index barely moves, and the annualized excess
+    # return is identical. A per-period mean return in the numerator made the
+    # daily UPI about 20x smaller than the monthly one.
+    idx = pd.date_range("2024-01-01", "2024-12-31", freq="D")
+    t = np.arange(len(idx))
+    daily = pd.Series(100 * np.exp(0.08 * t / 365) * (1 - 0.15 * np.exp(-(((t - 150) / 30) ** 2))), index=idx)
+    monthly = daily[daily.index.is_month_start | (daily.index == daily.index[-1])]
+
+    numerator_daily = daily.to_ulcer_performance_index(rf=risk_free, nperiods=365) * daily.to_ulcer_index()
+    numerator_monthly = monthly.to_ulcer_performance_index(rf=risk_free, nperiods=12) * monthly.to_ulcer_index()
+
+    assert np.isclose(numerator_daily, numerator_monthly)
+    assert np.isclose(numerator_daily, (daily.calc_cagr() - risk_free) * 100)
 
 
 def _diff_series(n, mean=0.001, std=0.01):
@@ -1234,11 +1810,11 @@ def test_twelve_month_win_perc_uses_twelve_month_window():
 
 def test_calc_sharpe(df):
     x = pd.Series()
-    assert np.isnan(x.calc_sharpe())
+    assert np.isnan(x.calc_sharpe(annualize=False))
 
     r = df.to_returns()
 
-    res = r.calc_sharpe()
+    res = r.calc_sharpe(annualize=False)
     assert np.allclose(res, r.mean() / r.std())
 
     res = r.calc_sharpe(rf=0.05, nperiods=252)
@@ -1258,6 +1834,189 @@ def test_calc_expected_max_sharpe():
         ffn.calc_expected_max_sharpe(10, 1.0) * 0.5,
         ffn.calc_expected_max_sharpe(10, 0.5),
     )
+
+
+def test_calc_prob_backtest_overfitting():
+    np.random.seed(0)
+    n_periods, n_trials = 640, 40
+    index = pd.date_range(start="2015-01-01", periods=n_periods, freq="D")
+
+    # Pure noise: selecting the in-sample best carries no information, so the
+    # winner's out-of-sample rank is uniform and PBO sits near one half.
+    noise = pd.DataFrame(np.random.normal(0, 0.01, (n_periods, n_trials)), index=index)
+    pbo_noise = ffn.calc_prob_backtest_overfitting(noise, n_blocks=8)
+    assert 0.15 < pbo_noise < 0.85
+
+    # One genuinely skilled trial: the in-sample winner keeps winning out of
+    # sample, so PBO collapses towards zero. This also guards the rank
+    # direction: with the ranking inverted, this case reports near one.
+    skilled = noise.copy()
+    skilled[7] = skilled[7] + 0.004
+    pbo_skilled = ffn.calc_prob_backtest_overfitting(skilled, n_blocks=8)
+    assert pbo_skilled < 0.1
+    assert pbo_noise - pbo_skilled > 0.15
+
+    # Accessible as a DataFrame method, with full diagnostics on request
+    full = skilled.calc_prob_backtest_overfitting(n_blocks=8, full_output=True)
+    assert full["pbo"] == pbo_skilled
+    assert len(full["logits"]) == 70  # C(8, 4) combinations
+    assert 0.0 < full["mean_oos_rank"] < 1.0
+
+    # Input validation
+    with np.testing.assert_raises(ValueError):
+        ffn.calc_prob_backtest_overfitting(noise, n_blocks=7)
+    with np.testing.assert_raises(TypeError):
+        ffn.calc_prob_backtest_overfitting(noise[3], n_blocks=8)
+    with np.testing.assert_raises(ValueError):
+        ffn.calc_prob_backtest_overfitting(noise.iloc[:4], n_blocks=8)
+
+
+@mark.parametrize("order", ["permuted", "descending"])
+def test_calc_prob_backtest_overfitting_rejects_nonchronological_dates(order):
+    returns = pd.DataFrame(
+        np.random.default_rng(18).normal(0, 0.01, (24, 5)),
+        index=pd.date_range("2020-01-01", periods=24, tz="UTC"),
+    )
+    if order == "permuted":
+        returns = returns.sample(frac=1, random_state=4)
+    else:
+        returns = returns.iloc[::-1]
+    original = returns.copy()
+
+    with raises(ValueError, match="trial_returns index must be monotonic increasing"):
+        ffn.calc_prob_backtest_overfitting(returns, n_blocks=6)
+
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_prob_backtest_overfitting_validates_truncated_tail():
+    index = pd.date_range("2020-01-01", periods=25, tz="UTC")
+    returns = pd.DataFrame(np.arange(125).reshape(25, 5), index=index)
+    returns.index = index[:-1].append(pd.DatetimeIndex([index[0] - pd.Timedelta(days=1)]))
+
+    # The last row would be truncated for six blocks, but remains part of the caller's input.
+    with raises(ValueError, match="trial_returns index must be monotonic increasing"):
+        ffn.calc_prob_backtest_overfitting(returns, n_blocks=6)
+
+
+def test_calc_prob_backtest_overfitting_accepts_duplicate_dates():
+    returns = pd.DataFrame(
+        np.random.default_rng(18).normal(0, 0.01, (24, 5)),
+        index=pd.date_range("2020-01-01", periods=24),
+    )
+    expected = ffn.calc_prob_backtest_overfitting(returns.reset_index(drop=True), n_blocks=6)
+    returns.index = returns.index[:5].append(pd.DatetimeIndex([returns.index[4]])).append(returns.index[6:])
+
+    # Equal neighboring dates remain monotonic under the accepted datetime-index policy.
+    assert ffn.calc_prob_backtest_overfitting(returns, n_blocks=6) == expected
+
+
+def test_calc_prob_backtest_overfitting_exact_ranks():
+    returns = pd.DataFrame([[3, 1, 2], [3, 2, 1], [1, 3, 2], [1, 2, 3]])
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=4, metric=pd.Series.mean, full_output=True)
+
+    # AB, AC, AD, BC, BD, CD; in-sample ties select the first column.
+    ranks = np.array([0.25, 0.5, 0.25, 0.25, 0.5, 0.375])
+    np.testing.assert_allclose(result["logits"], np.log(ranks / (1 - ranks)))
+    aae(result["mean_oos_rank"], ranks.mean())
+    assert result["pbo"] == 1.0
+
+
+def test_calc_prob_backtest_overfitting_identical_trials():
+    returns = pd.DataFrame({"a": [1, 2, 3, 4], "b": [1, 2, 3, 4]})
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=2, full_output=True)
+
+    np.testing.assert_array_equal(result["logits"], [0.0, 0.0])
+    assert result["mean_oos_rank"] == 0.5
+    assert result["pbo"] == 1.0  # The existing PBO convention includes the median.
+
+
+@mark.parametrize("value", [0.0, 0.1, np.nan])
+def test_calc_prob_backtest_overfitting_undefined_full_output(value):
+    returns = pd.DataFrame(value, index=range(40), columns=["a", "b"])
+
+    assert np.isnan(returns.calc_prob_backtest_overfitting(n_blocks=2))
+    result = returns.calc_prob_backtest_overfitting(n_blocks=2, full_output=True)
+
+    assert set(result) == {"pbo", "logits", "mean_oos_rank"}
+    assert np.isnan(result["pbo"])
+    assert np.isnan(result["mean_oos_rank"])
+    assert len(result["logits"]) == 2
+    assert result["logits"].isna().all()
+
+
+@mark.parametrize("invalid", [np.nan, np.inf, -np.inf])
+@mark.parametrize("trial", ["a", "b"])
+def test_calc_prob_backtest_overfitting_nonfinite_metric(invalid, trial):
+    returns = pd.DataFrame({"a": [11, 12, 13, 14], "b": [1, 2, 3, 4]})
+
+    def metric(series):
+        if series.iloc[0] == returns[trial].iloc[2]:
+            return invalid
+        return series.mean()
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=2, metric=metric, full_output=True)
+
+    assert np.isnan(result["pbo"])
+    assert np.isnan(result["mean_oos_rank"])
+    assert len(result["logits"]) == 2
+    assert result["logits"].isna().all()
+
+
+def test_calc_prob_backtest_overfitting_retains_undefined_folds():
+    returns = pd.DataFrame({"a": [1, 1, 1, 1, 3, 4, 5, 6], "b": [1, 2, 3, 4, 1, 2, 1, 2]})
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=4, full_output=True)
+
+    assert len(result["logits"]) == 6
+    assert result["logits"].iloc[[0, 5]].isna().all()
+    assert np.isfinite(result["logits"].iloc[1:5]).all()
+    assert np.isnan(result["pbo"])
+    assert np.isnan(result["mean_oos_rank"])
+
+
+@mark.parametrize("n_blocks", [np.int64(4), np.uint64(4)])
+def test_calc_prob_backtest_overfitting_custom_metric_preserves_labels(n_blocks):
+    returns = pd.DataFrame(
+        np.arange(18, dtype=float).reshape(9, 2),
+        index=pd.date_range("2020-01-01", periods=9, freq="2D", tz="UTC"),
+        columns=["a", "b"],
+    )
+    seen = []
+
+    def metric(series):
+        assert isinstance(series.index, pd.DatetimeIndex)
+        assert series.index.is_monotonic_increasing
+        assert returns.index[-1] not in series.index  # Truncate the ninth row.
+        pd.testing.assert_series_equal(series, returns.loc[series.index, series.name])
+        seen.append(series)
+        return series.mean()
+
+    assert returns.calc_prob_backtest_overfitting(n_blocks=n_blocks, metric=metric) == 0.0
+    assert len(seen) == 24  # Six folds, two halves, two trials.
+    assert all(len(series) == 4 for series in seen)
+
+
+@mark.parametrize("n_blocks", [0, 1, 3, -2, 2.0, 2.5, "2", None, np.nan, np.inf, True, False])
+def test_calc_prob_backtest_overfitting_invalid_block_count(n_blocks):
+    returns = pd.DataFrame(np.arange(16).reshape(8, 2))
+    with np.testing.assert_raises_regex(ValueError, "n_blocks"):
+        returns.calc_prob_backtest_overfitting(n_blocks=n_blocks)
+
+
+def test_calc_prob_backtest_overfitting_invalid_metric():
+    returns = pd.DataFrame(np.arange(8).reshape(4, 2))
+    with np.testing.assert_raises_regex(TypeError, "metric"):
+        returns.calc_prob_backtest_overfitting(n_blocks=2, metric=1)
+    with np.testing.assert_raises_regex(ValueError, "scalar"):
+        returns.calc_prob_backtest_overfitting(n_blocks=2, metric=lambda series: series.to_numpy())
+
+
+def test_calc_prob_backtest_overfitting_single_trial():
+    with np.testing.assert_raises(ValueError):
+        ffn.calc_prob_backtest_overfitting(pd.DataFrame({"a": range(8)}), n_blocks=2)
 
 
 def test_calc_deflated_sharpe_ratio():
@@ -1281,6 +2040,64 @@ def test_calc_deflated_sharpe_ratio():
 
     # Attached to pandas objects like the other metrics
     aae(winner.calc_deflated_sharpe_ratio(sharpes), dsr)
+
+
+@mark.parametrize("invalid", [np.nan, np.inf, -np.inf, pd.NA, None])
+@mark.parametrize("annualized_trials", [True, False])
+@mark.parametrize("dtype", [None, object, "Float32", "Float64"])
+def test_calc_deflated_sharpe_ratio_nonfinite_trials(invalid, annualized_trials, dtype):
+    returns = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250))
+    trials = [0.0, 0.5, invalid]
+    if dtype is not None:
+        trials = pd.Series(trials, dtype=dtype)
+    original = trials.copy()
+
+    result = ffn.calc_deflated_sharpe_ratio(
+        returns,
+        trials,
+        nperiods=252,
+        annualized_trials=annualized_trials,
+    )
+
+    assert np.isnan(result)
+    assert np.isnan(returns.calc_deflated_sharpe_ratio(trials, nperiods=252, annualized_trials=annualized_trials))
+    if isinstance(trials, pd.Series):
+        pd.testing.assert_series_equal(trials, original)
+    else:
+        assert trials == original
+
+
+def test_calc_deflated_sharpe_ratio_scalar_trial():
+    returns = pd.Series(np.random.default_rng(0).normal(0.001, 0.01, 250))
+
+    # Scalar inputs take the same public coercion path through a zero-dimensional
+    # NumPy array, which must be validated before pandas boxes it as an object.
+    assert np.isfinite(ffn.calc_deflated_sharpe_ratio(returns, 0.5, nperiods=252))
+    for invalid in (np.nan, np.inf, -np.inf, pd.NA, None):
+        assert np.isnan(ffn.calc_deflated_sharpe_ratio(returns, invalid, nperiods=252))
+
+
+def test_calc_deflated_sharpe_ratio_nonfinite_calculated_trials():
+    trial_returns = pd.DataFrame(
+        {
+            "varying_a": [0.01, -0.02, 0.03, 0.0],
+            "constant": [0.01] * 4,
+            "varying_b": [-0.01, 0.02, -0.005, 0.015],
+        }
+    )
+    trial_sharpes = trial_returns.calc_sharpe(nperiods=252)
+    original = trial_sharpes.copy()
+
+    # A constant evaluated trial has no Sharpe ratio, so the full search cannot
+    # define the dispersion used by the deflated-Sharpe hurdle.
+    assert trial_sharpes.isna().equals(pd.Series([False, True, False], index=trial_sharpes.index))
+    result = trial_returns["varying_a"].calc_deflated_sharpe_ratio(
+        trial_sharpes,
+        nperiods=252,
+    )
+
+    assert np.isnan(result)
+    pd.testing.assert_series_equal(trial_sharpes, original)
 
 
 def test_calc_deflated_sharpe_ratio_ignores_missing_returns():
@@ -1543,11 +2360,11 @@ def test_numpy_floating_risk_free_rates_match_python_float():
                 else:
                     assert actual == expected_sortino
 
-        price_returns = prices.pct_change(fill_method=None)
-        expected_excess = price_returns - period_rate
         drawdowns = prices / prices.cummax() - 1.0
         ulcer_index = ((drawdowns * 100.0) ** 2).mean() ** 0.5
-        expected_upi = expected_excess.mean() * 100.0 / ulcer_index
+        years = (prices.index[-1] - prices.index[0]).total_seconds() / 31557600
+        growth = prices.iloc[-1] / prices.iloc[0]
+        expected_upi = (growth ** (1.0 / years) - 1.0 - float(risk_free)) * 100.0 / ulcer_index
         aae(
             ffn.to_ulcer_performance_index(prices, rf=risk_free, nperiods=nperiods),
             expected_upi,
@@ -1838,6 +2655,166 @@ def test_performance_stats(df):
     assert num_stats == num_unique_stats
 
 
+def _assert_csv_row_width(output, sep, expected_width):
+    import csv
+    import io
+
+    rows = csv.reader(io.StringIO(output), delimiter=sep)
+    assert {len(row) for row in rows} == {expected_width}
+
+
+@mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
+def test_performance_stats_to_csv_preserves_row_width(df, sep):
+    stats = ffn.PerformanceStats(df["AAPL"])
+
+    _assert_csv_row_width(stats.to_csv(sep=sep), sep, expected_width=2)
+
+
+@mark.parametrize(
+    "prices",
+    (
+        pd.Series([], index=pd.DatetimeIndex([]), dtype=float, name="asset"),
+        pd.Series(
+            [np.nan, np.nan],
+            index=pd.date_range("2025-01-01", periods=2),
+            name="asset",
+        ),
+        pd.Series(
+            [pd.NA, pd.NA],
+            index=pd.date_range("2025-01-01", periods=2),
+            dtype="Float64",
+            name="asset",
+        ),
+    ),
+)
+def test_performance_stats_rejects_prices_without_usable_values(prices):
+    original = prices.copy()
+
+    with raises(ValueError, match="at least one usable value"):
+        ffn.PerformanceStats(prices)
+
+    pd.testing.assert_series_equal(prices, original)
+
+
+def test_performance_stats_public_helpers_reject_empty_prices():
+    prices = pd.Series([], index=pd.DatetimeIndex([]), dtype=float, name="asset")
+    constructors = (
+        ffn.calc_perf_stats,
+        ffn.calc_stats,
+        lambda value: value.calc_perf_stats(),
+        lambda value: value.calc_stats(),
+    )
+
+    for constructor in constructors:
+        with raises(ValueError, match="at least one usable value"):
+            constructor(prices)
+
+
+def test_group_stats_rejects_empty_rows():
+    prices = pd.DataFrame(index=pd.DatetimeIndex([]), columns=["A", "B"], dtype=float)
+    original = prices.copy()
+    constructors = (
+        lambda value: ffn.GroupStats(value),
+        ffn.calc_stats,
+        lambda value: value.calc_stats(),
+    )
+
+    for constructor in constructors:
+        with raises(ValueError, match="at least one usable value"):
+            constructor(prices)
+
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("empty_column", ("A", "B"))
+def test_group_stats_rejects_unusable_child(empty_column):
+    prices = pd.DataFrame(
+        {"A": [100.0, 101.0], "B": [50.0, 51.0]},
+        index=pd.date_range("2025-01-01", periods=2),
+    )
+    prices[empty_column] = np.nan
+    original = prices.copy()
+
+    # Exercise both child orders so rejection cannot depend on a prior valid child.
+    with raises(ValueError, match="at least one usable value"):
+        ffn.GroupStats(prices)
+    with raises(ValueError, match="at least one usable value"):
+        prices.calc_stats()
+
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("positions", [[3, 2, 1, 0], [0, 2, 1, 3]], ids=["descending", "unsorted"])
+def test_performance_stats_rejects_nonmonotonic_prices(positions):
+    """Reject unsorted prices through every public Series statistics path."""
+    index = pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd)
+    prices = pd.Series([100.0, 110.0, 121.0, 133.1], index=index, name="asset").iloc[positions]
+    original = prices.copy()
+
+    for constructor in (ffn.PerformanceStats, ffn.calc_perf_stats, ffn.calc_stats):
+        with raises(ValueError, match="prices index must be monotonic increasing"):
+            constructor(prices)
+
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        prices.calc_perf_stats()
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        prices.calc_stats()
+    pd.testing.assert_series_equal(prices, original)
+
+
+def test_dataframe_stats_rejects_nonmonotonic_prices():
+    """Reject an unsorted DataFrame through module and pandas entry points."""
+    index = pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd)
+    prices = pd.DataFrame({"asset": [133.1, 121.0, 110.0, 100.0]}, index=index[::-1])
+    original = prices.copy()
+
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        ffn.GroupStats(prices)
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        ffn.calc_stats(prices)
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        prices.calc_stats()
+    pd.testing.assert_frame_equal(prices, original)
+
+
+def test_group_stats_rejects_nonmonotonic_component_before_merge():
+    """Reject an unsorted component before GroupStats can normalize its order."""
+    index = pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd)
+    ascending = pd.Series([100.0, 110.0, 121.0, 133.1], index=index, name="ascending")
+    descending = pd.Series([66.55, 60.5, 55.0, 50.0], index=index[::-1], name="descending")
+    original_ascending = ascending.copy()
+    original_descending = descending.copy()
+
+    with raises(ValueError, match="prices index must be monotonic increasing"):
+        ffn.GroupStats(ascending, descending)
+
+    pd.testing.assert_series_equal(ascending, original_ascending)
+    pd.testing.assert_series_equal(descending, original_descending)
+
+
+@mark.parametrize(
+    "index",
+    [
+        pd.date_range("2020-12-31", periods=4, freq=ffn.core._YearEnd),
+        pd.to_datetime(["2020-12-31", "2021-12-31", "2021-12-31", "2023-12-31"]),
+    ],
+    ids=["ascending", "duplicate-dates"],
+)
+def test_performance_stats_accepts_monotonic_prices(index):
+    """Preserve ascending and duplicate-date performance inputs."""
+    prices = pd.Series([100.0, 110.0, 121.0, 133.1], index=index, name="asset")
+    original = prices.copy()
+
+    stats = ffn.PerformanceStats(prices)
+    group = ffn.GroupStats(prices)
+    group_stats = group["asset"]
+
+    assert stats.total_return == approx(0.331)
+    assert group_stats is not None
+    assert group_stats.total_return == approx(0.331)
+    pd.testing.assert_series_equal(prices, original)
+
+
 def test_performance_stats_uses_observed_price_endpoints():
     """Use observed outer prices for endpoint dates and total return."""
     dates = pd.date_range("2025-01-01", periods=4, tz="UTC")
@@ -1880,12 +2857,153 @@ def test_performance_stats_date_range_reset_uses_observed_endpoints():
     assert stats.total_return == 110.0 / 100.0 - 1
 
 
+@mark.parametrize(
+    ("start", "end"),
+    (
+        ("2025-01-01T00:00:00Z", "2025-01-02T00:00:00Z"),
+        ("2024-01-02T00:00:00Z", "2024-01-02T00:00:00Z"),
+    ),
+)
+def test_performance_stats_empty_date_range_preserves_state(start, end):
+    dates = pd.date_range("2024-01-01", periods=4, tz="UTC")
+    prices = pd.Series([100.0, np.nan, 102.0, 103.0], index=dates, name="asset")
+    original_prices = prices.copy()
+    stats = ffn.PerformanceStats(prices, rf=0.03, annualization_factor=365)
+    original_scalars = (
+        stats.start,
+        stats.end,
+        stats.total_return,
+        stats.rf,
+        stats.annualization_factor,
+    )
+    original_daily = stats.daily_prices.copy()
+    original_monthly = stats.monthly_prices.copy()
+    original_yearly = stats.yearly_prices.copy()
+    original_stats = stats.stats.copy()
+    original_lookbacks = stats.lookback_returns.copy()
+    original_return_table = stats.return_table.copy()
+
+    with raises(ValueError, match="no usable data"):
+        stats.set_date_range(start=start, end=end)
+
+    assert (
+        stats.start,
+        stats.end,
+        stats.total_return,
+        stats.rf,
+        stats.annualization_factor,
+    ) == original_scalars
+    pd.testing.assert_series_equal(stats.daily_prices, original_daily)
+    pd.testing.assert_series_equal(stats.monthly_prices, original_monthly)
+    pd.testing.assert_series_equal(stats.yearly_prices, original_yearly)
+    pd.testing.assert_series_equal(stats.stats, original_stats)
+    pd.testing.assert_series_equal(stats.lookback_returns, original_lookbacks)
+    pd.testing.assert_frame_equal(stats.return_table, original_return_table)
+    pd.testing.assert_series_equal(prices, original_prices)
+
+
+def test_performance_stats_empty_date_range_guard_accepts_one_price():
+    dates = pd.date_range("2024-01-01", periods=3)
+    stats = ffn.PerformanceStats(pd.Series([100.0, 101.0, 102.0], index=dates))
+
+    stats.set_date_range(start=dates[1], end=dates[1])
+
+    assert stats.start == dates[1]
+    assert stats.end == dates[1]
+    assert len(stats.daily_prices) == 1
+    assert pd.isna(stats.total_return)
+
+
+@mark.parametrize("empty_column", ("A", "B"))
+def test_group_stats_empty_date_range_preserves_all_children(empty_column):
+    dates = pd.date_range("2024-01-01", periods=6, tz="UTC")
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0],
+            "B": [50.0, 51.0, 52.0, 53.0, 54.0, 55.0],
+        },
+        index=dates,
+    )
+    prices.loc[dates[:2], empty_column] = np.nan
+    original_prices = prices.copy()
+    stats = ffn.GroupStats(prices, annualization_factor=365)
+    stats.set_riskfree_rate(0.03)
+    original_group_prices = stats.prices.copy()
+    original_stats = stats.stats.copy()
+    original_lookbacks = stats.lookback_returns.copy()
+    original_children = {name: stats[name] for name in ("A", "B")}
+
+    with raises(ValueError, match="no usable data"):
+        stats.set_date_range(start=dates[0], end=dates[1])
+
+    pd.testing.assert_frame_equal(stats.prices, original_group_prices)
+    pd.testing.assert_frame_equal(stats.stats, original_stats)
+    pd.testing.assert_frame_equal(stats.lookback_returns, original_lookbacks)
+    assert all(stats[name] is original_children[name] for name in ("A", "B"))
+    assert stats._riskfree_rate == 0.03
+    assert stats._annualization_factor_override == 365
+    pd.testing.assert_frame_equal(prices, original_prices)
+
+
+def test_group_stats_empty_shared_date_range_keeps_usable_children():
+    dates = pd.date_range("2024-01-01", periods=2, tz="UTC")
+    first = pd.Series([100.0], index=dates[:1], name="first")
+    second = pd.Series([200.0], index=dates[1:], name="second")
+    stats = ffn.GroupStats(first, second)
+
+    stats.set_date_range()
+
+    assert stats.prices.empty
+    pd.testing.assert_series_equal(stats["first"].prices, first)
+    pd.testing.assert_series_equal(stats["second"].prices, second)
+
+
 def test_group_stats_calc_stats(df):
     gs = df.calc_stats()
 
     num_stats = len(gs.stats.index)
     num_unique_stats = len(gs.stats.index.drop_duplicates())
     assert num_stats == num_unique_stats
+
+
+def test_group_stats_integer_labels_take_precedence_over_positions(df):
+    prices = df[["AAPL", "MSFT"]].rename(columns={"AAPL": 1, "MSFT": 0})
+    stats = ffn.GroupStats(prices)
+
+    # Reversed labels distinguish mapping lookup from positional lookup.
+    assert stats[0] is dict.__getitem__(stats, 0)
+    assert stats[1] is dict.__getitem__(stats, 1)
+
+
+def test_group_stats_integer_lookup_falls_back_to_position(df):
+    stats = ffn.GroupStats(df[["AAPL", "MSFT"]])
+
+    assert stats[0] is stats["AAPL"]
+    assert stats[-1] is stats["MSFT"]
+
+
+@mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
+def test_group_stats_to_csv_preserves_row_width(df, sep):
+    prices = df[["AAPL", "MSFT"]].rename(columns={"AAPL": "fund", "MSFT": "peer-with-a-long-name"})
+    stats = ffn.GroupStats(prices)
+
+    # Unequal name lengths ensure blank-row width cannot follow serialized text length.
+    _assert_csv_row_width(stats.to_csv(sep=sep), sep, expected_width=3)
+
+
+def test_group_stats_to_csv_formats_series_riskfree_rate_as_unavailable(df):
+    prices = df[["AAPL", "MSFT"]]
+    risk_free_prices = pd.Series(np.linspace(100.0, 110.0, len(prices)), index=prices.index)
+    stats = ffn.GroupStats(prices)
+
+    assert "Risk-free rate,0.00%,0.00%" in stats.to_csv().splitlines()
+    stats.set_riskfree_rate(risk_free_prices)
+
+    output = stats.to_csv()
+
+    # A price series has no single annual percentage to place in the summary row.
+    assert "Risk-free rate,-,-" in output.splitlines()
+    _assert_csv_row_width(output, ",", expected_width=3)
 
 
 def test_calc_stats_annualization_factor(df):
@@ -2003,6 +3121,59 @@ def test_resample_returns(df):
     std_resampled_means = np.std(sample_stats, ddof=1, axis=0)
 
     assert np.all(np.abs((sample_mean - resampled_mean) / std_resampled_means) < 3)
+
+
+def test_resample_returns_duplicate_labels():
+    """Sample Series and DataFrame rows positionally when labels repeat."""
+    returns = pd.Series([10.0, 20.0, 30.0], index=["a", "a", "b"])
+    original = returns.copy()
+    sample_sizes = ffn.resample_returns(returns, len, seed=0, num_trials=8)
+    sample_stats = ffn.resample_returns(returns, np.sum, seed=0, num_trials=8)
+
+    # Each expected value sums exactly three seeded row draws, including repeats.
+    expected = np.array([40.0, 40.0, 40.0, 60.0, 80.0, 80.0, 60.0, 60.0])
+    np.testing.assert_array_equal(sample_stats.to_numpy(dtype=float), expected)
+    np.testing.assert_array_equal(sample_sizes.to_numpy(dtype=int), np.full(8, 3))
+    pd.testing.assert_series_equal(returns, original)
+
+    dates = pd.to_datetime(["2024-01-02", "2024-01-02", "2024-01-03"])
+    returns = pd.DataFrame({"first": [10.0, 20.0, 30.0], "second": [1.0, 2.0, 3.0]}, index=dates)
+    original = returns.copy()
+    sample_sizes = ffn.resample_returns(returns, len, seed=0, num_trials=8)
+    sample_stats = ffn.resample_returns(returns, pd.DataFrame.sum, seed=0, num_trials=8)
+
+    expected = pd.DataFrame({"first": expected, "second": expected / 10}, dtype=object)
+    pd.testing.assert_frame_equal(sample_stats, expected)
+    np.testing.assert_array_equal(sample_sizes.to_numpy(dtype=int), np.full((8, 2), 3))
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize(
+    "index,positions,seed",
+    [
+        (pd.date_range("2024-01-31", periods=1, freq=ffn.core._MonthEnd, tz="UTC", name="date"), [0], 0),
+        (pd.date_range("2024-01-01", periods=3, tz="UTC", name="date"), [2, 1, 0], 6),
+        (pd.timedelta_range("0 days", periods=3, freq="D", name="elapsed"), [2, 1, 0], 6),
+    ],
+)
+def test_resample_returns_preserves_sampled_index_metadata(as_frame, index, positions, seed):
+    returns = pd.Series(np.arange(len(index), dtype=float), index=index, name="returns")
+    if as_frame:
+        returns = returns.to_frame()
+    expected = returns.iloc[positions].copy()
+    expected.index = pd.Index([index[position] for position in positions], name=index.name)
+
+    def statistic(sample):
+        # Label-based sampling did not infer frequency, which callbacks can use.
+        assert sample.index.freq is None
+        if as_frame:
+            pd.testing.assert_frame_equal(sample, expected)
+        else:
+            pd.testing.assert_series_equal(sample, expected)
+        return sample.sum()
+
+    ffn.resample_returns(returns, statistic, seed=seed, num_trials=1)
 
 
 def test_monthly_returns():
