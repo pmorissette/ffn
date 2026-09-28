@@ -269,7 +269,7 @@ def _fxmacrodata_fetch(
 
     rows = payload.get("data") if isinstance(payload, dict) else None
     if not isinstance(rows, list):
-        raise ValueError("FXMacroData response did not include a data list")
+        raise FXMacroDataError("FXMacroData response did not include a data list")
 
     records = []
     for row in rows:

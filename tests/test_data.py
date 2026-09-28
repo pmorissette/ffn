@@ -313,9 +313,8 @@ def test_fxmacrodata_rejects_missing_rows():
     def fake_urlopen(request, timeout):
         return FakeResponse(json.dumps(payload))
 
-    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
-        with pytest.raises(ValueError, match="dated 'val' rows"):
-            ffn.data.fxmacrodata("EURUSD", mrefresh=True)
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen), pytest.raises(ValueError, match="dated 'val' rows"):
+        ffn.data.fxmacrodata("EURUSD", mrefresh=True)
 
 
 def test_fxmacrodata_redacts_http_error_details():
@@ -327,21 +326,18 @@ def test_fxmacrodata_redacts_http_error_details():
         io.BytesIO(b"sensitive upstream details"),
     )
 
-    with mock.patch("urllib.request.urlopen", side_effect=error):
-        with pytest.raises(ffn.data.FXMacroDataError) as raised:
-            ffn.data.fxmacrodata("EURUSD", api_key="placeholder-key")
+    with mock.patch("urllib.request.urlopen", side_effect=error), pytest.raises(ffn.data.FXMacroDataError) as raised:
+        ffn.data.fxmacrodata("EURUSD", api_key="placeholder-key")
 
     assert str(raised.value) == "FXMacroData API request failed with status 500"
     assert raised.value.__cause__ is None
 
 
 def test_fxmacrodata_wraps_network_errors():
-    with mock.patch("urllib.request.urlopen", side_effect=URLError("unavailable")):
-        with pytest.raises(ffn.data.FXMacroDataError, match="API request failed$"):
-            ffn.data.fxmacrodata("EURUSD", mrefresh=True)
+    with mock.patch("urllib.request.urlopen", side_effect=URLError("unavailable")), pytest.raises(ffn.data.FXMacroDataError, match="API request failed$"):
+        ffn.data.fxmacrodata("EURUSD", mrefresh=True)
 
 
 def test_fxmacrodata_rejects_invalid_json():
-    with mock.patch("urllib.request.urlopen", return_value=FakeResponse("not-json")):
-        with pytest.raises(ffn.data.FXMacroDataError, match="invalid JSON"):
-            ffn.data.fxmacrodata("EURUSD", mrefresh=True)
+    with mock.patch("urllib.request.urlopen", return_value=FakeResponse("not-json")), pytest.raises(ffn.data.FXMacroDataError, match="invalid JSON"):
+        ffn.data.fxmacrodata("EURUSD", mrefresh=True)
