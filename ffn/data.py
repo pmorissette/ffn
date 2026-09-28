@@ -166,6 +166,7 @@ def csv(ticker: str, path="data.csv", field="", mrefresh=False, **kwargs) -> pd.
 
 
 FXMACRODATA_API_BASE_URL = "https://api.fxmacrodata.com/v1"
+_FXMACRODATA_MAX_PAGES = 1000
 
 
 class FXMacroDataError(ValueError):
@@ -244,32 +245,41 @@ def _fxmacrodata_fetch(
             params["indicators"] = indicator
 
     api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
-    query = urlencode(params)
     url = f"{base_url.rstrip('/')}/{endpoint}"
-    if query:
-        url = f"{url}?{query}"
 
     headers = {"Accept": "application/json"}
     if api_key:
         headers["X-API-Key"] = api_key
-    request = Request(url, headers=headers)
-    try:
-        with urlopen(request, timeout=timeout) as response:
-            payload = json.load(response)
-    except HTTPError as error:
-        if error.code == 401:
-            raise PermissionError("FXMacroData API authentication failed") from None
-        raise FXMacroDataError(f"FXMacroData API request failed with status {error.code}") from None
-    except TimeoutError:
-        raise FXMacroDataError("FXMacroData API request timed out") from None
-    except (URLError, OSError):
-        raise FXMacroDataError("FXMacroData API request failed") from None
-    except (json.JSONDecodeError, UnicodeError):
-        raise FXMacroDataError("FXMacroData API returned invalid JSON") from None
 
-    rows = payload.get("data") if isinstance(payload, dict) else None
-    if not isinstance(rows, list):
-        raise FXMacroDataError("FXMacroData response did not include a data list")
+    # The API returns at most 100 rows per request (newest first), so page
+    # through the window with offset until pagination.has_more is false.
+    rows = []
+    offset = 0
+    for _ in range(_FXMACRODATA_MAX_PAGES):
+        request = Request(f"{url}?{urlencode({**params, 'limit': 100, 'offset': offset})}", headers=headers)
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                payload = json.load(response)
+        except HTTPError as error:
+            if error.code == 401:
+                raise PermissionError("FXMacroData API authentication failed") from None
+            raise FXMacroDataError(f"FXMacroData API request failed with status {error.code}") from None
+        except TimeoutError:
+            raise FXMacroDataError("FXMacroData API request timed out") from None
+        except (URLError, OSError):
+            raise FXMacroDataError("FXMacroData API request failed") from None
+        except (json.JSONDecodeError, UnicodeError):
+            raise FXMacroDataError("FXMacroData API returned invalid JSON") from None
+
+        page = payload.get("data") if isinstance(payload, dict) else None
+        if not isinstance(page, list):
+            raise FXMacroDataError("FXMacroData response did not include a data list")
+        rows.extend(page)
+
+        pagination = payload.get("pagination")
+        if not page or not isinstance(pagination, dict) or not pagination.get("has_more"):
+            break
+        offset = pagination.get("next_offset") or offset + len(page)
 
     records = []
     for row in rows:

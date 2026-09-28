@@ -2,6 +2,7 @@ import io
 import json
 from unittest import mock
 from urllib.error import HTTPError, URLError
+from urllib.parse import parse_qs, urlparse
 
 import numpy as np
 import pandas as pd
@@ -205,11 +206,37 @@ def test_fxmacrodata_fetches_spot_series():
     )
     pd.testing.assert_series_equal(actual, expected)
     assert captured == {
-        "url": "https://api.fxmacrodata.com/v1/forex/eur/usd?start_date=2024-01-01&end_date=2024-01-31",
+        "url": "https://api.fxmacrodata.com/v1/forex/eur/usd?start_date=2024-01-01&end_date=2024-01-31&limit=100&offset=0",
         "accept": "application/json",
         "api_key": "placeholder-key",
         "timeout": 12,
     }
+
+
+def test_fxmacrodata_pages_through_history():
+    pages = {
+        "0": {
+            "data": [{"date": "2024-01-03", "val": 1.0920}, {"date": "2024-01-02", "val": 1.0943}],
+            "pagination": {"has_more": True, "next_offset": 2},
+        },
+        "2": {
+            "data": [{"date": "2024-01-01", "val": 1.1038}],
+            "pagination": {"has_more": False, "next_offset": None},
+        },
+    }
+    offsets = []
+
+    def fake_urlopen(request, timeout):
+        query = parse_qs(urlparse(request.full_url).query)
+        assert query["limit"] == ["100"]
+        offsets.append(query["offset"][0])
+        return FakeResponse(json.dumps(pages[query["offset"][0]]))
+
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        actual = ffn.data.fxmacrodata("EURUSD", start="2024-01-01", api_key="placeholder-key")
+
+    assert offsets == ["0", "2"]
+    assert actual.tolist() == [1.1038, 1.0943, 1.0920]
 
 
 def test_fxmacrodata_requests_indicator_for_technical_field():
@@ -223,7 +250,7 @@ def test_fxmacrodata_requests_indicator_for_technical_field():
     with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
         actual = ffn.data.fxmacrodata("EURUSD", field="rsi_14", start="2024-01-01", mrefresh=True)
 
-    assert captured["url"] == "https://api.fxmacrodata.com/v1/forex/eur/usd?start_date=2024-01-01&indicators=rsi_14"
+    assert captured["url"] == "https://api.fxmacrodata.com/v1/forex/eur/usd?start_date=2024-01-01&indicators=rsi_14&limit=100&offset=0"
     assert actual.loc[pd.Timestamp("2024-01-03")] == 54.25
 
 
@@ -241,7 +268,7 @@ def test_fxmacrodata_fetches_public_usd_indicator_without_api_key(monkeypatch):
         actual = ffn.data.fxmacrodata("USD", field="inflation", start="2024-01-01", mrefresh=True)
 
     assert captured == {
-        "url": "https://api.fxmacrodata.com/v1/announcements/usd/inflation?start_date=2024-01-01",
+        "url": "https://api.fxmacrodata.com/v1/announcements/usd/inflation?start_date=2024-01-01&limit=100&offset=0",
         "api_key": None,
     }
     assert actual.loc[pd.Timestamp("2024-01-31")] == 3.1
