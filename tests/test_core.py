@@ -671,6 +671,56 @@ def test_calc_mean_var_weights(df):
     aae(actual["C"], 1.000, 3)
 
 
+@mark.parametrize(
+    ("covar_method", "dtype"),
+    [("ledoit-wolf", "float64"), ("standard", "float64"), ("standard", "Float64")],
+)
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_mean_var_weights_passes_numpy_operands_to_solver(monkeypatch, covar_method, dtype, use_pandas_method):
+    returns = pd.DataFrame(
+        [[0.01, 0.03], [0.02, -0.01], [-0.01, 0.02]],
+        columns=["first", "second"],
+        dtype=dtype,
+    )
+    original = returns.copy()
+
+    def fake_minimize(fitness, weights, args, **kwargs):
+        expected_returns, covariance, risk_free = args
+        assert isinstance(expected_returns, np.ndarray)
+        assert isinstance(covariance, np.ndarray)
+        assert risk_free == 0.0001
+        assert kwargs["bounds"] == [(0.2, 0.8), (0.2, 0.8)]
+
+        # Exercise the real objective so the conversion cannot change its arithmetic.
+        expected_mean = sum(np.asarray(returns, dtype=float).mean(axis=0) * weights)
+        expected_variance = np.dot(np.dot(weights, covariance), weights)
+        assert fitness(weights, *args) == -(expected_mean - risk_free) / np.sqrt(expected_variance)
+
+        return type("Result", (), {"success": True, "x": weights})()
+
+    monkeypatch.setattr(ffn.core, "minimize", fake_minimize)
+    calculate = returns.calc_mean_var_weights if use_pandas_method else ffn.calc_mean_var_weights
+    args = () if use_pandas_method else (returns,)
+
+    result = calculate(*args, covar_method=covar_method, weight_bounds=(0.2, 0.8), rf=0.0001)
+
+    pd.testing.assert_series_equal(result, pd.Series([0.5, 0.5], index=returns.columns))
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_mean_var_weights_preserves_nullable_missing_failure():
+    returns = pd.DataFrame(
+        {
+            "missing": pd.Series([pd.NA, pd.NA, pd.NA], dtype="Float64"),
+            "valid": pd.Series([0.01, -0.01, 0.02], dtype="Float64"),
+        }
+    )
+
+    # Keep nullable missingness in pandas so rejection occurs before SLSQP.
+    with raises(TypeError, match="boolean value of NA is ambiguous"):
+        ffn.calc_mean_var_weights(returns, covar_method="standard")
+
+
 @mark.parametrize("covar_method", ["ledoit-wolf", "standard"])
 @mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
 def test_calc_mean_var_weights_rejects_duplicate_columns(covar_method, use_pandas_method):

@@ -126,6 +126,21 @@ def test_calc_prob_mom(benchmark, returns):
 
 
 @pytest.mark.benchmark(group="weights")
+@pytest.mark.parametrize("covar_method", ["ledoit-wolf", "standard"])
+def test_calc_mean_var_weights(benchmark, covar_method):
+    rng = np.random.default_rng(42)
+    returns = pd.DataFrame(
+        rng.normal(0.0002, 0.01, size=(1_000, 40)),
+        columns=[f"asset_{index}" for index in range(40)],
+    )
+
+    result = benchmark(ffn.calc_mean_var_weights, returns, covar_method=covar_method)
+
+    assert result.index.equals(returns.columns)
+    assert result.sum() == pytest.approx(1.0)
+
+
+@pytest.mark.benchmark(group="weights")
 def test_calc_erc_weights(benchmark, returns):
     result = benchmark(ffn.calc_erc_weights, returns)
 
