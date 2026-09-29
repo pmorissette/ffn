@@ -245,7 +245,12 @@ class PerformanceStats:
         if len(r) < 2:
             return
 
-        min_period = r.index.to_series().diff().min()
+        # Gate each block on the typical spacing: one short gap, such as the row bt
+        # prepends a day before a weekly or monthly backtest, must not make it daily.
+        typical_period = r.index.to_series().diff().median()
+        # A short business-day series can have equal weekday and weekend gaps.
+        if typical_period >= pd.Timedelta("2 days") and infer_freq(r) == "B":
+            typical_period = pd.Timedelta("1 day")
 
         # Auto-infer annualization factor from data frequency when not explicitly provided
         if self._annualization_factor_override is None:
@@ -255,7 +260,7 @@ class PerformanceStats:
 
         # Will calculate daily figures only if the input data has at least daily frequency or higher (e.g hourly)
         # Rather < 2 days than <= 1 days in case of data taken at different hours of the days
-        if min_period < pd.Timedelta("2 days"):
+        if typical_period < pd.Timedelta("2 days"):
             self.daily_mean = r.mean() * self.annualization_factor
             self.daily_vol = r.std(ddof=1) * np.sqrt(self.annualization_factor)
 
@@ -287,7 +292,7 @@ class PerformanceStats:
         if len(r) < 4:
             return
 
-        if min_period <= pd.Timedelta("2 days"):
+        if typical_period <= pd.Timedelta("2 days"):
             self.daily_skew = r.skew()
 
             # if all zero/nan kurt fails division by zero
@@ -303,7 +308,7 @@ class PerformanceStats:
 
         # Will calculate monthly figures only if the input data has at least monthly frequency or higher (e.g daily)
         # Rather < 32 days than <= 31 days in case of data taken at different hours of the days
-        if min_period < pd.Timedelta("32 days"):
+        if typical_period < pd.Timedelta("32 days"):
             self.monthly_mean = mr.mean() * 12
             self.monthly_vol = mr.std(ddof=1) * np.sqrt(12)
 
@@ -354,14 +359,14 @@ class PerformanceStats:
                 arr = np.array(list(self.return_table[idx].values()))
                 self.return_table[idx][13] = np.prod(arr + 1) - 1
 
-        if min_period < pd.Timedelta("93 days"):
+        if typical_period < pd.Timedelta("93 days"):
             denom = _lookback_prices(dp, 3)
             if len(denom) == 0:
                 return
 
             self.three_month = dp.iloc[-1] / denom.iloc[-1] - 1
 
-        if min_period < pd.Timedelta("32 days"):
+        if typical_period < pd.Timedelta("32 days"):
             if len(mr) < 4:
                 return
 
@@ -371,7 +376,7 @@ class PerformanceStats:
             if len(mr[(~pd.isna(mr)) & (mr != 0)]) > 0:
                 self.monthly_kurt = mr.kurt()
 
-        if min_period < pd.Timedelta("185 days"):
+        if typical_period < pd.Timedelta("185 days"):
             denom = _lookback_prices(dp, 6)
             if len(denom) == 0:
                 return
@@ -380,9 +385,9 @@ class PerformanceStats:
 
         # Will calculate yearly figures only if the input data has at least yearly frequency or higher (e.g monthly)
         # Rather < 367 days than <= 366 days in case of data taken at different hours of the days
-        if min_period < pd.Timedelta("367 days"):
-            self.yearly_returns = self.yearly_prices.to_returns()
-            yr = self.yearly_returns
+        yr = yp.to_returns()
+        if typical_period < pd.Timedelta("367 days"):
+            self.yearly_returns = yr
 
             if len(yr) < 2:
                 return
@@ -417,7 +422,7 @@ class PerformanceStats:
                 if len(twelve_month_returns) > 0:
                     self.twelve_month_win_perc = float((twelve_month_returns > 1).sum()) / len(twelve_month_returns)
 
-        if min_period < pd.Timedelta("1097 days"):
+        if typical_period < pd.Timedelta("1097 days"):
             if len(yr) < 3:
                 return
 
@@ -427,7 +432,7 @@ class PerformanceStats:
             if dp.index[0] <= start:
                 self.three_year = calc_cagr(dp[start:])
 
-        if min_period < pd.Timedelta("367 days"):
+        if typical_period < pd.Timedelta("367 days"):
             if len(yr) < 4:
                 return
 
@@ -437,14 +442,14 @@ class PerformanceStats:
             if len(yr[(~pd.isna(yr)) & (yr != 0)]) > 0:
                 self.yearly_kurt = yr.kurt()
 
-        if min_period < pd.Timedelta("1828 days"):
+        if typical_period < pd.Timedelta("1828 days"):
             if len(yr) < 5:
                 return
             start = dp.index[-1] - pd.DateOffset(years=5)
             if dp.index[0] <= start:
                 self.five_year = calc_cagr(dp[start:])
 
-        if min_period < pd.Timedelta("3654 days"):
+        if typical_period < pd.Timedelta("3654 days"):
             if len(yr) < 10:
                 return
             start = dp.index[-1] - pd.DateOffset(years=10)

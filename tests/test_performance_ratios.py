@@ -110,6 +110,68 @@ def test_performance_stats_rejects_no_dispersion_sharpe():
     pd.testing.assert_series_equal(prices, original)
 
 
+@pytest.mark.parametrize("freq,daily", [("B", True), ("W-FRI", False), (ffn.core._MonthEnd, False), (pd.offsets.QuarterEnd(), False), (pd.offsets.YearEnd(), False)])
+def test_start_row_one_day_early_keeps_data_frequency(freq, daily):
+    """bt prepends a row a day before the first date; that one gap must not make weekly or monthly prices daily."""
+    index = pd.date_range("2020-01-07", periods=60, freq=freq)
+    prices = pd.Series(100 * np.cumprod(1 + 0.02 * np.sin(np.arange(60))), index=index, name="asset")
+    start_row = pd.Series([prices.iloc[0]], index=[index[0] - pd.Timedelta(days=1)], name="asset")
+
+    plain = ffn.PerformanceStats(prices)
+    stats = ffn.PerformanceStats(pd.concat([start_row, prices]))
+
+    for name in ("daily_mean", "daily_vol", "daily_sharpe", "daily_sortino", "daily_skew", "daily_kurt", "best_day", "worst_day"):
+        assert np.isfinite(getattr(stats, name)) == daily
+    for frequency in ("monthly", "yearly"):
+        for field in ("mean", "vol", "sharpe", "sortino", "skew", "kurt"):
+            name = frequency + "_" + field
+            assert np.isclose(getattr(stats, name), getattr(plain, name), equal_nan=True)
+
+
+@pytest.mark.parametrize("start", ["2024-01-04", "2024-01-05"])
+@pytest.mark.parametrize("annualization_factor", [None, 365])
+def test_short_business_day_series_keeps_daily_stats(start, annualization_factor):
+    dates = pd.DatetimeIndex(pd.bdate_range(start, periods=3).values)
+    prices = pd.Series([100.0, 102.0, 101.0], index=dates, name="asset")
+    original = prices.copy(deep=True)
+    returns = prices.to_returns()
+    periods = 252 if annualization_factor is None else annualization_factor
+
+    stats = ffn.PerformanceStats(prices, annualization_factor=annualization_factor)
+
+    assert stats.daily_mean == pytest.approx(returns.mean() * periods)
+    assert stats.daily_vol == pytest.approx(returns.std(ddof=1) * np.sqrt(periods))
+    assert stats.daily_sharpe == pytest.approx(ffn.calc_sharpe(returns, nperiods=periods))
+    assert stats.daily_sortino == pytest.approx(ffn.calc_sortino_ratio(returns, nperiods=periods))
+    assert stats.best_day == returns.max()
+    assert stats.worst_day == returns.min()
+    pd.testing.assert_series_equal(prices, original)
+
+
+@pytest.mark.parametrize("spacing", [2, 3, 5, 10])
+@pytest.mark.parametrize("prepend", [False, True])
+def test_sparse_yearly_prices_keep_long_term_returns(spacing, prepend):
+    dates = pd.date_range("1970-01-01", periods=6, freq=pd.offsets.YearEnd(spacing))
+    prices = pd.Series([100.0, 105.0, 103.0, 110.0, 108.0, 115.0], index=dates, name="asset")
+    if prepend:
+        start_row = pd.Series([prices.iloc[0]], index=[dates[0] - pd.Timedelta(days=1)], name="asset")
+        prices = pd.concat([start_row, prices])
+    original = prices.copy(deep=True)
+
+    stats = ffn.PerformanceStats(prices)
+
+    for frequency in ("daily", "monthly", "yearly"):
+        for field in ("mean", "vol", "sharpe", "sortino", "skew", "kurt"):
+            assert pd.isna(getattr(stats, frequency + "_" + field))
+    for years, field in ((3, "three_year"), (5, "five_year"), (10, "ten_year")):
+        if spacing <= years:
+            window = prices.loc[dates[-1] - pd.DateOffset(years=years) :]
+            assert getattr(stats, field) == pytest.approx(ffn.calc_cagr(window))
+        else:
+            assert pd.isna(getattr(stats, field))
+    pd.testing.assert_series_equal(prices, original)
+
+
 @pytest.mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", object])
 @pytest.mark.parametrize("as_frame", [False, True])
 @pytest.mark.parametrize("annualize", [False, True])
