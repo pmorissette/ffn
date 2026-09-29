@@ -1911,12 +1911,18 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
 
     # expected return defaults to mean return by default
     exp_rets = returns.mean()
+    # Preserve pandas' nullable-missing failure path before the optimizer.
+    if not exp_rets.hasnans:
+        # Match Series iteration: Python floats use compensated sum on Python
+        # 3.12+, while nullable/sparse arrays can yield NumPy scalars instead.
+        dtype = object if type(next(iter(exp_rets), None)) is float else getattr(exp_rets.dtype, "numpy_dtype", None)
+        exp_rets = exp_rets.to_numpy(dtype=dtype)
 
     # calc covariance matrix
     if covar_method == "ledoit-wolf":
         covar = sklearn.covariance.ledoit_wolf(returns)[0]
     elif covar_method == "standard":
-        covar = returns.cov()
+        covar = returns.cov().to_numpy()
     else:
         raise NotImplementedError("covar_method not implemented")
 

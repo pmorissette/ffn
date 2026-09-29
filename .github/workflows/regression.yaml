@@ -37,6 +37,9 @@ jobs:
           - python: '3.11'
             pandas: '>=3,<4'
             numpy: '>=2,<3'
+          - python: '3.12'
+            pandas: '>=3,<4'
+            numpy: '>=2,<3'
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
