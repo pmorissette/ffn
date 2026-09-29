@@ -54,21 +54,18 @@ METRICS = {
     "calmar": lambda r, p: ffn.calc_calmar_ratio(_prices(r, p)),
 }
 
-CASES = [
-    pytest.param(metric, fixture, expected, id=f"{metric}-{fixture}")
-    for metric, spec in DATA["metrics"].items()
-    for fixture, expected in spec["values"].items()
-    if expected is not None
-]
+CASES = [pytest.param(metric, fixture, expected, id=f"{metric}-{fixture}") for metric, spec in DATA["metrics"].items() for fixture, expected in spec["values"].items()]
 
 
 def test_every_metric_has_a_check():
     assert set(METRICS) == set(DATA["metrics"])
+    for metric, spec in DATA["metrics"].items():
+        assert set(spec["values"]) == set(DATA["fixtures"]), metric
 
 
 @pytest.mark.parametrize("metric, fixture, expected", CASES)
 def test_reference_value(metric, fixture, expected):
     returns, periods = _returns(fixture)
-    value = float(np.asarray(METRICS[metric](returns, periods)).ravel()[0])
+    value = float(np.asarray(METRICS[metric](returns, periods)).item())
     convention = DATA["metrics"][metric]["convention"]
     assert value == pytest.approx(expected, rel=1e-9, abs=1e-12), f"{metric} on {fixture} no longer matches the {convention} convention"

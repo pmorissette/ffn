@@ -66,7 +66,7 @@
   "max_drawdown": {
    "convention": "geometric_initial_peak",
    "definition": "compounded wealth, starting capital counts as a peak",
-   "oracle": "R PerformanceAnalytics: maxDrawdown(R, geometric=TRUE)",
+   "oracle": "R PerformanceAnalytics: maxDrawdown(R, geometric=TRUE, invert=FALSE)",
    "values": {
     "bacon_monthly": -0.144672955739218,
     "tiny_sample_n7": -0.08485758410265398,
@@ -77,7 +77,7 @@
   },
   "calmar": {
    "convention": "cagr_calendar_over_mdd",
-   "definition": "calendar-time CAGR (365.25-day years) / geometric max drawdown (initial peak)",
+   "definition": "calendar-time CAGR (365.25-day years) / abs(geometric max drawdown with initial peak)",
    "oracle": null,
    "values": {
     "bacon_monthly": 0.7161243162664309,
