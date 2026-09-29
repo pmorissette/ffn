@@ -708,6 +708,36 @@ def test_calc_mean_var_weights_passes_numpy_operands_to_solver(monkeypatch, cova
     pd.testing.assert_frame_equal(returns, original)
 
 
+@mark.parametrize(
+    ("covar_method", "dtype"),
+    [(method, dtype) for method in ("ledoit-wolf", "standard") for dtype in ("float32", "float64", "Float32", "Float64")]
+    + [("ledoit-wolf", object), ("standard", pd.SparseDtype("float64", 0))],
+)
+def test_calc_mean_var_weights_preserves_objective_summation(monkeypatch, dtype, covar_method):
+    returns = pd.DataFrame(
+        np.array([[0.0, 1e16 - 2, -1e16], [1.0, 1e16, -1e16 + 2], [2.0, 1e16 + 2, -1e16 - 2]]) * 2.0**-60,
+        columns=["small", "positive", "negative"],
+        dtype=dtype,
+    )
+    original = returns.copy(deep=True)
+
+    def fake_minimize(fitness, weights, args, **kwargs):
+        _, covariance, risk_free = args
+        # Preserve Series iteration: Python floats and NumPy scalars take
+        # different built-in sum paths on Python 3.12 and newer.
+        expected_mean = sum(returns.mean() * weights)
+        expected_variance = np.dot(np.dot(weights, covariance), weights)
+        assert expected_variance > 0
+        assert fitness(weights, *args) == -(expected_mean - risk_free) / np.sqrt(expected_variance)
+        return type("Result", (), {"success": True, "x": weights})()
+
+    monkeypatch.setattr(ffn.core, "minimize", fake_minimize)
+    result = ffn.calc_mean_var_weights(returns, covar_method=covar_method)
+
+    pd.testing.assert_series_equal(result, pd.Series([1.0 / 3] * 3, index=returns.columns))
+    pd.testing.assert_frame_equal(returns, original)
+
+
 def test_calc_mean_var_weights_preserves_nullable_missing_failure():
     returns = pd.DataFrame(
         {
@@ -716,8 +746,8 @@ def test_calc_mean_var_weights_preserves_nullable_missing_failure():
         }
     )
 
-    # Keep nullable missingness in pandas so rejection occurs before SLSQP.
-    with raises(TypeError, match="boolean value of NA is ambiguous"):
+    # SciPy 1.18 rejects the non-scalar objective before the older NA comparison.
+    with raises((TypeError, ValueError), match="boolean value of NA is ambiguous|objective function must return a scalar value"):
         ffn.calc_mean_var_weights(returns, covar_method="standard")
 
 

@@ -1908,7 +1908,10 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
     exp_rets = returns.mean()
     # Preserve pandas' nullable-missing failure path before the optimizer.
     if not exp_rets.hasnans:
-        exp_rets = exp_rets.to_numpy()
+        # Match Series iteration: Python floats use compensated sum on Python
+        # 3.12+, while nullable/sparse arrays can yield NumPy scalars instead.
+        dtype = object if type(next(iter(exp_rets), None)) is float else getattr(exp_rets.dtype, "numpy_dtype", None)
+        exp_rets = exp_rets.to_numpy(dtype=dtype)
 
     # calc covariance matrix
     if covar_method == "ledoit-wolf":
