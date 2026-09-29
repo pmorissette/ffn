@@ -695,7 +695,12 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="n">min_period</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_series</span><span class="p">()</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="c1"># Gate each block on the typical spacing: one short gap, such as the row bt</span>
+        <span class="c1"># prepends a day before a weekly or monthly backtest, must not make it daily.</span>
+        <span class="n">typical_period</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">to_series</span><span class="p">()</span><span class="o">.</span><span class="n">diff</span><span class="p">()</span><span class="o">.</span><span class="n">median</span><span class="p">()</span>
+        <span class="c1"># A short business-day series can have equal weekday and weekend gaps.</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&gt;=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"2 days"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">infer_freq</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">==</span> <span class="s2">"B"</span><span class="p">:</span>
+            <span class="n">typical_period</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"1 day"</span><span class="p">)</span>
 
         <span class="c1"># Auto-infer annualization factor from data frequency when not explicitly provided</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_annualization_factor_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -705,7 +710,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># Will calculate daily figures only if the input data has at least daily frequency or higher (e.g hourly)</span>
         <span class="c1"># Rather &lt; 2 days than &lt;= 1 days in case of data taken at different hours of the days</span>
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"2 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"2 days"</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">daily_mean</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">daily_vol</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span><span class="p">)</span>
 
@@ -737,7 +742,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"2 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"2 days"</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">daily_skew</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">skew</span><span class="p">()</span>
 
             <span class="c1"># if all zero/nan kurt fails division by zero</span>
@@ -753,7 +758,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># Will calculate monthly figures only if the input data has at least monthly frequency or higher (e.g daily)</span>
         <span class="c1"># Rather &lt; 32 days than &lt;= 31 days in case of data taken at different hours of the days</span>
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"32 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"32 days"</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">monthly_mean</span> <span class="o">=</span> <span class="n">mr</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">*</span> <span class="mi">12</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">monthly_vol</span> <span class="o">=</span> <span class="n">mr</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
 
@@ -804,14 +809,14 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">return_table</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">return_table</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">13</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">arr</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"93 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"93 days"</span><span class="p">):</span>
             <span class="n">denom</span> <span class="o">=</span> <span class="n">_lookback_prices</span><span class="p">(</span><span class="n">dp</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">denom</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">return</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">three_month</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="n">denom</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"32 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"32 days"</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
                 <span class="k">return</span>
 
@@ -821,7 +826,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mr</span><span class="p">[(</span><span class="o">~</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">mr</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mr</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">monthly_kurt</span> <span class="o">=</span> <span class="n">mr</span><span class="o">.</span><span class="n">kurt</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"185 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"185 days"</span><span class="p">):</span>
             <span class="n">denom</span> <span class="o">=</span> <span class="n">_lookback_prices</span><span class="p">(</span><span class="n">dp</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">denom</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">return</span>
@@ -830,9 +835,9 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># Will calculate yearly figures only if the input data has at least yearly frequency or higher (e.g monthly)</span>
         <span class="c1"># Rather &lt; 367 days than &lt;= 366 days in case of data taken at different hours of the days</span>
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"367 days"</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">yearly_returns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yearly_prices</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
-            <span class="n">yr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yearly_returns</span>
+        <span class="n">yr</span> <span class="o">=</span> <span class="n">yp</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"367 days"</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">yearly_returns</span> <span class="o">=</span> <span class="n">yr</span>
 
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="k">return</span>
@@ -867,7 +872,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">twelve_month_returns</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">twelve_month_win_perc</span> <span class="o">=</span> <span class="nb">float</span><span class="p">((</span><span class="n">twelve_month_returns</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">twelve_month_returns</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"1097 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"1097 days"</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
                 <span class="k">return</span>
 
@@ -877,7 +882,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="n">dp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">start</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">three_year</span> <span class="o">=</span> <span class="n">calc_cagr</span><span class="p">(</span><span class="n">dp</span><span class="p">[</span><span class="n">start</span><span class="p">:])</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"367 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"367 days"</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
                 <span class="k">return</span>
 
@@ -887,14 +892,14 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yr</span><span class="p">[(</span><span class="o">~</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">yr</span><span class="p">))</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">yr</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">yearly_kurt</span> <span class="o">=</span> <span class="n">yr</span><span class="o">.</span><span class="n">kurt</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"1828 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"1828 days"</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
                 <span class="k">return</span>
             <span class="n">start</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">DateOffset</span><span class="p">(</span><span class="n">years</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">dp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">start</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">five_year</span> <span class="o">=</span> <span class="n">calc_cagr</span><span class="p">(</span><span class="n">dp</span><span class="p">[</span><span class="n">start</span><span class="p">:])</span>
 
-        <span class="k">if</span> <span class="n">min_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"3654 days"</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"3654 days"</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">yr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
                 <span class="k">return</span>
             <span class="n">start</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">DateOffset</span><span class="p">(</span><span class="n">years</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
