@@ -2484,12 +2484,18 @@ window.runMermaid = runMermaid;</script>
 
     <span class="c1"># expected return defaults to mean return by default</span>
     <span class="n">exp_rets</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="c1"># Preserve pandas' nullable-missing failure path before the optimizer.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">exp_rets</span><span class="o">.</span><span class="n">hasnans</span><span class="p">:</span>
+        <span class="c1"># Match Series iteration: Python floats use compensated sum on Python</span>
+        <span class="c1"># 3.12+, while nullable/sparse arrays can yield NumPy scalars instead.</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="nb">object</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">exp_rets</span><span class="p">),</span> <span class="kc">None</span><span class="p">))</span> <span class="ow">is</span> <span class="nb">float</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">exp_rets</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="s2">"numpy_dtype"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">exp_rets</span> <span class="o">=</span> <span class="n">exp_rets</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
 
     <span class="c1"># calc covariance matrix</span>
     <span class="k">if</span> <span class="n">covar_method</span> <span class="o">==</span> <span class="s2">"ledoit-wolf"</span><span class="p">:</span>
         <span class="n">covar</span> <span class="o">=</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">covariance</span><span class="o">.</span><span class="n">ledoit_wolf</span><span class="p">(</span><span class="n">returns</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">covar_method</span> <span class="o">==</span> <span class="s2">"standard"</span><span class="p">:</span>
-        <span class="n">covar</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span>
+        <span class="n">covar</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"covar_method not implemented"</span><span class="p">)</span>
 
