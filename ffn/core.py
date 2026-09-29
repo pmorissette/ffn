@@ -40,6 +40,20 @@ def _validate_prices_index(prices):
         raise ValueError("prices index must be monotonic increasing")
 
 
+def _riskfree_interval_returns(rf_prices, dates):
+    """Risk-free price returns between consecutive observed daily asset ``dates``.
+
+    Risk-free prices use the asset's daily sampling (last value per calendar day) and are
+    read only at ``dates``; a missing endpoint leaves its interval NaN rather than filled.
+    """
+    if (getattr(rf_prices.index, "tz", None) is None) != (dates.tz is None):
+        raise TypeError("Cannot align tz-naive and tz-aware risk-free and asset prices")
+    if dates.tz is not None:
+        rf_prices = rf_prices.tz_convert(dates.tz)
+    endpoint_prices = rf_prices.resample("D").last().reindex(dates)
+    return endpoint_prices / endpoint_prices.shift(1) - 1
+
+
 class PerformanceStats:
     """
     PerformanceStats is a convenience class used for the performance
@@ -57,6 +71,8 @@ class PerformanceStats:
             to_returns(). Note this differs from calc_sharpe and
             calc_sortino_ratio, which take rf as a return series. Passing a
             return series here silently behaves like rf=0.
+            Daily statistics use risk-free prices on the asset's own observed daily
+            endpoints; an interval missing either risk-free price is excluded, not filled.
 
     Raises:
         * ValueError: If the price series contains no usable value.
@@ -261,9 +277,9 @@ class PerformanceStats:
 
             if isinstance(self.rf, _FLOATING_SCALAR_TYPES):
                 rf = self.rf
-            # rf is a price series
+            # rf is a price series; measure it over the same observed asset intervals
             else:
-                rf = self.rf.to_returns()
+                rf = _riskfree_interval_returns(self.rf, dp.index)
             er = r.to_excess_returns(rf, nperiods=self.annualization_factor)
             self.daily_sharpe = _calc_sharpe(er, nperiods=self.annualization_factor)
             self.daily_sortino = _calc_sortino_ratio(er, nperiods=self.annualization_factor)

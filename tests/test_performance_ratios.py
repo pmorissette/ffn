@@ -244,7 +244,14 @@ def test_performance_stats_reuses_excess_returns(monkeypatch, dtype, risk_free_k
     ]:
         rf = risk_free
         if isinstance(rf, pd.Series):
-            rf = (rf.resample(offset).last() if offset else rf).to_returns()
+            if offset:
+                rf = rf.resample(offset).last().to_returns()
+            else:
+                # Daily excess returns compare both holdings over the same observed asset interval.
+                # rf.to_returns() on rf's own calendar paired Fri->Mon asset returns with Sun->Mon rf
+                # returns. Read rf prices at the asset's endpoints; missing endpoints stay NaN.
+                rf_endpoints = rf.reindex(returns.index)
+                rf = rf_endpoints / rf_endpoints.shift(1) - 1
         er = to_excess_returns(returns, rf, nperiods=periods)
         with np.errstate(invalid="ignore", divide="ignore"):
             sharpe = np.divide(er.mean(), er.std(ddof=1)) * np.sqrt(periods)
@@ -264,3 +271,80 @@ def test_performance_stats_preserves_zero_yearly_volatility():
     assert stats.yearly_vol == 0
     assert np.isnan(stats.yearly_sharpe)
     assert stats.yearly_sortino == ffn.calc_sortino_ratio(stats.yearly_returns, rf=0.05, nperiods=1)
+
+
+def _daily_riskfree_prices(growth):
+    index = pd.date_range("2024-01-01", "2024-03-31")
+    return pd.Series(100.0 * growth ** np.arange(len(index)), index=index, name="rf")
+
+
+@pytest.mark.parametrize("growth", [1.0001, 0.9999])
+@pytest.mark.parametrize("calendar", ["daily", "business", "gapped_business", "intraday_utc"])
+def test_performance_stats_same_holding_as_riskfree_has_no_daily_excess(calendar, growth):
+    """Holding the risk-free asset itself earns exactly zero excess over every asset interval."""
+    risk_free = _daily_riskfree_prices(growth)
+    prices = risk_free.rename("same_holding")
+    if calendar != "daily":
+        prices = prices[prices.index.dayofweek < 5]
+    if calendar == "gapped_business":
+        prices = prices.drop(prices.index[[4, 10, 23]])
+    if calendar == "intraday_utc":
+        risk_free = risk_free.tz_localize("UTC")
+        prices = prices.tz_localize("UTC")
+        prices.index = prices.index + pd.Timedelta(hours=16)
+    original_rf = risk_free.copy()
+
+    # Both holdings have identical endpoint prices; checked with plain float division.
+    for start, end in zip(prices.index[:-1], prices.index[1:]):
+        rf_return = float(risk_free[end.normalize()]) / float(risk_free[start.normalize()]) - 1
+        assert float(prices[end]) / float(prices[start]) - 1 - rf_return == 0
+
+    stats = ffn.PerformanceStats(prices, rf=risk_free, annualization_factor=252)
+
+    # The daily branch ran on nonzero asset returns.
+    assert np.sign(stats.daily_mean) == np.sign(growth - 1)
+    assert np.isnan(stats.daily_sharpe)
+    assert np.isnan(stats.daily_sortino)
+
+    # GroupStats children rebuilt for a narrower window read rf at the window's endpoints.
+    group = ffn.GroupStats(prices)
+    group.set_riskfree_rate(risk_free)
+    group.set_date_range(start=prices.index[5])
+    assert np.isnan(group["same_holding"].daily_sharpe)
+    assert np.isnan(group["same_holding"].daily_sortino)
+    pd.testing.assert_series_equal(risk_free, original_rf)
+
+
+def test_performance_stats_daily_riskfree_prices_match_asset_interval_oracle():
+    """Nonzero daily excess returns use rf prices at each observed asset interval's endpoints."""
+    risk_free = _daily_riskfree_prices(1.0002)
+    index = pd.bdate_range("2024-01-02", periods=16).delete(5)
+    prices = pd.Series(100.0 * np.cumprod(np.tile([1.004, 0.997, 1.001, 0.998, 1.003], 3)), index=index, name="asset")
+    # An unavailable rf price removes both adjacent intervals instead of being filled.
+    risk_free[index[7]] = np.nan
+
+    excess = []
+    for start, end in zip(index[:-1], index[1:]):
+        rf_start, rf_end = float(risk_free[start]), float(risk_free[end])
+        if np.isnan(rf_start) or np.isnan(rf_end):
+            continue
+        excess.append((float(prices[end]) / float(prices[start]) - 1) - (rf_end / rf_start - 1))
+    n = len(excess)
+    mean = sum(excess) / n
+    std = (sum((x - mean) ** 2 for x in excess) / (n - 1)) ** 0.5
+    downside = (sum(min(x, 0.0) ** 2 for x in excess) / n) ** 0.5
+    assert n == len(index) - 3
+    assert min(excess) < 0 < max(excess)
+
+    stats = ffn.PerformanceStats(prices, rf=risk_free, annualization_factor=252)
+
+    assert stats.daily_sharpe == pytest.approx(mean / std * 252**0.5, rel=1e-9)
+    assert stats.daily_sortino == pytest.approx(mean / downside * 252**0.5, rel=1e-9)
+
+
+def test_performance_stats_rejects_mixed_timezone_riskfree_prices():
+    risk_free = _daily_riskfree_prices(1.0001)
+    prices = risk_free[risk_free.index.dayofweek < 5].rename("asset").tz_localize("UTC")
+
+    with pytest.raises(TypeError, match="tz-naive"):
+        ffn.PerformanceStats(prices, rf=risk_free)
