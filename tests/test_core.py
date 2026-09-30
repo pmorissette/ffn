@@ -2735,6 +2735,80 @@ def test_performance_stats(df):
     assert num_stats == num_unique_stats
 
 
+def test_statistics_specifications_preserve_rows_and_fresh_lists():
+    expected = [
+        ("start", "Start", "dt"),
+        ("end", "End", "dt"),
+        ("rf", "Risk-free rate", "p"),
+        (None, None, None),
+        ("total_return", "Total Return", "p"),
+        ("cagr", "CAGR", "p"),
+        ("max_drawdown", "Max Drawdown", "p"),
+        ("calmar", "Calmar Ratio", "n"),
+        (None, None, None),
+        ("mtd", "MTD", "p"),
+        ("three_month", "3m", "p"),
+        ("six_month", "6m", "p"),
+        ("ytd", "YTD", "p"),
+        ("one_year", "1Y", "p"),
+        ("three_year", "3Y (ann.)", "p"),
+        ("five_year", "5Y (ann.)", "p"),
+        ("ten_year", "10Y (ann.)", "p"),
+        ("incep", "Since Incep. (ann.)", "p"),
+        (None, None, None),
+        ("daily_sharpe", "Daily Sharpe", "n"),
+        ("daily_sortino", "Daily Sortino", "n"),
+        ("daily_mean", "Daily Mean (ann.)", "p"),
+        ("daily_vol", "Daily Vol (ann.)", "p"),
+        ("daily_skew", "Daily Skew", "n"),
+        ("daily_kurt", "Daily Kurt", "n"),
+        ("best_day", "Best Day", "p"),
+        ("worst_day", "Worst Day", "p"),
+        (None, None, None),
+        ("monthly_sharpe", "Monthly Sharpe", "n"),
+        ("monthly_sortino", "Monthly Sortino", "n"),
+        ("monthly_mean", "Monthly Mean (ann.)", "p"),
+        ("monthly_vol", "Monthly Vol (ann.)", "p"),
+        ("monthly_skew", "Monthly Skew", "n"),
+        ("monthly_kurt", "Monthly Kurt", "n"),
+        ("best_month", "Best Month", "p"),
+        ("worst_month", "Worst Month", "p"),
+        (None, None, None),
+        ("yearly_sharpe", "Yearly Sharpe", "n"),
+        ("yearly_sortino", "Yearly Sortino", "n"),
+        ("yearly_mean", "Yearly Mean", "p"),
+        ("yearly_vol", "Yearly Vol", "p"),
+        ("yearly_skew", "Yearly Skew", "n"),
+        ("yearly_kurt", "Yearly Kurt", "n"),
+        ("best_year", "Best Year", "p"),
+        ("worst_year", "Worst Year", "p"),
+        (None, None, None),
+        ("avg_drawdown", "Avg. Drawdown", "p"),
+        ("avg_drawdown_days", "Avg. Drawdown Days", "n"),
+        ("avg_up_month", "Avg. Up Month", "p"),
+        ("avg_down_month", "Avg. Down Month", "p"),
+        ("win_year_perc", "Win Year %", "p"),
+        ("twelve_month_win_perc", "Win 12m %", "p"),
+    ]
+    expected_group = expected.copy()
+    expected_group[5:5] = [
+        ("daily_sharpe", "Daily Sharpe", "n"),
+        ("daily_sortino", "Daily Sortino", "n"),
+    ]
+
+    performance_stats = object.__new__(ffn.PerformanceStats)
+    group_stats = dict.__new__(ffn.GroupStats)
+
+    assert performance_stats._stats() == expected
+    assert group_stats._stats() == expected_group
+
+    performance_stats._stats().append(("extra", "Extra", "n"))
+    group_stats._stats().clear()
+
+    assert performance_stats._stats() == expected
+    assert group_stats._stats() == expected_group
+
+
 def _assert_csv_row_width(output, sep, expected_width):
     import csv
     import io
