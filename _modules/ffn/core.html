@@ -485,6 +485,20 @@ window.runMermaid = runMermaid;</script>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"prices index must be monotonic increasing"</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_riskfree_interval_returns</span><span class="p">(</span><span class="n">rf_prices</span><span class="p">,</span> <span class="n">dates</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Risk-free price returns between consecutive observed daily asset ``dates``.</span>
+
+<span class="sd">    Risk-free prices use the asset's daily sampling (last value per calendar day) and are</span>
+<span class="sd">    read only at ``dates``; a missing endpoint leaves its interval NaN rather than filled.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">rf_prices</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">"tz"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">dates</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"Cannot align tz-naive and tz-aware risk-free and asset prices"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dates</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rf_prices</span> <span class="o">=</span> <span class="n">rf_prices</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">dates</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+    <span class="n">endpoint_prices</span> <span class="o">=</span> <span class="n">rf_prices</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="s2">"D"</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">dates</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">endpoint_prices</span> <span class="o">/</span> <span class="n">endpoint_prices</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+
 <div class="viewcode-block" id="PerformanceStats">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.PerformanceStats">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">PerformanceStats</span><span class="p">:</span>
@@ -504,6 +518,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            to_returns(). Note this differs from calc_sharpe and</span>
 <span class="sd">            calc_sortino_ratio, which take rf as a return series. Passing a</span>
 <span class="sd">            return series here silently behaves like rf=0.</span>
+<span class="sd">            Daily statistics use risk-free prices on the asset's own observed daily</span>
+<span class="sd">            endpoints; an interval missing either risk-free price is excluded, not filled.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        * ValueError: If the price series contains no usable value.</span>
@@ -716,9 +732,9 @@ window.runMermaid = runMermaid;</script>
 
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                 <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf</span>
-            <span class="c1"># rf is a price series</span>
+            <span class="c1"># rf is a price series; measure it over the same observed asset intervals</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
+                <span class="n">rf</span> <span class="o">=</span> <span class="n">_riskfree_interval_returns</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="p">,</span> <span class="n">dp</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
             <span class="n">er</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">to_excess_returns</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">daily_sharpe</span> <span class="o">=</span> <span class="n">_calc_sharpe</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">daily_sortino</span> <span class="o">=</span> <span class="n">_calc_sortino_ratio</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">annualization_factor</span><span class="p">)</span>

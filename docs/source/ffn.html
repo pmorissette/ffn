@@ -260,7 +260,9 @@ expressed as a yearly (annualized) return if it is a floating scalar. Otherwise
 rf should be a <em>price</em> series — it is converted internally with
 to_returns(). Note this differs from calc_sharpe and
 calc_sortino_ratio, which take rf as a return series. Passing a
-return series here silently behaves like rf=0.</p>
+return series here silently behaves like rf=0.
+Daily statistics use risk-free prices on the asset’s own observed daily
+endpoints; an interval missing either risk-free price is excluded, not filled.</p>
 </p></li>
 </ul>
 </dd>
