@@ -1163,6 +1163,31 @@ def test_limit_weights_preserves_precision():
     assert actual.max() <= 0.5
 
 
+def test_limit_weights_accepts_exact_feasible_boundary():
+    size = 49
+    limit = 1.0 / size
+    values = np.arange(1, size + 1, dtype=float)
+    weights = pd.Series(values / values.sum(), index=[f"asset_{i}" for i in range(size)])
+    original = weights.copy(deep=True)
+    expected = pd.Series(np.full(size, limit), index=weights.index)
+
+    actual = ffn.limit_weights(weights, limit=limit)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(weights, original)
+    np.testing.assert_allclose(actual.sum(), 1.0)
+    assert actual.max() <= limit
+
+
+def test_limit_weights_rejects_nearby_infeasible_boundary():
+    size = 5
+    feasible_limit = 1.0 / size
+    weights = pd.Series(np.full(size, feasible_limit))
+
+    with np.testing.assert_raises_regex(ValueError, "1 / limit"):
+        ffn.limit_weights(weights, limit=np.nextafter(feasible_limit, 0.0))
+
+
 @mark.parametrize(
     "weights",
     [

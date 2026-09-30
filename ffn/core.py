@@ -2359,7 +2359,9 @@ def limit_weights(weights, limit=0.1):
         * weights (Series): A series describing finite weights
         * limit (float): Maximum weight allowed
     """
-    if 1.0 / limit > len(weights):
+    # Preserve invalid-limit behavior while avoiding reciprocal rounding at the feasible boundary.
+    inverse_limit = 1.0 / limit
+    if inverse_limit > 0 and (len(weights) == 0 or limit < 1.0 / len(weights)):
         raise ValueError("invalid limit -> 1 / limit must be <= len(weights)")
 
     if isinstance(weights, dict):
