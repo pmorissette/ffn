@@ -1163,6 +1163,66 @@ def test_limit_weights_preserves_precision():
     assert actual.max() <= 0.5
 
 
+def test_limit_weights_accepts_exact_feasible_boundary():
+    size = 49
+    limit = 1.0 / size
+    values = np.arange(1, size + 1, dtype=float)
+    weights = pd.Series(values / values.sum(), index=[f"asset_{i}" for i in range(size)])
+    original = weights.copy(deep=True)
+    expected = pd.Series(np.full(size, limit), index=weights.index)
+
+    actual = ffn.limit_weights(weights, limit=limit)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(weights, original)
+    np.testing.assert_allclose(actual.sum(), 1.0)
+    assert actual.max() <= limit
+
+
+@mark.parametrize("size", [49, 98])
+@mark.parametrize("concentrated", [False, True])
+@mark.parametrize("dtype", ["float64", "Float64"])
+@mark.parametrize("as_dict", [False, True])
+def test_limit_weights_redistributes_to_zero_weights_at_feasible_boundary(size, concentrated, dtype, as_dict):
+    limit = 1.0 / size
+    values = np.arange(size, dtype=float)
+    if concentrated:
+        values[:-1] = 0.0
+    weights = pd.Series(values / values.sum(), index=[f"asset_{i}" for i in range(size)], dtype=dtype)
+    original = weights.copy(deep=True)
+    source = weights.to_dict() if as_dict else weights
+    expected = pd.Series(limit, index=weights.index, dtype="float64" if as_dict else dtype)
+
+    actual = ffn.limit_weights(source, limit=limit)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(weights, original)
+    if as_dict:
+        assert source == original.to_dict()
+    assert actual.notna().all()
+    np.testing.assert_allclose(actual.sum(), 1.0)
+    assert actual.max() <= limit
+
+
+def test_limit_weights_rejects_nearby_infeasible_boundary():
+    size = 5
+    feasible_limit = 1.0 / size
+    weights = pd.Series(np.full(size, feasible_limit))
+
+    with np.testing.assert_raises_regex(ValueError, "1 / limit"):
+        ffn.limit_weights(weights, limit=np.nextafter(feasible_limit, 0.0))
+
+
+@mark.parametrize("values, limit, expected", [([1.0, 0.0, 0.0], 0.4, [0.4, 0.3, 0.3]), ([0.5, 0.5, 0.0], 0.5, [0.5, 0.5, 0.0])])
+def test_limit_weights_handles_only_zero_weights_below_limit(values, limit, expected):
+    weights = pd.Series(values)
+
+    actual = ffn.limit_weights(weights, limit=limit)
+
+    pd.testing.assert_series_equal(actual, pd.Series(expected))
+    pd.testing.assert_series_equal(weights, pd.Series(values))
+
+
 @mark.parametrize(
     "weights",
     [
