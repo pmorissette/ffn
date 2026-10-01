@@ -1838,6 +1838,20 @@ def calc_inv_vol_weights(returns):
     return vol / volsum
 
 
+def _calc_standard_covariance(returns):
+    """Reject material indefiniteness without changing existing non-finite failures."""
+    covariance = returns.cov().to_numpy()
+    if covariance.size == 0 or not np.isfinite(covariance).all():
+        return covariance
+
+    eigenvalues = np.linalg.eigvalsh(covariance)
+    # Bound eigensolver roundoff relative to both matrix size and spectral scale.
+    tolerance = np.finfo(eigenvalues.dtype).eps * len(eigenvalues) * np.max(np.abs(eigenvalues))
+    if eigenvalues[0] < -tolerance:
+        raise ValueError("standard covariance matrix must be positive semidefinite")
+    return covariance
+
+
 def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_method="ledoit-wolf", options=None):
     """
     Calculates the mean-variance weights given a DataFrame of returns.
@@ -1855,6 +1869,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
 
     Raises:
         * ValueError: If the returns have duplicate column labels.
+        * ValueError: If the standard covariance matrix is not positive semidefinite.
 
     """
 
@@ -1887,7 +1902,7 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
     if covar_method == "ledoit-wolf":
         covar = sklearn.covariance.ledoit_wolf(returns)[0]
     elif covar_method == "standard":
-        covar = returns.cov().to_numpy()
+        covar = _calc_standard_covariance(returns)
     else:
         raise NotImplementedError("covar_method not implemented")
 
@@ -2057,6 +2072,9 @@ def calc_erc_weights(
     Returns:
         Series {col_name: weight}
 
+    Raises:
+        * ValueError: If the standard covariance matrix is not positive semidefinite.
+
     """
     n = len(returns.columns)
 
@@ -2064,7 +2082,7 @@ def calc_erc_weights(
     if covar_method == "ledoit-wolf":
         covar = sklearn.covariance.ledoit_wolf(returns)[0]
     elif covar_method == "standard":
-        covar = returns.cov().values
+        covar = _calc_standard_covariance(returns)
     else:
         raise NotImplementedError("covar_method not implemented")
 
