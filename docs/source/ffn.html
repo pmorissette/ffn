@@ -587,6 +587,9 @@ DataFrame of returns.</p>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>Series {col_name</p>
 </dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>* ValueError</strong> – If the standard covariance matrix is not positive semidefinite.</p>
+</dd>
 </dl>
 </dd></dl>
 
@@ -696,7 +699,10 @@ actual drawdown series, please use to_drawdown_series.</p>
 <dd class="field-odd"><p>Series {col_name</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>* ValueError</strong> – If the returns have duplicate column labels.</p>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>* ValueError</strong> – If the returns have duplicate column labels.</p></li>
+<li><p><strong>* ValueError</strong> – If the standard covariance matrix is not positive semidefinite.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

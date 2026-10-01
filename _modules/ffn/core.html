@@ -2409,6 +2409,24 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_calc_standard_covariance</span><span class="p">(</span><span class="n">returns</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reject material indefiniteness without changing existing non-finite failures."""</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">covariance</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">covariance</span>
+
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">covariance</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">covariance</span>
+    <span class="c1"># Scale only the validation copy so finite matrices cannot overflow the spectrum.</span>
+    <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">covariance</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span>
+    <span class="c1"># Bound eigensolver roundoff relative to both matrix size and spectral scale.</span>
+    <span class="n">tolerance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">eigenvalues</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">eigenvalues</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">tolerance</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"standard covariance matrix must be positive semidefinite"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">covariance</span>
+
+
 <div class="viewcode-block" id="calc_mean_var_weights">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.calc_mean_var_weights">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">calc_mean_var_weights</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">weight_bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">rf</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">covar_method</span><span class="o">=</span><span class="s2">"ledoit-wolf"</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -2428,6 +2446,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        * ValueError: If the returns have duplicate column labels.</span>
+<span class="sd">        * ValueError: If the standard covariance matrix is not positive semidefinite.</span>
 
 <span class="sd">    """</span>
 
@@ -2460,7 +2479,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">covar_method</span> <span class="o">==</span> <span class="s2">"ledoit-wolf"</span><span class="p">:</span>
         <span class="n">covar</span> <span class="o">=</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">covariance</span><span class="o">.</span><span class="n">ledoit_wolf</span><span class="p">(</span><span class="n">returns</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">covar_method</span> <span class="o">==</span> <span class="s2">"standard"</span><span class="p">:</span>
-        <span class="n">covar</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">covar</span> <span class="o">=</span> <span class="n">_calc_standard_covariance</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"covar_method not implemented"</span><span class="p">)</span>
 
@@ -2633,6 +2652,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Returns:</span>
 <span class="sd">        Series {col_name: weight}</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: If the standard covariance matrix is not positive semidefinite.</span>
+
 <span class="sd">    """</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
 
@@ -2640,7 +2662,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">covar_method</span> <span class="o">==</span> <span class="s2">"ledoit-wolf"</span><span class="p">:</span>
         <span class="n">covar</span> <span class="o">=</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">covariance</span><span class="o">.</span><span class="n">ledoit_wolf</span><span class="p">(</span><span class="n">returns</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">elif</span> <span class="n">covar_method</span> <span class="o">==</span> <span class="s2">"standard"</span><span class="p">:</span>
-        <span class="n">covar</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">cov</span><span class="p">()</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">covar</span> <span class="o">=</span> <span class="n">_calc_standard_covariance</span><span class="p">(</span><span class="n">returns</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">"covar_method not implemented"</span><span class="p">)</span>
 
