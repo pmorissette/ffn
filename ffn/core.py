@@ -1844,7 +1844,11 @@ def _calc_standard_covariance(returns):
     if covariance.size == 0 or not np.isfinite(covariance).all():
         return covariance
 
-    eigenvalues = np.linalg.eigvalsh(covariance)
+    scale = np.max(np.abs(covariance))
+    if scale == 0:
+        return covariance
+    # Scale only the validation copy so finite matrices cannot overflow the spectrum.
+    eigenvalues = np.linalg.eigvalsh(covariance / scale)
     # Bound eigensolver roundoff relative to both matrix size and spectral scale.
     tolerance = np.finfo(eigenvalues.dtype).eps * len(eigenvalues) * np.max(np.abs(eigenvalues))
     if eigenvalues[0] < -tolerance:
