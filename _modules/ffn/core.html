@@ -2947,7 +2947,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * weights (Series): A series describing finite weights</span>
 <span class="sd">        * limit (float): Maximum weight allowed</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">limit</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">):</span>
+    <span class="c1"># Preserve invalid-limit behavior while avoiding reciprocal rounding at the feasible boundary.</span>
+    <span class="n">inverse_limit</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">limit</span>
+    <span class="k">if</span> <span class="n">inverse_limit</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">limit</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"invalid limit -&gt; 1 / limit must be &lt;= len(weights)"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
@@ -2963,7 +2965,11 @@ window.runMermaid = runMermaid;</script>
     <span class="n">to_rebalance</span> <span class="o">=</span> <span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">]</span> <span class="o">-</span> <span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
     <span class="n">ok</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&lt;</span> <span class="n">limit</span><span class="p">]</span>
-    <span class="n">ok</span> <span class="o">+=</span> <span class="p">(</span><span class="n">ok</span> <span class="o">/</span> <span class="n">ok</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="n">to_rebalance</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">ok</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="c1"># Once positive weights are capped, share remaining excess among zero weights.</span>
+        <span class="n">ok</span> <span class="o">+=</span> <span class="n">to_rebalance</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">ok</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ok</span> <span class="o">+=</span> <span class="p">(</span><span class="n">ok</span> <span class="o">/</span> <span class="n">ok</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">*</span> <span class="n">to_rebalance</span>
 
     <span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">]</span> <span class="o">=</span> <span class="n">limit</span>
     <span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&lt;</span> <span class="n">limit</span><span class="p">]</span> <span class="o">=</span> <span class="n">ok</span>
