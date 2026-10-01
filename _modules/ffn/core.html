@@ -478,6 +478,61 @@ window.runMermaid = runMermaid;</script>
 <span class="n">TRADING_DAYS_PER_YEAR</span> <span class="o">=</span> <span class="mi">252</span>
 <span class="n">_FLOATING_SCALAR_TYPES</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span>
 
+<span class="n">_STATISTICS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s2">"start"</span><span class="p">,</span> <span class="s2">"Start"</span><span class="p">,</span> <span class="s2">"dt"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"end"</span><span class="p">,</span> <span class="s2">"End"</span><span class="p">,</span> <span class="s2">"dt"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"rf"</span><span class="p">,</span> <span class="s2">"Risk-free rate"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"total_return"</span><span class="p">,</span> <span class="s2">"Total Return"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"cagr"</span><span class="p">,</span> <span class="s2">"CAGR"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"max_drawdown"</span><span class="p">,</span> <span class="s2">"Max Drawdown"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"calmar"</span><span class="p">,</span> <span class="s2">"Calmar Ratio"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"mtd"</span><span class="p">,</span> <span class="s2">"MTD"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"three_month"</span><span class="p">,</span> <span class="s2">"3m"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"six_month"</span><span class="p">,</span> <span class="s2">"6m"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"ytd"</span><span class="p">,</span> <span class="s2">"YTD"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"one_year"</span><span class="p">,</span> <span class="s2">"1Y"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"three_year"</span><span class="p">,</span> <span class="s2">"3Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"five_year"</span><span class="p">,</span> <span class="s2">"5Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"ten_year"</span><span class="p">,</span> <span class="s2">"10Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"incep"</span><span class="p">,</span> <span class="s2">"Since Incep. (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"daily_sharpe"</span><span class="p">,</span> <span class="s2">"Daily Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"daily_sortino"</span><span class="p">,</span> <span class="s2">"Daily Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"daily_mean"</span><span class="p">,</span> <span class="s2">"Daily Mean (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"daily_vol"</span><span class="p">,</span> <span class="s2">"Daily Vol (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"daily_skew"</span><span class="p">,</span> <span class="s2">"Daily Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"daily_kurt"</span><span class="p">,</span> <span class="s2">"Daily Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"best_day"</span><span class="p">,</span> <span class="s2">"Best Day"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"worst_day"</span><span class="p">,</span> <span class="s2">"Worst Day"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"monthly_sharpe"</span><span class="p">,</span> <span class="s2">"Monthly Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"monthly_sortino"</span><span class="p">,</span> <span class="s2">"Monthly Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"monthly_mean"</span><span class="p">,</span> <span class="s2">"Monthly Mean (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"monthly_vol"</span><span class="p">,</span> <span class="s2">"Monthly Vol (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"monthly_skew"</span><span class="p">,</span> <span class="s2">"Monthly Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"monthly_kurt"</span><span class="p">,</span> <span class="s2">"Monthly Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"best_month"</span><span class="p">,</span> <span class="s2">"Best Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"worst_month"</span><span class="p">,</span> <span class="s2">"Worst Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"yearly_sharpe"</span><span class="p">,</span> <span class="s2">"Yearly Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"yearly_sortino"</span><span class="p">,</span> <span class="s2">"Yearly Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"yearly_mean"</span><span class="p">,</span> <span class="s2">"Yearly Mean"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"yearly_vol"</span><span class="p">,</span> <span class="s2">"Yearly Vol"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"yearly_skew"</span><span class="p">,</span> <span class="s2">"Yearly Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"yearly_kurt"</span><span class="p">,</span> <span class="s2">"Yearly Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"best_year"</span><span class="p">,</span> <span class="s2">"Best Year"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"worst_year"</span><span class="p">,</span> <span class="s2">"Worst Year"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"avg_drawdown"</span><span class="p">,</span> <span class="s2">"Avg. Drawdown"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"avg_drawdown_days"</span><span class="p">,</span> <span class="s2">"Avg. Drawdown Days"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"avg_up_month"</span><span class="p">,</span> <span class="s2">"Avg. Up Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"avg_down_month"</span><span class="p">,</span> <span class="s2">"Avg. Down Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"win_year_perc"</span><span class="p">,</span> <span class="s2">"Win Year %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">"twelve_month_win_perc"</span><span class="p">,</span> <span class="s2">"Win 12m %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+<span class="p">)</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_prices_index</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Require datetime price indexes to be monotonic increasing."""</span>
@@ -925,62 +980,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">stats</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">"start"</span><span class="p">,</span> <span class="s2">"Start"</span><span class="p">,</span> <span class="s2">"dt"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"end"</span><span class="p">,</span> <span class="s2">"End"</span><span class="p">,</span> <span class="s2">"dt"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"rf"</span><span class="p">,</span> <span class="s2">"Risk-free rate"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"total_return"</span><span class="p">,</span> <span class="s2">"Total Return"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"cagr"</span><span class="p">,</span> <span class="s2">"CAGR"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"max_drawdown"</span><span class="p">,</span> <span class="s2">"Max Drawdown"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"calmar"</span><span class="p">,</span> <span class="s2">"Calmar Ratio"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"mtd"</span><span class="p">,</span> <span class="s2">"MTD"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"three_month"</span><span class="p">,</span> <span class="s2">"3m"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"six_month"</span><span class="p">,</span> <span class="s2">"6m"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"ytd"</span><span class="p">,</span> <span class="s2">"YTD"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"one_year"</span><span class="p">,</span> <span class="s2">"1Y"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"three_year"</span><span class="p">,</span> <span class="s2">"3Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"five_year"</span><span class="p">,</span> <span class="s2">"5Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"ten_year"</span><span class="p">,</span> <span class="s2">"10Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"incep"</span><span class="p">,</span> <span class="s2">"Since Incep. (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_sharpe"</span><span class="p">,</span> <span class="s2">"Daily Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_sortino"</span><span class="p">,</span> <span class="s2">"Daily Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_mean"</span><span class="p">,</span> <span class="s2">"Daily Mean (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_vol"</span><span class="p">,</span> <span class="s2">"Daily Vol (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_skew"</span><span class="p">,</span> <span class="s2">"Daily Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_kurt"</span><span class="p">,</span> <span class="s2">"Daily Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"best_day"</span><span class="p">,</span> <span class="s2">"Best Day"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"worst_day"</span><span class="p">,</span> <span class="s2">"Worst Day"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_sharpe"</span><span class="p">,</span> <span class="s2">"Monthly Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_sortino"</span><span class="p">,</span> <span class="s2">"Monthly Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_mean"</span><span class="p">,</span> <span class="s2">"Monthly Mean (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_vol"</span><span class="p">,</span> <span class="s2">"Monthly Vol (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_skew"</span><span class="p">,</span> <span class="s2">"Monthly Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_kurt"</span><span class="p">,</span> <span class="s2">"Monthly Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"best_month"</span><span class="p">,</span> <span class="s2">"Best Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"worst_month"</span><span class="p">,</span> <span class="s2">"Worst Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_sharpe"</span><span class="p">,</span> <span class="s2">"Yearly Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_sortino"</span><span class="p">,</span> <span class="s2">"Yearly Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_mean"</span><span class="p">,</span> <span class="s2">"Yearly Mean"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_vol"</span><span class="p">,</span> <span class="s2">"Yearly Vol"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_skew"</span><span class="p">,</span> <span class="s2">"Yearly Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_kurt"</span><span class="p">,</span> <span class="s2">"Yearly Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"best_year"</span><span class="p">,</span> <span class="s2">"Best Year"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"worst_year"</span><span class="p">,</span> <span class="s2">"Worst Year"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_drawdown"</span><span class="p">,</span> <span class="s2">"Avg. Drawdown"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_drawdown_days"</span><span class="p">,</span> <span class="s2">"Avg. Drawdown Days"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_up_month"</span><span class="p">,</span> <span class="s2">"Avg. Up Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_down_month"</span><span class="p">,</span> <span class="s2">"Avg. Down Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"win_year_perc"</span><span class="p">,</span> <span class="s2">"Win Year %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"twelve_month_win_perc"</span><span class="p">,</span> <span class="s2">"Win 12m %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-        <span class="p">]</span>
-
-        <span class="k">return</span> <span class="n">stats</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">_STATISTICS</span><span class="p">)</span>
 
 <div class="viewcode-block" id="PerformanceStats.set_date_range">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.PerformanceStats.set_date_range">[docs]</a>
@@ -1398,61 +1398,10 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">stats</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">(</span><span class="s2">"start"</span><span class="p">,</span> <span class="s2">"Start"</span><span class="p">,</span> <span class="s2">"dt"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"end"</span><span class="p">,</span> <span class="s2">"End"</span><span class="p">,</span> <span class="s2">"dt"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"rf"</span><span class="p">,</span> <span class="s2">"Risk-free rate"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"total_return"</span><span class="p">,</span> <span class="s2">"Total Return"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">_STATISTICS</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">(</span><span class="s2">"daily_sharpe"</span><span class="p">,</span> <span class="s2">"Daily Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"daily_sortino"</span><span class="p">,</span> <span class="s2">"Daily Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"cagr"</span><span class="p">,</span> <span class="s2">"CAGR"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"max_drawdown"</span><span class="p">,</span> <span class="s2">"Max Drawdown"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"calmar"</span><span class="p">,</span> <span class="s2">"Calmar Ratio"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"mtd"</span><span class="p">,</span> <span class="s2">"MTD"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"three_month"</span><span class="p">,</span> <span class="s2">"3m"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"six_month"</span><span class="p">,</span> <span class="s2">"6m"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"ytd"</span><span class="p">,</span> <span class="s2">"YTD"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"one_year"</span><span class="p">,</span> <span class="s2">"1Y"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"three_year"</span><span class="p">,</span> <span class="s2">"3Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"five_year"</span><span class="p">,</span> <span class="s2">"5Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"ten_year"</span><span class="p">,</span> <span class="s2">"10Y (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"incep"</span><span class="p">,</span> <span class="s2">"Since Incep. (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_sharpe"</span><span class="p">,</span> <span class="s2">"Daily Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_sortino"</span><span class="p">,</span> <span class="s2">"Daily Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_mean"</span><span class="p">,</span> <span class="s2">"Daily Mean (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_vol"</span><span class="p">,</span> <span class="s2">"Daily Vol (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_skew"</span><span class="p">,</span> <span class="s2">"Daily Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"daily_kurt"</span><span class="p">,</span> <span class="s2">"Daily Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"best_day"</span><span class="p">,</span> <span class="s2">"Best Day"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"worst_day"</span><span class="p">,</span> <span class="s2">"Worst Day"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_sharpe"</span><span class="p">,</span> <span class="s2">"Monthly Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_sortino"</span><span class="p">,</span> <span class="s2">"Monthly Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_mean"</span><span class="p">,</span> <span class="s2">"Monthly Mean (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_vol"</span><span class="p">,</span> <span class="s2">"Monthly Vol (ann.)"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_skew"</span><span class="p">,</span> <span class="s2">"Monthly Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"monthly_kurt"</span><span class="p">,</span> <span class="s2">"Monthly Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"best_month"</span><span class="p">,</span> <span class="s2">"Best Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"worst_month"</span><span class="p">,</span> <span class="s2">"Worst Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_sharpe"</span><span class="p">,</span> <span class="s2">"Yearly Sharpe"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_sortino"</span><span class="p">,</span> <span class="s2">"Yearly Sortino"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_mean"</span><span class="p">,</span> <span class="s2">"Yearly Mean"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_vol"</span><span class="p">,</span> <span class="s2">"Yearly Vol"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_skew"</span><span class="p">,</span> <span class="s2">"Yearly Skew"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"yearly_kurt"</span><span class="p">,</span> <span class="s2">"Yearly Kurt"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"best_year"</span><span class="p">,</span> <span class="s2">"Best Year"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"worst_year"</span><span class="p">,</span> <span class="s2">"Worst Year"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_drawdown"</span><span class="p">,</span> <span class="s2">"Avg. Drawdown"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_drawdown_days"</span><span class="p">,</span> <span class="s2">"Avg. Drawdown Days"</span><span class="p">,</span> <span class="s2">"n"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_up_month"</span><span class="p">,</span> <span class="s2">"Avg. Up Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"avg_down_month"</span><span class="p">,</span> <span class="s2">"Avg. Down Month"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"win_year_perc"</span><span class="p">,</span> <span class="s2">"Win Year %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
-            <span class="p">(</span><span class="s2">"twelve_month_win_perc"</span><span class="p">,</span> <span class="s2">"Win 12m %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
         <span class="p">]</span>
 
         <span class="k">return</span> <span class="n">stats</span>
