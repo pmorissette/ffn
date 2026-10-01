@@ -768,6 +768,114 @@ def test_calc_mean_var_weights_rejects_duplicate_columns(covar_method, use_panda
     pd.testing.assert_frame_equal(returns, original)
 
 
+@mark.parametrize("return_scale", [1e-6, 1.0, 1e6])
+def test_standard_covariance_rejects_indefinite_before_solver(monkeypatch, return_scale):
+    returns = return_scale * pd.DataFrame(
+        [
+            [2.0, np.nan, 0.0],
+            [np.nan, -1.0, -3.0],
+            [-3.0, -3.0, np.nan],
+            [np.nan, 1.0, 3.0],
+            [0.0, 1.0, 3.0],
+            [2.0, 1.0, 0.0],
+            [0.0, 3.0, np.nan],
+            [2.0, 1.0, -3.0],
+        ],
+        columns=list("ABC"),
+    )
+    original = returns.copy(deep=True)
+    covariance = returns.cov().to_numpy(dtype=float)
+
+    # A negative determinant independently disproves positive semidefiniteness here.
+    assert np.linalg.det(covariance) < 0
+
+    def unexpected_solver(*args, **kwargs):
+        raise AssertionError("solver must not receive an indefinite covariance")
+
+    monkeypatch.setattr(ffn.core, "minimize", unexpected_solver)
+    monkeypatch.setattr(ffn.core, "_erc_weights_ccd", unexpected_solver)
+
+    with raises(ValueError, match="standard covariance matrix must be positive semidefinite"):
+        ffn.calc_mean_var_weights(returns, covar_method="standard")
+    with raises(ValueError, match="standard covariance matrix must be positive semidefinite"):
+        returns.calc_erc_weights(covar_method="standard")
+
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("return_scale", [1e-160, 1.0, np.sqrt(8e307)])
+@mark.parametrize("method", ["mean-var", "ccd", "slsqp"])
+def test_standard_covariance_rejects_indefinite_at_extreme_scales(monkeypatch, return_scale, method):
+    returns = return_scale * pd.DataFrame([[1.0, 1.0], [-1.0, -1.0], [0.0, np.nan], [np.nan, 0.0]], columns=["A", "B"])
+    original = returns.copy(deep=True)
+    covariance = returns.cov().to_numpy()
+    assert np.isfinite(covariance).all()
+    # A negative portfolio variance disproves PSD without relying on eigenvalues.
+    direction = np.array([1.0, -1.0])
+    assert direction @ (covariance / np.abs(covariance).max()) @ direction < 0
+
+    def unexpected_solver(*args, **kwargs):
+        raise AssertionError("solver must not receive an indefinite covariance")
+
+    monkeypatch.setattr(ffn.core, "minimize", unexpected_solver)
+    monkeypatch.setattr(ffn.core, "_erc_weights_ccd", unexpected_solver)
+    monkeypatch.setattr(ffn.core, "_erc_weights_slsqp", unexpected_solver)
+
+    with raises(ValueError, match="standard covariance matrix must be positive semidefinite"):
+        if method == "mean-var":
+            ffn.calc_mean_var_weights(returns, covar_method="standard")
+        else:
+            returns.calc_erc_weights(covar_method="standard", risk_parity_method=method)
+
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("scale", [1e-300, 1e-12, 1.0, 1e12, 1e308])
+def test_standard_covariance_allows_rounding_negative_eigenvalue(monkeypatch, scale):
+    returns = pd.DataFrame([[0.0, 0.0], [1.0, 1.0]], columns=["A", "B"])
+    epsilon = np.finfo(float).eps
+    # Create a one-epsilon negative eigenvalue to exercise the scale-aware roundoff allowance.
+    covariance = pd.DataFrame(
+        np.array([[1.0, 1.0 + epsilon], [1.0 + epsilon, 1.0]]) * scale,
+        index=returns.columns,
+        columns=returns.columns,
+    )
+    assert np.linalg.eigvalsh(covariance.to_numpy())[0] < 0
+    calls = []
+
+    monkeypatch.setattr(pd.DataFrame, "cov", lambda self: covariance)
+
+    def fake_minimize(*args, **kwargs):
+        calls.append("mean-var")
+        return type("Result", (), {"success": True, "x": np.array([0.5, 0.5])})()
+
+    def fake_ccd(*args, **kwargs):
+        calls.append("erc")
+        return np.array([0.5, 0.5])
+
+    monkeypatch.setattr(ffn.core, "minimize", fake_minimize)
+    monkeypatch.setattr(ffn.core, "_erc_weights_ccd", fake_ccd)
+
+    ffn.calc_mean_var_weights(returns, covar_method="standard")
+    returns.calc_erc_weights(covar_method="standard")
+
+    assert calls == ["mean-var", "erc"]
+
+
+@mark.parametrize("values", [[[0.0, 0.0], [0.0, 0.0]], [[1.0, 1.0], [1.0, 1.0]], [[1.0, 0.25], [0.25, 1.0]]])
+@mark.parametrize("scale", [1e-300, 1.0, 1e308])
+def test_standard_covariance_preserves_valid_matrix(monkeypatch, values, scale):
+    returns = pd.DataFrame([[0.0, 0.0], [1.0, 1.0]], columns=["A", "B"])
+    covariance = pd.DataFrame(np.array(values) * scale, index=returns.columns, columns=returns.columns)
+    original = covariance.copy(deep=True)
+    monkeypatch.setattr(pd.DataFrame, "cov", lambda self: covariance)
+
+    actual = ffn.core._calc_standard_covariance(returns)
+
+    np.testing.assert_array_equal(actual, original.to_numpy())
+    pd.testing.assert_frame_equal(covariance, original)
+
+
 def test_calc_erc_weights(df):
     prc = df.iloc[0:11]
     rets = prc.to_returns().dropna()
