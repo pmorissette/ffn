@@ -2377,7 +2377,11 @@ def limit_weights(weights, limit=0.1):
     to_rebalance = (res[res > limit] - limit).sum()
 
     ok = res[res < limit]
-    ok += (ok / ok.sum()) * to_rebalance
+    if len(ok) and (ok == 0).all():
+        # Once positive weights are capped, share remaining excess among zero weights.
+        ok += to_rebalance / len(ok)
+    else:
+        ok += (ok / ok.sum()) * to_rebalance
 
     res[res > limit] = limit
     res[res < limit] = ok
