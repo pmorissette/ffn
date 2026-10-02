@@ -2899,6 +2899,101 @@ def test_numpy_floating_risk_free_rates_work_in_stats():
         assert zero_stats.daily_sharpe == expected_zero.daily_sharpe
 
 
+def _assert_attribute_graph_unchanged(obj, expected):
+    """Require a rejected state transition to preserve every attribute object."""
+    assert obj.__dict__.keys() == expected.keys()
+    for name, value in expected.items():
+        assert obj.__dict__[name] is value, name
+
+
+def test_performance_stats_failed_riskfree_update_preserves_state():
+    """Reject incompatible risk-free prices without partially updating statistics."""
+    dates = pd.date_range("2024-01-01", periods=8, tz="UTC")
+    prices = pd.Series([100.0, 101.0, 99.0, 102.0, 104.0, 103.0, 106.0, 108.0], index=dates, name="asset")
+    invalid_rf = pd.Series(np.linspace(100.0, 101.0, len(dates)), index=dates.tz_localize(None), name="rf")
+    original_rf = invalid_rf.copy()
+    stats = ffn.PerformanceStats(prices, rf=0.03, annualization_factor=365)
+    original_state = stats.__dict__.copy()
+
+    with raises(TypeError, match="tz-naive and tz-aware"):
+        stats.set_riskfree_rate(invalid_rf)
+
+    _assert_attribute_graph_unchanged(stats, original_state)
+    pd.testing.assert_series_equal(invalid_rf, original_rf)
+
+
+def test_group_stats_failed_riskfree_update_preserves_all_children():
+    """Stage every child so one rejected update cannot leave a partially changed group."""
+    dates = pd.date_range("2024-01-01", periods=8, tz="UTC")
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 99.0, 102.0, 104.0, 103.0, 106.0, 108.0],
+            "B": [80.0, 79.0, 81.0, 82.0, 81.0, 84.0, 83.0, 86.0],
+        },
+        index=dates,
+    )
+    invalid_rf = pd.Series(np.linspace(100.0, 101.0, len(dates)), index=dates.tz_localize(None), name="rf")
+    original_rf = invalid_rf.copy()
+    stats = ffn.GroupStats(prices, annualization_factor=365)
+    stats.set_riskfree_rate(0.03)
+    original_state = stats.__dict__.copy()
+    original_children = {name: stats[name] for name in stats._names}
+    original_child_states = {name: child.__dict__.copy() for name, child in original_children.items()}
+
+    with raises(TypeError, match="tz-naive and tz-aware"):
+        stats.set_riskfree_rate(invalid_rf)
+
+    _assert_attribute_graph_unchanged(stats, original_state)
+    assert all(stats[name] is original_children[name] for name in stats._names)
+    for name in stats._names:
+        _assert_attribute_graph_unchanged(stats[name], original_child_states[name])
+    pd.testing.assert_series_equal(invalid_rf, original_rf)
+
+    # A later valid transition must still commit through the existing child objects.
+    stats.set_riskfree_rate(0.05)
+    expected = ffn.GroupStats(prices, annualization_factor=365)
+    expected.set_riskfree_rate(0.05)
+    assert all(stats[name] is original_children[name] for name in stats._names)
+    pd.testing.assert_frame_equal(stats.stats, expected.stats)
+    pd.testing.assert_frame_equal(stats.lookback_returns, expected.lookback_returns)
+
+
+def test_group_stats_later_riskfree_failure_preserves_all_children(monkeypatch):
+    """Do not commit an earlier staged child when a later child rejects the update."""
+    dates = pd.date_range("2024-01-01", periods=8)
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 99.0, 102.0, 104.0, 103.0, 106.0, 108.0],
+            "B": [80.0, 79.0, 81.0, 82.0, 81.0, 84.0, 83.0, 86.0],
+        },
+        index=dates,
+    )
+    stats = ffn.GroupStats(prices, annualization_factor=365)
+    stats.set_riskfree_rate(0.03)
+    original_state = stats.__dict__.copy()
+    original_children = {name: stats[name] for name in stats._names}
+    original_child_states = {name: child.__dict__.copy() for name, child in original_children.items()}
+    original_setter = ffn.core.PerformanceStats.set_riskfree_rate
+    updated_names = []
+
+    def reject_second_child(child, rf):
+        updated_names.append(child.name)
+        if child.name == "B":
+            raise RuntimeError("second child rejected the risk-free rate")
+        original_setter(child, rf)
+
+    monkeypatch.setattr(ffn.core.PerformanceStats, "set_riskfree_rate", reject_second_child)
+
+    with raises(RuntimeError, match="second child rejected"):
+        stats.set_riskfree_rate(0.05)
+
+    assert updated_names == ["A", "B"]
+    _assert_attribute_graph_unchanged(stats, original_state)
+    assert all(stats[name] is original_children[name] for name in stats._names)
+    for name in stats._names:
+        _assert_attribute_graph_unchanged(stats[name], original_child_states[name])
+
+
 def test_set_riskfree_rate(df):
     r = df.to_returns()
 
