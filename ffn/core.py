@@ -1226,6 +1226,10 @@ def to_price_index(returns, start=100):
     the round-trip ``to_returns(to_price_index(r))`` recovers the
     non-missing returns.
 
+    Prepending ``start`` requires a DatetimeIndex or RangeIndex to derive
+    a baseline label. Other index types raise TypeError in this case;
+    they remain supported when the first row is entirely missing.
+
     Formula is: start, start * cumprod(1+r)
     """
     r = returns.replace(to_replace=np.nan, value=0)
@@ -1255,6 +1259,8 @@ def to_price_index(returns, start=100):
             start_index -= pd.Timedelta(days=1)
     elif isinstance(cp.index, pd.RangeIndex):
         start_index -= cp.index.step
+    else:
+        raise TypeError("Prepending a price baseline requires a DatetimeIndex or RangeIndex")
 
     if isinstance(cp, pd.DataFrame):
         start_row = pd.DataFrame(start, columns=cp.columns, index=[start_index])
