@@ -126,7 +126,8 @@ class PerformanceStats:
             rf should be a *price* series — it is converted internally with
             to_returns(). Note this differs from calc_sharpe and
             calc_sortino_ratio, which take rf as a return series. Passing a
-            return series here silently behaves like rf=0.
+            return series here treats its values as price levels rather than
+            returns, so it does not generally behave like rf=0.
             Daily statistics use risk-free prices on the asset's own observed daily
             endpoints; an interval missing either risk-free price is excluded, not filled.
 
