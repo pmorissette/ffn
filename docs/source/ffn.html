@@ -569,9 +569,10 @@ DataFrame of returns.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>returns</strong> (<em>*</em>) – Returns for multiple securities.</p></li>
+<li><p><strong>returns</strong> (<em>*</em>) – Returns for multiple securities with unique column labels.</p></li>
 <li><p><strong>initial_weights</strong> (<em>*</em>) – Starting asset weights [default inverse vol].</p></li>
-<li><p><strong>risk_weights</strong> (<em>*</em>) – Risk target weights [default equal weight].</p></li>
+<li><p><strong>risk_weights</strong> (<em>*</em>) – Finite, nonnegative relative risk targets, one per
+return column and with at least one positive value [default equal weight].</p></li>
 <li><p><strong>covar_method</strong> (<em>*</em>) – Covariance matrix estimation method:
 <a class="reference external" href="http://www.ledoit.net/honey.pdf">ledoit-wolf</a> (default) or <code class="docutils literal notranslate"><span class="pre">standard</span></code>.</p></li>
 <li><p><strong>risk_parity_method</strong> (<em>*</em>) – Risk parity estimation method:
@@ -588,7 +589,10 @@ DataFrame of returns.</p>
 <dd class="field-odd"><p>Series {col_name</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>* ValueError</strong> – If the standard covariance matrix is not positive semidefinite.</p>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>* ValueError</strong> – If the standard covariance matrix is not positive semidefinite.</p></li>
+<li><p><strong>* ValueError</strong> – If return columns are duplicated or risk targets are invalid.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

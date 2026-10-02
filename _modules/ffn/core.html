@@ -2528,12 +2528,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    http://thierry-roncalli.com/download/erc.pdf</span>
 
 <span class="sd">    """</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-    <span class="c1"># Keep SLSQP's finite-difference steps visible with low-precision targets.</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># Scale before summing so finite positive targets cannot overflow their total.</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
-    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
     <span class="n">covariance_scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">cov</span><span class="p">))</span>
     <span class="c1"># Keep SLSQP's absolute tolerance independent of the units used for returns.</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">covariance_scale</span><span class="p">)</span> <span class="ow">and</span> <span class="n">covariance_scale</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -2638,9 +2632,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    DataFrame of returns.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * returns (DataFrame): Returns for multiple securities.</span>
-<span class="sd">        * initial_weights (list): Starting asset weights [default inverse vol].</span>
-<span class="sd">        * risk_weights (list): Risk target weights [default equal weight].</span>
+<span class="sd">        * returns (DataFrame): Returns for multiple securities with unique column labels.</span>
+<span class="sd">        * initial_weights (array-like): Starting asset weights [default inverse vol].</span>
+<span class="sd">        * risk_weights (array-like): Finite, nonnegative relative risk targets, one per</span>
+<span class="sd">          return column and with at least one positive value [default equal weight].</span>
 <span class="sd">        * covar_method (str): Covariance matrix estimation method:</span>
 <span class="sd">          `ledoit-wolf &lt;http://www.ledoit.net/honey.pdf&gt;`_ (default) or ``standard``.</span>
 <span class="sd">        * risk_parity_method (str): Risk parity estimation method:</span>
@@ -2654,9 +2649,31 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        * ValueError: If the standard covariance matrix is not positive semidefinite.</span>
+<span class="sd">        * ValueError: If return columns are duplicated or risk targets are invalid.</span>
 
 <span class="sd">    """</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">returns</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">is_unique</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"returns columns must be unique"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">risk_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">risk_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">risk_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">risk_weights</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">risk_weights</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">n</span><span class="p">,):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"risk_weights must have one value per return column"</span><span class="p">)</span>
+    <span class="c1"># Promote before comparisons and reductions, then scale before summing to avoid overflow.</span>
+    <span class="k">if</span> <span class="n">risk_weights</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">"biufO"</span> <span class="ow">or</span> <span class="p">(</span><span class="n">risk_weights</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"O"</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">iscomplexobj</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">risk_weights</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"risk_weights must contain real numeric values"</span><span class="p">)</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span> <span class="k">if</span> <span class="n">risk_weights</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"O"</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">risk_weights</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">risk_weights</span> <span class="o">=</span> <span class="n">risk_weights</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"risk_weights must contain real numeric values"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">risk_weights</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">risk_weights</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span><span class="n">risk_weights</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"risk_weights must be finite and nonnegative with a positive total"</span><span class="p">)</span>
+    <span class="n">risk_weights</span> <span class="o">=</span> <span class="n">risk_weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">risk_weights</span><span class="p">)</span>
+    <span class="n">risk_weights</span> <span class="o">=</span> <span class="n">risk_weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">risk_weights</span><span class="p">)</span>
 
     <span class="c1"># calc covariance matrix</span>
     <span class="k">if</span> <span class="n">covar_method</span> <span class="o">==</span> <span class="s2">"ledoit-wolf"</span><span class="p">:</span>
@@ -2670,10 +2687,9 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">initial_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">inv_vol</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diagonal</span><span class="p">(</span><span class="n">covar</span><span class="p">))</span>
         <span class="n">initial_weights</span> <span class="o">=</span> <span class="n">inv_vol</span> <span class="o">/</span> <span class="n">inv_vol</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
-
-    <span class="c1"># default to equal risk weight</span>
-    <span class="k">if</span> <span class="n">risk_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">risk_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">initial_weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)</span>
+        <span class="n">initial_weights</span> <span class="o">=</span> <span class="n">initial_weights</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">result_type</span><span class="p">(</span><span class="n">initial_weights</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">),</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># calc risk parity weights matrix</span>
     <span class="k">if</span> <span class="n">risk_parity_method</span> <span class="o">==</span> <span class="s2">"ccd"</span><span class="p">:</span>
