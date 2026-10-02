@@ -1954,12 +1954,6 @@ def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):
     http://thierry-roncalli.com/download/erc.pdf
 
     """
-    b = np.asarray(b)
-    # Keep SLSQP's finite-difference steps visible with low-precision targets.
-    b = b.astype(np.result_type(b.dtype, np.float64), copy=False)
-    # Scale before summing so finite positive targets cannot overflow their total.
-    b = b / np.max(b)
-    b = b / np.sum(b)
     covariance_scale = np.mean(np.diagonal(cov))
     # Keep SLSQP's absolute tolerance independent of the units used for returns.
     if np.isfinite(covariance_scale) and covariance_scale > 0:
@@ -2062,9 +2056,10 @@ def calc_erc_weights(
     DataFrame of returns.
 
     Args:
-        * returns (DataFrame): Returns for multiple securities.
-        * initial_weights (list): Starting asset weights [default inverse vol].
-        * risk_weights (list): Risk target weights [default equal weight].
+        * returns (DataFrame): Returns for multiple securities with unique column labels.
+        * initial_weights (array-like): Starting asset weights [default inverse vol].
+        * risk_weights (array-like): Finite, nonnegative relative risk targets, one per
+          return column and with at least one positive value [default equal weight].
         * covar_method (str): Covariance matrix estimation method:
           `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_ (default) or ``standard``.
         * risk_parity_method (str): Risk parity estimation method:
@@ -2078,9 +2073,31 @@ def calc_erc_weights(
 
     Raises:
         * ValueError: If the standard covariance matrix is not positive semidefinite.
+        * ValueError: If return columns are duplicated or risk targets are invalid.
 
     """
     n = len(returns.columns)
+
+    if not returns.columns.is_unique:
+        raise ValueError("returns columns must be unique")
+
+    if risk_weights is None:
+        risk_weights = np.ones(n)
+    risk_weights = np.asarray(risk_weights)
+    if risk_weights.shape != (n,):
+        raise ValueError("risk_weights must have one value per return column")
+    # Promote before comparisons and reductions, then scale before summing to avoid overflow.
+    if risk_weights.dtype.kind not in "biufO" or (risk_weights.dtype.kind == "O" and any(np.iscomplexobj(value) for value in risk_weights)):
+        raise ValueError("risk_weights must contain real numeric values")
+    dtype = np.float64 if risk_weights.dtype.kind == "O" else np.result_type(risk_weights.dtype, np.float64)
+    try:
+        risk_weights = risk_weights.astype(dtype, copy=False)
+    except (TypeError, ValueError) as error:
+        raise ValueError("risk_weights must contain real numeric values") from error
+    if not np.isfinite(risk_weights).all() or (risk_weights < 0).any() or not (risk_weights > 0).any():
+        raise ValueError("risk_weights must be finite and nonnegative with a positive total")
+    risk_weights = risk_weights / np.max(risk_weights)
+    risk_weights = risk_weights / np.sum(risk_weights)
 
     # calc covariance matrix
     if covar_method == "ledoit-wolf":
@@ -2094,10 +2111,9 @@ def calc_erc_weights(
     if initial_weights is None:
         inv_vol = 1.0 / np.sqrt(np.diagonal(covar))
         initial_weights = inv_vol / inv_vol.sum()
-
-    # default to equal risk weight
-    if risk_weights is None:
-        risk_weights = np.ones(n) / n
+    else:
+        initial_weights = np.asarray(initial_weights)
+        initial_weights = initial_weights.astype(np.result_type(initial_weights.dtype, np.float64), copy=False)
 
     # calc risk parity weights matrix
     if risk_parity_method == "ccd":

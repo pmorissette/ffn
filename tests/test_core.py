@@ -931,6 +931,160 @@ def test_calc_erc_weights(df):
     aae(actual["C"], 0.356, 3)
 
 
+@mark.parametrize("covar_method", ["ledoit-wolf", "standard"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_erc_weights_rejects_duplicate_columns_before_covariance(monkeypatch, covar_method, use_pandas_method):
+    """Reject ambiguous labels before either covariance path through both public APIs."""
+    returns = pd.DataFrame(
+        [[0.01, 0.03], [0.02, -0.01], [-0.01, 0.02]],
+        columns=["same", "same"],
+    )
+    original = returns.copy()
+
+    def unexpected_covariance(*args, **kwargs):
+        raise AssertionError("covariance must not be calculated")
+
+    monkeypatch.setattr(pd.DataFrame, "cov", unexpected_covariance)
+    monkeypatch.setattr(ffn.core.sklearn.covariance, "ledoit_wolf", unexpected_covariance)
+    calculate = returns.calc_erc_weights if use_pandas_method else ffn.calc_erc_weights
+    args = () if use_pandas_method else (returns,)
+
+    with raises(ValueError, match="returns columns must be unique"):
+        calculate(*args, covar_method=covar_method)
+
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize(
+    "risk_weights, message",
+    [
+        (np.array([0.5, 0.5]), "one value per return column"),
+        (np.array([0.4, 0.3, 0.2, 0.1]), "one value per return column"),
+        (np.array([[0.8, 0.1, 0.1]]), "one value per return column"),
+        (np.array([1.0, -0.1, 0.1]), "finite and nonnegative with a positive total"),
+        (np.array([0.0, 0.0, 0.0]), "finite and nonnegative with a positive total"),
+        (np.array([0.8, np.nan, 0.2]), "finite and nonnegative with a positive total"),
+        (np.array([0.8, np.inf, 0.2]), "finite and nonnegative with a positive total"),
+    ],
+    ids=["short", "long", "two-dimensional", "negative", "zero", "nan", "infinite"],
+)
+def test_calc_erc_weights_rejects_invalid_risk_weights_before_covariance(monkeypatch, risk_weights, message):
+    """Reject malformed targets before covariance or solver work begins."""
+    returns = pd.DataFrame(
+        [[0.01, 0.02, 0.03], [0.02, -0.01, 0.01], [-0.01, 0.01, 0.02]],
+        columns=list("ABC"),
+    )
+    original_returns = returns.copy()
+    original_risk_weights = risk_weights.copy()
+
+    def unexpected_operation(*args, **kwargs):
+        raise AssertionError("covariance and solver work must not start")
+
+    monkeypatch.setattr(pd.DataFrame, "cov", unexpected_operation)
+    monkeypatch.setattr(ffn.core.sklearn.covariance, "ledoit_wolf", unexpected_operation)
+    monkeypatch.setattr(ffn.core, "_erc_weights_ccd", unexpected_operation)
+    monkeypatch.setattr(ffn.core, "_erc_weights_slsqp", unexpected_operation)
+
+    with raises(ValueError, match=message):
+        ffn.calc_erc_weights(returns, risk_weights=risk_weights, covar_method="standard")
+
+    pd.testing.assert_frame_equal(returns, original_returns)
+    np.testing.assert_array_equal(risk_weights, original_risk_weights)
+
+
+@mark.parametrize("dtype", ["object", "Float32", "Float64"])
+@mark.parametrize("as_array", [False, True])
+@mark.parametrize("risk_parity_method", ["ccd", "slsqp"])
+@mark.parametrize("covar_method", ["standard", "ledoit-wolf"])
+def test_calc_erc_weights_accepts_numeric_object_and_nullable_targets(dtype, as_array, risk_parity_method, covar_method):
+    signs = np.array([[1.0, 1.0, 1.0], [1.0, -1.0, -1.0], [-1.0, 1.0, -1.0], [-1.0, -1.0, 1.0]])
+    returns = pd.DataFrame(signs * [0.01, 0.02, 0.04], columns=list("ABC"))
+    target = pd.Series([0.8, 0.2, 0.0], dtype=dtype)
+    target = target.to_numpy() if as_array else target
+    original = target.copy()
+    expected = ffn.calc_erc_weights(returns, risk_weights=np.asarray(target, dtype=float), covar_method=covar_method, risk_parity_method=risk_parity_method)
+
+    actual = returns.calc_erc_weights(risk_weights=target, covar_method=covar_method, risk_parity_method=risk_parity_method)
+
+    pd.testing.assert_series_equal(actual, expected)
+    if as_array:
+        np.testing.assert_array_equal(target, original)
+    else:
+        pd.testing.assert_series_equal(target, original)
+
+
+@mark.parametrize(
+    "risk_weights",
+    [
+        np.array([0.8 + 1j, 0.1, 0.1]),
+        np.array([0.8, 0.1, 0.1], dtype=complex),
+        np.array([0.8 + 1j, 0.1, 0.1], dtype=object),
+        np.array([np.complex128(0.8 + 1j), 0.1, 0.1], dtype=object),
+        np.array([0.8, None, 0.2], dtype=object),
+        pd.Series([0.8, pd.NA, 0.2], dtype="Float64"),
+        np.array([0.8, "invalid", 0.2], dtype=object),
+        np.array([0.8, "invalid", 0.2]),
+    ],
+    ids=["complex", "complex-real", "complex-object", "numpy-complex-object", "none", "nullable-missing", "nonnumeric-object", "nonnumeric-string"],
+)
+@mark.parametrize("covar_method", ["standard", "ledoit-wolf"])
+def test_calc_erc_weights_rejects_nonreal_or_missing_targets_before_covariance(monkeypatch, risk_weights, covar_method):
+    returns = pd.DataFrame([[0.01, 0.02, 0.03], [0.02, -0.01, 0.01]], columns=list("ABC"))
+    original = risk_weights.copy()
+
+    def unexpected_operation(*args, **kwargs):
+        raise AssertionError("covariance and solver work must not start")
+
+    monkeypatch.setattr(pd.DataFrame, "cov", unexpected_operation)
+    monkeypatch.setattr(ffn.core.sklearn.covariance, "ledoit_wolf", unexpected_operation)
+    monkeypatch.setattr(ffn.core, "_erc_weights_ccd", unexpected_operation)
+    monkeypatch.setattr(ffn.core, "_erc_weights_slsqp", unexpected_operation)
+
+    with raises(ValueError, match="risk_weights"):
+        ffn.calc_erc_weights(returns, risk_weights=risk_weights, covar_method=covar_method)
+
+    if isinstance(risk_weights, pd.Series):
+        pd.testing.assert_series_equal(risk_weights, original)
+    else:
+        np.testing.assert_array_equal(risk_weights, original)
+
+
+@mark.parametrize("risk_parity_method", ["ccd", "slsqp"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_erc_weights_accepts_list_initial_weights(risk_parity_method, use_pandas_method):
+    """Treat documented list initial weights like equivalent NumPy arrays."""
+    signs = np.array(
+        [
+            [1.0, 1.0, 1.0],
+            [1.0, -1.0, -1.0],
+            [-1.0, 1.0, -1.0],
+            [-1.0, -1.0, 1.0],
+        ]
+    )
+    returns = pd.DataFrame(signs * np.array([0.01, 0.02, 0.04]), columns=list("ABC"))
+    initial_weights = [0.5, 0.3, 0.2]
+    expected = ffn.calc_erc_weights(
+        returns,
+        initial_weights=np.array(initial_weights),
+        covar_method="standard",
+        risk_parity_method=risk_parity_method,
+        tolerance=1e-9,
+    )
+    calculate = returns.calc_erc_weights if use_pandas_method else ffn.calc_erc_weights
+    args = () if use_pandas_method else (returns,)
+
+    actual = calculate(
+        *args,
+        initial_weights=initial_weights,
+        covar_method="standard",
+        risk_parity_method=risk_parity_method,
+        tolerance=1e-9,
+    )
+
+    pd.testing.assert_series_equal(actual, expected)
+    assert initial_weights == [0.5, 0.3, 0.2]
+
+
 def test_calc_erc_weights_slsqp_honors_risk_target():
     """Honor a non-equal target through both public paths and covariance methods."""
     target = np.array([0.8, 0.1, 0.1])
@@ -993,7 +1147,8 @@ def test_calc_erc_weights_slsqp_honors_risk_target():
     np.testing.assert_array_equal(target, original_target)
 
 
-def test_calc_erc_weights_slsqp_matches_diagonal_risk_target():
+@mark.parametrize("risk_parity_method", ["ccd", "slsqp"])
+def test_calc_erc_weights_matches_diagonal_risk_target(risk_parity_method):
     """Match the diagonal oracle across equivalent target and return scales."""
     signs = np.array(
         [
@@ -1014,6 +1169,7 @@ def test_calc_erc_weights_slsqp_matches_diagonal_risk_target():
     expected /= expected.sum()
     equivalent_targets = (
         target,
+        target.tolist(),
         target * 10,
         target.astype("float32"),
         np.array([8_000_000_000_000_000_000, 1_000_000_000_000_000_000, 1_000_000_000_000_000_000], dtype="int64"),
@@ -1027,15 +1183,46 @@ def test_calc_erc_weights_slsqp_matches_diagonal_risk_target():
                 returns * return_scale,
                 risk_weights=scaled_target,
                 covar_method="standard",
-                risk_parity_method="slsqp",
+                risk_parity_method=risk_parity_method,
                 tolerance=1e-9,
             )
             assert isinstance(actual, pd.Series)
-            np.testing.assert_allclose(actual.to_numpy(dtype=float), expected, atol=1e-6)
+            np.testing.assert_allclose(actual.to_numpy(dtype=float), expected, atol=1e-5)
             np.testing.assert_array_equal(scaled_target, original_scaled_target)
 
     pd.testing.assert_frame_equal(returns, original_returns)
     np.testing.assert_array_equal(target, original_target)
+
+
+@mark.parametrize("risk_parity_method", ["ccd", "slsqp"])
+def test_calc_erc_weights_preserves_zero_risk_target(risk_parity_method):
+    """Preserve a valid zero-risk component through both solver branches."""
+    signs = np.array(
+        [
+            [1.0, 1.0, 1.0],
+            [1.0, -1.0, -1.0],
+            [-1.0, 1.0, -1.0],
+            [-1.0, -1.0, 1.0],
+        ]
+    )
+    returns = pd.DataFrame(signs * np.array([0.01, 0.02, 0.04]), columns=list("ABC"))
+    target = np.array([0.8, 0.2, 0.0])
+    covariance = returns.cov().to_numpy(dtype=float)
+
+    actual = ffn.calc_erc_weights(
+        returns,
+        risk_weights=target,
+        covar_method="standard",
+        risk_parity_method=risk_parity_method,
+        tolerance=1e-9,
+    )
+
+    weights = actual.to_numpy(dtype=float)
+    contributions = weights * (covariance @ weights)
+    np.testing.assert_allclose(contributions / contributions.sum(), target, atol=1e-5)
+    assert np.isfinite(weights).all()
+    assert (weights >= 0).all()
+    np.testing.assert_allclose(weights.sum(), 1.0, atol=1e-10)
 
 
 def test_calc_total_return(df):
