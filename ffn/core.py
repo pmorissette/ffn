@@ -2087,7 +2087,13 @@ def calc_erc_weights(
     if risk_weights.shape != (n,):
         raise ValueError("risk_weights must have one value per return column")
     # Promote before comparisons and reductions, then scale before summing to avoid overflow.
-    risk_weights = risk_weights.astype(np.result_type(risk_weights.dtype, np.float64), copy=False)
+    if risk_weights.dtype.kind not in "biufO" or (risk_weights.dtype.kind == "O" and any(np.iscomplexobj(value) for value in risk_weights)):
+        raise ValueError("risk_weights must contain real numeric values")
+    dtype = np.float64 if risk_weights.dtype.kind == "O" else np.result_type(risk_weights.dtype, np.float64)
+    try:
+        risk_weights = risk_weights.astype(dtype, copy=False)
+    except (TypeError, ValueError) as error:
+        raise ValueError("risk_weights must contain real numeric values") from error
     if not np.isfinite(risk_weights).all() or (risk_weights < 0).any() or not (risk_weights > 0).any():
         raise ValueError("risk_weights must be finite and nonnegative with a positive total")
     risk_weights = risk_weights / np.max(risk_weights)
