@@ -319,6 +319,109 @@ def test_to_price_index_preserves_first_return_in_stats():
     assert np.isclose(stats.total_return, np.prod(1 + returns) - 1)
 
 
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize("length", [1, 2])
+@mark.parametrize(
+    "index",
+    [
+        pd.Index(["first", "second"]),
+        pd.Index([10, 20]),
+        pd.period_range("2024-01", periods=2, freq="M"),
+        pd.timedelta_range("1 day", periods=2),
+        pd.CategoricalIndex(["first", "second"]),
+        pd.MultiIndex.from_tuples([("asset", 1), ("asset", 2)]),
+    ],
+    ids=["string", "integer", "period", "timedelta", "categorical", "multi"],
+)
+def test_to_price_index_rejects_unsupported_baseline_index(index, length, as_frame):
+    """A mixed first row still needs a distinct label for the baseline."""
+    returns = pd.Series([0.1, 0.2], index=index, name="asset").iloc[:length]
+    if as_frame:
+        returns = pd.concat([returns * np.nan, returns], axis=1)
+    original = returns.copy(deep=True)
+
+    for convert in (ffn.to_price_index, lambda data: data.to_price_index()):
+        with raises(TypeError, match="DatetimeIndex or RangeIndex"):
+            convert(returns)
+        if as_frame:
+            pd.testing.assert_frame_equal(returns, original)
+        else:
+            pd.testing.assert_series_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize(
+    "index",
+    [
+        pd.Index(["first", "second"]),
+        pd.Index([10, 20]),
+        pd.period_range("2024-01", periods=2, freq="M"),
+        pd.timedelta_range("1 day", periods=2),
+        pd.CategoricalIndex(["first", "second"]),
+        pd.MultiIndex.from_tuples([("asset", 1), ("asset", 2)]),
+    ],
+    ids=["string", "integer", "period", "timedelta", "categorical", "multi"],
+)
+def test_to_price_index_reuses_leading_missing_baseline_for_any_index(index, as_frame):
+    """An existing missing baseline needs no synthesized label or index restriction."""
+    returns = pd.Series([pd.NA, 0.2], index=index, name="asset", dtype="Float64")
+    if as_frame:
+        returns = pd.concat([returns, returns], axis=1)
+    original = returns.copy(deep=True)
+
+    for convert in (ffn.to_price_index, lambda data, start: data.to_price_index(start=start)):
+        prices = convert(returns, start=250)
+        pd.testing.assert_index_equal(prices.index, returns.index)
+        assert np.allclose(prices.iloc[0].to_numpy(dtype=float) if as_frame else prices.iloc[0], 250)
+        assert np.allclose(prices.iloc[1].to_numpy(dtype=float) if as_frame else prices.iloc[1], 300)
+        if as_frame:
+            pd.testing.assert_index_equal(prices.columns, returns.columns)
+            pd.testing.assert_frame_equal(returns, original)
+        else:
+            assert prices.name == returns.name
+            pd.testing.assert_series_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize(
+    "index, baseline",
+    [
+        (pd.RangeIndex(2), -1),
+        (pd.RangeIndex(5, 9, 2), 3),
+        (pd.RangeIndex(5, 1, -2), 7),
+        (pd.date_range("2024-01-08", periods=2, freq="B"), pd.Timestamp("2024-01-05")),
+        (pd.DatetimeIndex(["2024-01-08", "2024-01-09", "2024-01-10"]), pd.Timestamp("2024-01-07")),
+        (pd.DatetimeIndex(["2024-01-08", "2024-01-11"]), pd.Timestamp("2024-01-05")),
+        (pd.DatetimeIndex(["2024-01-08"]), pd.Timestamp("2024-01-07")),
+        (pd.date_range("2024-01-08", periods=2, tz="UTC"), pd.Timestamp("2024-01-07", tz="UTC")),
+    ],
+    ids=["range", "stepped-range", "descending-range", "business", "inferred", "irregular", "single", "timezone"],
+)
+def test_to_price_index_supported_baselines_preserve_first_return(index, baseline, as_frame):
+    """Probe every predecessor branch with nullable returns and an independent price path."""
+    returns = pd.Series([0.1, 0.2, -0.1][: len(index)], index=index, name="asset", dtype="Float64")
+    if as_frame:
+        returns = pd.concat([returns, returns], axis=1)
+    original = returns.copy(deep=True)
+    expected = np.array([250.0, 275.0, 330.0, 297.0][: len(index) + 1])
+
+    for convert in (ffn.to_price_index, lambda data, start: data.to_price_index(start=start)):
+        prices = convert(returns, start=250)
+        assert len(prices) == len(returns) + 1
+        assert prices.index.is_unique
+        assert prices.index[0] == baseline
+        assert prices.index[1:].equals(returns.index)
+        actual = prices.to_numpy(dtype=float)
+        assert np.allclose(actual, expected[:, None] if as_frame else expected)
+        assert np.allclose(prices.to_returns().iloc[1:].to_numpy(dtype=float), returns.to_numpy(dtype=float))
+        if as_frame:
+            pd.testing.assert_index_equal(prices.columns, returns.columns)
+            pd.testing.assert_frame_equal(returns, original)
+        else:
+            assert prices.name == returns.name
+            pd.testing.assert_series_equal(returns, original)
+
+
 def test_rebase(df):
     data = df
     actual = data.rebase()
