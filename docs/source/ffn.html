@@ -1252,6 +1252,9 @@ Otherwise <code class="docutils literal notranslate"><span class="pre">start</sp
 reflected in the prices.  Missing returns are treated as zero, and
 the round-trip <code class="docutils literal notranslate"><span class="pre">to_returns(to_price_index(r))</span></code> recovers the
 non-missing returns.</p>
+<p>Prepending <code class="docutils literal notranslate"><span class="pre">start</span></code> requires a DatetimeIndex or RangeIndex to derive
+a baseline label. Other index types raise TypeError in this case;
+they remain supported when the first row is entirely missing.</p>
 <p>Formula is: start, start * cumprod(1+r)</p>
 </dd></dl>
 

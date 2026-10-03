@@ -1736,6 +1736,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    the round-trip ``to_returns(to_price_index(r))`` recovers the</span>
 <span class="sd">    non-missing returns.</span>
 
+<span class="sd">    Prepending ``start`` requires a DatetimeIndex or RangeIndex to derive</span>
+<span class="sd">    a baseline label. Other index types raise TypeError in this case;</span>
+<span class="sd">    they remain supported when the first row is entirely missing.</span>
+
 <span class="sd">    Formula is: start, start * cumprod(1+r)</span>
 <span class="sd">    """</span>
     <span class="n">r</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">to_replace</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -1765,6 +1769,8 @@ window.runMermaid = runMermaid;</script>
             <span class="n">start_index</span> <span class="o">-=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cp</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">RangeIndex</span><span class="p">):</span>
         <span class="n">start_index</span> <span class="o">-=</span> <span class="n">cp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">step</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"Prepending a price baseline requires a DatetimeIndex or RangeIndex"</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
         <span class="n">start_row</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cp</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="n">start_index</span><span class="p">])</span>
