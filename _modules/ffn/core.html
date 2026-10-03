@@ -573,7 +573,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            rf should be a *price* series — it is converted internally with</span>
 <span class="sd">            to_returns(). Note this differs from calc_sharpe and</span>
 <span class="sd">            calc_sortino_ratio, which take rf as a return series. Passing a</span>
-<span class="sd">            return series here silently behaves like rf=0.</span>
+<span class="sd">            return series here treats its values as price levels rather than</span>
+<span class="sd">            returns, so it does not generally behave like rf=0.</span>
 <span class="sd">            Daily statistics use risk-free prices on the asset's own observed daily</span>
 <span class="sd">            endpoints; an interval missing either risk-free price is excluded, not filled.</span>
 
