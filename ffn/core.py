@@ -1,3 +1,4 @@
+import copy
 import itertools
 import random
 
@@ -170,10 +171,11 @@ class PerformanceStats:
             * rf (float, np.floating, Series): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_,
                 or a risk-free *price* series (not returns)
         """
-        self.rf = rf
-
-        # Note, that we recalculate everything.
-        self._update(self.prices)
+        # Recalculate off-object so a rejected risk-free input cannot leave stale state.
+        updated = copy.copy(self)
+        updated.rf = rf
+        updated._update(updated.prices)
+        self.__dict__.update(updated.__dict__)
 
     def _update(self, obj):
         # calc
@@ -956,14 +958,17 @@ class GroupStats(dict):
                 series (not returns)
         """
 
+        # Stage every child before committing so one failure cannot split group state.
+        updated = copy.copy(self)
         for key in self._names:
-            self[key].set_riskfree_rate(rf)
+            updated[key] = copy.copy(self[key])
+            updated[key].set_riskfree_rate(rf)
+        updated._update_stats()
+        updated._riskfree_rate = rf
 
-        # calculate stats for entire series
-        self._update_stats()
-
-        # A failed recalculation must not become the default for later rebuilds.
-        self._riskfree_rate = rf
+        for key in self._names:
+            self[key].__dict__.update(updated[key].__dict__)
+        self.__dict__.update(updated.__dict__)
 
     def set_date_range(self, start=None, end=None):
         """
