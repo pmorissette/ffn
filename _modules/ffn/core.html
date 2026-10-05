@@ -582,7 +582,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * ValueError: If the price series contains no usable value.</span>
 
 <span class="sd">    Attributes:</span>
-<span class="sd">        * name (str): Name, derived from price series name</span>
+<span class="sd">        * name: Name, derived from price series name</span>
 <span class="sd">        * return_table (DataFrame): A table of monthly returns with</span>
 <span class="sd">            YTD figures as well.</span>
 <span class="sd">        * lookback_returns (Series): Returns for different</span>
@@ -1248,6 +1248,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">","</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Returns a CSV string with appropriate formatting.</span>
+<span class="sd">        Strategy names, including numeric labels, are serialized as text.</span>
 <span class="sd">        If path is not None, the string will be saved to file</span>
 <span class="sd">        at path.</span>
 
@@ -1259,7 +1260,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="p">()</span>
 
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">first_row</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Stat"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">first_row</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Stat"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
         <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">first_row</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">:</span>
@@ -1630,6 +1631,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_csv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">","</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Returns a CSV string with appropriate formatting.</span>
+<span class="sd">        Strategy names, including numeric labels, are serialized as text.</span>
 <span class="sd">        If path is not None, the string will be saved to file</span>
 <span class="sd">        at path.</span>
 
@@ -1641,7 +1643,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        """</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">first_row</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Stat"</span><span class="p">]</span>
-        <span class="n">first_row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">)</span>
+        <span class="n">first_row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">)</span>
         <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">first_row</span><span class="p">))</span>
 
         <span class="n">stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="p">()</span>

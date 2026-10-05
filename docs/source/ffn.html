@@ -226,6 +226,7 @@ series (not returns)</p>
 <dt class="sig sig-object py" id="ffn.core.GroupStats.to_csv">
 <span class="sig-name descname"><span class="pre">to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#GroupStats.to_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.to_csv" title="Link to this definition">¶</a></dt>
 <dd><p>Returns a CSV string with appropriate formatting.
+Strategy names, including numeric labels, are serialized as text.
 If path is not None, the string will be saved to file
 at path.</p>
 <dl class="field-list simple">
@@ -275,11 +276,6 @@ endpoints; an interval missing either risk-free price is excluded, not filled.</
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">\*</span> <span class="pre">name</span></span></dt>
 <dd><p>Name, derived from price series name</p>
-<dl class="field-list simple">
-<dt class="field-odd">Type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py attribute">
@@ -424,6 +420,7 @@ or a risk-free <em>price</em> series (not returns)</p>
 <dt class="sig sig-object py" id="ffn.core.PerformanceStats.to_csv">
 <span class="sig-name descname"><span class="pre">to_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#PerformanceStats.to_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.to_csv" title="Link to this definition">¶</a></dt>
 <dd><p>Returns a CSV string with appropriate formatting.
+Strategy names, including numeric labels, are serialized as text.
 If path is not None, the string will be saved to file
 at path.</p>
 <dl class="field-list simple">
