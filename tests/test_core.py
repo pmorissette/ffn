@@ -2409,6 +2409,50 @@ def test_calc_prob_backtest_overfitting():
         ffn.calc_prob_backtest_overfitting(noise.iloc[:4], n_blocks=8)
 
 
+@mark.parametrize("n_blocks", [2, 4, 6, 8])
+def test_calc_prob_backtest_overfitting_pairs_default_folds(monkeypatch, n_blocks):
+    from math import comb
+
+    returns = pd.DataFrame(np.random.default_rng(42).normal(0, 0.01, (65, 5)))
+    original = returns.copy()
+
+    def sharpe(series):
+        std = series.std(ddof=1)
+        return series.mean() / std if std > 0 and series.max() > series.min() else np.nan
+
+    expected = returns.calc_prob_backtest_overfitting(n_blocks=n_blocks, metric=sharpe, full_output=True)
+    calls = []
+    std = pd.DataFrame.std
+
+    def counted_std(sample, *args, **kwargs):
+        calls.append(len(sample))
+        return std(sample, *args, **kwargs)
+
+    monkeypatch.setattr(pd.DataFrame, "std", counted_std)
+    result = ffn.calc_prob_backtest_overfitting(returns, n_blocks=n_blocks, full_output=True)
+
+    # Each subset is evaluated once, then reused when its complement is in-sample.
+    assert len(calls) == comb(n_blocks, n_blocks // 2)
+    assert set(calls) == {(len(returns) // n_blocks) * n_blocks // 2}
+    pd.testing.assert_series_equal(result["logits"], expected["logits"], check_exact=True)
+    assert result["pbo"] == expected["pbo"]
+    assert result["mean_oos_rank"] == expected["mean_oos_rank"]
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_prob_backtest_overfitting_default_fold_order():
+    returns = pd.DataFrame([[3, 1, 2], [4, 2, 3], [4, 3, 2], [5, 4, 3], [1, 4, 3], [2, 5, 4], [2, 3, 4], [3, 4, 5]])
+
+    result = returns.calc_prob_backtest_overfitting(n_blocks=4, full_output=True)
+
+    # AB, AC, AD, BC, BD, CD: compare positive mean squared / sample variance.
+    # AC's out-of-sample winner ties another trial; CD's in-sample tie selects column 1.
+    ranks = np.array([0.25, 0.375, 0.25, 0.25, 0.25, 0.25])
+    np.testing.assert_array_equal(result["logits"], np.log(ranks / (1.0 - ranks)))
+    assert result["mean_oos_rank"] == ranks.mean()
+    assert result["pbo"] == 1.0
+
+
 @mark.parametrize("order", ["permuted", "descending"])
 def test_calc_prob_backtest_overfitting_rejects_nonchronological_dates(order):
     returns = pd.DataFrame(
@@ -2535,6 +2579,14 @@ def test_calc_prob_backtest_overfitting_custom_metric_preserves_labels(n_blocks)
     assert returns.calc_prob_backtest_overfitting(n_blocks=n_blocks, metric=metric) == 0.0
     assert len(seen) == 24  # Six folds, two halves, two trials.
     assert all(len(series) == 4 for series in seen)
+    # Stateful metrics can distinguish repeated halves and their evaluation order.
+    folds = [[0, 1, 2, 3], [0, 1, 4, 5], [0, 1, 6, 7], [2, 3, 4, 5], [2, 3, 6, 7], [4, 5, 6, 7]]
+    expected = []
+    for rows in folds:
+        complement = [i for i in range(8) if i not in rows]
+        expected.extend(returns.iloc[half][column] for half in (rows, complement) for column in returns)
+    for actual, sample in zip(seen, expected):
+        pd.testing.assert_series_equal(actual, sample)
 
 
 @mark.parametrize("n_blocks", [0, 1, 3, -2, 2.0, 2.5, "2", None, np.nan, np.inf, True, False])
@@ -2542,6 +2594,20 @@ def test_calc_prob_backtest_overfitting_invalid_block_count(n_blocks):
     returns = pd.DataFrame(np.arange(16).reshape(8, 2))
     with np.testing.assert_raises_regex(ValueError, "n_blocks"):
         returns.calc_prob_backtest_overfitting(n_blocks=n_blocks)
+
+
+def test_calc_prob_backtest_overfitting_custom_metric_stops_early():
+    returns = pd.DataFrame(np.arange(128).reshape(64, 2))
+    calls = []
+
+    def metric(series):
+        calls.append(series.name)
+        raise RuntimeError("stop after the first sample")
+
+    # A callback can stop a large fold search before its output would fit in memory.
+    with raises(RuntimeError, match="stop after the first sample"):
+        returns.calc_prob_backtest_overfitting(n_blocks=64, metric=metric)
+    assert calls == [0]
 
 
 def test_calc_prob_backtest_overfitting_invalid_metric():
