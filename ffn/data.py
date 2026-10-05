@@ -244,19 +244,21 @@ def _fxmacrodata_fetch(
         if indicator:
             params["indicators"] = indicator
 
-    api_key = api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY")
+    api_key = (api_key or os.getenv("FXMACRODATA_API_KEY") or os.getenv("FXMD_API_KEY") or "").strip()
+    if any(char.isspace() for char in api_key) or not api_key.isprintable():
+        # Never include the key itself in the message.
+        raise FXMacroDataError("FXMacroData API key contains invalid characters")
     url = f"{base_url.rstrip('/')}/{endpoint}"
-
-    headers = {"Accept": "application/json"}
-    if api_key:
-        headers["X-API-Key"] = api_key
 
     # The API returns at most 100 rows per request (newest first), so page
     # through the window with offset until pagination.has_more is false.
     rows = []
     offset = 0
     for _ in range(_FXMACRODATA_MAX_PAGES):
-        request = Request(f"{url}?{urlencode({**params, 'limit': 100, 'offset': offset})}", headers=headers)
+        request = Request(f"{url}?{urlencode({**params, 'limit': 100, 'offset': offset})}", headers={"Accept": "application/json"})
+        if api_key:
+            # Unredirected headers are not copied onto a followed redirect, so the key never reaches another host.
+            request.add_unredirected_header("X-API-Key", api_key)
         try:
             with urlopen(request, timeout=timeout) as response:
                 payload = json.load(response)

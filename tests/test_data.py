@@ -368,3 +368,29 @@ def test_fxmacrodata_wraps_network_errors():
 def test_fxmacrodata_rejects_invalid_json():
     with mock.patch("urllib.request.urlopen", return_value=FakeResponse("not-json")), pytest.raises(ffn.data.FXMacroDataError, match="invalid JSON"):
         ffn.data.fxmacrodata("EURUSD", mrefresh=True)
+
+
+def test_fxmacrodata_does_not_forward_api_key_on_redirect():
+    from email.message import Message
+    from urllib.request import HTTPRedirectHandler
+
+    captured = {}
+
+    def fake_urlopen(request, timeout):
+        captured["request"] = request
+        return FakeResponse(json.dumps({"data": [{"date": "2024-01-01", "val": 1.1}]}))
+
+    with mock.patch("urllib.request.urlopen", side_effect=fake_urlopen):
+        ffn.data.fxmacrodata("EURUSD", api_key="test-key")
+
+    redirected = HTTPRedirectHandler().redirect_request(captured["request"], None, 302, "Found", Message(), "https://elsewhere.test/v1")
+    assert captured["request"].get_header("X-api-key") == "test-key"
+    assert redirected.get_header("X-api-key") is None
+
+
+def test_fxmacrodata_invalid_api_key_is_not_echoed():
+    with mock.patch("urllib.request.urlopen") as urlopen, pytest.raises(ffn.data.FXMacroDataError) as raised:
+        ffn.data.fxmacrodata("EURUSD", api_key="test-key\r\nX-Other: 1")
+
+    assert "test-key" not in str(raised.value)
+    urlopen.assert_not_called()
