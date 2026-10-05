@@ -135,7 +135,7 @@ class PerformanceStats:
         * ValueError: If the price series contains no usable value.
 
     Attributes:
-        * name (str): Name, derived from price series name
+        * name: Name, derived from price series name
         * return_table (DataFrame): A table of monthly returns with
             YTD figures as well.
         * lookback_returns (Series): Returns for different
@@ -778,6 +778,7 @@ class PerformanceStats:
     def to_csv(self, sep=",", path=None):
         """
         Returns a CSV string with appropriate formatting.
+        Strategy names, including numeric labels, are serialized as text.
         If path is not None, the string will be saved to file
         at path.
 
@@ -789,7 +790,7 @@ class PerformanceStats:
         stats = self._stats()
 
         data = []
-        first_row = ["Stat", self.name]
+        first_row = ["Stat", str(self.name)]
         data.append(sep.join(first_row))
 
         for stat in stats:
@@ -1130,6 +1131,7 @@ class GroupStats(dict):
     def to_csv(self, sep=",", path=None):
         """
         Returns a CSV string with appropriate formatting.
+        Strategy names, including numeric labels, are serialized as text.
         If path is not None, the string will be saved to file
         at path.
 
@@ -1141,7 +1143,7 @@ class GroupStats(dict):
         """
         data = []
         first_row = ["Stat"]
-        first_row.extend(self._names)
+        first_row.extend(str(name) for name in self._names)
         data.append(sep.join(first_row))
 
         stats = self._stats()

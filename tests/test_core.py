@@ -3370,6 +3370,65 @@ def _assert_csv_row_width(output, sep, expected_width):
     assert {len(row) for row in rows} == {expected_width}
 
 
+@mark.parametrize(
+    "label",
+    [-7, 0, 3.5, np.int64(7), np.uint64(2**63), np.float32(2.5), np.float64(-3.25), "fund"],
+    ids=["integer", "zero", "float", "numpy-integer", "numpy-unsigned", "numpy-float32", "numpy-float64", "string"],
+)
+@mark.parametrize("grouped", [False, True], ids=["performance", "group"])
+@mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
+@mark.parametrize("series_rf", [False, True], ids=["scalar-riskfree", "series-riskfree"])
+def test_statistics_to_csv_serializes_numeric_labels(label, grouped, sep, series_rf, tmp_path):
+    """Changing strategy labels must affect only header text, including file exports."""
+    import csv
+    import io
+
+    prices = pd.Series([100.0, 101.0, 99.0, 104.0, 103.0, 108.0], index=pd.date_range("2020-01-01", periods=6), name=label)
+    if grouped:
+        prices = pd.concat([prices, pd.Series([100.0, 99.0, 102.0, 101.0, 105.0, 104.0], index=prices.index, name="peer")], axis=1)
+        control_prices = prices.copy()
+        control_prices.columns = [str(label), "peer"]
+        stats = ffn.GroupStats(prices)
+        control = ffn.GroupStats(control_prices)
+        labels = [label, "peer"]
+    else:
+        stats = ffn.PerformanceStats(prices)
+        control = ffn.PerformanceStats(prices.rename(str(label)))
+        labels = [label]
+
+    risk_free = pd.Series([100.0, 100.1, 100.2, 100.3, 100.4, 100.5], index=prices.index) if series_rf else 0.03
+    stats.set_riskfree_rate(risk_free)
+    control.set_riskfree_rate(risk_free)
+    original_prices = prices.copy(deep=True)
+    original_stats = stats.stats.copy(deep=True)
+
+    output = stats.to_csv(sep=sep)
+    # A string-label control protects every metric, separator, and blank-row byte.
+    assert output == control.to_csv(sep=sep)
+    rows = list(csv.reader(io.StringIO(output), delimiter=sep))
+    assert rows[0] == ["Stat"] + [str(name) for name in labels]
+    assert {len(row) for row in rows} == {len(labels) + 1}
+    assert ["Total Return", "8.00%"] + (["4.00%"] if grouped else []) in rows
+    assert [""] * (len(labels) + 1) in rows
+
+    path = tmp_path / "statistics.csv"
+    assert stats.to_csv(sep=sep, path=path) is None
+    assert path.read_text() == output
+    # Compare native file bytes so platform newline translation remains unchanged.
+    control_path = tmp_path / "control.csv"
+    control.to_csv(sep=sep, path=control_path)
+    assert path.read_bytes() == control_path.read_bytes()
+    if grouped:
+        assert stats._names == labels
+        assert stats[label].name == label
+        pd.testing.assert_frame_equal(prices, original_prices)
+        pd.testing.assert_frame_equal(stats.stats, original_stats)
+    else:
+        assert stats.name == label
+        pd.testing.assert_series_equal(prices, original_prices)
+        pd.testing.assert_series_equal(stats.stats, original_stats)
+
+
 @mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
 def test_performance_stats_to_csv_preserves_row_width(df, sep):
     stats = ffn.PerformanceStats(df["AAPL"])
