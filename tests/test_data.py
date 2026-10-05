@@ -10,6 +10,38 @@ def sample_provider(ticker, field):
     return pd.Series(prices[ticker], index=pd.date_range("2024-01-01", periods=4))
 
 
+@pytest.mark.parametrize("provider_kind", ["lambda", "closure", "memoized"])
+@pytest.mark.parametrize("refresh", [False, True])
+def test_get_supports_uncacheable_providers(provider_kind, refresh):
+    """Provider dispatch must preserve fields, kwargs, and the inner provider's refresh policy."""
+    index = pd.date_range("2024-01-01", periods=2, name="date")
+    calls = []
+
+    def provide(ticker, field, offset, mrefresh=False):
+        calls.append((ticker, field, offset, mrefresh))
+        return pd.Series([1.0 + offset, 2.0 + offset], index=index)
+
+    provider = (lambda **kwargs: provide(**kwargs)) if provider_kind == "lambda" else provide
+    if provider_kind == "memoized":
+        provider = ffn.utils.memoize(provide)
+
+    expected = pd.DataFrame({"abcclose": [11.0, 12.0]}, index=index)
+    ffn.get.mcache.clear()
+    try:
+        first = ffn.get("ABC:Close", provider=provider, offset=10.0, mrefresh=refresh)
+        pd.testing.assert_frame_equal(first, expected)
+        first.iloc[0, 0] = -1.0
+        second = ffn.get("ABC:Close", provider=provider, offset=10.0, mrefresh=refresh)
+        pd.testing.assert_frame_equal(second, expected)
+        # get has no reusable key, but a memoized provider still owns its independent cache.
+        count = 1 if provider_kind == "memoized" and not refresh else 2
+        forwarded_refresh = refresh if provider_kind == "memoized" else False
+        assert calls == [("ABC", "Close", 10.0, forwarded_refresh)] * count
+        assert ffn.get.mcache == {}
+    finally:
+        ffn.get.mcache.clear()
+
+
 def test_get_isolates_cached_data_from_caller_mutation(monkeypatch):
     """Keep caller assignments from changing data cached by ``ffn.get``."""
     expected = pd.DataFrame(

@@ -1,8 +1,14 @@
+import functools
+import pickle
+
 import pandas as pd
 import pytest
 
 import ffn
 from ffn import utils
+
+# A module-level lambda raises PicklingError; local closures raise AttributeError.
+_UNCACHEABLE_PROVIDERS = {"lambda": lambda: 10, "partial": functools.partial(bool, memoryview(b""))}
 
 
 def test_memoize_isolates_series_results():
@@ -153,6 +159,99 @@ def test_memoize_does_not_treat_varargs_as_keyword_only_refresh():
     assert cached("value", True) == 1
     assert cached("value", True) == 1
     assert cached("value", True, mrefresh=True) == 2
+
+
+@pytest.mark.parametrize("provider_kind", ["lambda", "closure", "partial"])
+@pytest.mark.parametrize("refresh", [False, True])
+def test_memoize_executes_uncacheable_callables(provider_kind, refresh):
+    """A reusable pickle key is optional; an uncached call must leave existing entries intact."""
+    calls = []
+
+    def closure():
+        return 10
+
+    # Captured memoryview state adds the TypeError path to lambda/local-function pickle failures.
+    provider = closure if provider_kind == "closure" else _UNCACHEABLE_PROVIDERS[provider_kind]
+    expected = False if provider_kind == "partial" else 10
+    error = {"lambda": pickle.PicklingError, "closure": AttributeError, "partial": TypeError}[provider_kind]
+    with pytest.raises(error):
+        pickle.dumps((provider,), 1)
+
+    @utils.memoize
+    def cached(*args, mrefresh=False, **kwargs):
+        calls.append(mrefresh)
+        callback = args[0] if args else kwargs["callback"]
+        return callback()
+
+    sentinel = object()
+    cached.mcache[b"existing"] = sentinel
+    # Exercise both serialized containers; a failure in kwargs follows a successful args dump.
+    assert cached(provider, mrefresh=refresh) == expected
+    assert cached(callback=provider, mrefresh=refresh) == expected
+    assert calls == [refresh, refresh]
+    assert cached.mcache == {b"existing": sentinel}
+
+
+def test_memoize_does_not_alias_distinct_closures():
+    """Identical apparent names must not become an alternate cache identity."""
+    calls = []
+
+    def make_provider(value):
+        def provider():
+            calls.append(value)
+            return value
+
+        return provider
+
+    @utils.memoize
+    def cached(provider):
+        return provider()
+
+    first, second = make_provider(1), make_provider(2)
+    assert first.__qualname__ == second.__qualname__
+    assert [cached(provider) for provider in (first, second, first, second)] == [1, 2, 1, 2]
+    assert calls == [1, 2, 1, 2]
+    assert cached.mcache == {}
+
+
+@pytest.mark.parametrize("error", [TypeError, AttributeError, pickle.PicklingError])
+def test_memoize_preserves_uncached_provider_exceptions(error):
+    """Pickle fallback must not swallow the same exception class from the provider body."""
+    failure = error("provider failed")
+
+    def provider():
+        raise failure
+
+    @utils.memoize
+    def cached(callback):
+        return callback()
+
+    sentinel = object()
+    cached.mcache[b"existing"] = sentinel
+    with pytest.raises(error) as raised:
+        cached(provider)
+    assert raised.value is failure
+    assert cached.mcache == {b"existing": sentinel}
+
+
+def test_memoize_preserves_unexpected_pickle_errors():
+    """A failing user reducer must not be mistaken for a known unsupported pickle key."""
+    failure = RuntimeError("reducer failed")
+    calls = []
+
+    class BrokenReducer:
+        def __reduce__(self):
+            raise failure
+
+    @utils.memoize
+    def cached(value):
+        calls.append(value)
+
+    with pytest.raises(RuntimeError) as raised:
+        cached(BrokenReducer())
+    assert raised.value is failure
+    assert calls == []
+    assert cached.mcache == {}
 
 
 def test_parse_args():

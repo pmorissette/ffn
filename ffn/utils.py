@@ -37,7 +37,13 @@ def _memoize(func, *args, **kw):
     if not refresh and refresh_kw in kw and kw[refresh_kw]:
         refresh = True
 
-    key = pickle.dumps(args, 1) + pickle.dumps(kw, 1)
+    try:
+        key = pickle.dumps(args, 1) + pickle.dumps(kw, 1)
+    except (pickle.PicklingError, AttributeError, TypeError):
+        # Lambdas, local functions, and some callable state cannot form reusable
+        # pickle keys. Execute without caching rather than inventing a key that
+        # could alias a different provider or its captured state.
+        return func(*args, **kw)
 
     cache = func.mcache
     if not refresh and key in cache:
@@ -53,6 +59,9 @@ def memoize(f, refresh_keyword="mrefresh"):
     """
     Memoize decorator. The refresh keyword is the keyword
     used to bypass the cache (in the function call).
+    If pickle rejects arguments with PicklingError, AttributeError, or TypeError,
+    the call runs without caching. Other serialization errors propagate.
+    Exceptions raised by the wrapped function are propagated unchanged.
     Pandas Series and DataFrame results are copied at the cache boundary
     so assignments through returned containers do not change cached data.
     Axes and attrs are copied independently. As with pandas deep copies,
