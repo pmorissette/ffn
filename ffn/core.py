@@ -2181,6 +2181,9 @@ def calc_clusters(returns, n=None, plot=False):
     Calculates the clusters based on k-means
     clustering.
 
+    With automatic cluster selection, a single asset with a defined correlation
+    forms cluster 0 without fitting a model.
+
     Args:
         * returns (pd.DataFrame): DataFrame of returns
         * n (int): Specify # of clusters. If None, this
@@ -2192,6 +2195,14 @@ def calc_clusters(returns, n=None, plot=False):
     """
     # calculate correlation
     corr = returns.corr()
+
+    # A valid singleton has one partition; keep undefined correlations on the model's validation path.
+    if n is None and len(corr) == 1 and np.isfinite(corr.iloc[0, 0]):
+        if plot:
+            _, ax = plt.subplots()
+            ax.scatter([0.0], [0.0], c=[0], s=90)
+            ax.annotate(corr.columns[0], (0.0, 0.0), size=14)
+        return {0: [corr.columns[0]]}
 
     # calculate dissimilarity matrix
     diss = 1 - corr

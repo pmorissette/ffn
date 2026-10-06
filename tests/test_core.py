@@ -1513,6 +1513,92 @@ def test_drop_duplicate_cols_isolates_nullable_values(dtype, duplicate, use_pand
     pd.testing.assert_frame_equal(actual, result_snapshot)
 
 
+@mark.parametrize("label, dtype", [("only", "float64"), (7, "Float64"), (("group", "only"), "Int64")])
+@mark.parametrize("use_pandas_method", [False, True])
+@mark.parametrize("plot", [False, True])
+def test_calc_clusters_single_asset(label, dtype, use_pandas_method, plot):
+    plt = ffn.core.plt
+    returns = pd.DataFrame({label: pd.Series([1, 3, 2, 4], dtype=dtype)})
+    original = returns.copy(deep=True)
+    figures = set(plt.get_fignums())
+
+    try:
+        actual = returns.calc_clusters(plot=plot) if use_pandas_method else ffn.calc_clusters(returns, plot=plot)
+
+        # There is exactly one partition of a singleton set, regardless of its label.
+        assert actual == {0: [label]}
+        pd.testing.assert_frame_equal(returns, original)
+        created = set(plt.get_fignums()) - figures
+        assert len(created) == int(plot)
+        if plot:
+            figure = plt.figure(created.pop())
+            figure.canvas.draw()
+            ax = figure.axes[0]
+            np.testing.assert_array_equal(ax.collections[0].get_offsets(), [[0.0, 0.0]])
+            assert [text.get_text() for text in ax.texts] == [str(label)]
+    finally:
+        for number in set(plt.get_fignums()) - figures:
+            plt.close(number)
+
+
+@mark.parametrize("dtype", ["float64", "Float64", "Int64"])
+def test_calc_clusters_single_asset_uses_observed_sample_without_models(monkeypatch, dtype):
+    returns = pd.DataFrame({"only": pd.Series([None, 1, 2, None], dtype=dtype)})
+    original = returns.copy(deep=True)
+
+    def unexpected_model(*args, **kwargs):
+        raise AssertionError("A valid singleton does not require fitting a model")
+
+    monkeypatch.setattr(ffn.core.sklearn.manifold, "MDS", unexpected_model)
+    monkeypatch.setattr(ffn.core.sklearn.cluster, "KMeans", unexpected_model)
+
+    assert ffn.calc_clusters(returns) == {0: ["only"]}
+    assert ffn.calc_clusters(returns.dropna()) == {0: ["only"]}
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("values", [[], [1.0], [1.0, 1.0], [np.nan, np.nan], [np.nan, 1.0]])
+@mark.parametrize("plot", [False, True])
+@mark.parametrize("dtype", ["float64", "Float64"])
+def test_calc_clusters_rejects_undefined_single_asset_correlation(values, plot, dtype):
+    returns = pd.DataFrame({"only": pd.Series(values, dtype=dtype)})
+    original = returns.copy(deep=True)
+    figures = ffn.core.plt.get_fignums()
+
+    with raises(ValueError):
+        ffn.calc_clusters(returns, plot=plot)
+
+    pd.testing.assert_frame_equal(returns, original)
+    assert ffn.core.plt.get_fignums() == figures
+
+
+@mark.parametrize("n", [None, 1])
+def test_calc_clusters_two_assets_preserves_model_selection(n):
+    returns = pd.DataFrame({"a": [-2.0, -1.0, 0.0, 1.0, 2.0], "b": [2.0, 1.0, 0.0, -1.0, -2.0]})
+    original = returns.copy(deep=True)
+
+    actual = ffn.calc_clusters(returns, n=n)
+
+    # Cluster numbers are model labels; the asset partition is the invariant.
+    expected = {frozenset({"a"}), frozenset({"b"})} if n is None else {frozenset({"a", "b"})}
+    assert {frozenset(assets) for assets in actual.values()} == expected
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("columns, n", [(1, 1), (1, 0), (1, 2), (2, None), (0, None)])
+def test_calc_clusters_preserves_other_model_paths(monkeypatch, columns, n):
+    returns = pd.DataFrame(np.tile([1.0, 2.0, 3.0], (columns, 1)).T)
+    original = returns.copy(deep=True)
+
+    def model_boundary(*args, **kwargs):
+        raise RuntimeError("existing model path")
+
+    monkeypatch.setattr(ffn.core.sklearn.manifold, "MDS", model_boundary)
+    with raises(RuntimeError, match="existing model path"):
+        ffn.calc_clusters(returns, n=n)
+    pd.testing.assert_frame_equal(returns, original)
+
+
 def test_limit_weights():
     w = {"a": 0.3, "b": 0.1, "c": 0.05, "d": 0.05, "e": 0.5}
     actual_exp = {"a": 0.3, "b": 0.2, "c": 0.1, "d": 0.1, "e": 0.3}
