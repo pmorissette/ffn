@@ -1,6 +1,7 @@
 import copy
 import itertools
 import random
+from math import comb as _comb
 
 import matplotlib
 import numpy as np
@@ -3114,10 +3115,19 @@ def calc_prob_backtest_overfitting(trial_returns, n_blocks=16, metric=None, full
             return (sample.mean() / std).to_numpy()
         return np.array([metric(series) for _, series in sample.items()], dtype=float)
 
+    indices = range(n_blocks)
     logits = []
     ranks = []
-    indices = range(n_blocks)
-    for in_sample in itertools.combinations(indices, n_blocks // 2):
+    folds = itertools.combinations(indices, n_blocks // 2)
+    # Custom callbacks may be stateful or stop the search early, so preserve their
+    # call order/count and incremental output allocation.
+    if metric is None:
+        n_combinations = _comb(n_blocks, n_blocks // 2)
+        logits = [np.nan] * n_combinations
+        ranks = [np.nan] * n_combinations
+        # The first half contains block 0; their complements cover the second half.
+        folds = itertools.islice(folds, n_combinations // 2)
+    for fold, in_sample in enumerate(folds):
         chosen = set(in_sample)
         ins = trial_returns.iloc[np.concatenate([blocks[i] for i in indices if i in chosen])]
         oos = trial_returns.iloc[np.concatenate([blocks[i] for i in indices if i not in chosen])]
@@ -3125,15 +3135,27 @@ def calc_prob_backtest_overfitting(trial_returns, n_blocks=16, metric=None, full
         oos_perf = performance(oos)
         if is_perf.shape != (n_trials,) or oos_perf.shape != (n_trials,):
             raise ValueError("metric must return one scalar per trial")
+        # An undefined half invalidates both default directions, retaining their NaN slots.
         if not np.isfinite(is_perf).all() or not np.isfinite(oos_perf).all():
-            logits.append(np.nan)
-            ranks.append(np.nan)
+            if metric is not None:
+                logits.append(np.nan)
+                ranks.append(np.nan)
             continue
-        winner = np.argmax(is_perf)
-        # Relative rank of the winner's out-of-sample performance in (0, 1)
-        omega = scipy.stats.rankdata(oos_perf, method="average")[winner] / (n_trials + 1.0)
-        logits.append(np.log(omega / (1.0 - omega)))
-        ranks.append(omega)
+        directions = [(fold, is_perf, oos_perf)]
+        if metric is None:
+            # Complements reverse lexicographic order; the mirrored position keeps
+            # full_output logits in the original combination order.
+            directions.append((n_combinations - fold - 1, oos_perf, is_perf))
+        for position, train_perf, test_perf in directions:
+            winner = np.argmax(train_perf)
+            # Relative rank of the winner's out-of-sample performance in (0, 1)
+            omega = scipy.stats.rankdata(test_perf, method="average")[winner] / (n_trials + 1.0)
+            if metric is None:
+                logits[position] = np.log(omega / (1.0 - omega))
+                ranks[position] = omega
+            else:
+                logits.append(np.log(omega / (1.0 - omega)))
+                ranks.append(omega)
 
     logits = pd.Series(logits, dtype=float)
     pbo = float((logits <= 0.0).mean()) if logits.notna().all() else np.nan

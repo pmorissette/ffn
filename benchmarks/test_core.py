@@ -125,6 +125,18 @@ def test_calc_prob_mom(benchmark, returns):
     assert result.index.equals(returns.columns)
 
 
+@pytest.mark.benchmark(group="pbo")
+@pytest.mark.parametrize("n_blocks", [8, 12, 16])
+def test_calc_prob_backtest_overfitting(benchmark, n_blocks):
+    returns = pd.DataFrame(np.random.default_rng(42).normal(0.0002, 0.01, (640, 40)))
+
+    result = benchmark(ffn.calc_prob_backtest_overfitting, returns, n_blocks=n_blocks, full_output=True)
+
+    assert 0.0 <= result["pbo"] <= 1.0
+    assert result["logits"].notna().all()
+    assert 0.0 < result["mean_oos_rank"] < 1.0
+
+
 @pytest.mark.benchmark(group="weights")
 @pytest.mark.parametrize("covar_method", ["ledoit-wolf", "standard"])
 def test_calc_mean_var_weights(benchmark, covar_method):
