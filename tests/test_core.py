@@ -1861,7 +1861,7 @@ def test_winsorize():
     assert x["b"].iloc[-1] == 19
 
 
-@mark.parametrize("dtype", ["Float32", "Float64"])
+@mark.parametrize("dtype", ["Float32", "Float64", "Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64"])
 @mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
 def test_winsorize_nullable_series(dtype, use_pandas_method):
     index = pd.Index(range(11), name="row")
@@ -1878,13 +1878,14 @@ def test_winsorize_nullable_series(dtype, use_pandas_method):
     pd.testing.assert_series_equal(values, original)
 
 
+@mark.parametrize("dtype", ["Float64", "Int8", "Int16", "Int32", "Int64", "UInt8", "UInt16", "UInt32", "UInt64"])
 @mark.parametrize("axis", [0, 1])
-def test_winsorize_nullable_dataframe(axis):
-    values = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 100, pd.NA], dtype="Float64")
-    expected_values = pd.Series([1, 1, 2, 3, 4, 5, 6, 7, 8, 8, pd.NA], dtype="Float64")
+def test_winsorize_nullable_dataframe(axis, dtype):
+    values = pd.Series([0, 1, 2, 3, 4, 5, 6, 7, 8, 100, pd.NA], dtype=dtype)
+    expected_values = pd.Series([1, 1, 2, 3, 4, 5, 6, 7, 8, 8, pd.NA], dtype=dtype)
     # The all-missing slice must bypass SciPy while the observed slice is winsorized.
-    data = pd.DataFrame({"observed": values, "all_missing": pd.Series(pd.NA, index=values.index, dtype="Float64")})
-    expected = pd.DataFrame({"observed": expected_values, "all_missing": pd.Series(pd.NA, index=values.index, dtype="Float64")})
+    data = pd.DataFrame({"observed": values, "all_missing": pd.Series(pd.NA, index=values.index, dtype=dtype)})
+    expected = pd.DataFrame({"observed": expected_values, "all_missing": pd.Series(pd.NA, index=values.index, dtype=dtype)})
     if axis == 1:
         data = data.T
         expected = expected.T
@@ -1894,6 +1895,53 @@ def test_winsorize_nullable_dataframe(axis):
 
     pd.testing.assert_frame_equal(actual, expected)
     pd.testing.assert_frame_equal(data, original)
+    # Applying along either axis must not expose the caller's extension storage.
+    actual.iloc[0, 0] = 2
+    pd.testing.assert_frame_equal(data, original)
+    snapshot = actual.copy()
+    data.iloc[0, 0] = 3
+    pd.testing.assert_frame_equal(actual, snapshot)
+
+
+@mark.parametrize("dtype", ["Int8", "UInt8", "Int64", "UInt64"])
+@mark.parametrize("limits", [0.0, 0.2, (0.2, None), (None, 0.2)])
+def test_winsorize_nullable_integer_cut_points(dtype, limits):
+    bounds = np.iinfo(pd.Series(dtype=dtype).dtype.numpy_dtype)
+    raw = [int(bounds.max), int(bounds.min), int(bounds.max) - 1, int(bounds.min) + 1, 1, 0]
+    index = pd.Index(["f", "e", "d", "c", "b", "a", "missing"], name="row")
+    values = pd.Series(raw + [pd.NA], index=index, dtype=dtype, name="observations")
+    original = values.copy()
+    # Winsorization selects observed order statistics, not interpolated quantiles.
+    # Python integers keep wide cut points exact where a float conversion would round.
+    ordered = sorted(raw)
+    lower, upper = (limits, limits) if np.isscalar(limits) else limits
+    low = ordered[int(len(raw) * (lower or 0))]
+    high = ordered[len(raw) - int(len(raw) * (upper or 0)) - 1]
+    expected = pd.Series([min(max(value, low), high) for value in raw] + [pd.NA], index=index, dtype=dtype, name=values.name)
+
+    actual = ffn.winsorize(values, limits=limits)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(values, original)
+    # Neither returned extension storage nor caller storage may alias the other.
+    actual.iloc[0] = 2
+    pd.testing.assert_series_equal(values, original)
+    snapshot = actual.copy()
+    values.iloc[1] = 3
+    pd.testing.assert_series_equal(actual, snapshot)
+
+
+@mark.parametrize("dtype", ["Int8", "UInt8", "Int64", "UInt64"])
+@mark.parametrize("raw", [[], [pd.NA, pd.NA]], ids=["empty", "all-missing"])
+def test_winsorize_nullable_integer_without_observations(dtype, raw):
+    values = pd.Series(raw, dtype=dtype, name="observations")
+    original = values.copy()
+
+    actual = values.winsorize(limits=0.1)
+
+    # No observed cut point exists; retain the original dtype, mask and labels.
+    pd.testing.assert_series_equal(actual, original)
+    pd.testing.assert_series_equal(values, original)
 
 
 def test_rescale():

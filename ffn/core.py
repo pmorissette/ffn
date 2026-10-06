@@ -2534,6 +2534,9 @@ def _winsorize_wrapper(x, limits):
         if isinstance(x.dtype, pd.api.extensions.ExtensionDtype) and pd.api.types.is_float_dtype(x.dtype):
             # SciPy requires a NumPy dtype rather than a pandas nullable floating dtype.
             observed = observed.to_numpy(dtype=float)
+        elif isinstance(x.dtype, pd.api.extensions.ExtensionDtype) and pd.api.types.is_integer_dtype(x.dtype):
+            # Keep integer cut points exact, including values too large for float64.
+            observed = observed.to_numpy(dtype=x.dtype.numpy_dtype)
         x[notnanx] = scipy.stats.mstats.winsorize(observed, limits=limits)
         return x
     else:
