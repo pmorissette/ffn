@@ -177,3 +177,16 @@ def test_calc_erc_weights(benchmark, returns):
 
     assert result.index.equals(returns.columns)
     assert result.sum() == pytest.approx(1.0)
+
+
+@pytest.mark.benchmark(group="clustering")
+@pytest.mark.parametrize("assets", [100, 400, 800])
+def test_calc_ftca(benchmark, assets):
+    returns = pd.DataFrame(np.random.default_rng(42).normal(0.0002, 0.01, (252, assets)), columns=[f"asset_{i}" for i in range(assets)])
+
+    result = benchmark(ffn.calc_ftca, returns)
+
+    members = [asset for cluster in result.values() for asset in cluster]
+    assert list(result) == list(range(1, len(result) + 1))
+    assert len(members) == assets
+    assert set(members) == set(returns.columns)

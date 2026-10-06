@@ -2290,6 +2290,17 @@ def calc_ftca(returns, threshold=0.5):
     i = 0
     # correlation matrix
     corr = returns.corr()
+    # Preserve labelled lookup and skip-NaN behavior for inputs outside the finite working set.
+    if (
+        len(corr) > 1
+        and not isinstance(corr.index, pd.MultiIndex)
+        and not corr.index.hasnans
+        and corr.index.is_unique
+        and isinstance(threshold, (int, float, np.integer, np.floating))
+    ):
+        values = corr.to_numpy()
+        if np.isfinite(values).all():
+            return _calc_ftca(values, corr.index, threshold)
     # remaining securities to cluster
     remain = list(corr.index.copy())
     n = len(remain)
@@ -2359,6 +2370,39 @@ def calc_ftca(returns, threshold=0.5):
                 n = len(remain)
 
     return res
+
+
+def _calc_ftca(values, labels, threshold):
+    """Cluster finite correlations with unique, non-missing, flat labels.
+
+    Keep pandas' mean-correlation sort for seed ties and the original label
+    iteration for member order and scalar types. Positions own the shrinking
+    working set; high-seed members are assigned before the low-seed cluster.
+    """
+    names = list(labels)
+    remain = np.arange(len(labels))
+    clusters = {}
+    while len(remain):
+        if len(remain) == 1:
+            clusters[len(clusters) + 1] = [names[remain[0]]]
+            break
+
+        means = pd.Series(values[np.ix_(remain, remain)].mean(axis=0), index=labels.take(remain)).sort_values()
+        low_label, high_label = means.index[0], means.index[-1]
+        low, high = labels.get_indexer([low_label, high_label])
+        remain = remain[(remain != low) & (remain != high)]
+
+        if values[low, high] > threshold:
+            selected = (values[remain, high] + values[remain, low]) / 2.0 > threshold
+            clusters[len(clusters) + 1] = [low_label, high_label] + [names[x] for x in remain[selected]]
+            remain = remain[~selected]
+        else:
+            for seed, label in ((high, high_label), (low, low_label)):
+                selected = values[remain, seed] > threshold
+                clusters[len(clusters) + 1] = [label] + [names[x] for x in remain[selected]]
+                remain = remain[~selected]
+
+    return clusters
 
 
 def limit_weights(weights, limit=0.1):
