@@ -2,6 +2,8 @@
 import ffn
 ```
 
+Install `ffn[yahoo]` to run this example with Yahoo Finance data.
+
 ```python
 %matplotlib inline
 ```
@@ -9,7 +11,7 @@ import ffn
 ```python
 # download price data from Yahoo! Finance. By default, 
 # the Adj. Close will be used. 
-prices = ffn.get('aapl,msft', start='2010-01-01')
+prices = ffn.get('aapl,msft', provider='yahoo', start='2010-01-01')
 ```
 
 ```python

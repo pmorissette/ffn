@@ -10,11 +10,13 @@ import ffn
 
 The main method for data retrieval is the {py:func}`get <ffn.get>` function. The get function uses a data provider to download data from an external service and packs that data into a pandas DataFrame for further manipulation.
 
+Install `ffn[yahoo]` for the Yahoo examples below. Other providers can be passed as callables or registered by installed packages; see [how to use a data provider](data-providers.md).
+
 > **Note:** Upon import, `ffn` modifies `pandas.core.base.PandasObject`
 > to provide added functionality to pandas objects, including DataFrames.
 
 ```python
-data = ffn.get('agg,hyg,spy,eem,efa', start='2010-01-01', end='2014-01-01')
+data = ffn.get('agg,hyg,spy,eem,efa', provider='yahoo', start='2010-01-01', end='2014-01-01')
 print(data.head())
 ```
 
@@ -28,10 +30,10 @@ Date
 2010-01-08  75.196701  44.031300  90.201675  33.561905  39.202148
 ```
 
-By default, the data is downloaded from Yahoo! Finance and the Adjusted Close is used as the security's price. Other data sources are also available and you may select other fields as well. Fields are specified by using the following format: \{ticker}:\{field}. So, if we want to get the Open, High, Low, Close for aapl, we would do the following:
+The Yahoo provider uses Adjusted Close when no field is specified. Fields use the format \{ticker}:\{field}. To retrieve Open, High, Low, and Close for aapl:
 
 ```python
-print(ffn.get('aapl:Open,aapl:High,aapl:Low,aapl:Close', start='2010-01-01', end='2014-01-01').head())
+print(ffn.get('aapl:Open,aapl:High,aapl:Low,aapl:Close', provider='yahoo', start='2010-01-01', end='2014-01-01').head())
 ```
 
 ```
@@ -44,10 +46,10 @@ Date
 2010-01-08  7.510714  7.571429  7.466429   7.570714
 ```
 
-The default data provider is {py:func}`ffn.data.web`. This is basically just a thin wrapper around pandas' pandas.io.data provider. Please refer to the appropriate docs for more info (data sources, etc.). The {py:func}`ffn.data.csv` provider is also available when we want to load data from a local file. In this case, we can tell {py:func}`ffn.data.get` to use the csv provider. In this case, we also want to merge this new data with the existing data we downloaded earlier. Therefore, we will provide the **data** object as the *existing* argument, and the new data will be merged into the existing DataFrame.
+Use the {py:func}`ffn.data.csv` provider to load a local file. Pass the earlier **data** object as *existing* to merge the new series into the downloaded data:
 
 ```python
-data = ffn.get('dbc', provider=ffn.data.csv, path='test_data.csv', existing=data)
+data = ffn.get('dbc', provider='csv', path='test_data.csv', existing=data)
 print(data.head())
 ```
 
@@ -61,7 +63,7 @@ Date
 2010-01-08  75.196701  44.031300  90.201675  33.561905  39.202148  25.38
 ```
 
-As we can see above, the dbc column was added to the DataFrame. Internally, get is using the function ffn.merge, which is useful when you want to merge TimeSeries and DataFrames together. We plan on adding many more data sources over time. If you know your way with Python and would like to contribute a data provider, please feel free to submit a pull request - contributions are always welcome!
+The dbc column was added to the DataFrame using ffn.merge. Additional providers can live in your own code or an independently installed package; they do not need changes to ffn.
 
 ## Data Manipulation
 

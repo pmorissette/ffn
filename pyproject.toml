@@ -43,10 +43,14 @@ dependencies = [
     "scikit-learn>=0.15",
     "scipy>=0.15",
     "tabulate>=0.7.5",
-    "yfinance>=0.2",
 ]
 
+[project.entry-points."ffn.providers"]
+yahoo = "ffn.yahoo:download"
+csv = "ffn.data:csv"
+
 [project.optional-dependencies]
+yahoo = ["yfinance>=0.2"]
 develop = [
     "build",
     "bump-my-version",
@@ -125,7 +129,7 @@ include = [
 packages = ["ffn"]
 
 [tool.check-dist]
-present = ["ffn/__init__.py", "ffn/core.py", "ffn/data.py", "ffn/utils.py"]
+present = ["ffn/__init__.py", "ffn/core.py", "ffn/data.py", "ffn/utils.py", "ffn/yahoo.py"]
 absent = ["base/*", "bt/*", "reference/*", "tests/*", "benchmarks/*", "docs/*", "TODO.md"]
 
 [tool.check-dist.sdist]
@@ -140,6 +144,8 @@ pages = [
     "docs/source/install.md",
     "docs/source/introduction.md",
     "docs/source/quick.md",
+    "docs/source/data-providers.md",
+    "docs/source/provider-contract.md",
     "docs/source/ffn.md",
     "docs/development.md",
 ]
