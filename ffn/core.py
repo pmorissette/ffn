@@ -2568,6 +2568,7 @@ def rescale(x, min=0.0, max=1.0, axis=0):
         return x.apply(
             innerfn,
             axis=axis,
+            result_type="broadcast",
             args=(
                 min,
                 max,

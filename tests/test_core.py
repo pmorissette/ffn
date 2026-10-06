@@ -1979,6 +1979,18 @@ def test_rescale():
     assert x["b"].iloc[-1] == 9
 
 
+def test_rescale_dataframe_axis_1():
+    x = pd.DataFrame({"a": [1.0, 2.0, 5.0], "b": [3.0, 4.0, 1.0], "c": [5.0, 0.0, 3.0]})
+    res = x.rescale(axis=1)
+
+    assert isinstance(res, pd.DataFrame)
+    assert list(res.columns) == ["a", "b", "c"]
+    assert res.index.equals(x.index)
+    assert res.loc[0].tolist() == [0.0, 0.5, 1.0]
+    assert res.loc[2].tolist() == [1.0, 0.0, 0.5]
+    assert (res.dtypes == "float64").all()
+
+
 # A falsey non-string name guards against conditional metadata propagation.
 @mark.parametrize("name", [None, "asset", 0], ids=["unnamed", "string-name", "falsey-name"])
 @mark.parametrize("method_name", ["winsorize", "rescale"])
