@@ -26,52 +26,45 @@ def test_get_supports_uncacheable_providers(provider_kind, refresh):
         provider = ffn.utils.memoize(provide)
 
     expected = pd.DataFrame({"abcclose": [11.0, 12.0]}, index=index)
-    ffn.get.mcache.clear()
-    try:
-        first = ffn.get("ABC:Close", provider=provider, offset=10.0, mrefresh=refresh)
-        pd.testing.assert_frame_equal(first, expected)
-        first.iloc[0, 0] = -1.0
-        second = ffn.get("ABC:Close", provider=provider, offset=10.0, mrefresh=refresh)
-        pd.testing.assert_frame_equal(second, expected)
-        # get has no reusable key, but a memoized provider still owns its independent cache.
-        count = 1 if provider_kind == "memoized" and not refresh else 2
-        forwarded_refresh = refresh if provider_kind == "memoized" else False
-        assert calls == [("ABC", "Close", 10.0, forwarded_refresh)] * count
-        assert ffn.get.mcache == {}
-    finally:
-        ffn.get.mcache.clear()
+    first = ffn.get("ABC:Close", provider=provider, offset=10.0, mrefresh=refresh)
+    pd.testing.assert_frame_equal(first, expected)
+    first.iloc[0, 0] = -1.0
+    second = ffn.get("ABC:Close", provider=provider, offset=10.0, mrefresh=refresh)
+    pd.testing.assert_frame_equal(second, expected)
+    # Only the provider owns a cache; refresh is forwarded when explicitly declared.
+    count = 1 if provider_kind == "memoized" and not refresh else 2
+    forwarded_refresh = refresh if provider_kind != "lambda" else False
+    assert calls == [("ABC", "Close", 10.0, forwarded_refresh)] * count
+    assert not hasattr(ffn.get, "mcache")
 
 
-def test_get_isolates_cached_data_from_caller_mutation(monkeypatch):
-    """Keep caller assignments from changing data cached by ``ffn.get``."""
+def test_get_isolates_provider_data_from_caller_mutation(monkeypatch):
+    """Keep caller assignments from changing data cached by a provider."""
     expected = pd.DataFrame(
         {"abc": [10.0, 12.0]},
         index=pd.date_range("2024-01-02", periods=2, freq="2D"),
     )
     calls = []
 
+    @ffn.utils.memoize
     def provider(ticker, field):
         calls.append((ticker, field))
         return sample_provider(ticker, field)
 
     monkeypatch.setattr(ffn.data, "DEFAULT_PROVIDER", provider)
-    ffn.get.mcache.clear()
-    try:
-        first = ffn.get("ABC")
-        assert isinstance(first, pd.DataFrame)
-        first.iloc[0, 0] = 999.0
-        first.index.freq = None
-        second = ffn.get("ABC")
+    first = ffn.get("ABC")
+    assert isinstance(first, pd.DataFrame)
+    first.iloc[0, 0] = 999.0
+    first.index.freq = None
+    second = ffn.get("ABC")
 
-        assert isinstance(second, pd.DataFrame)
-        assert second is not first
-        pd.testing.assert_frame_equal(second, expected)
-        second.iloc[-1, 0] = -1.0
-        second.index.freq = None
-        pd.testing.assert_frame_equal(ffn.get("ABC"), expected)
-        assert calls == [("ABC", None)]
-    finally:
-        ffn.get.mcache.clear()
+    assert isinstance(second, pd.DataFrame)
+    assert second is not first
+    pd.testing.assert_frame_equal(second, expected)
+    second.iloc[-1, 0] = -1.0
+    second.index.freq = None
+    pd.testing.assert_frame_equal(ffn.get("ABC"), expected)
+    assert calls == [("ABC", None)]
 
 
 def test_csv_isolates_cached_data_from_caller_mutation(monkeypatch):

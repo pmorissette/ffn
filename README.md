@@ -20,7 +20,7 @@ graphing and common data transformations.
 
 ```python
 import ffn
-returns = ffn.get('aapl,msft,c,gs,ge', start='2010-01-01').to_returns().dropna()
+returns = ffn.get('aapl,msft,c,gs,ge', provider='yahoo', start='2010-01-01').to_returns().dropna()
 print(returns.calc_mean_var_weights().as_format('.2%'))
 ```
 
@@ -44,6 +44,14 @@ using `pip`.
 pip install ffn
 ```
 
+The Yahoo examples require the optional provider dependency:
+
+```bash
+pip install 'ffn[yahoo]'
+```
+
+Other providers can be passed as callables or installed as plugins. See [how to use a data provider](docs/source/data-providers.md).
+
 Since ffn has many dependencies, we strongly recommend installing the [Anaconda Scientific Python Distribution](https://store.continuum.io/cshop/anaconda/). This distribution comes with many of the required packages pre-installed, including pip. Once Anaconda is installed, the above command should complete the installation.
 
 ## Documentation
@@ -53,6 +61,8 @@ Read the docs at <https://pmorissette.github.io/ffn/>.
 - [Introduction](docs/source/introduction.md)
 - [Installation guide](docs/source/install.md)
 - [Quickstart](docs/source/quick.md)
+- [Data providers](docs/source/data-providers.md)
+- [Provider contract](docs/source/provider-contract.md)
 - [Full API](docs/source/ffn.md)
 
 ## Contribute
