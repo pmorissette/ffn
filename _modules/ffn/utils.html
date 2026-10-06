@@ -482,7 +482,13 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">refresh</span> <span class="ow">and</span> <span class="n">refresh_kw</span> <span class="ow">in</span> <span class="n">kw</span> <span class="ow">and</span> <span class="n">kw</span><span class="p">[</span><span class="n">refresh_kw</span><span class="p">]:</span>
         <span class="n">refresh</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="n">key</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">PicklingError</span><span class="p">,</span> <span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="c1"># Lambdas, local functions, and some callable state cannot form reusable</span>
+        <span class="c1"># pickle keys. Execute without caching rather than inventing a key that</span>
+        <span class="c1"># could alias a different provider or its captured state.</span>
+        <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
     <span class="n">cache</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">mcache</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">refresh</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cache</span><span class="p">:</span>
@@ -500,6 +506,9 @@ window.runMermaid = runMermaid;</script>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Memoize decorator. The refresh keyword is the keyword</span>
 <span class="sd">    used to bypass the cache (in the function call).</span>
+<span class="sd">    If pickle rejects arguments with PicklingError, AttributeError, or TypeError,</span>
+<span class="sd">    the call runs without caching. Other serialization errors propagate.</span>
+<span class="sd">    Exceptions raised by the wrapped function are propagated unchanged.</span>
 <span class="sd">    Pandas Series and DataFrame results are copied at the cache boundary</span>
 <span class="sd">    so assignments through returned containers do not change cached data.</span>
 <span class="sd">    Axes and attrs are copied independently. As with pandas deep copies,</span>
