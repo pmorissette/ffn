@@ -157,6 +157,7 @@ extensions = ["sphinx.ext.intersphinx"]
 
 [tool.yardang.html-theme-options]
 github = "pmorissette/ffn"
+logo = "logo.png"
 
 [tool.yardang.redirects]
 install = "docs/source/install.html"
