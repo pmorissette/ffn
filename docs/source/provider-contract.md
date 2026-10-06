@@ -37,6 +37,8 @@ Responses combined in one call must use compatible timezone conventions.
 `common_dates=True` drops rows containing missing values. Otherwise
 `forward_fill=True` fills gaps after alignment. Neither option changes the
 provider's data. ffn does not convert timezones or resample observations.
+Each response is copied before the next provider call, so providers may reuse
+their data buffers.
 
 ## Provider selection
 
@@ -65,6 +67,11 @@ uninspectable signature can be wrapped in a function declaring `mrefresh`.
 The registered Yahoo provider makes a fresh request on every call. The CSV
 provider and legacy `ffn.data.yf` wrapper retain their provider-local caches and
 support `mrefresh=True`.
+
+Direct calls to `ffn.data.yf` and the deprecated `ffn.data.web` preserve Yahoo's
+original Series or DataFrame shape. An empty field string returns the full
+frame. These legacy helpers do not normalize dates or columns; the registered
+`yahoo` provider returns the single, normalized Series required by `ffn.get`.
 
 ## Compatibility changes
 

@@ -128,6 +128,40 @@ def test_get_preserves_valid_provider_response(monkeypatch, dtype):
     pd.testing.assert_series_equal(provided, before)
 
 
+@pytest.mark.parametrize("dtype", ["float64", "Float64", "Int64"])
+def test_get_snapshots_reused_provider_buffer(dtype):
+    buffer = prices("source").astype(dtype)
+
+    def provider(ticker, field):
+        buffer.iloc[:] = 1 if ticker == "ABC" else 2
+        return buffer
+
+    result = ffn.get("ABC,DEF", provider=provider)
+
+    assert result.to_dict("list") == {"abc": [1, 1], "def": [2, 2]}
+    buffer.iloc[:] = 3
+    assert result.to_dict("list") == {"abc": [1, 1], "def": [2, 2]}
+    result.iloc[0, 0] = 4
+    assert buffer.tolist() == [3, 3]
+
+
+def test_get_snapshots_reused_provider_index():
+    buffer = prices("source")
+
+    def provider(ticker, field):
+        if ticker == "DEF":
+            buffer.index.array[:] = pd.date_range("2024-01-03", periods=2)
+        return buffer
+
+    result = ffn.get("ABC,DEF", provider=provider, common_dates=False)
+
+    expected = pd.DataFrame(
+        {"abc": [1.0, 2.0, float("nan"), float("nan")], "def": [float("nan"), float("nan"), 1.0, 2.0]},
+        index=pd.date_range("2024-01-01", periods=4),
+    )
+    pd.testing.assert_frame_equal(result, expected)
+
+
 def test_get_does_not_cache_credentials_or_provider_state(monkeypatch):
     calls = []
 
@@ -233,22 +267,26 @@ series = pd.Series([100.0, 110.0], index=pd.date_range('2024-01-01', periods=2))
 assert ffn.get('ABC', provider=lambda ticker, field: series).iloc[0, 0] == 100.0
 assert abs(series.calc_total_return() - 0.1) < 1e-10
 assert 'ffn.yahoo' not in sys.modules
-try:
-    ffn.get('ABC', provider='yahoo')
-except ImportError as error:
-    assert 'ffn[yahoo]' in str(error)
-else:
-    raise AssertionError('expected optional dependency error')
+for fetch in (lambda: ffn.get('ABC', provider='yahoo'), lambda: ffn.data.yf('ABC', '')):
+    try:
+        fetch()
+    except ImportError as error:
+        assert 'ffn[yahoo]' in str(error)
+    else:
+        raise AssertionError('expected optional dependency error')
 """
     subprocess.run([sys.executable, "-c", script], check=True, capture_output=True, text=True)
 
 
+@pytest.mark.parametrize("group_by", ["column", "ticker"])
 @pytest.mark.parametrize("multiindex", [False, True])
-def test_yahoo_adapter_normalizes_response(monkeypatch, multiindex):
+def test_yahoo_adapter_normalizes_response(monkeypatch, multiindex, group_by):
     from ffn.yahoo import download
 
     dates = pd.to_datetime(["2024-01-02", "2024-01-01", "2024-01-01"])
     columns = pd.MultiIndex.from_tuples([("Adj Close", "ABC"), ("Volume", "ABC")]) if multiindex else ["Adj Close", "Volume"]
+    if multiindex and group_by == "ticker":
+        columns = columns.swaplevel()
     raw = pd.DataFrame([[2.0, 20.0], [0.0, 0.0], [1.0, 10.0]], index=dates, columns=columns)
     before = raw.copy(deep=True)
     calls = []
@@ -258,19 +296,43 @@ def test_yahoo_adapter_normalizes_response(monkeypatch, multiindex):
         return raw
 
     monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=fetch))
-    result = download("ABC", start="2024-01-01", end="2024-01-03", interval="1d")
+    result = download("ABC", start="2024-01-01", end="2024-01-03", interval="1d", group_by=group_by)
     pd.testing.assert_series_equal(result, prices("ABC"), check_freq=False)
-    assert calls == [(("ABC",), {"auto_adjust": False, "start": "2024-01-01", "end": "2024-01-03", "interval": "1d"})]
+    assert calls == [(("ABC",), {"auto_adjust": False, "start": "2024-01-01", "end": "2024-01-03", "interval": "1d", "group_by": group_by})]
     pd.testing.assert_frame_equal(raw, before)
 
 
-def test_yahoo_adapter_rejects_ambiguous_response(monkeypatch):
+@pytest.mark.parametrize("group_by", ["column", "ticker"])
+def test_yahoo_adapter_rejects_ambiguous_response(monkeypatch, group_by):
     from ffn.yahoo import download
 
     raw = pd.DataFrame([[1.0, 2.0]], index=pd.date_range("2024-01-01", periods=1), columns=pd.MultiIndex.from_tuples([("Adj Close", "ABC"), ("Adj Close", "DEF")]))
+    if group_by == "ticker":
+        raw.columns = raw.columns.swaplevel()
     monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=lambda *args, **kwargs: raw))
     with pytest.raises(ValueError, match="one series"):
-        download("ABC DEF")
+        download("ABC DEF", group_by=group_by)
+
+
+@pytest.mark.parametrize("group_by", ["column", "ticker"])
+@pytest.mark.parametrize("multiindex", [False, True])
+def test_yahoo_adapter_preserves_empty_responses(monkeypatch, multiindex, group_by):
+    def fetch(ticker, **kwargs):
+        frame = prices(ticker).rename("Adj Close").to_frame()
+        if multiindex:
+            frame.columns = pd.MultiIndex.from_product([frame.columns, [ticker]])
+            if group_by == "ticker":
+                frame.columns = frame.columns.swaplevel()
+        return frame.iloc[:0] if ticker == "DEF" else frame
+
+    monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=fetch))
+    result = ffn.get("ABC,DEF", provider="yahoo", common_dates=False, group_by=group_by)
+    expected = pd.DataFrame({"abc": prices("ABC"), "def": float("nan")})
+    pd.testing.assert_frame_equal(result, expected)
+
+    empty = ffn.get("DEF", provider="yahoo", group_by=group_by)
+    pd.testing.assert_frame_equal(empty, prices("DEF").iloc[:0].rename("def").to_frame())
+    assert ffn.get("ABC,DEF", provider="yahoo", group_by=group_by).empty
 
 
 @pytest.mark.parametrize("raw", [None, pd.DataFrame(), prices("ABC").rename("Close").to_frame()])
@@ -296,13 +358,33 @@ def test_yahoo_adapter_forwards_adjustment_and_field(monkeypatch):
     assert calls == [{"start": None, "end": None, "auto_adjust": True}]
 
 
-def test_yahoo_compatibility_wrapper(monkeypatch):
-    from ffn import yahoo
-
+@pytest.mark.parametrize("legacy_name", ["yf", "web"])
+@pytest.mark.parametrize("field", [None, "", "Close"])
+@pytest.mark.parametrize("symbols", [None, ["ABC"], ["ABC", "DEF"]], ids=["flat", "single-ticker", "multiple-tickers"])
+def test_yahoo_compatibility_wrapper(monkeypatch, legacy_name, field, symbols):
+    fields = ["Adj Close", "Close", "Volume"]
+    columns = fields if symbols is None else pd.MultiIndex.from_product([fields, symbols])
+    raw = pd.DataFrame(
+        [[float(row * len(columns) + col) for col in range(len(columns))] for row in range(3)],
+        index=pd.to_datetime(["2024-01-02", "2024-01-01", "2024-01-01"]),
+        columns=columns,
+    )
     calls = []
-    monkeypatch.setattr(yahoo, "download", lambda *args, **kwargs: calls.append((args, kwargs)) or prices("ABC"))
-    ffn.data.yf("ABC", "Close", start="2024-01-01", mrefresh=True)
-    assert calls == [(("ABC",), {"field": "Close", "start": "2024-01-01", "end": None})]
+    monkeypatch.setitem(sys.modules, "yfinance", SimpleNamespace(download=lambda *args, **kwargs: calls.append((args, kwargs)) or raw))
+    ticker = " ".join(symbols or ["ABC"])
+    legacy = getattr(ffn.data, legacy_name)
+    if legacy_name == "web":
+        with pytest.warns(UserWarning, match="deprecated"):
+            result = legacy(ticker, field, start="2024-01-01", mrefresh=True)
+    else:
+        result = legacy(ticker, field, start="2024-01-01", mrefresh=True)
+
+    expected = raw if field == "" else raw["Adj Close" if field is None else field]
+    if isinstance(expected, pd.DataFrame):
+        pd.testing.assert_frame_equal(result, expected)
+    else:
+        pd.testing.assert_series_equal(result, expected)
+    assert calls == [((ticker,), {"auto_adjust": False, "start": "2024-01-01", "end": None})]
 
 
 def test_csv_provider_respects_date_window_and_refresh(tmp_path):

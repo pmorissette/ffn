@@ -13,18 +13,10 @@ def download(ticker: str, field=None, start=None, end=None, **kwargs) -> pd.Seri
     are sorted by date, with the last observation kept for duplicate dates.
     This adapter does not cache results or require ffn-specific utilities.
     """
-    try:
-        import yfinance
-    except ModuleNotFoundError as error:
-        if error.name != "yfinance":
-            raise
-        raise ImportError("Yahoo data requires yfinance; install 'ffn[yahoo]' or choose another provider") from error
-
     field = "Adj Close" if field is None else field
-    kwargs.setdefault("auto_adjust", False)
-    data = yfinance.download(ticker, start=start, end=end, **kwargs)
-    if data is None or data.empty:
-        raise ValueError(f"failed to retrieve data for {ticker}:{field}")
+    data = _download(ticker, start=start, end=end, **kwargs)
+    if isinstance(data.columns, pd.MultiIndex) and kwargs.get("group_by") == "ticker":
+        data = data.swaplevel(axis=1)
     if field not in data:
         raise ValueError(f"Yahoo response does not contain field {field!r} for {ticker!r}")
     series = data[field]
@@ -33,3 +25,24 @@ def download(ticker: str, field=None, start=None, end=None, **kwargs) -> pd.Seri
             raise ValueError("Yahoo provider requires one series per ticker/field request")
         series = series.iloc[:, 0]
     return series[~series.index.duplicated(keep="last")].sort_index().rename(ticker)
+
+
+def _legacy_download(ticker, field=None, start=None, end=None):
+    field = "Adj Close" if field is None else field
+    data = _download(ticker, start=start, end=end)
+    return data[field] if field else data
+
+
+def _download(ticker, start=None, end=None, **kwargs):
+    try:
+        import yfinance
+    except ModuleNotFoundError as error:
+        if error.name != "yfinance":
+            raise
+        raise ImportError("Yahoo data requires yfinance; install 'ffn[yahoo]' or choose another provider") from error
+
+    kwargs.setdefault("auto_adjust", False)
+    data = yfinance.download(ticker, start=start, end=end, **kwargs)
+    if data is None:
+        raise ValueError(f"failed to retrieve data for {ticker}")
+    return data

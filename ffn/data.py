@@ -140,11 +140,13 @@ def get(
             t = bits[0]
             f = bits[1]
 
-        data[ticker] = provider(ticker=t, field=f, **kwargs)
-        _validate_response(data[ticker], ticker)
+        series = provider(ticker=t, field=f, **kwargs)
+        _validate_response(series, ticker)
+        # Snapshot before the next request can reuse the provider's buffers.
+        data[ticker] = series.copy(deep=True)
+        data[ticker].index = series.index.copy(deep=True)
 
-    df = pd.DataFrame(data).copy(deep=True)
-    df.index = df.index.copy(deep=True)
+    df = pd.DataFrame(data)
 
     # ensure same order as provided
     df = df[tickers]
@@ -187,11 +189,11 @@ def web(ticker: str, field=None, start=None, end=None, mrefresh=False, source="y
 
 
 @utils.memoize
-def yf(ticker: str, field=None, start=None, end=None, mrefresh=False) -> pd.Series:
-    """Memoized compatibility wrapper for :func:`ffn.yahoo.download`."""
-    from .yahoo import download
+def yf(ticker: str, field=None, start=None, end=None, mrefresh=False) -> pd.Series | pd.DataFrame:
+    """Memoized Yahoo wrapper preserving legacy field selection and shapes."""
+    from .yahoo import _legacy_download
 
-    return download(ticker, field=field, start=start, end=end)
+    return _legacy_download(ticker, field=field, start=start, end=end)
 
 
 @utils.memoize
