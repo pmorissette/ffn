@@ -43,12 +43,13 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ffn</span>
 </pre></div>
 </div>
+<p>Install <code class="docutils literal notranslate"><span class="pre">ffn[yahoo]</span></code> to run this example with Yahoo Finance data.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># download price data from Yahoo! Finance. By default, </span>
 <span class="c1"># the Adj. Close will be used. </span>
-<span class="n">prices</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'aapl,msft'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">)</span>
+<span class="n">prices</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'aapl,msft'</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'yahoo'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># let's compare the relative performance of each stock </span>
@@ -149,6 +150,8 @@
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-providers.html">How to use a data provider</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provider-contract.html">Provider contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ffn.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../development.html">How to develop ffn</a></li>
 </ul>

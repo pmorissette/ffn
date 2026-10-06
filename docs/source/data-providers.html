@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>How to use a data provider &#8212; ffn - Financial Functions for Python v1.3.0</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/klink.css?v=c1d18d48" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/custom.css?v=890fd012" />
+    <script src="../../_static/documentation_options.js?v=1f29e9d3"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/js/custom.js?v=956e5d78"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Provider contract" href="provider-contract.html" />
+    <link rel="prev" title="Quickstart" href="quick.html" />
+         
+        <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+        
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,500,700' rel='stylesheet' type='text/css'>
+    
+  </head><body>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="tex2jax_ignore mathjax_ignore" id="how-to-use-a-data-provider">
+<h1>How to use a data provider<a class="headerlink" href="#how-to-use-a-data-provider" title="Link to this heading">¶</a></h1>
+<section id="fetch-yahoo-data">
+<h2>Fetch Yahoo data<a class="headerlink" href="#fetch-yahoo-data" title="Link to this heading">¶</a></h2>
+<p>Install the optional Yahoo dependency:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'ffn[yahoo]'</span>
+</pre></div>
+</div>
+<p>Select the registered provider:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ffn</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"AAPL,MSFT"</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s2">"yahoo"</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">"2025-01-01"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>To set a process-wide default instead, assign <code class="docutils literal notranslate"><span class="pre">ffn.data.DEFAULT_PROVIDER</span> <span class="pre">=</span> <span class="pre">&quot;yahoo&quot;</span></code>.
+The same setting accepts a callable or another registered name.</p>
+</section>
+<section id="supply-your-own-data">
+<h2>Supply your own data<a class="headerlink" href="#supply-your-own-data" title="Link to this heading">¶</a></h2>
+<p>Wrap your data source in a callable accepting <code class="docutils literal notranslate"><span class="pre">ticker</span></code> and <code class="docutils literal notranslate"><span class="pre">field</span></code> keywords.
+Return one numeric Series with unique, increasing dates:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">ffn</span>
+
+<span class="n">history</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">"ABC"</span><span class="p">:</span> <span class="p">[</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">101.0</span><span class="p">,</span> <span class="mf">102.0</span><span class="p">]},</span>
+    <span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="s2">"2024-01-01"</span><span class="p">,</span> <span class="n">periods</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">local_prices</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"This source has only a default price field"</span><span class="p">)</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">start</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">end</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">series</span>
+
+<span class="n">prices</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ABC"</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="n">local_prices</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s2">"2024-01-02"</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">prices</span><span class="p">[</span><span class="s2">"abc"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="mf">101.0</span><span class="p">,</span> <span class="mf">102.0</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Keep authentication, request construction, pagination, and response parsing in
+your provider. See the <a class="reference internal" href="provider-contract.html"><span class="std std-doc">provider contract</span></a> for validation
+rules and cache-refresh behavior.</p>
+</section>
+<section id="register-a-standalone-provider">
+<h2>Register a standalone provider<a class="headerlink" href="#register-a-standalone-provider" title="Link to this heading">¶</a></h2>
+<p>Put the callable in an installable package, for example <code class="docutils literal notranslate"><span class="pre">my_feed.provider:download</span></code>.
+Register it in that package’s <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code>:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.entry-points.</span><span class="s2">"ffn.providers"</span><span class="k">]</span>
+<span class="n">my_feed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my_feed.provider:download"</span>
+</pre></div>
+</div>
+<p>Install the package in the same environment as ffn, then select it by name:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">prices</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ABC"</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s2">"my_feed"</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s2">"2024-01-01"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Use <code class="docutils literal notranslate"><span class="pre">ffn.data.get_provider(&quot;my_feed&quot;)</span></code> to verify that the registration resolves.
+No registration call or change to ffn’s source is needed.</p>
+<p>For a working adapter to copy, see
+<a class="reference external" href="https://github.com/pmorissette/ffn/blob/master/ffn/yahoo.py"><code class="docutils literal notranslate"><span class="pre">ffn/yahoo.py</span></code></a>.
+It imports yfinance only when called and has no dependency on ffn’s dispatcher
+or caching utilities. ffn registers it in its own <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> using the same
+entry-point group:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="k">[project.entry-points.</span><span class="s2">"ffn.providers"</span><span class="k">]</span>
+<span class="n">yahoo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"ffn.yahoo:download"</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        <aside class="klink-sidebar">
+
+            
+            
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">How to use a data provider</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#fetch-yahoo-data">Fetch Yahoo data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#supply-your-own-data">Supply your own data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#register-a-standalone-provider">Register a standalone provider</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="provider-contract.html">Provider contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ffn.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development.html">How to develop ffn</a></li>
+</ul>
+
+
+            
+            <ul>
+                <li><a href="https://github.com/pmorissette/ffn">Github</a></li>
+            </ul>
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </aside>
+    
+      <div class="clearer"></div>
+    </div>
+        <div class="footer">
+            Philippe Morissette
+        </div>
+
+        
+  </body>
+</html>

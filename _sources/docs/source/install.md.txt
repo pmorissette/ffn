@@ -7,6 +7,14 @@ using `pip`:
 pip install ffn
 ```
 
+Yahoo Finance access is optional. To run the Yahoo examples, install:
+
+```bash
+pip install 'ffn[yahoo]'
+```
+
+Custom and CSV providers do not require yfinance. See [how to use a data provider](data-providers.md).
+
 Since `ffn` has many dependencies, we strongly recommend installing the [Anaconda Scientific Python Distribution](https://store.continuum.io/cshop/anaconda/). This distribution comes with many of the required packages pre-installed, including pip. Once Anaconda is installed, the above command should complete the installation.
 
 `ffn` is also available on [Conda Forge](https://conda-forge.org/), and installable via:

@@ -55,7 +55,7 @@ finance</strong>. It stands on the shoulders of giants (Pandas, Numpy, Scipy, et
 a vast array of utilities, from performance measurement and evaluation to
 graphing and common data transformations.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ffn</span>
-<span class="n">returns</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'aapl,msft,c,gs,ge'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">)</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+<span class="n">returns</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'aapl,msft,c,gs,ge'</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'yahoo'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">)</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">returns</span><span class="o">.</span><span class="n">calc_mean_var_weights</span><span class="p">()</span><span class="o">.</span><span class="n">as_format</span><span class="p">(</span><span class="s1">'.2%'</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -76,6 +76,11 @@ using <code class="docutils literal notranslate"><span class="pre">pip</span></c
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>ffn
 </pre></div>
 </div>
+<p>The Yahoo examples require the optional provider dependency:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'ffn[yahoo]'</span>
+</pre></div>
+</div>
+<p>Other providers can be passed as callables or installed as plugins. See <a class="reference internal" href="docs/source/data-providers.html"><span class="std std-doc">how to use a data provider</span></a>.</p>
 <p>Since ffn has many dependencies, we strongly recommend installing the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda Scientific Python Distribution</a>. This distribution comes with many of the required packages pre-installed, including pip. Once Anaconda is installed, the above command should complete the installation.</p>
 </section>
 <section id="documentation">
@@ -85,6 +90,8 @@ using <code class="docutils literal notranslate"><span class="pre">pip</span></c
 <li><p><a class="reference internal" href="docs/source/introduction.html"><span class="std std-doc">Introduction</span></a></p></li>
 <li><p><a class="reference internal" href="docs/source/install.html"><span class="std std-doc">Installation guide</span></a></p></li>
 <li><p><a class="reference internal" href="docs/source/quick.html"><span class="std std-doc">Quickstart</span></a></p></li>
+<li><p><a class="reference internal" href="docs/source/data-providers.html"><span class="std std-doc">Data providers</span></a></p></li>
+<li><p><a class="reference internal" href="docs/source/provider-contract.html"><span class="std std-doc">Provider contract</span></a></p></li>
 <li><p><a class="reference internal" href="docs/source/ffn.html"><span class="std std-doc">Full API</span></a></p></li>
 </ul>
 </section>
@@ -107,6 +114,8 @@ using <code class="docutils literal notranslate"><span class="pre">pip</span></c
 <li class="toctree-l1"><a class="reference internal" href="docs/source/install.html">Installation Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="docs/source/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="docs/source/quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs/source/data-providers.html">How to use a data provider</a></li>
+<li class="toctree-l1"><a class="reference internal" href="docs/source/provider-contract.html">Provider contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="docs/source/ffn.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="docs/development.html">How to develop ffn</a></li>
 </ul>

@@ -45,6 +45,11 @@ using <code class="docutils literal notranslate"><span class="pre">pip</span></c
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>ffn
 </pre></div>
 </div>
+<p>Yahoo Finance access is optional. To run the Yahoo examples, install:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'ffn[yahoo]'</span>
+</pre></div>
+</div>
+<p>Custom and CSV providers do not require yfinance. See <a class="reference internal" href="data-providers.html"><span class="std std-doc">how to use a data provider</span></a>.</p>
 <p>Since <code class="docutils literal notranslate"><span class="pre">ffn</span></code> has many dependencies, we strongly recommend installing the <a class="reference external" href="https://store.continuum.io/cshop/anaconda/">Anaconda Scientific Python Distribution</a>. This distribution comes with many of the required packages pre-installed, including pip. Once Anaconda is installed, the above command should complete the installation.</p>
 <p><code class="docutils literal notranslate"><span class="pre">ffn</span></code> is also available on <a class="reference external" href="https://conda-forge.org/">Conda Forge</a>, and installable via:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>install<span class="w"> </span>ffn<span class="w"> </span>--channel<span class="w"> </span>conda-forge
@@ -66,6 +71,8 @@ using <code class="docutils literal notranslate"><span class="pre">pip</span></c
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-providers.html">How to use a data provider</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provider-contract.html">Provider contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ffn.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../development.html">How to develop ffn</a></li>
 </ul>

@@ -445,23 +445,77 @@ window.runMermaid = runMermaid;</script>
   <h1>Source code for ffn.data</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">importlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">metadata</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">yfinance</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pandas.api.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_bool_dtype</span><span class="p">,</span> <span class="n">is_complex_dtype</span><span class="p">,</span> <span class="n">is_numeric_dtype</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">ffn</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span>
 
 
+<div class="viewcode-block" id="DataProvider">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.data.DataProvider">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataProvider</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Callable accepting ticker/field keywords and returning one price Series.</span>
+
+<span class="sd">    Additional request options, including start/end, are passed unchanged.</span>
+<span class="sd">    The response must have a unique, increasing DatetimeIndex without NaT,</span>
+<span class="sd">    and real numeric values. Missing values and timezone-aware indexes are</span>
+<span class="sd">    supported. Providers own authentication, transport, and optional caching.</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">ticker</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span> <span class="o">...</span></div>
+
+
+
+<div class="viewcode-block" id="get_provider">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.data.get_provider">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_provider</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataProvider</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Load one callable registered in the ``ffn.providers`` entry-point group.</span>
+
+<span class="sd">    Raises ValueError for unknown or duplicate names, and TypeError if the</span>
+<span class="sd">    selected entry point is not callable. Unselected providers are not loaded.</span>
+<span class="sd">    """</span>
+    <span class="n">entries</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">entry_points</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="s2">"select"</span><span class="p">):</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">entries</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="s2">"ffn.providers"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># Python 3.9's importlib.metadata returns a mapping.</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">entry</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entries</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"ffn.providers"</span><span class="p">,</span> <span class="p">())</span> <span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">name</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown data provider </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">; install its package or pass a callable"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Multiple data providers registered as </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">provider</span> <span class="o">=</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">provider</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Data provider </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> must be callable"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">provider</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_response</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">ticker</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider response for </span><span class="si">{</span><span class="n">ticker</span><span class="si">!r}</span><span class="s2"> must be a Series"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider response for </span><span class="si">{</span><span class="n">ticker</span><span class="si">!r}</span><span class="s2"> must have a DatetimeIndex"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">hasnans</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider response for </span><span class="si">{</span><span class="n">ticker</span><span class="si">!r}</span><span class="s2"> must not contain NaT dates"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_unique</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_monotonic_increasing</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider response for </span><span class="si">{</span><span class="n">ticker</span><span class="si">!r}</span><span class="s2"> must have unique, increasing dates"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_numeric_dtype</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_bool_dtype</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="ow">or</span> <span class="n">is_complex_dtype</span><span class="p">(</span><span class="n">series</span><span class="o">.</span><span class="n">dtype</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Provider response for </span><span class="si">{</span><span class="n">ticker</span><span class="si">!r}</span><span class="s2"> must contain real numeric values"</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="get">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.data.get">[docs]</a>
-<span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span>
     <span class="n">tickers</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">provider</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">provider</span><span class="p">:</span> <span class="n">DataProvider</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">common_dates</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">forward_fill</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">clean_tickers</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -476,8 +530,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Args:</span>
 <span class="sd">        * tickers (list, string, csv string): Tickers to download.</span>
-<span class="sd">        * provider (function): Provider to use for downloading data.</span>
-<span class="sd">            By default it will be ffn.DEFAULT_PROVIDER if not provided.</span>
+<span class="sd">        * provider (callable, str): A DataProvider or an ``ffn.providers``</span>
+<span class="sd">            entry-point name. Defaults to ffn.data.DEFAULT_PROVIDER.</span>
+<span class="sd">            An unset default falls back to Yahoo with a deprecation warning.</span>
 <span class="sd">        * common_dates (bool): Keep common dates only? Drop na's.</span>
 <span class="sd">        * forward_fill (bool): forward fill values if missing. Only works</span>
 <span class="sd">            if common_dates is False, since common_dates will remove</span>
@@ -494,7 +549,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            ticker and field. This is in case we want to specify</span>
 <span class="sd">            particular, non-default fields. For example, we might</span>
 <span class="sd">            want: AAPL:Low,AAPL:High,AAPL:Close. ':' is the separator.</span>
-<span class="sd">        * mrefresh (bool): Ignore memoization.</span>
+<span class="sd">        * mrefresh (bool): Request a refresh from providers that explicitly</span>
+<span class="sd">            declare an mrefresh keyword. Legacy providers without it are</span>
+<span class="sd">            called normally. This function does not cache requests or results.</span>
 <span class="sd">        * existing (DataFrame): Existing DataFrame to append returns</span>
 <span class="sd">            to - used when we download from multiple sources</span>
 <span class="sd">        * kwargs: passed to provider</span>
@@ -503,6 +560,25 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">if</span> <span class="n">provider</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">provider</span> <span class="o">=</span> <span class="n">DEFAULT_PROVIDER</span>
+    <span class="k">if</span> <span class="n">provider</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"Implicit Yahoo data access is deprecated; pass provider='yahoo' or configure ffn.data.DEFAULT_PROVIDER"</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">provider</span> <span class="o">=</span> <span class="s2">"yahoo"</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">provider</span> <span class="o">=</span> <span class="n">get_provider</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">callable</span><span class="p">(</span><span class="n">provider</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">"provider must be callable or a registered provider name"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">mrefresh</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">refresh_parameter</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">provider</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"mrefresh"</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="n">refresh_parameter</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">refresh_parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">refresh_parameter</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">POSITIONAL_OR_KEYWORD</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">KEYWORD_ONLY</span><span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">"mrefresh"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="n">tickers</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_arg</span><span class="p">(</span><span class="n">tickers</span><span class="p">)</span>
 
@@ -517,17 +593,11 @@ window.runMermaid = runMermaid;</script>
             <span class="n">t</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">f</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="c1"># call provider - check if supports memoization</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="s2">"mcache"</span><span class="p">):</span>
-            <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">provider</span><span class="p">(</span><span class="n">ticker</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="n">mrefresh</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">provider</span><span class="p">(</span><span class="n">ticker</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-        <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">][</span><span class="o">~</span><span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="s2">"last"</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">],</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-            <span class="c1"># newer yfinance returns as dataframe,</span>
-            <span class="c1"># convert to series</span>
-            <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">][</span><span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">series</span> <span class="o">=</span> <span class="n">provider</span><span class="p">(</span><span class="n">ticker</span><span class="o">=</span><span class="n">t</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">_validate_response</span><span class="p">(</span><span class="n">series</span><span class="p">,</span> <span class="n">ticker</span><span class="p">)</span>
+        <span class="c1"># Snapshot before the next request can reuse the provider's buffers.</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="n">ticker</span><span class="p">]</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
@@ -578,28 +648,22 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="yf">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.data.yf">[docs]</a>
 <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">yf</span><span class="p">(</span><span class="n">ticker</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">field</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">field</span> <span class="o">=</span> <span class="s2">"Adj Close"</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">yf</span><span class="p">(</span><span class="n">ticker</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="o">|</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Memoized Yahoo wrapper preserving legacy field selection and shapes."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.yahoo</span><span class="w"> </span><span class="kn">import</span> <span class="n">_legacy_download</span>
 
-    <span class="n">tmp</span> <span class="o">=</span> <span class="n">yfinance</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">auto_adjust</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">tmp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"failed to retrieve data for </span><span class="si">{</span><span class="n">ticker</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">field</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">tmp</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">tmp</span></div>
+    <span class="k">return</span> <span class="n">_legacy_download</span><span class="p">(</span><span class="n">ticker</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="n">end</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="csv">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.data.csv">[docs]</a>
 <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">csv</span><span class="p">(</span><span class="n">ticker</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">"data.csv"</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">csv</span><span class="p">(</span><span class="n">ticker</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">"data.csv"</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">""</span><span class="p">,</span> <span class="n">mrefresh</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Data provider wrapper around pandas' read_csv. Provides memoization.</span>
+<span class="sd">    The date window includes start and excludes end. Duplicate dates keep</span>
+<span class="sd">    the last observation, and the result is sorted by date.</span>
 <span class="sd">    """</span>
     <span class="c1"># set defaults if not specified</span>
     <span class="k">if</span> <span class="s2">"index_col"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -618,11 +682,17 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="n">tf</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Ticker(field) not present in csv file!"</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">tf</span><span class="p">]</span></div>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">tf</span><span class="p">]</span>
+    <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="p">[</span><span class="o">~</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="s2">"last"</span><span class="p">)]</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">start</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">end</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">series</span></div>
 
 
 
-<span class="n">DEFAULT_PROVIDER</span> <span class="o">=</span> <span class="n">yf</span>
+<span class="n">DEFAULT_PROVIDER</span><span class="p">:</span> <span class="n">DataProvider</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 </pre></div>
 
             <div class="clearer"></div>
@@ -637,6 +707,8 @@ window.runMermaid = runMermaid;</script>
 <li class="toctree-l1"><a class="reference internal" href="../../docs/source/install.html">Installation Guide</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../docs/source/introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../docs/source/quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/source/data-providers.html">How to use a data provider</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../docs/source/provider-contract.html">Provider contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../docs/source/ffn.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../docs/development.html">How to develop ffn</a></li>
 </ul>

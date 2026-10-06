@@ -23,7 +23,7 @@
     <script src="../../_static/js/custom.js?v=956e5d78"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="API" href="ffn.html" />
+    <link rel="next" title="How to use a data provider" href="data-providers.html" />
     <link rel="prev" title="Introduction" href="introduction.html" />
          
         <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
@@ -51,11 +51,12 @@ the source, or check out the <a class="reference internal" href="ffn.html"><span
 <section id="data-retrieval">
 <h2>Data Retrieval<a class="headerlink" href="#data-retrieval" title="Link to this heading">¶</a></h2>
 <p>The main method for data retrieval is the <code class="xref py py-func docutils literal notranslate"><span class="pre">get</span></code> function. The get function uses a data provider to download data from an external service and packs that data into a pandas DataFrame for further manipulation.</p>
+<p>Install <code class="docutils literal notranslate"><span class="pre">ffn[yahoo]</span></code> for the Yahoo examples below. Other providers can be passed as callables or registered by installed packages; see <a class="reference internal" href="data-providers.html"><span class="std std-doc">how to use a data provider</span></a>.</p>
 <blockquote>
 <div><p><strong>Note:</strong> Upon import, <code class="docutils literal notranslate"><span class="pre">ffn</span></code> modifies <code class="docutils literal notranslate"><span class="pre">pandas.core.base.PandasObject</span></code>
 to provide added functionality to pandas objects, including DataFrames.</p>
 </div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'agg,hyg,spy,eem,efa'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">'2014-01-01'</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'agg,hyg,spy,eem,efa'</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'yahoo'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">'2014-01-01'</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -68,8 +69,8 @@ to provide added functionality to pandas objects, including DataFrames.</p>
 <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">75.196701</span>  <span class="mf">44.031300</span>  <span class="mf">90.201675</span>  <span class="mf">33.561905</span>  <span class="mf">39.202148</span>
 </pre></div>
 </div>
-<p>By default, the data is downloaded from Yahoo! Finance and the Adjusted Close is used as the security’s price. Other data sources are also available and you may select other fields as well. Fields are specified by using the following format: {ticker}:{field}. So, if we want to get the Open, High, Low, Close for aapl, we would do the following:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'aapl:Open,aapl:High,aapl:Low,aapl:Close'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">'2014-01-01'</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+<p>The Yahoo provider uses Adjusted Close when no field is specified. Fields use the format {ticker}:{field}. To retrieve Open, High, Low, and Close for aapl:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'aapl:Open,aapl:High,aapl:Low,aapl:Close'</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'yahoo'</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="s1">'2010-01-01'</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">'2014-01-01'</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>            <span class="n">aaplopen</span>  <span class="n">aaplhigh</span>   <span class="n">aapllow</span>  <span class="n">aaplclose</span>
@@ -81,8 +82,8 @@ to provide added functionality to pandas objects, including DataFrames.</p>
 <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">7.510714</span>  <span class="mf">7.571429</span>  <span class="mf">7.466429</span>   <span class="mf">7.570714</span>
 </pre></div>
 </div>
-<p>The default data provider is <a class="reference internal" href="ffn.html#ffn.data.web" title="ffn.data.web"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.data.web()</span></code></a>. This is basically just a thin wrapper around pandas’ pandas.io.data provider. Please refer to the appropriate docs for more info (data sources, etc.). The <a class="reference internal" href="ffn.html#ffn.data.csv" title="ffn.data.csv"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.data.csv()</span></code></a> provider is also available when we want to load data from a local file. In this case, we can tell <a class="reference internal" href="ffn.html#ffn.data.get" title="ffn.data.get"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.data.get()</span></code></a> to use the csv provider. In this case, we also want to merge this new data with the existing data we downloaded earlier. Therefore, we will provide the <strong>data</strong> object as the <em>existing</em> argument, and the new data will be merged into the existing DataFrame.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'dbc'</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="n">ffn</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">csv</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">'test_data.csv'</span><span class="p">,</span> <span class="n">existing</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<p>Use the <a class="reference internal" href="ffn.html#ffn.data.csv" title="ffn.data.csv"><code class="xref py py-func docutils literal notranslate"><span class="pre">ffn.data.csv()</span></code></a> provider to load a local file. Pass the earlier <strong>data</strong> object as <em>existing</em> to merge the new series into the downloaded data:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">ffn</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'dbc'</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s1">'csv'</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">'test_data.csv'</span><span class="p">,</span> <span class="n">existing</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
 </div>
@@ -95,7 +96,7 @@ to provide added functionality to pandas objects, including DataFrames.</p>
 <span class="mi">2010</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">08</span>  <span class="mf">75.196701</span>  <span class="mf">44.031300</span>  <span class="mf">90.201675</span>  <span class="mf">33.561905</span>  <span class="mf">39.202148</span>  <span class="mf">25.38</span>
 </pre></div>
 </div>
-<p>As we can see above, the dbc column was added to the DataFrame. Internally, get is using the function ffn.merge, which is useful when you want to merge TimeSeries and DataFrames together. We plan on adding many more data sources over time. If you know your way with Python and would like to contribute a data provider, please feel free to submit a pull request - contributions are always welcome!</p>
+<p>The dbc column was added to the DataFrame using ffn.merge. Additional providers can live in your own code or an independently installed package; they do not need changes to ffn.</p>
 </section>
 <section id="data-manipulation">
 <h2>Data Manipulation<a class="headerlink" href="#data-manipulation" title="Link to this heading">¶</a></h2>
@@ -412,6 +413,8 @@ to provide added functionality to pandas objects, including DataFrames.</p>
 <li class="toctree-l2"><a class="reference internal" href="#numerical-routines-and-financial-functions">Numerical Routines and Financial Functions</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="data-providers.html">How to use a data provider</a></li>
+<li class="toctree-l1"><a class="reference internal" href="provider-contract.html">Provider contract</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ffn.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../development.html">How to develop ffn</a></li>
 </ul>

@@ -27,6 +27,15 @@
    :show-inheritance:
 ```
 
+## {py:mod}`yahoo` Module
+
+```{eval-rst}
+.. automodule:: ffn.yahoo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
 ## {py:mod}`utils` Module
 
 ```{eval-rst}

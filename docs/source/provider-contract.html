@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Provider contract &#8212; ffn - Financial Functions for Python v1.3.0</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/klink.css?v=c1d18d48" />
+    <link rel="stylesheet" type="text/css" href="../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/custom.css?v=890fd012" />
+    <script src="../../_static/documentation_options.js?v=1f29e9d3"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script src="../../_static/js/custom.js?v=956e5d78"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="API" href="ffn.html" />
+    <link rel="prev" title="How to use a data provider" href="data-providers.html" />
+         
+        <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+        
+        <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400,700' rel='stylesheet' type='text/css'>
+        <link href='http://fonts.googleapis.com/css?family=Droid+Sans+Mono:400,500,700' rel='stylesheet' type='text/css'>
+    
+  </head><body>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section class="tex2jax_ignore mathjax_ignore" id="provider-contract">
+<h1>Provider contract<a class="headerlink" href="#provider-contract" title="Link to this heading">¶</a></h1>
+<section id="requests">
+<h2>Requests<a class="headerlink" href="#requests" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ffn.data.DataProvider</span></code> describes the callable interface:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">provider</span><span class="p">(</span><span class="n">ticker</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">field</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pandas</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">ffn.get</span></code> calls the provider once for each requested ticker/field pair, using
+keyword arguments. <code class="docutils literal notranslate"><span class="pre">ABC:Close</span></code> becomes <code class="docutils literal notranslate"><span class="pre">ticker=&quot;ABC&quot;,</span> <span class="pre">field=&quot;Close&quot;</span></code>; <code class="docutils literal notranslate"><span class="pre">ABC</span></code>
+uses <code class="docutils literal notranslate"><span class="pre">field=None</span></code>. The default field belongs to the provider.</p>
+<p>Other keyword arguments are passed unchanged. Providers accepting <code class="docutils literal notranslate"><span class="pre">start</span></code> and
+<code class="docutils literal notranslate"><span class="pre">end</span></code> use an inclusive start and exclusive end. Credentials and client objects
+can be configured on a callable instance or closure. Providers may reject
+options they do not support; their exceptions propagate unchanged.</p>
+</section>
+<section id="responses">
+<h2>Responses<a class="headerlink" href="#responses" title="Link to this heading">¶</a></h2>
+<p>Each response is one pandas Series with:</p>
+<ul class="simple">
+<li><p>A real numeric dtype, including nullable numeric dtypes; booleans, complex
+values, and numeric strings are rejected.</p></li>
+<li><p>A unique, increasing DatetimeIndex without NaT dates. Timezones are preserved.</p></li>
+<li><p>Missing values where observations are unavailable. An empty numeric Series
+with an empty DatetimeIndex is valid.</p></li>
+</ul>
+<p>The Series name is not used to select the output column. ffn uses the requested
+ticker/field string, then applies <code class="docutils literal notranslate"><span class="pre">column_names</span></code> or <code class="docutils literal notranslate"><span class="pre">clean_tickers</span></code>.
+DataFrames are rejected, including single-column frames. Each adapter is
+responsible for extracting the requested series and resolving duplicate dates.
+Responses combined in one call must use compatible timezone conventions.</p>
+<p><code class="docutils literal notranslate"><span class="pre">common_dates=True</span></code> drops rows containing missing values. Otherwise
+<code class="docutils literal notranslate"><span class="pre">forward_fill=True</span></code> fills gaps after alignment. Neither option changes the
+provider’s data. ffn does not convert timezones or resample observations.
+Each response is copied before the next provider call, so providers may reuse
+their data buffers.</p>
+</section>
+<section id="provider-selection">
+<h2>Provider selection<a class="headerlink" href="#provider-selection" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">provider</span></code> accepts a callable or an entry-point name in the <code class="docutils literal notranslate"><span class="pre">ffn.providers</span></code>
+group. If omitted, <code class="docutils literal notranslate"><span class="pre">ffn.data.DEFAULT_PROVIDER</span></code> supplies either value. If that
+setting is also <code class="docutils literal notranslate"><span class="pre">None</span></code>, implicit Yahoo selection emits a DeprecationWarning.</p>
+<p>Named providers are resolved once per <code class="docutils literal notranslate"><span class="pre">get</span></code> call. Only the selected entry point
+is loaded. Missing or duplicate names raise ValueError; a non-callable entry
+point raises TypeError. Provider import errors propagate.</p>
+<p>ffn’s own registrations are <code class="docutils literal notranslate"><span class="pre">yahoo</span> <span class="pre">=</span> <span class="pre">&quot;ffn.yahoo:download&quot;</span></code> and
+<code class="docutils literal notranslate"><span class="pre">csv</span> <span class="pre">=</span> <span class="pre">&quot;ffn.data:csv&quot;</span></code>. The Yahoo provider requires the optional <code class="docutils literal notranslate"><span class="pre">ffn[yahoo]</span></code>
+extra. Importing ffn and using other providers does not require yfinance.</p>
+</section>
+<section id="caching-and-refresh">
+<h2>Caching and refresh<a class="headerlink" href="#caching-and-refresh" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ffn.get</span></code> does not memoize calls, serialize request options, or retain credentials.
+Providers own caching, expiration, and cache isolation between accounts.</p>
+<p>For compatibility, <code class="docutils literal notranslate"><span class="pre">mrefresh=True</span></code> is forwarded if the callable explicitly
+declares an <code class="docutils literal notranslate"><span class="pre">mrefresh</span></code> keyword parameter. A bare <code class="docutils literal notranslate"><span class="pre">**kwargs</span></code> does not opt in.
+Providers without that parameter are called normally. Providers with an
+uninspectable signature can be wrapped in a function declaring <code class="docutils literal notranslate"><span class="pre">mrefresh</span></code>.</p>
+<p>The registered Yahoo provider makes a fresh request on every call. The CSV
+provider and legacy <code class="docutils literal notranslate"><span class="pre">ffn.data.yf</span></code> wrapper retain their provider-local caches and
+support <code class="docutils literal notranslate"><span class="pre">mrefresh=True</span></code>.</p>
+<p>Direct calls to <code class="docutils literal notranslate"><span class="pre">ffn.data.yf</span></code> and the deprecated <code class="docutils literal notranslate"><span class="pre">ffn.data.web</span></code> preserve Yahoo’s
+original Series or DataFrame shape. An empty field string returns the full
+frame. These legacy helpers do not normalize dates or columns; the registered
+<code class="docutils literal notranslate"><span class="pre">yahoo</span></code> provider returns the single, normalized Series required by <code class="docutils literal notranslate"><span class="pre">ffn.get</span></code>.</p>
+</section>
+<section id="compatibility-changes">
+<h2>Compatibility changes<a class="headerlink" href="#compatibility-changes" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ffn.get.mcache</span></code> is removed. Cache control belongs to the provider.</p></li>
+<li><p>Returning a DataFrame, unsorted dates, or duplicate dates now raises an error
+instead of selecting the first column or dropping duplicates in <code class="docutils literal notranslate"><span class="pre">get</span></code>.</p></li>
+<li><p>Yahoo-specific response normalization is in <code class="docutils literal notranslate"><span class="pre">ffn.yahoo</span></code>, not in the dispatcher.</p></li>
+<li><p>Calls without an explicit or configured provider are deprecated. They still
+select Yahoo while that optional dependency is available.</p></li>
+</ul>
+<p>See <a class="reference internal" href="data-providers.html"><span class="std std-doc">how to use a data provider</span></a> for configuration and packaging examples.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        <aside class="klink-sidebar">
+
+            
+            
+            <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="install.html">Installation Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quick.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-providers.html">How to use a data provider</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Provider contract</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#requests">Requests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#responses">Responses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#provider-selection">Provider selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#caching-and-refresh">Caching and refresh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#compatibility-changes">Compatibility changes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="ffn.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../development.html">How to develop ffn</a></li>
+</ul>
+
+
+            
+            <ul>
+                <li><a href="https://github.com/pmorissette/ffn">Github</a></li>
+            </ul>
+            
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </aside>
+    
+      <div class="clearer"></div>
+    </div>
+        <div class="footer">
+            Philippe Morissette
+        </div>
+
+        
+  </body>
+</html>
