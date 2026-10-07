@@ -133,6 +133,109 @@ def test_mtd_ytd_keep_unavailable_with_one_current_period_price():
         assert pd.isna(calculator(daily_prices, period_prices))
 
 
+@mark.parametrize("dtype", ["float64", "Float64"])
+@mark.parametrize("timezone", [None, "America/New_York"])
+@mark.parametrize(
+    "padding_dates",
+    [
+        ["2024-02-20"],
+        ["2024-03-15"],
+        ["2024-03-15", "2024-04-15"],
+        ["2025-03-15"],
+        ["2025-03-15", "2026-03-15"],
+    ],
+    ids=["same-period", "next-month", "future-months", "next-year", "future-years"],
+)
+def test_performance_stats_current_period_returns_ignore_future_missing_bins(dtype, timezone, padding_dates):
+    """Reporting-calendar padding cannot move the observed return period."""
+    dates = pd.to_datetime(["2023-12-29", "2024-01-02", "2024-01-15", "2024-02-01", "2024-02-15"]).tz_localize(timezone)
+    observed = pd.Series([80, 90, 95, 100, 110], index=dates, dtype=dtype, name="asset")
+    padding = pd.Series(np.nan, index=pd.to_datetime(padding_dates).tz_localize(timezone), dtype=dtype, name="asset")
+    prices = pd.concat([observed, padding])
+    original = prices.copy()
+
+    stats = ffn.PerformanceStats(prices)
+
+    # February uses January's last price; 2024 uses the last price of 2023.
+    assert stats.mtd == approx(110 / 95 - 1)
+    assert stats.ytd == approx(110 / 80 - 1)
+    assert stats.end == dates[-1]
+    # Other reports intentionally retain unavailable month/year bins.
+    pd.testing.assert_series_equal(stats.monthly_prices, prices.resample(ffn.core._MonthEnd).last())
+    pd.testing.assert_series_equal(stats.yearly_prices, prices.resample(ffn.core._YearEnd).last())
+    pd.testing.assert_series_equal(stats.monthly_returns, stats.monthly_prices.to_returns())
+    pd.testing.assert_series_equal(prices, original)
+
+
+@mark.parametrize(
+    "field, dates, padding_date",
+    [
+        ("mtd", ["2024-01-31", "2024-03-01", "2024-03-15"], "2024-05-15"),
+        ("ytd", ["2019-12-31", "2021-01-01", "2021-01-15"], "2023-03-15"),
+    ],
+)
+@mark.parametrize("current_count", [1, 2])
+def test_performance_stats_current_period_padding_preserves_missing_prior_fallback(field, dates, padding_date, current_count):
+    """Padding must preserve both the observed fallback and its two-price guard."""
+    prices = pd.Series([90, 100, 110], index=pd.to_datetime(dates), dtype="Float64", name="asset")
+    if current_count == 1:
+        prices.iloc[1] = pd.NA
+    prices.loc[pd.Timestamp(padding_date)] = pd.NA
+
+    actual = getattr(ffn.PerformanceStats(prices), field)
+
+    if current_count == 1:
+        assert pd.isna(actual)
+    else:
+        # The prior period is empty: use 110 / 100, not the older 90 price.
+        assert actual == approx(0.1)
+
+
+@mark.parametrize("end", ["2024-02-29", "2024-12-31"])
+@mark.parametrize("separate_days", [False, True])
+def test_performance_stats_current_period_padding_respects_daily_cardinality(end, separate_days):
+    """Calendar-end selection must not turn one sampled day into a defined return."""
+    last = pd.Timestamp(end, tz="America/New_York") + pd.Timedelta(hours=16)
+    first = last - (pd.Timedelta(days=1) if separate_days else pd.Timedelta(hours=1))
+    prices = pd.Series([100, 110, np.nan], index=pd.DatetimeIndex([first, last, last + pd.DateOffset(years=1)]), name="asset")
+
+    stats = ffn.PerformanceStats(prices)
+
+    assert stats.total_return == approx(0.1)
+    if separate_days:
+        assert stats.mtd == approx(0.1)
+        assert stats.ytd == approx(0.1)
+    else:
+        assert pd.isna(stats.mtd)
+        assert pd.isna(stats.ytd)
+
+
+def test_performance_stats_current_period_padding_public_reports_and_range_reset():
+    """The observed-period correction reaches public reports and range rebuilds."""
+    prices = pd.Series(
+        [80, 90, 95, 100, 110, np.nan],
+        index=pd.to_datetime(["2023-12-29", "2024-01-02", "2024-01-15", "2024-02-01", "2024-02-15", "2026-03-15"]),
+        name="asset",
+    )
+    original = prices.copy()
+    results = (ffn.PerformanceStats(prices), ffn.calc_perf_stats(prices), ffn.calc_stats(prices), prices.calc_perf_stats(), prices.calc_stats())
+
+    for stats in results:
+        for field, expected in (("mtd", 110 / 95 - 1), ("ytd", 110 / 80 - 1)):
+            assert getattr(stats, field) == approx(expected)
+            assert stats.stats[field] == approx(expected)
+            assert stats.lookback_returns[field] == approx(expected)
+            assert f"{field.upper()},{expected:.2%}" in stats.to_csv().splitlines()
+        stats.set_date_range(start="2024-02-01")
+        assert stats.mtd == approx(0.1)
+        assert stats.ytd == approx(0.1)
+        stats.set_date_range()
+        assert stats.mtd == approx(110 / 95 - 1)
+        assert stats.ytd == approx(110 / 80 - 1)
+
+    pd.testing.assert_series_equal(prices, original)
+
+
 def test_to_returns_ts(ts):
     data = ts
     actual = data.to_returns()
