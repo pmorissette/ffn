@@ -2574,7 +2574,9 @@ def rollapply(data, window, fn):
         * window (int): Window size
         * fn (function): Function to apply over the rolling window.
             For a series, the return value is expected to be a single
-            number. For a DataFrame, it shuold return a new row.
+            number. For a DataFrame, it should return a new row. Complete
+            uniquely labeled Series rows are aligned to unique DataFrame
+            columns. Other row results retain positional assignment.
 
     Returns:
         * Object of same dimensions as data
@@ -2587,7 +2589,22 @@ def rollapply(data, window, fn):
         return res
 
     for i in range(window - 1, n):
-        res.iloc[i] = fn(data.iloc[i - window + 1 : i + 1])
+        row = fn(data.iloc[i - window + 1 : i + 1])
+        if (
+            isinstance(res, pd.DataFrame)
+            and isinstance(row, pd.Series)
+            and not row.index.equals(res.columns)
+            and res.columns.is_unique
+            and row.index.is_unique
+            and len(row) == len(res.columns)
+        ):
+            # Match labels exactly, avoiding specialized lookups such as interval containment.
+            row_labels = pd.Index(row.index, dtype=object, tupleize_cols=False)
+            columns = pd.Index(res.columns, dtype=object, tupleize_cols=False)
+            positions = row_labels.get_indexer(columns)
+            if (positions >= 0).all() and row_labels.take(positions).equals(columns):
+                row = row.iloc[positions]
+        res.iloc[i] = row
 
     return res
 

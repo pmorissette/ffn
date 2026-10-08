@@ -2227,6 +2227,146 @@ def test_rollapply():
     assert all(actual.iloc[4] == 4)
 
 
+@mark.parametrize(
+    "dtype,columns",
+    [
+        ("float64", pd.Index(["A", "B"], name="asset")),
+        ("Float64", pd.Index(["A", "B"], name="asset")),
+        ("Int64", pd.Index([1, 2], name="asset")),
+        ("float64", pd.Index([("A", 1), ("B", 2)], tupleize_cols=False, name="asset")),
+        ("Float64", pd.MultiIndex.from_tuples([("A", 1), ("B", 2)], names=["asset", "leg"])),
+        ("float64", pd.Index([np.nan, "B"], dtype=object, name="asset")),
+        ("float64", pd.Index([True, False], name="asset")),
+        ("float64", pd.IntervalIndex.from_tuples([(0, 2), (1, 4)], name="asset")),
+        ("float64", pd.CategoricalIndex(["A", "B"], name="asset")),
+        ("float64", pd.date_range("2020-01-01", periods=2, tz="UTC", name="asset")),
+        ("float64", pd.timedelta_range("1D", periods=2, name="asset")),
+        ("float64", pd.period_range("2020-01", periods=2, freq="M", name="asset")),
+    ],
+    ids=[
+        "ordinary",
+        "nullable-float",
+        "nullable-integer-labels",
+        "tuple-labels",
+        "multiindex",
+        "missing-label",
+        "boolean-labels",
+        "overlapping-intervals",
+        "categorical",
+        "datetime",
+        "timedelta",
+        "period",
+    ],
+)
+@mark.parametrize("reversed_row", [False, True], ids=["same-order", "reversed"])
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_preserves_labeled_callback_rows(dtype, columns, reversed_row, pandas_method, recwarn):
+    """Callback order must not move an asset's totals to another output column."""
+    import math
+
+    data = pd.DataFrame(
+        [[1, 10], [2, None], [3, 30], [4, 40]],
+        index=pd.date_range("2020-01-01", periods=4, tz="UTC", name="observed"),
+        columns=columns,
+        dtype=dtype,
+    )
+    original = data.copy(deep=True)
+    for window in [1, 2, len(data), len(data) + 1]:
+        calls = []
+
+        def callback(sample, calls=calls):
+            row = sample.sum()
+            if reversed_row:
+                row = row.iloc[::-1]
+            calls.append((sample.index.copy(), sample.columns.copy(), row, row.copy(deep=True)))
+            return row
+
+        actual = data.rollapply(window, callback) if pandas_method else ffn.rollapply(data, window, callback)
+        expected = pd.DataFrame(np.nan, index=data.index, columns=data.columns)
+        for end in range(window - 1, len(data)):
+            # Scalar source-column sums are independent of the callback's Series order.
+            expected.iloc[end] = [math.fsum(float(value) for value in data.iloc[end - window + 1 : end + 1, column] if not pd.isna(value)) for column in range(len(data.columns))]
+        pd.testing.assert_frame_equal(actual, expected)
+        assert len(calls) == max(0, len(data) - window + 1)
+        for end, (index, labels, row, snapshot) in enumerate(calls, start=window - 1):
+            pd.testing.assert_index_equal(index, data.index[end - window + 1 : end + 1])
+            pd.testing.assert_index_equal(labels, data.columns)
+            pd.testing.assert_series_equal(row, snapshot)
+        pd.testing.assert_frame_equal(data, original)
+    assert not recwarn
+
+
+@mark.parametrize(
+    "categories,ordered",
+    [(["A", "B"], True), (["B", "A", "unused"], True), (["A", "B", "unused"], False)],
+    ids=["unused-category", "category-order", "ordered-flag"],
+)
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_aligns_labels_with_different_category_metadata(categories, ordered, pandas_method):
+    columns = pd.CategoricalIndex(["A", "B"], categories=["A", "B", "unused"], ordered=True, name="asset")
+    data = pd.DataFrame([[1.0, 10.0], [2.0, 20.0]], columns=columns)
+    row = pd.Series([30.0, 3.0], index=pd.CategoricalIndex(["B", "A"], categories=categories, ordered=ordered))
+    original = data.copy(deep=True)
+    snapshot = row.copy(deep=True)
+
+    actual = data.rollapply(2, lambda sample: row) if pandas_method else ffn.rollapply(data, 2, lambda sample: row)
+
+    expected = pd.DataFrame([[np.nan, np.nan], [3.0, 30.0]], columns=columns)
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+    pd.testing.assert_series_equal(row, snapshot)
+
+
+@mark.parametrize("kind", ["array", "list", "scalar"])
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_preserves_positional_callback_rows(kind, pandas_method):
+    """Unlabeled results retain positional assignment and scalar broadcasting."""
+    data = pd.DataFrame({"A": [1.0, 2.0, 3.0], "B": [10.0, 20.0, 30.0]})
+
+    def callback(sample):
+        if kind == "scalar":
+            return 7.0
+        # The reverse order is intentional: unlabeled values must stay positional.
+        values = [sample["B"].sum(), sample["A"].sum()]
+        return np.array(values) if kind == "array" else values
+
+    actual = data.rollapply(2, callback) if pandas_method else ffn.rollapply(data, 2, callback)
+    values = [[np.nan, np.nan], [7.0, 7.0], [7.0, 7.0]] if kind == "scalar" else [[np.nan, np.nan], [30.0, 3.0], [50.0, 5.0]]
+    pd.testing.assert_frame_equal(actual, pd.DataFrame(values, columns=data.columns))
+
+
+@mark.parametrize(
+    "columns,row,expected",
+    [
+        (["A", "B"], pd.Series([3.0], index=["A"]), [3.0, 3.0]),
+        (["A", "B"], pd.Series([30.0, 3.0], index=["B", "C"]), [30.0, 3.0]),
+        (["A", "B"], pd.Series([30.0, 3.0], index=["A", "A"]), [30.0, 3.0]),
+        (["A", "A"], pd.Series([30.0, 3.0], index=["B", "A"]), [30.0, 3.0]),
+        (["A", "B"], pd.Series([30.0, 3.0], index=pd.IntervalIndex.from_tuples([(1, 4), (0, 2)])), [30.0, 3.0]),
+        # Interval lookup can match contained points; those are not matching row labels.
+        ([3, 1], pd.Series([30.0, 3.0], index=pd.IntervalIndex.from_tuples([(0, 2), (2, 4)])), [30.0, 3.0]),
+        ([3, 1.5], pd.Series([30.0, 3.0], index=pd.IntervalIndex.from_tuples([(0, 2), (1, 4)])), [30.0, 3.0]),
+    ],
+    ids=["partial", "missing-extra", "duplicate-row", "duplicate-columns", "unrelated-interval", "inexact-interval", "ambiguous-containment"],
+)
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_preserves_unmatched_callback_rows(columns, row, expected, pandas_method):
+    """Alignment must not redefine incomplete, duplicate or inexact row-label policy."""
+    data = pd.DataFrame([[1.0, 10.0], [2.0, 20.0]], columns=columns)
+    snapshot = row.copy(deep=True)
+    actual = data.rollapply(2, lambda sample: row) if pandas_method else ffn.rollapply(data, 2, lambda sample: row)
+    pd.testing.assert_frame_equal(actual, pd.DataFrame([[np.nan, np.nan], expected], columns=data.columns))
+    pd.testing.assert_series_equal(row, snapshot)
+
+
+def test_rollapply_preserves_extra_callback_row_rejection():
+    data = pd.DataFrame({"A": [1.0, 2.0], "B": [10.0, 20.0]})
+    original = data.copy(deep=True)
+    with raises(ValueError):
+        ffn.rollapply(data, 2, lambda sample: pd.Series([3.0, 30.0, 300.0], index=["A", "B", "C"]))
+    pd.testing.assert_frame_equal(data, original)
+
+
 def test_winsorize():
     x = pd.Series(range(20), dtype="float")
     res = x.winsorize(limits=0.05)
