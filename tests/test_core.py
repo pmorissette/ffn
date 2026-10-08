@@ -1,7 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
-from pytest import approx, fixture, mark, raises
+from pytest import approx, fixture, mark, raises, warns
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
 
@@ -1720,6 +1720,191 @@ def test_calc_clusters_preserves_other_model_paths(monkeypatch, columns, n):
     monkeypatch.setattr(ffn.core.sklearn.manifold, "MDS", model_boundary)
     with raises(RuntimeError, match="existing model path"):
         ffn.calc_clusters(returns, n=n)
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_ftca_avoids_rebuilding_labelled_working_frames(monkeypatch):
+    class Correlation(pd.DataFrame):
+        def __getitem__(self, key):
+            raise AssertionError("Finite FTCA working sets should not rebuild labelled frames")
+
+    corr = Correlation([[1.0, 0.9, 0.2, 0.1], [0.9, 1.0, 0.3, 0.2], [0.2, 0.3, 1.0, 0.8], [0.1, 0.2, 0.8, 1.0]], index=list("abcd"), columns=list("abcd"))
+    returns = pd.DataFrame(columns=corr.columns)
+    monkeypatch.setattr(pd.DataFrame, "corr", lambda self: corr)
+
+    # b has the highest mean and d the lowest; each absorbs its strongly correlated peer.
+    assert ffn.calc_ftca(returns) == {1: ["b", "a"], 2: ["d", "c"]}
+
+
+@mark.parametrize(
+    "threshold, expected",
+    [(0.5, {1: ["a", "b"], 2: ["c"]}), (np.nextafter(0.5, 0.0), {1: ["a", "b", "c"]}), (0.75, {1: ["b"], 2: ["a"], 3: ["c"]})],
+)
+@mark.parametrize("use_pandas_method", [False, True])
+def test_calc_ftca_preserves_threshold_ties_and_member_order(monkeypatch, threshold, expected, use_pandas_method):
+    corr = pd.DataFrame([[1.0, 0.75, 0.25], [0.75, 1.0, 0.75], [0.25, 0.75, 1.0]], index=list("abc"), columns=list("abc"))
+    snapshot = corr.copy(deep=True)
+    returns = pd.DataFrame(columns=corr.columns)
+    monkeypatch.setattr(pd.DataFrame, "corr", lambda self: corr)
+
+    # a and c tie for the lowest mean; c's mean correlation with seeds a/b is exactly 0.5.
+    actual = returns.calc_ftca(threshold) if use_pandas_method else ffn.calc_ftca(returns, threshold)
+
+    assert actual == expected
+    assert list(actual) == list(expected)
+    pd.testing.assert_frame_equal(corr, snapshot)
+
+
+@mark.parametrize("dtype", ["float64", "float32", "Float64", "Int64", "object"])
+@mark.parametrize("use_pandas_method", [False, True])
+def test_calc_ftca_preserves_numeric_samples_and_labels(dtype, use_pandas_method):
+    columns = pd.Index([7, 2, 9], name="asset")
+    returns = pd.DataFrame([[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]], columns=columns, dtype=dtype)
+    original = returns.copy(deep=True)
+
+    if dtype == "object" and Version(pd.__version__) < Version("2.0"):
+        # pandas 1.5 excludes object columns by default; preserve its empty universe and warning.
+        with warns(FutureWarning, match="numeric_only"):
+            actual = returns.calc_ftca() if use_pandas_method else ffn.calc_ftca(returns)
+        assert actual == {}
+        pd.testing.assert_frame_equal(returns, original)
+        return
+
+    actual = returns.calc_ftca() if use_pandas_method else ffn.calc_ftca(returns)
+
+    # Orthogonal columns tie in mean correlation; high then low are assigned before the remainder.
+    assert actual == {1: [columns[2]], 2: [columns[0]], 3: [list(columns)[1]]}
+    assert type(actual[1][0]) is type(columns[2])
+    assert type(actual[3][0]) is type(list(columns)[1])
+    pd.testing.assert_frame_equal(returns, original)
+    actual[1].append("new member")
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("large_label", [2**60 + 1, -(2**60 + 1), 2**64 - 1])
+@mark.parametrize("threshold", [0.1, -0.6])
+@mark.parametrize("use_pandas_method", [False, True])
+def test_calc_ftca_preserves_mixed_numeric_label_precision(monkeypatch, large_label, threshold, use_pandas_method):
+    labels = pd.Index([large_label, 1.5, "c"], dtype=object, name="asset")
+    corr = pd.DataFrame([[1.0, -0.5, 0.5], [-0.5, 1.0, -0.75], [0.5, -0.75, 1.0]], index=labels, columns=labels)
+    original = corr.copy(deep=True)
+    returns = pd.DataFrame(columns=labels)
+    monkeypatch.setattr(pd.DataFrame, "corr", lambda self: corr)
+
+    # The high/low seeds are a large integer and a float; a combined lookup can round the integer.
+    expected = {1: [large_label, "c"], 2: [1.5]} if threshold == 0.1 else {1: [1.5, large_label, "c"]}
+    actual = returns.calc_ftca(threshold) if use_pandas_method else ffn.calc_ftca(returns, threshold)
+
+    assert actual == expected
+    assert list(actual) == list(expected)
+    pd.testing.assert_frame_equal(corr, original)
+
+
+@mark.parametrize("numeric_only", [False, True])
+@mark.parametrize("all_object", [False, True])
+def test_calc_ftca_preserves_correlation_column_selection(monkeypatch, numeric_only, all_object):
+    returns = pd.DataFrame({"numeric": [1.0, 2.0, 3.0], "object": pd.Series([2.0, 4.0, 6.0], dtype=object)})
+    if all_object:
+        returns = returns.astype(object)
+    original = returns.copy(deep=True)
+    native_corr = pd.DataFrame.corr
+    monkeypatch.setattr(pd.DataFrame, "corr", lambda self: native_corr(self, numeric_only=numeric_only))
+
+    # Exercise both supported pandas defaults explicitly, including a zero- or one-column result.
+    expected = ({} if all_object else {1: ["numeric"]}) if numeric_only else {1: ["numeric", "object"]}
+    assert ffn.calc_ftca(returns) == expected
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("values, expected", [([], {}), ([np.nan], {1: ["only"]}), ([1.0, 1.0], {1: ["only"]})])
+def test_calc_ftca_preserves_empty_and_single_asset_inputs(values, expected):
+    returns = pd.DataFrame({"only": values}) if values else pd.DataFrame()
+    original = returns.copy(deep=True)
+
+    assert ffn.calc_ftca(returns) == expected
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("dtype", ["float64", "Float64", "object"])
+@mark.parametrize("missing_row", [False, True])
+def test_calc_ftca_assigns_shared_members_to_high_seed_first(dtype, missing_row):
+    high = np.array([1, 1, -1, -1])
+    low = np.array([1, -1, 1, -1])
+    returns = pd.DataFrame({**{f"high_{i}": high for i in range(6)}, "shared": high + low, "low": low}, dtype=dtype)
+    if missing_row:
+        returns.loc[len(returns)] = np.nan
+    original = returns.copy(deep=True)
+
+    if dtype == "object" and Version(pd.__version__) < Version("2.0"):
+        # The legacy numeric-only default removes every object column before seed assignment.
+        with warns(FutureWarning, match="numeric_only"):
+            actual = ffn.calc_ftca(returns)
+        assert actual == {}
+        pd.testing.assert_frame_equal(returns, original)
+        return
+
+    # Preserve pandas' native seed choice: quicksort's order among ties varies across runtimes.
+    high_seed = returns.corr().mean().sort_values().index[-1]
+    high_members = [label for label in returns.columns[:6] if label != high_seed]
+    # Orthogonal seeds split; shared correlates sqrt(0.5) with both and belongs to high first.
+    assert ffn.calc_ftca(returns) == {1: [high_seed] + high_members + ["shared"], 2: ["low"]}
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize("all_missing", [False, True])
+def test_calc_ftca_preserves_nonfinite_correlation_fallback(all_missing):
+    returns = pd.DataFrame({"a": [np.nan, np.nan, np.nan] if all_missing else [1.0, 1.0, 1.0], "b": [np.nan, np.nan, np.nan] if all_missing else [1.0, 2.0, 3.0]})
+    original = returns.copy(deep=True)
+
+    # Native skip-NaN mean ordering puts an undefined seed last, even when every mean is undefined.
+    expected = {1: ["b"], 2: ["a"]} if all_missing else {1: ["a"], 2: ["b"]}
+    assert ffn.calc_ftca(returns) == expected
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_ftca_preserves_hierarchical_labels():
+    columns = pd.MultiIndex.from_tuples([("group", "a"), ("group", "b")])
+    returns = pd.DataFrame([[1.0, 2.0], [2.0, 1.0], [3.0, 4.0]], columns=columns)
+    original = returns.copy(deep=True)
+
+    assert ffn.calc_ftca(returns) == {1: [("group", "a"), ("group", "b")]}
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_ftca_preserves_missing_label_normalization():
+    returns = pd.DataFrame([[1.0, 2.0], [2.0, 1.0], [3.0, 4.0]], columns=[pd.NA, "b"])
+    original = returns.copy(deep=True)
+    expected_label = returns.corr().mean().sort_values().index[0]
+
+    actual = ffn.calc_ftca(returns)
+
+    # Preserve pandas' seed label: older object indexes retain pd.NA; string indexes normalize it.
+    assert list(actual) == [1]
+    assert len(actual[1]) == 2
+    if expected_label is pd.NA:
+        assert actual[1][0] is pd.NA
+    else:
+        assert type(actual[1][0]) is type(expected_label)
+        assert np.isnan(actual[1][0])
+    assert actual[1][1] == "b"
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_ftca_preserves_duplicate_label_rejection():
+    returns = pd.DataFrame([[1.0, 2.0], [2.0, 1.0], [3.0, 4.0]], columns=["a", "a"])
+    original = returns.copy(deep=True)
+
+    with raises(ValueError):
+        ffn.calc_ftca(returns)
+
+    pd.testing.assert_frame_equal(returns, original)
+
+
+def test_calc_ftca_preserves_array_threshold():
+    returns = pd.DataFrame([[1.0, 2.0], [2.0, 1.0], [3.0, 4.0]], columns=["a", "b"])
+    original = returns.copy(deep=True)
+
+    assert ffn.calc_ftca(returns, np.array([0.5])) == {1: ["a", "b"]}
     pd.testing.assert_frame_equal(returns, original)
 
 
