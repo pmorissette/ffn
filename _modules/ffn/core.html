@@ -568,6 +568,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * prices (Series): A price series. A DatetimeIndex must be monotonic increasing.</span>
 <span class="sd">            Unavailable outer observations are excluded from endpoint statistics when total</span>
 <span class="sd">            return is available.</span>
+<span class="sd">            MTD and YTD use the last observed daily price's month and year, even when later</span>
+<span class="sd">            dates contain only unavailable prices.</span>
 <span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ used in various calculation. Should be</span>
 <span class="sd">            expressed as a yearly (annualized) return if it is a floating scalar. Otherwise</span>
 <span class="sd">            rf should be a *price* series — it is converted internally with</span>
@@ -758,8 +760,11 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">mtd</span> <span class="o">=</span> <span class="n">calc_mtd</span><span class="p">(</span><span class="n">dp</span><span class="p">,</span> <span class="n">mp</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ytd</span> <span class="o">=</span> <span class="n">calc_ytd</span><span class="p">(</span><span class="n">dp</span><span class="p">,</span> <span class="n">yp</span><span class="p">)</span>
+        <span class="c1"># Keep empty reporting bins, but end current-period lookups at the last observed day.</span>
+        <span class="n">month_end</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">offsets</span><span class="o">.</span><span class="n">MonthEnd</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">year_end</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">pd</span><span class="o">.</span><span class="n">offsets</span><span class="o">.</span><span class="n">YearEnd</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mtd</span> <span class="o">=</span> <span class="n">calc_mtd</span><span class="p">(</span><span class="n">dp</span><span class="p">,</span> <span class="n">mp</span><span class="o">.</span><span class="n">loc</span><span class="p">[:</span><span class="n">month_end</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ytd</span> <span class="o">=</span> <span class="n">calc_ytd</span><span class="p">(</span><span class="n">dp</span><span class="p">,</span> <span class="n">yp</span><span class="o">.</span><span class="n">loc</span><span class="p">[:</span><span class="n">year_end</span><span class="p">])</span>
 
         <span class="c1"># stats using daily data</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">returns</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
@@ -2762,6 +2767,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Calculates the clusters based on k-means</span>
 <span class="sd">    clustering.</span>
 
+<span class="sd">    With automatic cluster selection, a single asset with a defined correlation</span>
+<span class="sd">    forms cluster 0 without fitting a model.</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        * returns (pd.DataFrame): DataFrame of returns</span>
 <span class="sd">        * n (int): Specify # of clusters. If None, this</span>
@@ -2773,6 +2781,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    """</span>
     <span class="c1"># calculate correlation</span>
     <span class="n">corr</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+
+    <span class="c1"># A valid singleton has one partition; keep undefined correlations on the model's validation path.</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">returns</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">plot</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">([</span><span class="mf">0.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">[</span><span class="n">corr</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="mi">0</span><span class="p">]]}</span>
 
     <span class="c1"># calculate dissimilarity matrix</span>
     <span class="n">diss</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">corr</span>
