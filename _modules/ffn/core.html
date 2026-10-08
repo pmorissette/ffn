@@ -444,6 +444,7 @@ window.runMermaid = runMermaid;</script>
   <h1>Source code for ffn.core</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">comb</span> <span class="k">as</span> <span class="n">_comb</span>
 
@@ -533,6 +534,14 @@ window.runMermaid = runMermaid;</script>
     <span class="p">(</span><span class="s2">"win_year_perc"</span><span class="p">,</span> <span class="s2">"Win Year %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
     <span class="p">(</span><span class="s2">"twelve_month_win_perc"</span><span class="p">,</span> <span class="s2">"Win 12m %"</span><span class="p">,</span> <span class="s2">"p"</span><span class="p">),</span>
 <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_quote_csv_field</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">sep</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Escape header text without changing separators or metric formatting."""</span>
+    <span class="c1"># CR and LF both delimit CSV records, even though this report joins rows with LF.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">sep</span> <span class="ow">and</span> <span class="n">sep</span> <span class="ow">in</span> <span class="n">text</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">char</span> <span class="ow">in</span> <span class="n">text</span> <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="s1">'"</span><span class="se">\r\n</span><span class="s1">'</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">'"'</span> <span class="o">+</span> <span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'"'</span><span class="p">,</span> <span class="s1">'""'</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'"'</span>
+    <span class="k">return</span> <span class="n">text</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_validate_prices_index</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
@@ -1254,6 +1263,7 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Returns a CSV string with appropriate formatting.</span>
 <span class="sd">        Strategy names, including numeric labels, are serialized as text.</span>
+<span class="sd">        Names containing separators, quotes or line breaks are CSV-quoted.</span>
 <span class="sd">        If path is not None, the string will be saved to file</span>
 <span class="sd">        at path.</span>
 
@@ -1266,7 +1276,7 @@ window.runMermaid = runMermaid;</script>
 
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">first_row</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Stat"</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)]</span>
-        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">first_row</span><span class="p">))</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_quote_csv_field</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">sep</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">first_row</span><span class="p">))</span>
 
         <span class="k">for</span> <span class="n">stat</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">:</span>
             <span class="n">k</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="n">stat</span>
@@ -1297,8 +1307,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">res</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
-                <span class="n">fl</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+                <span class="n">fl</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">res</span></div>
 </div>
@@ -1637,6 +1647,7 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Returns a CSV string with appropriate formatting.</span>
 <span class="sd">        Strategy names, including numeric labels, are serialized as text.</span>
+<span class="sd">        Names containing separators, quotes or line breaks are CSV-quoted.</span>
 <span class="sd">        If path is not None, the string will be saved to file</span>
 <span class="sd">        at path.</span>
 
@@ -1649,7 +1660,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">first_row</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Stat"</span><span class="p">]</span>
         <span class="n">first_row</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">)</span>
-        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">first_row</span><span class="p">))</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_quote_csv_field</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">sep</span><span class="p">)</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">first_row</span><span class="p">))</span>
 
         <span class="n">stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stats</span><span class="p">()</span>
 
@@ -1681,8 +1692,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">res</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
-                <span class="n">fl</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span> <span class="k">as</span> <span class="n">fl</span><span class="p">:</span>
+                <span class="n">fl</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">res</span></div>
 </div>
