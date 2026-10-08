@@ -1824,8 +1824,11 @@ def test_calc_ftca_assigns_shared_members_to_high_seed_first(dtype, missing_row)
         pd.testing.assert_frame_equal(returns, original)
         return
 
+    # Preserve pandas' native seed choice: quicksort's order among ties varies across runtimes.
+    high_seed = returns.corr().mean().sort_values().index[-1]
+    high_members = [label for label in returns.columns[:6] if label != high_seed]
     # Orthogonal seeds split; shared correlates sqrt(0.5) with both and belongs to high first.
-    assert ffn.calc_ftca(returns) == {1: ["high_5", "high_0", "high_1", "high_2", "high_3", "high_4", "shared"], 2: ["low"]}
+    assert ffn.calc_ftca(returns) == {1: [high_seed] + high_members + ["shared"], 2: ["low"]}
     pd.testing.assert_frame_equal(returns, original)
 
 
