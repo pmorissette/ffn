@@ -2296,6 +2296,27 @@ def test_rollapply_preserves_labeled_callback_rows(dtype, columns, reversed_row,
     assert not recwarn
 
 
+@mark.parametrize(
+    "categories,ordered",
+    [(["A", "B"], True), (["B", "A", "unused"], True), (["A", "B", "unused"], False)],
+    ids=["unused-category", "category-order", "ordered-flag"],
+)
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_aligns_labels_with_different_category_metadata(categories, ordered, pandas_method):
+    columns = pd.CategoricalIndex(["A", "B"], categories=["A", "B", "unused"], ordered=True, name="asset")
+    data = pd.DataFrame([[1.0, 10.0], [2.0, 20.0]], columns=columns)
+    row = pd.Series([30.0, 3.0], index=pd.CategoricalIndex(["B", "A"], categories=categories, ordered=ordered))
+    original = data.copy(deep=True)
+    snapshot = row.copy(deep=True)
+
+    actual = data.rollapply(2, lambda sample: row) if pandas_method else ffn.rollapply(data, 2, lambda sample: row)
+
+    expected = pd.DataFrame([[np.nan, np.nan], [3.0, 30.0]], columns=columns)
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+    pd.testing.assert_series_equal(row, snapshot)
+
+
 @mark.parametrize("kind", ["array", "list", "scalar"])
 @mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
 def test_rollapply_preserves_positional_callback_rows(kind, pandas_method):

@@ -2599,8 +2599,10 @@ def rollapply(data, window, fn):
             and len(row) == len(res.columns)
         ):
             # Match labels exactly, avoiding specialized lookups such as interval containment.
-            positions = pd.Index(row.index, dtype=object, tupleize_cols=False).get_indexer(res.columns)
-            if (positions >= 0).all() and row.index.take(positions).equals(res.columns):
+            row_labels = pd.Index(row.index, dtype=object, tupleize_cols=False)
+            columns = pd.Index(res.columns, dtype=object, tupleize_cols=False)
+            positions = row_labels.get_indexer(columns)
+            if (positions >= 0).all() and row_labels.take(positions).equals(columns):
                 row = row.iloc[positions]
         res.iloc[i] = row
 
