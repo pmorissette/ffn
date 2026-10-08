@@ -3173,7 +3173,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * window (int): Window size</span>
 <span class="sd">        * fn (function): Function to apply over the rolling window.</span>
 <span class="sd">            For a series, the return value is expected to be a single</span>
-<span class="sd">            number. For a DataFrame, it shuold return a new row.</span>
+<span class="sd">            number. For a DataFrame, it should return a new row. Complete</span>
+<span class="sd">            uniquely labeled Series rows are aligned to unique DataFrame</span>
+<span class="sd">            columns. Other row results retain positional assignment.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        * Object of same dimensions as data</span>
@@ -3186,7 +3188,22 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">res</span>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">window</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-        <span class="n">res</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">window</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="n">window</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">res</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">is_unique</span>
+            <span class="ow">and</span> <span class="n">row</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_unique</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="c1"># Match labels exactly, avoiding specialized lookups such as interval containment.</span>
+            <span class="n">row_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span> <span class="n">tupleize_cols</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">,</span> <span class="n">tupleize_cols</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">positions</span> <span class="o">=</span> <span class="n">row_labels</span><span class="o">.</span><span class="n">get_indexer</span><span class="p">(</span><span class="n">columns</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">positions</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">and</span> <span class="n">row_labels</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">columns</span><span class="p">):</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">positions</span><span class="p">]</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span>
 
     <span class="k">return</span> <span class="n">res</span></div>
 

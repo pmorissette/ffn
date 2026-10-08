@@ -1157,7 +1157,9 @@ instead for per-period ratios.</p>
 <li><p><strong>window</strong> (<em>*</em>) – Window size</p></li>
 <li><p><strong>fn</strong> (<em>*</em>) – Function to apply over the rolling window.
 For a series, the return value is expected to be a single
-number. For a DataFrame, it shuold return a new row.</p></li>
+number. For a DataFrame, it should return a new row. Complete
+uniquely labeled Series rows are aligned to unique DataFrame
+columns. Other row results retain positional assignment.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
