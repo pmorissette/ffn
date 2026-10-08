@@ -1991,6 +1991,44 @@ def test_rescale_dataframe_axis_1():
     assert (res.dtypes == "float64").all()
 
 
+@mark.parametrize("dtype", ["int64", "uint64", "float32", "float64", "Int64", "Float64"])
+@mark.parametrize("axis", [0, 1, "index", "columns"])
+@mark.parametrize("bounds", [(0.0, 1.0), (-0.5, 2.5)])
+def test_rescale_dataframe_preserves_interpolated_values(dtype, axis, bounds):
+    data = pd.DataFrame(
+        [[0, 2, 6], [6, 0, 2], [2, 6, 0]],
+        index=pd.Index(["third", "first", "second"], name="observation"),
+        columns=pd.Index(["c", "a", "b"], name="asset"),
+        dtype=dtype,
+    )
+    original = data.copy(deep=True)
+    lower, upper = bounds
+    expected = data.astype(float) / 6 * (upper - lower) + lower
+
+    actual = data.rescale(min=lower, max=upper, axis=axis)
+
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, original)
+
+
+@mark.parametrize("axis", [0, 1])
+@mark.parametrize("labels", ["duplicate", "multiindex"])
+def test_rescale_dataframe_preserves_labels(axis, labels):
+    if labels == "duplicate":
+        index = pd.Index(["row", "row", "other"], name="observation")
+        columns = pd.Index(["asset", "asset", "other"], name="asset")
+    else:
+        index = pd.MultiIndex.from_tuples([("b", 2), ("a", 1), ("a", 2)], names=["group", "row"])
+        columns = pd.MultiIndex.from_tuples([("z", 2), ("y", 1), ("y", 2)], names=["group", "asset"])
+    data = pd.DataFrame([[0.0, 2.0, 6.0], [6.0, 0.0, 2.0], [2.0, 6.0, 0.0]], index=index, columns=columns)
+    original = data.copy(deep=True)
+
+    actual = ffn.rescale(data, axis=axis)
+
+    pd.testing.assert_frame_equal(actual, data / 6)
+    pd.testing.assert_frame_equal(data, original)
+
+
 # A falsey non-string name guards against conditional metadata propagation.
 @mark.parametrize("name", [None, "asset", 0], ids=["unnamed", "string-name", "falsey-name"])
 @mark.parametrize("method_name", ["winsorize", "rescale"])

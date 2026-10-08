@@ -2562,20 +2562,19 @@ def rescale(x, min=0.0, max=1.0, axis=0):
     """
 
     def innerfn(x, min, max):
-        return np.interp(x, [np.min(x), np.max(x)], [min, max])
+        return pd.Series(np.interp(x, [np.min(x), np.max(x)], [min, max]), index=x.index, name=x.name)
 
     if isinstance(x, pd.DataFrame):
         return x.apply(
             innerfn,
             axis=axis,
-            result_type="broadcast",
             args=(
                 min,
                 max,
             ),
         )
     else:
-        return pd.Series(innerfn(x, min, max), index=x.index, name=x.name)
+        return innerfn(x, min, max)
 
 
 def annualize(returns, durations, one_year=365.0):
