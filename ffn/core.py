@@ -122,6 +122,8 @@ class PerformanceStats:
         * prices (Series): A price series. A DatetimeIndex must be monotonic increasing.
             Unavailable outer observations are excluded from endpoint statistics when total
             return is available.
+            MTD and YTD use the last observed daily price's month and year, even when later
+            dates contain only unavailable prices.
         * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in various calculation. Should be
             expressed as a yearly (annualized) return if it is a floating scalar. Otherwise
             rf should be a *price* series — it is converted internally with
@@ -309,8 +311,11 @@ class PerformanceStats:
         if len(dp) == 1:
             return
 
-        self.mtd = calc_mtd(dp, mp)
-        self.ytd = calc_ytd(dp, yp)
+        # Keep empty reporting bins, but end current-period lookups at the last observed day.
+        month_end = dp.index[-1] + pd.offsets.MonthEnd(0)
+        year_end = dp.index[-1] + pd.offsets.YearEnd(0)
+        self.mtd = calc_mtd(dp, mp.loc[:month_end])
+        self.ytd = calc_ytd(dp, yp.loc[:year_end])
 
         # stats using daily data
         self.returns = dp.to_returns()
