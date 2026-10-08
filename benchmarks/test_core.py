@@ -63,6 +63,25 @@ def test_to_drawdown_series(benchmark, prices):
     assert result.max().max() <= 0.0
 
 
+@pytest.mark.benchmark(group="resampling")
+@pytest.mark.parametrize("periods, assets, trials", [(252, 3, 1000), (2520, 20, 5000)])
+def test_resample_returns(benchmark, periods, assets, trials):
+    returns = pd.DataFrame(
+        np.random.default_rng(42).normal(0.0002, 0.01, size=(periods, assets)),
+        index=pd.bdate_range("2010-01-01", periods=periods),
+        columns=[f"asset_{i}" for i in range(assets)],
+    )
+
+    result = benchmark(ffn.resample_returns, returns, pd.DataFrame.mean, seed=0, num_trials=trials)
+
+    assert result.shape == (trials, assets)
+    # Check a seeded sample independently of pandas' row selection and reduction.
+    positions = np.random.RandomState(0).choice(periods, size=periods, replace=True)
+    expected = returns.to_numpy()[positions].mean(axis=0)
+    np.testing.assert_allclose(result.iloc[0].to_numpy(dtype=float), expected)
+    pd.testing.assert_index_equal(result.columns, returns.columns)
+
+
 @pytest.mark.benchmark(group="drawdown")
 def test_calc_max_drawdown(benchmark, prices):
     result = benchmark(ffn.calc_max_drawdown, prices)

@@ -3211,8 +3211,16 @@ def resample_returns(returns, func, seed=0, num_trials=100):
 
     n = returns.shape[0]
     for i in range(num_trials):
-        # Sample rows directly so duplicate index labels cannot expand a draw.
-        sample, sample_index = resample(returns, returns.index, n_samples=n, random_state=seed + i)
+        trial_seed = seed + i
+        # Match sklearn's legacy draws without its per-trial pandas dispatch.
+        # Delegate empty inputs and other seeds to preserve native validation.
+        # Callbacks may resize the caller: keep the initial draw count, but use current rows.
+        if n and len(returns) and type(trial_seed) is int and 0 <= trial_seed < 2**32:
+            positions = np.random.RandomState(trial_seed).randint(0, len(returns), n)
+            sample = returns.take(positions)
+            sample_index = returns.index[positions]
+        else:
+            sample, sample_index = resample(returns, returns.index, n_samples=n, random_state=trial_seed)
         # Preserve label-sampling metadata; row sampling can infer a frequency.
         sample.index = sample_index
         stats.loc[i] = func(sample)
