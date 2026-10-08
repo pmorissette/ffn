@@ -1585,6 +1585,27 @@ def test_calc_clusters_two_assets_preserves_model_selection(n):
     pd.testing.assert_frame_equal(returns, original)
 
 
+@mark.parametrize("missing_first", [False, True])
+@mark.parametrize("plot", [False, True])
+def test_calc_clusters_rejects_all_missing_object_asset(missing_first, plot):
+    returns = pd.DataFrame({"observed": [1.0, 3.0, 2.0, 4.0], "missing": pd.Series([None] * 4, dtype=object)})
+    if missing_first:
+        returns = returns[["missing", "observed"]]
+    original = returns.copy(deep=True)
+    figures = set(ffn.core.plt.get_fignums())
+
+    try:
+        # pandas 1.5 drops the object column from corr(), but this is not a singleton input.
+        with raises(ValueError):
+            ffn.calc_clusters(returns, plot=plot)
+
+        pd.testing.assert_frame_equal(returns, original)
+        assert set(ffn.core.plt.get_fignums()) == figures
+    finally:
+        for number in set(ffn.core.plt.get_fignums()) - figures:
+            ffn.core.plt.close(number)
+
+
 @mark.parametrize("columns, n", [(1, 1), (1, 0), (1, 2), (2, None), (0, None)])
 def test_calc_clusters_preserves_other_model_paths(monkeypatch, columns, n):
     returns = pd.DataFrame(np.tile([1.0, 2.0, 3.0], (columns, 1)).T)

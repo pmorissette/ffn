@@ -2197,7 +2197,7 @@ def calc_clusters(returns, n=None, plot=False):
     corr = returns.corr()
 
     # A valid singleton has one partition; keep undefined correlations on the model's validation path.
-    if n is None and len(corr) == 1 and np.isfinite(corr.iloc[0, 0]):
+    if n is None and returns.shape[1] == 1 and len(corr) == 1 and np.isfinite(corr.iloc[0, 0]):
         if plot:
             _, ax = plt.subplots()
             ax.scatter([0.0], [0.0], c=[0], s=90)
