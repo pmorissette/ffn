@@ -91,6 +91,14 @@ _STATISTICS = (
 )
 
 
+def _quote_csv_field(text, sep):
+    """Escape header text without changing separators or metric formatting."""
+    # CR and LF both delimit CSV records, even though this report joins rows with LF.
+    if (sep and sep in text) or any(char in text for char in '"\r\n'):
+        return '"' + text.replace('"', '""') + '"'
+    return text
+
+
 def _validate_prices_index(prices):
     """Require datetime price indexes to be monotonic increasing."""
     if isinstance(prices, (pd.Series, pd.DataFrame)) and isinstance(prices.index, pd.DatetimeIndex) and not prices.index.is_monotonic_increasing:
@@ -785,6 +793,7 @@ class PerformanceStats:
         """
         Returns a CSV string with appropriate formatting.
         Strategy names, including numeric labels, are serialized as text.
+        Names containing separators, quotes or line breaks are CSV-quoted.
         If path is not None, the string will be saved to file
         at path.
 
@@ -797,7 +806,7 @@ class PerformanceStats:
 
         data = []
         first_row = ["Stat", str(self.name)]
-        data.append(sep.join(first_row))
+        data.append(sep.join(_quote_csv_field(field, sep) for field in first_row))
 
         for stat in stats:
             k, n, f = stat
@@ -1138,6 +1147,7 @@ class GroupStats(dict):
         """
         Returns a CSV string with appropriate formatting.
         Strategy names, including numeric labels, are serialized as text.
+        Names containing separators, quotes or line breaks are CSV-quoted.
         If path is not None, the string will be saved to file
         at path.
 
@@ -1150,7 +1160,7 @@ class GroupStats(dict):
         data = []
         first_row = ["Stat"]
         first_row.extend(str(name) for name in self._names)
-        data.append(sep.join(first_row))
+        data.append(sep.join(_quote_csv_field(field, sep) for field in first_row))
 
         stats = self._stats()
 
