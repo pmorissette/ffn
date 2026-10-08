@@ -2874,6 +2874,17 @@ window.runMermaid = runMermaid;</script>
     <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="c1"># correlation matrix</span>
     <span class="n">corr</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+    <span class="c1"># Preserve labelled lookup and skip-NaN behavior for inputs outside the finite working set.</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">corr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">hasnans</span>
+        <span class="ow">and</span> <span class="n">corr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">is_unique</span>
+        <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">threshold</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">))</span>
+    <span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">corr</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">_calc_ftca</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">corr</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
     <span class="c1"># remaining securities to cluster</span>
     <span class="n">remain</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
     <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">remain</span><span class="p">)</span>
@@ -2944,6 +2955,39 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">return</span> <span class="n">res</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_calc_ftca</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">threshold</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Cluster finite correlations with unique, non-missing, flat labels.</span>
+
+<span class="sd">    Keep pandas' mean-correlation sort for seed ties and the original label</span>
+<span class="sd">    iteration for member order and scalar types. Positions own the shrinking</span>
+<span class="sd">    working set; high-seed members are assigned before the low-seed cluster.</span>
+<span class="sd">    """</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="n">remain</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">))</span>
+    <span class="n">clusters</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">remain</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">remain</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">clusters</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">remain</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+            <span class="k">break</span>
+
+        <span class="n">means</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ix_</span><span class="p">(</span><span class="n">remain</span><span class="p">,</span> <span class="n">remain</span><span class="p">)]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">labels</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">remain</span><span class="p">))</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span>
+        <span class="n">low_label</span><span class="p">,</span> <span class="n">high_label</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">means</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">get_loc</span><span class="p">(</span><span class="n">low_label</span><span class="p">),</span> <span class="n">labels</span><span class="o">.</span><span class="n">get_loc</span><span class="p">(</span><span class="n">high_label</span><span class="p">)</span>
+        <span class="n">remain</span> <span class="o">=</span> <span class="n">remain</span><span class="p">[(</span><span class="n">remain</span> <span class="o">!=</span> <span class="n">low</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">remain</span> <span class="o">!=</span> <span class="n">high</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="n">selected</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">remain</span><span class="p">,</span> <span class="n">high</span><span class="p">]</span> <span class="o">+</span> <span class="n">values</span><span class="p">[</span><span class="n">remain</span><span class="p">,</span> <span class="n">low</span><span class="p">])</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+            <span class="n">clusters</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">low_label</span><span class="p">,</span> <span class="n">high_label</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">remain</span><span class="p">[</span><span class="n">selected</span><span class="p">]]</span>
+            <span class="n">remain</span> <span class="o">=</span> <span class="n">remain</span><span class="p">[</span><span class="o">~</span><span class="n">selected</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">seed</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="p">((</span><span class="n">high</span><span class="p">,</span> <span class="n">high_label</span><span class="p">),</span> <span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">low_label</span><span class="p">)):</span>
+                <span class="n">selected</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">remain</span><span class="p">,</span> <span class="n">seed</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">threshold</span>
+                <span class="n">clusters</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">remain</span><span class="p">[</span><span class="n">selected</span><span class="p">]]</span>
+                <span class="n">remain</span> <span class="o">=</span> <span class="n">remain</span><span class="p">[</span><span class="o">~</span><span class="n">selected</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">clusters</span>
 
 
 <div class="viewcode-block" id="limit_weights">
