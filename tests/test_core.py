@@ -4056,6 +4056,158 @@ def test_resample_returns_preserves_sampled_index_metadata(as_frame, index, posi
     ffn.resample_returns(returns, statistic, seed=seed, num_trials=1)
 
 
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize("dtype", ["float64", "Float64"])
+@mark.parametrize("seed", [0, 6, 2**32 - 3, np.int64(0), np.uint32(0)])
+def test_resample_returns_preserves_seeded_callbacks(as_frame, dtype, seed):
+    """Keep each seeded draw, callback order and value ownership intact."""
+    returns = pd.Series([10, 20, 30], index=pd.Index(["a", "a", "b"], name="row"), dtype=dtype, name="return")
+    if as_frame:
+        returns = pd.DataFrame({"return": returns, "scaled": returns / 10})
+        returns.columns.name = "asset"
+    original = returns.copy(deep=True)
+    expected_statistics = []
+    calls = []
+
+    def statistic(sample):
+        # The independent draw oracle does not depend on pandas or ffn sampling.
+        positions = np.random.RandomState(seed + len(calls)).choice(3, size=3, replace=True)
+        expected = original.iloc[positions]
+        if as_frame:
+            pd.testing.assert_frame_equal(sample, expected)
+        else:
+            pd.testing.assert_series_equal(sample, expected)
+        calls.append(positions)
+        expected_statistics.append(expected.sum())
+        sample.iloc[0] = 999
+        return expected_statistics[-1]
+
+    random_state = np.random.get_state()
+    actual = ffn.resample_returns(returns, statistic, seed=seed, num_trials=3)
+
+    assert len(calls) == 3
+    after = np.random.get_state()
+    np.testing.assert_array_equal(after[1], random_state[1])
+    assert after[0] == random_state[0] and after[2:] == random_state[2:]
+    if as_frame:
+        expected = pd.DataFrame(expected_statistics, dtype=object)
+        pd.testing.assert_frame_equal(actual, expected)
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        pd.testing.assert_series_equal(actual, pd.Series(expected_statistics, dtype=float))
+        pd.testing.assert_series_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize("seed, trials", [(-1, 1), (2**32, 1), (0.5, 1), (2**32 - 1, 2)])
+def test_resample_returns_preserves_native_rejections(as_frame, seed, trials):
+    """Dependency-owned error forms may vary, but must match the native sampler."""
+    size = 3
+    returns = pd.Series(np.arange(size, dtype=float), name="return")
+    if as_frame:
+        returns = returns.to_frame()
+    original = returns.copy(deep=True)
+    calls = []
+
+    with raises((ValueError, TypeError)) as native:
+        ffn.core.resample(returns, returns.index, n_samples=size, random_state=seed + trials - 1)
+
+    def statistic(sample):
+        calls.append(len(sample))
+        return sample.sum()
+
+    with raises(type(native.value)) as actual:
+        ffn.resample_returns(returns, statistic, seed=seed, num_trials=trials)
+    assert str(actual.value) == str(native.value)
+    # A valid maximum seed still calls the statistic before the next seed fails.
+    assert calls == [size] * (trials - 1)
+    if as_frame:
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        pd.testing.assert_series_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+def test_resample_returns_preserves_native_empty_behavior(as_frame):
+    """Keep empty-input acceptance or rejection owned by the installed sampler."""
+    returns = pd.Series([], dtype=float, name="return")
+    if as_frame:
+        returns = returns.to_frame()
+    calls = []
+
+    def statistic(sample):
+        calls.append(len(sample))
+        if as_frame:
+            pd.testing.assert_frame_equal(sample, returns)
+        else:
+            pd.testing.assert_series_equal(sample, returns)
+        return sample.sum()
+
+    # Empty n_samples=0 is dependency-owned, rather than a new ffn policy.
+    try:
+        ffn.core.resample(returns, returns.index, n_samples=0, random_state=0)
+    except (ValueError, TypeError) as native:
+        with raises(type(native)) as actual:
+            ffn.resample_returns(returns, statistic, num_trials=1)
+        assert str(actual.value) == str(native)
+        assert calls == []
+    else:
+        actual = ffn.resample_returns(returns, statistic, num_trials=1)
+        assert calls == [0]
+        assert np.asarray(actual.iloc[0]).sum() == 0
+    assert returns.empty
+
+
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize("dtype", ["float64", "Float64"])
+def test_resample_returns_stops_at_callback_error(as_frame, dtype):
+    returns = pd.Series([1, 2, 3], dtype=dtype, name="return")
+    if as_frame:
+        returns = returns.to_frame()
+    original = returns.copy(deep=True)
+    calls = []
+
+    def statistic(sample):
+        calls.append(len(sample))
+        sample.iloc[0] = 999
+        if len(calls) == 2:
+            raise RuntimeError("statistic failed")
+        return sample.sum()
+
+    with raises(RuntimeError, match="statistic failed"):
+        ffn.resample_returns(returns, statistic, num_trials=5)
+    assert calls == [3, 3]
+    if as_frame:
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        pd.testing.assert_series_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+def test_resample_returns_callback_can_change_population(as_frame):
+    """Each trial draws from current rows while retaining the initial sample size."""
+    returns = pd.Series([1.0, 2.0, 3.0], index=["a", "b", "c"], name="return")
+    if as_frame:
+        returns = returns.to_frame()
+    calls = []
+
+    def statistic(sample):
+        calls.append(len(sample))
+        if len(calls) == 1:
+            returns.drop(index="a", inplace=True)
+        return sample.sum()
+
+    actual = ffn.resample_returns(returns, statistic, num_trials=2)
+
+    # Seed 0 draws a,b,a; seed 1 draws c,c,b from the remaining population.
+    assert calls == [3, 3]
+    if as_frame:
+        pd.testing.assert_frame_equal(actual, pd.DataFrame({"return": [4.0, 8.0]}, dtype=object))
+    else:
+        pd.testing.assert_series_equal(actual, pd.Series([4.0, 8.0]))
+    assert returns.index.tolist() == ["b", "c"]
+
+
 def test_monthly_returns():
     dates = [
         "31/12/2017",
