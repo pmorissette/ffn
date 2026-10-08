@@ -3996,11 +3996,21 @@ def test_statistics_to_csv_serializes_numeric_labels(label, grouped, sep, series
 @mark.parametrize("grouped", [False, True], ids=["performance", "group"])
 @mark.parametrize("sep", [",", ";"], ids=["comma", "semicolon"])
 @mark.parametrize("series_rf", [False, True], ids=["scalar-riskfree", "series-riskfree"])
-def test_statistics_to_csv_quotes_strategy_labels(label, grouped, sep, series_rf, tmp_path):
+@mark.parametrize("linesep", ["\n", "\r\n"], ids=["posix", "windows"])
+def test_statistics_to_csv_quotes_strategy_labels(label, grouped, sep, series_rf, linesep, tmp_path, monkeypatch):
     """Quoted labels round-trip while metric bytes and native file conventions stay intact."""
     import csv
     import io
     import os
+
+    native_open = open
+
+    def platform_open(path, mode, newline=None):
+        return native_open(path, mode, newline=linesep if newline is None else newline)
+
+    # Exercise Windows text translation even when the tests run on a POSIX host.
+    monkeypatch.setattr(ffn.core, "open", platform_open, raising=False)
+    monkeypatch.setattr(os, "linesep", linesep)
 
     prices = pd.Series([100.0, 101.0, 99.0, 104.0, 103.0, 108.0], index=pd.date_range("2020-01-01", periods=6), name=label)
     if grouped:
@@ -4039,12 +4049,12 @@ def test_statistics_to_csv_quotes_strategy_labels(label, grouped, sep, series_rf
 
     path = tmp_path / "statistics.csv"
     assert stats.to_csv(sep=sep, path=path) is None
-    # Native text-mode translation also applies inside fields on Windows; preserve that convention.
-    expected_file = expected.replace("\n", os.linesep)
+    # Only record separators use platform line endings; quoted field content stays exact.
+    expected_file = expected_header + control_output[control_output.index("\n") :].replace("\n", linesep)
     assert path.read_bytes().decode() == expected_file
     with path.open(newline="") as exported:
         file_rows = list(csv.reader(exported, delimiter=sep))
-    assert file_rows[0] == ["Stat"] + [name.replace("\n", os.linesep) for name in labels]
+    assert file_rows[0] == ["Stat"] + labels
     assert {len(row) for row in file_rows} == {len(labels) + 1}
     if grouped:
         assert stats._names == labels

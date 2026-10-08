@@ -1,5 +1,6 @@
 import copy
 import itertools
+import os
 import random
 from math import comb as _comb
 
@@ -837,8 +838,8 @@ class PerformanceStats:
         res = "\n".join(data)
 
         if path is not None:
-            with open(path, "w") as fl:
-                fl.write(res)
+            with open(path, "w", newline="") as fl:
+                fl.write(os.linesep.join(data))
         else:
             return res
 
@@ -1192,8 +1193,8 @@ class GroupStats(dict):
         res = "\n".join(data)
 
         if path is not None:
-            with open(path, "w") as fl:
-                fl.write(res)
+            with open(path, "w", newline="") as fl:
+                fl.write(os.linesep.join(data))
         else:
             return res
 
