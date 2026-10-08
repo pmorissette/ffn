@@ -2389,7 +2389,7 @@ def _calc_ftca(values, labels, threshold):
 
         means = pd.Series(values[np.ix_(remain, remain)].mean(axis=0), index=labels.take(remain)).sort_values()
         low_label, high_label = means.index[0], means.index[-1]
-        low, high = labels.get_indexer([low_label, high_label])
+        low, high = labels.get_loc(low_label), labels.get_loc(high_label)
         remain = remain[(remain != low) & (remain != high)]
 
         if values[low, high] > threshold:

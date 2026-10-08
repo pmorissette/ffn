@@ -1781,6 +1781,25 @@ def test_calc_ftca_preserves_numeric_samples_and_labels(dtype, use_pandas_method
     pd.testing.assert_frame_equal(returns, original)
 
 
+@mark.parametrize("large_label", [2**60 + 1, -(2**60 + 1), 2**64 - 1])
+@mark.parametrize("threshold", [0.1, -0.6])
+@mark.parametrize("use_pandas_method", [False, True])
+def test_calc_ftca_preserves_mixed_numeric_label_precision(monkeypatch, large_label, threshold, use_pandas_method):
+    labels = pd.Index([large_label, 1.5, "c"], dtype=object, name="asset")
+    corr = pd.DataFrame([[1.0, -0.5, 0.5], [-0.5, 1.0, -0.75], [0.5, -0.75, 1.0]], index=labels, columns=labels)
+    original = corr.copy(deep=True)
+    returns = pd.DataFrame(columns=labels)
+    monkeypatch.setattr(pd.DataFrame, "corr", lambda self: corr)
+
+    # The high/low seeds are a large integer and a float; a combined lookup can round the integer.
+    expected = {1: [large_label, "c"], 2: [1.5]} if threshold == 0.1 else {1: [1.5, large_label, "c"]}
+    actual = returns.calc_ftca(threshold) if use_pandas_method else ffn.calc_ftca(returns, threshold)
+
+    assert actual == expected
+    assert list(actual) == list(expected)
+    pd.testing.assert_frame_equal(corr, original)
+
+
 @mark.parametrize("numeric_only", [False, True])
 @mark.parametrize("all_object", [False, True])
 def test_calc_ftca_preserves_correlation_column_selection(monkeypatch, numeric_only, all_object):
