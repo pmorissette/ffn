@@ -1,6 +1,7 @@
 import ffn
 import pandas as pd
 import numpy as np
+import warnings
 from pytest import approx, fixture, mark, raises, warns
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
@@ -2576,6 +2577,229 @@ def test_series_value_transform_preserves_name(name, method_name, use_pandas_met
     actual = calculate(*args)
 
     assert actual.name == name
+
+
+def _rescale_row_reference(data, lower=0.0, upper=1.0, axis=1):
+    """Retain the accepted interpolation owner independently of batch qualification/reductions."""
+    return data.apply(lambda row: pd.Series(np.interp(row, [row.min(), row.max()], [lower, upper]), index=row.index, name=row.name), axis=axis)
+
+
+@mark.parametrize("dtype", ["int8", "int64", "uint64", "float16", "float32", "float64"])
+@mark.parametrize("bounds", [(0.0, 1.0), (-0.5, 2.5), (1.0, 0.0)])
+@mark.parametrize("axis", [1, "columns"])
+def test_rescale_rows_preserve_interpolation(dtype, bounds, axis):
+    # Constant rows select the upper endpoint; a single affine formula cannot preserve that rule.
+    data = pd.DataFrame([[0, 2, 6], [6, 0, 2], [3, 3, 3]], dtype=dtype)
+    original = data.copy(deep=True)
+    expected = _rescale_row_reference(data, *bounds, axis=axis)
+
+    actual = data.rescale(min=bounds[0], max=bounds[1], axis=axis)
+
+    pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+    assert actual.iloc[2].tolist() == [bounds[1]] * 3
+    pd.testing.assert_frame_equal(data, original, check_exact=True)
+
+
+@mark.parametrize("dtype", ["float32", "float64", "int64", "uint64"])
+def test_rescale_rows_preserve_boundary_precision(dtype):
+    if dtype.startswith("float"):
+        limit = np.finfo(dtype).max
+        tiny = np.nextafter(np.array(0, dtype=dtype), np.array(1, dtype=dtype)).item()
+        values = np.array([[0.1, 0.2, 0.9], [-limit, 0, limit], [0, tiny, tiny * 2]], dtype=dtype)
+    elif dtype == "int64":
+        limit = np.iinfo(dtype)
+        values = np.array([[limit.min, 0, limit.max], [2**60, 2**60 + 1, 2**60 + 2], [7, 7, 7]], dtype=dtype)
+    else:
+        limit = np.iinfo(dtype)
+        values = np.array([[0, 1, limit.max], [2**63, 2**63 + 1, 2**63 + 2], [7, 7, 7]], dtype=dtype)
+    data = pd.DataFrame(values)
+    expected = _rescale_row_reference(data)
+
+    # Compare exactly: tolerance-based checks conceal an affine replacement's rounding changes.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        warnings.simplefilter("error", FutureWarning)
+        actual = ffn.rescale(data, axis=1)
+
+    pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+
+
+@mark.parametrize("labels", ["duplicate", "multiindex", "datetime", "categorical", "numeric-object"])
+def test_rescale_rows_preserve_metadata_and_input(labels):
+    if labels == "duplicate":
+        index = pd.Index(["row", "row", "other"], name="observations")
+        columns = pd.Index(["asset", "asset", "other"], name="assets")
+    elif labels == "multiindex":
+        index = pd.MultiIndex.from_tuples([("b", 2), ("a", 1), ("a", 2)], names=["group", "row"])
+        columns = pd.MultiIndex.from_tuples([("z", 2), ("y", 1), ("y", 2)], names=["group", "asset"])
+    elif labels == "datetime":
+        index = pd.date_range("2020-01-01", periods=3, tz="America/New_York", name="observations")
+        columns = pd.Index(["z", "y", "x"], name="assets")
+    elif labels == "categorical":
+        index = pd.CategoricalIndex(["b", "a", "c"], categories=["c", "b", "a", "unused"], ordered=True, name="observations")
+        columns = pd.CategoricalIndex(["z", "y", "x"], categories=["x", "z", "y", "unused"], name="assets")
+    else:
+        # Numeric labels must not be inferred as floats while assembling rows.
+        index = pd.Index([2**60 + 1, 0.5, 2**60 + 2], dtype=object, name="observations")
+        columns = pd.Index([2**60 + 2, 0.5, 2**60 + 1], dtype=object, name="assets")
+    data = pd.DataFrame([[0.0, 2.0, 6.0], [6.0, 0.0, 2.0], [2.0, 6.0, 0.0]], index=index, columns=columns)
+    data.attrs = {"units": {"signal": "score"}}
+    if labels != "duplicate":
+        data.flags.allows_duplicate_labels = False
+    original = data.copy(deep=True)
+    expected = _rescale_row_reference(data)
+
+    actual = ffn.rescale(data, axis=1)
+
+    pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+    assert actual.attrs == expected.attrs
+    assert actual.flags.allows_duplicate_labels == expected.flags.allows_duplicate_labels
+    # Returned numeric values must not share writable storage with the caller.
+    actual.iloc[0, 0] = -999.0
+    pd.testing.assert_frame_equal(data, original, check_exact=True)
+
+
+@mark.parametrize("labels", ["datetime", "multiindex", "categorical"])
+@mark.parametrize("axis", ["index", "columns"])
+@mark.parametrize("mutate_input", [False, True])
+def test_rescale_rows_preserve_axis_name_ownership(labels, axis, mutate_input):
+    if labels == "datetime":
+        labels = pd.date_range("2020-01-01", periods=3, tz="America/New_York", name="original")
+    elif labels == "multiindex":
+        labels = pd.MultiIndex.from_tuples([("b", 2), ("a", 1), ("a", 2)], names=["group", "original"])
+    else:
+        labels = pd.CategoricalIndex(["b", "a", "c"], categories=["c", "b", "a", "unused"], ordered=True, name="original")
+    observations = []
+    for calculate in (_rescale_row_reference, lambda data: data.rescale(axis=1)):
+        data = pd.DataFrame([[0.0, 2.0, 6.0], [6.0, 0.0, 2.0], [2.0, 6.0, 0.0]], **{axis: labels.copy(deep=True)})
+        result = calculate(data)
+        owner = data if mutate_input else result
+
+        getattr(owner, axis).names = ["changed"] * getattr(owner, axis).nlevels
+
+        # Axis-name sharing changed across pandas versions; preserve the native boundary.
+        observations.append((list(data.index.names), list(data.columns.names), list(result.index.names), list(result.columns.names)))
+    assert observations[0] == observations[1]
+
+
+@mark.parametrize("surface", ["index-frequency", "column-frequency", "attrs", "values"])
+@mark.parametrize("mutate_input", [False, True])
+def test_rescale_rows_preserve_metadata_sharing(surface, mutate_input):
+    observations = []
+    for calculate in (_rescale_row_reference, lambda data: ffn.rescale(data, axis=1)):
+        data = pd.DataFrame(
+            [[0.0, 2.0, 6.0], [6.0, 0.0, 2.0], [2.0, 6.0, 0.0]],
+            index=pd.date_range("2020-01-01", periods=3, name="observations"),
+            columns=pd.date_range("2021-01-01", periods=3, name="assets"),
+        )
+        data.attrs = {"units": {"signal": "score"}}
+        result = calculate(data)
+        owner = data if mutate_input else result
+        if surface == "index-frequency":
+            owner.index.freq = None
+        elif surface == "column-frequency":
+            owner.columns.freq = None
+        elif surface == "attrs":
+            owner.attrs["units"]["signal"] = "changed"
+        else:
+            owner.iloc[0, 0] = -999.0
+        # Preserve pandas' ownership boundary, including version-dependent shallow sharing.
+        observations.append((data.copy(deep=True), result.copy(deep=True)))
+    for expected, actual in zip(observations[0], observations[1]):
+        pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+        assert actual.attrs == expected.attrs
+
+
+@mark.parametrize(
+    "case",
+    [
+        "missing",
+        "infinite",
+        "all-missing",
+        "nullable",
+        "nullable-missing",
+        "nullable-integer",
+        "sparse",
+        "object",
+        "text",
+        "complex",
+        "boolean",
+        "mixed",
+        "no-rows",
+        "no-columns",
+        "subclass",
+    ],
+)
+@mark.parametrize("axis", [0, 1, "columns"])
+def test_rescale_preserves_fallback_results_warnings_and_errors(case, axis):
+    data = pd.DataFrame([[0.0, 2.0, 6.0], [6.0, 0.0, 2.0], [3.0, 3.0, 3.0]])
+    if case in ("missing", "infinite"):
+        data.iloc[0, 1] = np.nan if case == "missing" else np.inf
+    elif case == "all-missing":
+        data.iloc[:, :] = np.nan
+    elif case in ("nullable", "object", "complex", "boolean"):
+        data = data.astype({"nullable": "Float64", "object": "object", "complex": "complex128", "boolean": "bool"}[case])
+    elif case == "nullable-missing":
+        data = data.astype("Float64")
+        data.iloc[0, 1] = pd.NA
+    elif case == "nullable-integer":
+        data = data.astype("Int64")
+    elif case == "sparse":
+        data = data.astype(pd.SparseDtype("float64", 0.0))
+    elif case == "text":
+        data = data.astype(str)
+    elif case == "mixed":
+        data = data.astype({0: "int64", 1: "float32", 2: "float64"})
+    elif case == "no-rows":
+        data = data.iloc[:0]
+    elif case == "no-columns":
+        data = data.iloc[:, :0]
+    elif case == "subclass":
+
+        class SignalFrame(pd.DataFrame):
+            @property
+            def _constructor(self):
+                return SignalFrame
+
+        data = SignalFrame(data)
+    original = data.copy(deep=True)
+    outcomes, warning_sets = [], []
+    for calculate in (lambda: _rescale_row_reference(data, axis=axis), lambda: ffn.rescale(data, axis=axis)):
+        with warnings.catch_warnings(record=True) as recorded:
+            warnings.simplefilter("always")
+            try:
+                outcomes.append(calculate())
+            except (TypeError, ValueError) as error:
+                outcomes.append((type(error), str(error)))
+        warning_sets.append([(warning.category, str(warning.message)) for warning in recorded])
+    assert warning_sets[0] == warning_sets[1]
+    if isinstance(outcomes[0], tuple):
+        assert outcomes[0] == outcomes[1]
+    else:
+        pd.testing.assert_frame_equal(outcomes[0], outcomes[1], check_exact=True)
+    pd.testing.assert_frame_equal(data, original, check_exact=True)
+
+
+@mark.parametrize("axis", [True, np.int64(1), "index", 2, "rows", None])
+def test_rescale_preserves_axis_dispatch(axis):
+    data = pd.DataFrame([[0.0, 2.0, 6.0], [6.0, 0.0, 2.0]])
+    try:
+        expected = _rescale_row_reference(data, axis=axis)
+    except (TypeError, ValueError) as error:
+        with raises(type(error)) as caught:
+            ffn.rescale(data, axis=axis)
+        assert str(caught.value) == str(error)
+    else:
+        pd.testing.assert_frame_equal(ffn.rescale(data, axis=axis), expected, check_exact=True)
+
+
+@mark.parametrize("bounds", [(0.25, 0.25), (1 + 2j, -1 + 3j), (np.nan, np.inf), (np.float32(-0.5), np.float32(2.5))])
+@mark.parametrize("shape", [(1, 3), (3, 1)])
+def test_rescale_rows_preserve_degenerate_shapes_and_bounds(bounds, shape):
+    data = pd.DataFrame(np.arange(np.prod(shape), dtype=float).reshape(shape))
+    expected = _rescale_row_reference(data, *bounds)
+
+    pd.testing.assert_frame_equal(ffn.rescale(data, min=bounds[0], max=bounds[1], axis=1), expected, check_exact=True)
 
 
 def test_annualize():

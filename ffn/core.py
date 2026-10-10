@@ -2661,6 +2661,25 @@ def rescale(x, min=0.0, max=1.0, axis=0):
         return pd.Series(np.interp(x, [np.min(x), np.max(x)], [min, max]), index=x.index, name=x.name)
 
     if isinstance(x, pd.DataFrame):
+        # Leave mixed/extension dtypes and non-finite rows on pandas' existing path.
+        if (
+            type(x) is pd.DataFrame
+            and isinstance(axis, (int, str))
+            and axis in (1, "columns")
+            and not x.empty
+            and x.dtypes.nunique() == 1
+            and isinstance(x.dtypes.iloc[0], np.dtype)
+        ):
+            values = x.to_numpy()
+            if values.dtype.kind in "iuf" and values.dtype.itemsize <= 8 and np.isfinite(values).all():
+                # Batch extrema without constructing a pandas Series for every row.
+                # Keep np.interp's precision and constant-row rules instead of an affine rewrite.
+                lower = values.min(axis=1)
+                upper = values.max(axis=1)
+                result = np.array([np.interp(row, [low, high], [min, max]) for row, low, high in zip(values, lower, upper)])
+                # Match apply's inference step to preserve version-specific axis sharing.
+                # Finalize as apply does for attrs and duplicate-label flags.
+                return pd.DataFrame(result, index=x.index, columns=x.columns).infer_objects().__finalize__(x, method="apply")
         return x.apply(
             innerfn,
             axis=axis,
