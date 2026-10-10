@@ -410,3 +410,145 @@ def test_performance_stats_rejects_mixed_timezone_riskfree_prices():
 
     with pytest.raises(TypeError, match="tz-naive"):
         ffn.PerformanceStats(prices, rf=risk_free)
+
+
+def _periodic_timezone_prices(calendar="business", dtype="float64"):
+    # Late New York observations fall in the next UTC date, including at month/year ends.
+    dates = (pd.bdate_range("2020-01-01", periods=1000) + pd.Timedelta(hours=23, minutes=30)).tz_localize("America/New_York")
+    rng = np.random.default_rng(20261007)
+    prices = pd.Series(100 * np.cumprod(1 + rng.normal(0.0003, 0.01, len(dates))), index=dates, name="asset", dtype=dtype)
+    risk_free = pd.Series(100 * 1.0001 ** np.arange(len(dates)), index=dates, name="rf", dtype=dtype)
+    if calendar != "business":
+        last_positions = {}
+        for position, date in enumerate(dates):
+            key = (date.year, date.month) if calendar == "monthly" else date.year
+            last_positions[key] = position
+        prices = prices.iloc[list(last_positions.values())]
+    return prices, risk_free
+
+
+def _calendar_risk_ratios(prices, risk_free, periods):
+    """Derive paired calendar returns without ffn ratios, pandas resampling, or label subtraction."""
+    endpoints = []
+    for series in (prices, risk_free):
+        values = {}
+        for date, value in series.items():
+            # The asset's calendar defines both holdings' periods, irrespective of RF storage zone.
+            local_date = date.tz_convert(prices.index.tz)
+            key = (local_date.year, local_date.month) if periods == 12 else local_date.year
+            if pd.notna(value):
+                values[key] = float(value)
+        endpoints.append(values)
+    asset, rf = endpoints
+    keys = list(asset)
+    excess = []
+    for start, end in zip(keys[:-1], keys[1:]):
+        # Missing RF bins exclude both adjacent intervals; never bridge or fill them.
+        if start in rf and end in rf:
+            excess.append((asset[end] / asset[start] - 1) - (rf[end] / rf[start] - 1))
+    mean = sum(excess) / len(excess)
+    deviation = (sum((value - mean) ** 2 for value in excess) / (len(excess) - 1)) ** 0.5
+    downside = (sum(min(value, 0.0) ** 2 for value in excess) / len(excess)) ** 0.5
+    return mean / deviation * periods**0.5, mean / downside * periods**0.5
+
+
+@pytest.mark.parametrize("calendar", ["business", "monthly", "yearly"])
+@pytest.mark.parametrize("dtype", ["float64", "Float64"])
+@pytest.mark.parametrize("rf_timezone", ["America/New_York", "UTC", "Asia/Tokyo"])
+def test_performance_stats_periodic_riskfree_timezone_oracle(calendar, dtype, rf_timezone):
+    """Equivalent instants retain asset-local endpoint prices through DST and calendar boundaries."""
+    prices, risk_free = _periodic_timezone_prices(calendar, dtype)
+    risk_free = risk_free.tz_convert(rf_timezone)
+    original_prices, original_rf = prices.copy(), risk_free.copy()
+
+    stats = ffn.PerformanceStats(prices, rf=risk_free, annualization_factor=365)
+
+    frequencies = [("yearly", 1)] if calendar == "yearly" else [("monthly", 12), ("yearly", 1)]
+    for frequency, periods in frequencies:
+        expected = _calendar_risk_ratios(prices, risk_free, periods)
+        for ratio, value in zip(("sharpe", "sortino"), expected):
+            assert getattr(stats, frequency + "_" + ratio) == pytest.approx(value, rel=1e-10, abs=1e-12)
+    if calendar == "yearly":
+        assert np.isnan(stats.monthly_sharpe)
+    assert stats.rf is risk_free
+    pd.testing.assert_series_equal(prices, original_prices)
+    pd.testing.assert_series_equal(risk_free, original_rf)
+
+
+@pytest.mark.parametrize("rf_timezone", ["America/New_York", "UTC"])
+def test_performance_stats_periodic_riskfree_missing_calendar_bins(rf_timezone):
+    """Partial RF coverage and an absent month remove intervals without filling or shifting prices."""
+    prices, risk_free = _periodic_timezone_prices()
+    risk_free = risk_free.loc["2020-07":]
+    risk_free = risk_free[~((risk_free.index.year == 2021) & (risk_free.index.month == 5))].tz_convert(rf_timezone)
+    original_rf = risk_free.copy()
+    stats = prices.calc_perf_stats(risk_free_rate=risk_free)
+
+    for frequency, periods in [("monthly", 12), ("yearly", 1)]:
+        for ratio, value in zip(("sharpe", "sortino"), _calendar_risk_ratios(prices, risk_free, periods)):
+            assert getattr(stats, frequency + "_" + ratio) == pytest.approx(value, rel=1e-10, abs=1e-12)
+    pd.testing.assert_series_equal(risk_free, original_rf)
+
+
+def test_performance_stats_periodic_riskfree_keeps_distinct_observation_times():
+    """A real time shift across calendar boundaries must not be mistaken for a storage-zone change."""
+    prices, risk_free = _periodic_timezone_prices()
+    shifted = risk_free.set_axis(risk_free.index + pd.Timedelta(hours=2)).tz_convert("UTC")
+    original_rf = shifted.copy()
+    stats = ffn.PerformanceStats(prices, rf=shifted)
+
+    for frequency, periods in [("monthly", 12), ("yearly", 1)]:
+        expected = _calendar_risk_ratios(prices, shifted, periods)
+        unshifted = _calendar_risk_ratios(prices, risk_free, periods)
+        for ratio, value, control in zip(("sharpe", "sortino"), expected, unshifted):
+            actual = getattr(stats, frequency + "_" + ratio)
+            assert actual == pytest.approx(value, rel=1e-10, abs=1e-12)
+            assert actual != pytest.approx(control, rel=1e-10, abs=1e-12)
+    pd.testing.assert_series_equal(shifted, original_rf)
+
+
+def test_group_stats_periodic_riskfree_timezone_rebuilds():
+    """RF updates and date-range rebuilds retain each child's calendar and original RF series."""
+    prices, risk_free = _periodic_timezone_prices()
+    frame = pd.concat([prices, prices.iloc[1::2].rename("gapped")], axis=1)
+    original = frame.copy()
+    risk_free = risk_free.tz_convert("UTC")
+    original_rf = risk_free.copy()
+    stats = frame.calc_stats(annualization_factor=365)
+    stats.set_riskfree_rate(risk_free)
+
+    for start in (None, prices.index[110]):
+        stats.set_date_range(start=start)
+        for name, child in stats.items():
+            selected = frame[name].dropna().loc[start:]
+            for frequency, periods in [("monthly", 12), ("yearly", 1)]:
+                for ratio, value in zip(("sharpe", "sortino"), _calendar_risk_ratios(selected, risk_free, periods)):
+                    field = frequency + "_" + ratio
+                    assert getattr(child, field) == pytest.approx(value, rel=1e-10, abs=1e-12)
+                    assert stats.stats.loc[field, name] == getattr(child, field)
+            assert child.rf is risk_free
+            assert child.annualization_factor == 365
+    pd.testing.assert_frame_equal(frame, original)
+    pd.testing.assert_series_equal(risk_free, original_rf)
+
+
+@pytest.mark.parametrize("calendar", ["monthly", "yearly"])
+@pytest.mark.parametrize("naive_input", ["asset", "rf"])
+def test_performance_stats_periodic_riskfree_rejects_mixed_timezones(calendar, naive_input):
+    """Non-daily dispatch must preserve naive/aware rejection and staged-update atomicity."""
+    prices, risk_free = _periodic_timezone_prices(calendar)
+    if naive_input == "asset":
+        prices = prices.tz_localize(None)
+    else:
+        risk_free = risk_free.tz_localize(None)
+    stats = ffn.PerformanceStats(prices, rf=0.03)
+    original_state = stats.__dict__.copy()
+    original_rf = risk_free.copy()
+
+    with pytest.raises(TypeError, match="tz-naive"):
+        stats.set_riskfree_rate(risk_free)
+
+    assert stats.__dict__.keys() == original_state.keys()
+    for name, value in original_state.items():
+        assert stats.__dict__[name] is value, name
+    pd.testing.assert_series_equal(risk_free, original_rf)
