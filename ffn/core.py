@@ -142,6 +142,8 @@ class PerformanceStats:
             returns, so it does not generally behave like rf=0.
             Daily statistics use risk-free prices on the asset's own observed daily
             endpoints; an interval missing either risk-free price is excluded, not filled.
+            Monthly and yearly risk-free prices are sampled in the asset's timezone
+            before their returns are aligned with the asset's calendar-period returns.
 
     Raises:
         * ValueError: If the price series contains no usable value.
@@ -395,6 +397,12 @@ class PerformanceStats:
         if len(mr) < 2:
             return
 
+        # Calendar bins belong to the asset's timezone, not the RF series' storage timezone.
+        # Keep self.rf unchanged for callers and rebuilds; convert before selecting endpoints.
+        periodic_rf = self.rf
+        if not isinstance(periodic_rf, _FLOATING_SCALAR_TYPES) and mp.index.tz is not None and getattr(periodic_rf.index, "tz", None) is not None:
+            periodic_rf = periodic_rf.tz_convert(mp.index.tz)
+
         # Will calculate monthly figures only if the input data has at least monthly frequency or higher (e.g daily)
         # Rather < 32 days than <= 31 days in case of data taken at different hours of the days
         if typical_period < pd.Timedelta("32 days"):
@@ -405,7 +413,7 @@ class PerformanceStats:
                 rf = self.rf
             # rf is a price series
             else:
-                rf = self.rf.resample(_MonthEnd).last().to_returns()
+                rf = periodic_rf.resample(_MonthEnd).last().to_returns()
             er = mr.to_excess_returns(rf, nperiods=12)
             self.monthly_sharpe = _calc_sharpe(er, nperiods=12)
             self.monthly_sortino = _calc_sortino_ratio(er, nperiods=12)
@@ -493,7 +501,7 @@ class PerformanceStats:
                 rf = self.rf
             # rf is a price series
             else:
-                rf = self.rf.resample(_YearEnd).last().to_returns()
+                rf = periodic_rf.resample(_YearEnd).last().to_returns()
             er = yr.to_excess_returns(rf, nperiods=1)
             if self.yearly_vol > 0:
                 self.yearly_sharpe = _calc_sharpe(er, nperiods=1)
