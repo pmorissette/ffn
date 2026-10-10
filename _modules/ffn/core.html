@@ -2009,6 +2009,14 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    """</span>
 
+    <span class="c1"># Missing leading observations cannot start an episode. Trim only that prefix:</span>
+    <span class="c1"># interior gaps retain the established boundary and minimum conventions.</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">drawdown</span><span class="p">)</span> <span class="ow">and</span> <span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">drawdown</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">observed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">drawdown</span><span class="o">.</span><span class="n">notna</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">observed</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">drawdown</span> <span class="o">=</span> <span class="n">drawdown</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">observed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">:]</span>
+
     <span class="n">is_zero</span> <span class="o">=</span> <span class="n">drawdown</span> <span class="o">==</span> <span class="mi">0</span>
     <span class="c1"># find start dates (first day where dd is non-zero after a zero)</span>
     <span class="n">start</span> <span class="o">=</span> <span class="o">~</span><span class="n">is_zero</span> <span class="o">&amp;</span> <span class="n">is_zero</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
