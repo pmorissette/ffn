@@ -588,6 +588,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            returns, so it does not generally behave like rf=0.</span>
 <span class="sd">            Daily statistics use risk-free prices on the asset's own observed daily</span>
 <span class="sd">            endpoints; an interval missing either risk-free price is excluded, not filled.</span>
+<span class="sd">            Monthly and yearly risk-free prices are sampled in the asset's timezone</span>
+<span class="sd">            before their returns are aligned with the asset's calendar-period returns.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        * ValueError: If the price series contains no usable value.</span>
@@ -844,6 +846,12 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mr</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">return</span>
 
+        <span class="c1"># Calendar bins belong to the asset's timezone, not the RF series' storage timezone.</span>
+        <span class="c1"># Keep self.rf unchanged for callers and rebuilds; convert before selecting endpoints.</span>
+        <span class="n">periodic_rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">periodic_rf</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">)</span> <span class="ow">and</span> <span class="n">mp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">periodic_rf</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s2">"tz"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">periodic_rf</span> <span class="o">=</span> <span class="n">periodic_rf</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">mp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+
         <span class="c1"># Will calculate monthly figures only if the input data has at least monthly frequency or higher (e.g daily)</span>
         <span class="c1"># Rather &lt; 32 days than &lt;= 31 days in case of data taken at different hours of the days</span>
         <span class="k">if</span> <span class="n">typical_period</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="s2">"32 days"</span><span class="p">):</span>
@@ -854,7 +862,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf</span>
             <span class="c1"># rf is a price series</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_MonthEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
+                <span class="n">rf</span> <span class="o">=</span> <span class="n">periodic_rf</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_MonthEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
             <span class="n">er</span> <span class="o">=</span> <span class="n">mr</span><span class="o">.</span><span class="n">to_excess_returns</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">monthly_sharpe</span> <span class="o">=</span> <span class="n">_calc_sharpe</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">monthly_sortino</span> <span class="o">=</span> <span class="n">_calc_sortino_ratio</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
@@ -942,7 +950,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf</span>
             <span class="c1"># rf is a price series</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">rf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rf</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_YearEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
+                <span class="n">rf</span> <span class="o">=</span> <span class="n">periodic_rf</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_YearEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span><span class="o">.</span><span class="n">to_returns</span><span class="p">()</span>
             <span class="n">er</span> <span class="o">=</span> <span class="n">yr</span><span class="o">.</span><span class="n">to_excess_returns</span><span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">yearly_vol</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">yearly_sharpe</span> <span class="o">=</span> <span class="n">_calc_sharpe</span><span class="p">(</span><span class="n">er</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
