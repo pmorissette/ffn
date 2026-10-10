@@ -44,6 +44,67 @@ def test_drawdown_details_with_nullable_missing_initial_value():
 
 
 @pytest.mark.parametrize("dtype", [float, "Float64"])
+@pytest.mark.parametrize("prefix_length", [1, 3])
+@pytest.mark.parametrize("index_kind", ["datetime", "range"])
+@pytest.mark.parametrize(
+    "values, episodes",
+    [
+        ([0.0, -0.1, 0.0, -0.2, 0.0], [(1, 2, -0.1), (3, 4, -0.2)]),
+        ([-0.1, 0.0, -0.2, -0.1], [(0, 1, -0.1), (2, 3, -0.2)]),
+        ([-0.1], [(0, 0, -0.1)]),
+        ([0.0, 0.0], []),
+        ([], []),
+    ],
+)
+def test_drawdown_details_ignores_leading_missing_observations(dtype, prefix_length, index_kind, values, episodes):
+    size = prefix_length + len(values)
+    if index_kind == "datetime":
+        index = pd.date_range("2024-03-09", periods=size, freq="17h", tz="America/New_York")
+        index_type = pd.DatetimeIndex
+    else:
+        index = pd.RangeIndex(10, 10 + size * 3, 3)
+        index_type = type(index)
+    drawdown = pd.Series([np.nan] * prefix_length + values, index=index, dtype=dtype)
+    original = drawdown.copy(deep=True)
+
+    result = ffn.drawdown_details(drawdown, index_type=index_type)
+
+    # The fixed episode ledger follows observed underwater/recovery transitions,
+    # not the implementation's zero mask; missing prefixes contribute no episode.
+    if not episodes:
+        assert result is None
+    else:
+        rows = []
+        for start, end, minimum in episodes:
+            first, last = index[prefix_length + start], index[prefix_length + end]
+            duration = last - first
+            if index_kind == "datetime":
+                duration = duration.days
+            rows.append((first, last, duration, minimum))
+        expected = pd.DataFrame(rows, columns=["Start", "End", "Length", "drawdown"], dtype=object)
+        pd.testing.assert_frame_equal(result, expected, check_exact=True)
+    pd.testing.assert_series_equal(drawdown, original)
+
+
+@pytest.mark.parametrize("dtype", [float, "Float64"])
+def test_drawdown_details_from_prices_with_leading_missing_observations(dtype):
+    index = pd.date_range("2024-01-01", periods=6)
+    prices = pd.Series([np.nan, 100, 90, 100, 80, 100], index=index, dtype=dtype)
+    original = prices.copy(deep=True)
+
+    result = ffn.drawdown_details(prices.to_drawdown_series())
+
+    # Each recovered episode is one calendar day; depth is price/high-water mark - 1.
+    expected = pd.DataFrame(
+        [(index[2], index[3], 1, 90 / 100 - 1), (index[4], index[5], 1, 80 / 100 - 1)],
+        columns=["Start", "End", "Length", "drawdown"],
+        dtype=object,
+    )
+    pd.testing.assert_frame_equal(result, expected, check_exact=True)
+    pd.testing.assert_series_equal(prices, original)
+
+
+@pytest.mark.parametrize("dtype", [float, "Float64"])
 def test_drawdown_details_aggregates_episode_minima_with_gaps(dtype):
     drawdown = pd.Series(
         [0.0, -0.1, np.nan, -0.3, 0.0, 0.0, -0.2, -0.1, 0.0],

@@ -1468,6 +1468,14 @@ def drawdown_details(drawdown, index_type=pd.DatetimeIndex):
 
     """
 
+    # Missing leading observations cannot start an episode. Trim only that prefix:
+    # interior gaps retain the established boundary and minimum conventions.
+    if len(drawdown) and pd.isna(drawdown.iloc[0]):
+        observed = np.flatnonzero(drawdown.notna())
+        if len(observed) == 0:
+            return None
+        drawdown = drawdown.iloc[observed[0] :]
+
     is_zero = drawdown == 0
     # find start dates (first day where dd is non-zero after a zero)
     start = ~is_zero & is_zero.shift(1)
