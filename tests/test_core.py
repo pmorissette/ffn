@@ -1676,17 +1676,91 @@ def test_calc_clusters_rejects_undefined_single_asset_correlation(values, plot, 
     assert ffn.core.plt.get_fignums() == figures
 
 
-@mark.parametrize("n", [None, 1])
-def test_calc_clusters_two_assets_preserves_model_selection(n):
-    returns = pd.DataFrame({"a": [-2.0, -1.0, 0.0, 1.0, 2.0], "b": [2.0, 1.0, 0.0, -1.0, -2.0]})
+@mark.parametrize("n", [None, 1, 2])
+@mark.parametrize("dtype", ["float64", "Float64", "object"])
+@mark.parametrize("plot", [False, True])
+def test_calc_clusters_two_assets_preserves_model_selection(n, dtype, plot):
+    returns = pd.DataFrame({"a": [-0.02, -0.01, 0.0, 0.01, 0.02], "b": [0.02, 0.01, 0.0, -0.01, -0.02]}, dtype=dtype)
     original = returns.copy(deep=True)
+    figures = set(ffn.core.plt.get_fignums())
 
-    actual = ffn.calc_clusters(returns, n=n)
+    try:
+        # Older pandas omits every object column; numeric objects remain valid on newer pandas.
+        if dtype == "object" and Version(pd.__version__) < Version("2"):
+            with raises(ValueError):
+                returns.calc_clusters(n=n, plot=plot)
+            assert set(ffn.core.plt.get_fignums()) == figures
+        else:
+            actual = returns.calc_clusters(n=n, plot=True) if plot else ffn.calc_clusters(returns, n=n)
+            # Cluster numbers are model labels; the asset partition is the invariant.
+            expected = {frozenset({"a", "b"})} if n == 1 else {frozenset({"a"}), frozenset({"b"})}
+            assert {frozenset(assets) for assets in actual.values()} == expected
+            created = set(ffn.core.plt.get_fignums()) - figures
+            assert len(created) == int(plot)
+            if plot:
+                figure = ffn.core.plt.figure(created.pop())
+                figure.canvas.draw()
+                assert [text.get_text() for text in figure.axes[0].texts] == list(returns.columns)
+        pd.testing.assert_frame_equal(returns, original)
+    finally:
+        for number in set(ffn.core.plt.get_fignums()) - figures:
+            ffn.core.plt.close(number)
 
-    # Cluster numbers are model labels; the asset partition is the invariant.
-    expected = {frozenset({"a"}), frozenset({"b"})} if n is None else {frozenset({"a", "b"})}
-    assert {frozenset(assets) for assets in actual.values()} == expected
-    pd.testing.assert_frame_equal(returns, original)
+
+@mark.parametrize("position", [0, 1, 2])
+@mark.parametrize("n", [None, 1, 2])
+@mark.parametrize("plot", [False, True])
+@mark.parametrize("use_pandas_method", [False, True])
+def test_calc_clusters_rejects_filtered_asset_labels(position, n, plot, use_pandas_method):
+    returns = pd.DataFrame({"a": [-0.02, -0.01, 0.0, 0.01, 0.02], "b": [0.02, 0.01, 0.0, -0.01, -0.02]})
+    returns.insert(position, "missing", pd.Series([None] * 5, dtype=object))
+    original = returns.copy(deep=True)
+    figures = set(ffn.core.plt.get_fignums())
+
+    try:
+        # Two observed assets can fit a model, hiding the omitted asset until labels or plots are paired.
+        with raises(ValueError):
+            if use_pandas_method:
+                returns.calc_clusters(n=n, plot=plot)
+            else:
+                ffn.calc_clusters(returns, n=n, plot=plot)
+        pd.testing.assert_frame_equal(returns, original)
+        assert set(ffn.core.plt.get_fignums()) == figures
+    finally:
+        for number in set(ffn.core.plt.get_fignums()) - figures:
+            ffn.core.plt.close(number)
+
+
+@mark.parametrize("position", [0, 1, 2])
+@mark.parametrize("n", [None, 1, 2])
+@mark.parametrize("plot", [False, True])
+def test_calc_clusters_mixed_numeric_object_assets(position, n, plot):
+    returns = pd.DataFrame({"a": [-0.02, -0.01, 0.0, 0.01, 0.02], "b": [0.02, 0.01, 0.0, -0.01, -0.02]})
+    returns.insert(position, "object", pd.Series([0.02, 0.01, 0.0, -0.01, -0.02], dtype=object))
+    original = returns.copy(deep=True)
+    figures = set(ffn.core.plt.get_fignums())
+
+    try:
+        if Version(pd.__version__) < Version("2"):
+            # Valid numeric values must not disguise a missing asset in the correlation working set.
+            with raises(ValueError):
+                returns.calc_clusters(n=n, plot=plot)
+            assert set(ffn.core.plt.get_fignums()) == figures
+        else:
+            actual = returns.calc_clusters(n=n, plot=plot)
+            # Identical returns belong together; their negation is the other partition.
+            expected = {frozenset({"a", "b", "object"})} if n == 1 else {frozenset({"a"}), frozenset({"b", "object"})}
+            assert {frozenset(assets) for assets in actual.values()} == expected
+            created = set(ffn.core.plt.get_fignums()) - figures
+            assert len(created) == int(plot)
+            if plot:
+                figure = ffn.core.plt.figure(created.pop())
+                figure.canvas.draw()
+                assert [text.get_text() for text in figure.axes[0].texts] == list(returns.columns)
+        pd.testing.assert_frame_equal(returns, original)
+    finally:
+        for number in set(ffn.core.plt.get_fignums()) - figures:
+            ffn.core.plt.close(number)
 
 
 @mark.parametrize("missing_first", [False, True])

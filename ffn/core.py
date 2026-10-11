@@ -2224,9 +2224,16 @@ def calc_clusters(returns, n=None, plot=False):
 
     Returns:
         * dict with structure: {cluster# : [col names]}
+
+    Raises:
+        * ValueError: If correlation calculation omits any requested asset.
     """
     # calculate correlation
     corr = returns.corr()
+
+    # Older pandas can omit object columns, making model coordinates disagree with asset labels.
+    if len(corr) != returns.shape[1]:
+        raise ValueError("Correlation calculation must include every requested asset")
 
     # A valid singleton has one partition; keep undefined correlations on the model's validation path.
     if n is None and returns.shape[1] == 1 and len(corr) == 1 and np.isfinite(corr.iloc[0, 0]):
