@@ -2633,6 +2633,10 @@ def _winsorize_wrapper(x, limits):
         if x.count() == 0:
             return x
 
+        # This copy() detaches the working Series from its parent frame, avoiding
+        # large cache-update allocations in older pandas and reducing peak memory.
+        # It also prevents duplicate-label cache errors during assignment.
+        x = x.copy()
         notnanx = ~pd.isna(x)
         observed = x[notnanx]
         if isinstance(x.dtype, pd.api.extensions.ExtensionDtype) and pd.api.types.is_float_dtype(x.dtype):

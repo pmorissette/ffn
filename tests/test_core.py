@@ -2480,6 +2480,49 @@ def test_winsorize_nullable_integer_without_observations(dtype, raw):
     pd.testing.assert_series_equal(values, original)
 
 
+@mark.parametrize("dtype", ["float32", "float64", "Int64", "UInt64"])
+@mark.parametrize("axis", [0, 1])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_winsorize_dataframe_cut_points_with_missing_slices(dtype, axis, use_pandas_method):
+    numpy_dtype = pd.Series(dtype=dtype).dtype
+    if isinstance(numpy_dtype, pd.api.extensions.ExtensionDtype):
+        numpy_dtype = numpy_dtype.numpy_dtype
+        bounds = np.iinfo(numpy_dtype)
+        raw = [int(bounds.max), int(bounds.min), int(bounds.max) - 1, int(bounds.min) + 1, 1, 0]
+    else:
+        raw = [100, 1, 99, 2, 3, 4]
+    # Exact storage precedes pandas construction so wide integer cut points never round.
+    values = pd.Series(np.array(raw, dtype=numpy_dtype), dtype=dtype).reindex(range(7))
+    values.index = pd.Index(["f", "e", "d", "c", "b", "a", "missing"], name="sample")
+    # Six observed values at a 20% limit replace exactly one order statistic per tail.
+    ordered = sorted(raw)
+    clipped = [min(max(value, ordered[1]), ordered[-2]) for value in raw]
+    expected_values = pd.Series(np.array(clipped, dtype=numpy_dtype), dtype=dtype).reindex(range(7))
+    expected_values.index = values.index
+    missing = pd.Series(index=values.index, dtype=dtype)
+    # Duplicate labels still denote independent slices, not one shared assignment target.
+    other = values.iloc[::-1].set_axis(values.index)
+    expected_other = expected_values.iloc[::-1].set_axis(values.index)
+    data = pd.DataFrame({"observed": values, "other": other, "missing": missing})
+    expected = pd.DataFrame({"observed": expected_values, "other": expected_other, "missing": missing})
+    data.columns = expected.columns = pd.Index(["feature", "feature", "missing"], name="feature")
+    if axis == 1:
+        data, expected = data.T, expected.T
+    original = data.copy(deep=True)
+    calculate = data.winsorize if use_pandas_method else ffn.winsorize
+    args = () if use_pandas_method else (data,)
+
+    actual = calculate(*args, axis=axis, limits=0.2)
+
+    pd.testing.assert_frame_equal(actual, expected, check_exact=True)
+    pd.testing.assert_frame_equal(data, original, check_exact=True)
+    actual.iloc[0, 0] = 2
+    pd.testing.assert_frame_equal(data, original, check_exact=True)
+    snapshot = actual.copy(deep=True)
+    data.iloc[0, 0] = 3
+    pd.testing.assert_frame_equal(actual, snapshot, check_exact=True)
+
+
 def test_rescale():
     x = pd.Series(range(10), dtype="float")
     res = x.rescale()
