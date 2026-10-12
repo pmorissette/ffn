@@ -2437,6 +2437,9 @@ def limit_weights(weights, limit=0.1):
     Limits weights and redistributes excedent amount
     proportionally.
 
+    Integer weights are converted to floating point when capping is needed,
+    so redistribution can retain fractional allocations.
+
     ex:
         - weights are {a: 0.7, b: 0.2, c: 0.1}
         - call with limit=0.5
@@ -2463,6 +2466,9 @@ def limit_weights(weights, limit=0.1):
         raise ValueError(f"Expecting weights (that sum to 1) - sum is {weights.sum()}")
 
     res = weights.copy()
+    if pd.api.types.is_integer_dtype(res.dtype) and (res > limit).any():
+        # Fractional redistribution needs float storage; keep uncapped integer weights unchanged.
+        res = res.astype(float)
     to_rebalance = (res[res > limit] - limit).sum()
 
     ok = res[res < limit]

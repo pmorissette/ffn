@@ -1942,6 +1942,85 @@ def test_limit_weights():
     aae(actual["e"], 0.300, 3)
 
 
+@mark.parametrize("dtype", ["int64", "uint64", "Int64", "UInt64", None], ids=["signed", "unsigned", "nullable-signed", "nullable-unsigned", "dict"])
+@mark.parametrize("size, limit", [(3, 0.4), (3, 0.5), (3, 1.0 / 3), (49, 1.0 / 49)])
+def test_limit_weights_redistributes_integer_weights(dtype, size, limit):
+    """A concentrated integer portfolio needs fractional storage after capping."""
+    labels = ["c", "a", "b"] if size == 3 else [f"asset_{i}" for i in range(size)]
+    weights = pd.Series([1] + [0] * (size - 1), index=pd.Index(labels, name="asset"), name="weight", dtype=dtype)
+    original = weights.copy(deep=True)
+    source = weights.to_dict() if dtype is None else weights
+    # The capped holding leaves 1 - limit to split equally across the zero holdings.
+    expected = pd.Series(
+        [limit] + [(1 - limit) / (size - 1)] * (size - 1),
+        index=pd.Index(source) if dtype is None else weights.index,
+        name=None if dtype is None else weights.name,
+        dtype=float,
+    )
+
+    actual = ffn.limit_weights(source, limit=limit)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(weights, original)
+    if dtype is None:
+        assert source == original.to_dict()
+
+    assert actual.sum() == approx(1.0)
+    assert np.isfinite(actual).all()
+    assert (actual <= limit).all()
+    actual.iloc[0] = 0.0
+    pd.testing.assert_series_equal(weights, original)
+    if dtype is None:
+        assert source == original.to_dict()
+
+    returned = actual.copy(deep=True)
+    if dtype is None:
+        source[labels[1]] = 1
+    else:
+        weights.iloc[1] = 1
+    pd.testing.assert_series_equal(actual, returned)
+
+
+@mark.parametrize("dtype", ["int64", "uint64", "Int64", "UInt64"])
+@mark.parametrize("limit", [1.0, 1.25])
+def test_limit_weights_preserves_integer_weights_without_capping(dtype, limit):
+    """Fractional support must not change integer storage for an unchanged allocation."""
+    weights = pd.Series([1, 0, 0], index=["c", "a", "b"], name="weight", dtype=dtype)
+    original = weights.copy(deep=True)
+
+    actual = ffn.limit_weights(weights, limit=limit)
+
+    pd.testing.assert_series_equal(actual, original)
+    actual.iloc[0] = 0
+    pd.testing.assert_series_equal(weights, original)
+
+
+@mark.parametrize("dtype", ["float32", "float64", "Float32", "Float64", object])
+def test_limit_weights_preserves_noninteger_redistribution(dtype):
+    """The integer conversion must leave other working dtypes on their native path."""
+    weights = pd.Series([1, 0, 0], index=["c", "a", "b"], name="weight", dtype=dtype)
+    original = weights.copy(deep=True)
+    expected = pd.Series([0.5, 0.25, 0.25], index=weights.index, name=weights.name, dtype=dtype)
+
+    actual = ffn.core.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(weights, original)
+
+
+@mark.parametrize("dtype", ["int64", "uint64", "Int64", "UInt64"])
+@mark.parametrize("invalid", ["budget", "limit"])
+def test_limit_weights_rejects_invalid_integer_allocation_without_mutation(dtype, invalid):
+    weights = pd.Series([0, 0, 0] if invalid == "budget" else [1, 0, 0], dtype=dtype)
+    original = weights.copy(deep=True)
+    limit = 0.5 if invalid == "budget" else np.nextafter(1.0 / 3, 0.0)
+
+    with raises(ValueError, match="sum" if invalid == "budget" else "1 / limit"):
+        ffn.limit_weights(weights, limit=limit)
+
+    pd.testing.assert_series_equal(weights, original)
+
+
 def test_limit_weights_preserves_precision():
     """Preserve the original budget during proportional redistribution."""
     weights = pd.Series([0.50006, 0.29997, 0.19997], index=["a", "b", "c"])
@@ -2025,8 +2104,10 @@ def test_limit_weights_handles_only_zero_weights_below_limit(values, limit, expe
         pd.Series([0.6, 0.4, np.inf], index=["a", "b", "c"], dtype="Float64"),
         pd.Series([0.6, 0.4, -np.inf], index=["a", "b", "c"]),
         pd.Series([0.6, 0.4, pd.NA], index=["a", "b", "c"], dtype=object),
+        pd.Series([1, 0, pd.NA], index=["a", "b", "c"], dtype="Int64"),
+        pd.Series([1, 0, pd.NA], index=["a", "b", "c"], dtype="UInt64"),
     ],
-    ids=["nullable-missing", "float-nan", "nullable-positive-inf", "float-negative-inf", "object-missing"],
+    ids=["nullable-missing", "float-nan", "nullable-positive-inf", "float-negative-inf", "object-missing", "integer-missing", "unsigned-missing"],
 )
 def test_limit_weights_rejects_nonfinite_series(weights):
     original = weights.copy(deep=True)
