@@ -2611,8 +2611,19 @@ def rollapply(data, window, fn):
     if window > n:
         return res
 
+    # Buffer ordinary floats to avoid repeated pandas assignment; other result types need
+    # pandas conversion, warning and rejection behavior for the rest of the call.
+    buffer = np.full(n, np.nan) if type(data) is pd.Series and type(window) is int and window >= 1 else None
+
     for i in range(window - 1, n):
         row = fn(data.iloc[i - window + 1 : i + 1])
+        if buffer is not None:
+            # Scalar pandas assignment honors use_inf_as_na on older pandas.
+            if type(row) in (float, np.float64) and not np.isinf(row):
+                buffer[i] = row
+                continue
+            res.iloc[:] = buffer
+            buffer = None
         if (
             isinstance(res, pd.DataFrame)
             and isinstance(row, pd.Series)
@@ -2628,6 +2639,9 @@ def rollapply(data, window, fn):
             if (positions >= 0).all() and row_labels.take(positions).equals(columns):
                 row = row.iloc[positions]
         res.iloc[i] = row
+
+    if buffer is not None:
+        res.iloc[:] = buffer
 
     return res
 

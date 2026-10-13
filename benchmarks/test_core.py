@@ -55,6 +55,25 @@ def test_asfreq_actual_intraday(benchmark, minutes):
     pd.testing.assert_series_equal(result, prices.iloc[::minutes], check_freq=False)
 
 
+@pytest.mark.benchmark(group="rolling")
+@pytest.mark.parametrize("periods", [252, 50_000], ids=["small-history", "intraday-history"])
+def test_rollapply_series(benchmark, periods):
+    """Keep the float-callback assignment cost visible alongside exact rolling values."""
+    returns = pd.Series(0.0002 * np.sin(np.arange(periods) / 23), index=pd.date_range("2020-01-01", periods=periods, freq="min", tz="UTC"), name="asset")
+
+    def downside_rms(sample):
+        negative = np.minimum(sample.to_numpy(), 0.0)
+        return np.sqrt(np.mean(negative * negative))
+
+    result = benchmark(ffn.rollapply, returns, 20, downside_rms)
+
+    # Rolling sums of squared negative returns derive the same RMS without calling ffn.
+    negative_squared = np.minimum(returns.to_numpy(), 0.0) ** 2
+    expected_values = np.r_[np.full(19, np.nan), np.sqrt(np.convolve(negative_squared, np.ones(20) / 20, mode="valid"))]
+    expected = pd.Series(expected_values, index=returns.index, name=returns.name)
+    pd.testing.assert_series_equal(result, expected, rtol=1e-12, atol=1e-15)
+
+
 @pytest.mark.benchmark(group="drawdown")
 def test_to_drawdown_series(benchmark, prices):
     result = benchmark(ffn.to_drawdown_series, prices)

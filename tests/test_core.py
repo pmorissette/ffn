@@ -2302,6 +2302,138 @@ def test_rollapply():
     assert all(actual.iloc[4] == 4)
 
 
+@mark.parametrize("dtype", ["float64", "Float64", "Int64"])
+@mark.parametrize("window", [1, 2, 5, 6])
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_series_preserves_float_callbacks(dtype, window, pandas_method):
+    """Buffered writes retain the ordered labeled windows and float result metadata."""
+    import math
+
+    data = pd.Series([1, None, 3, 4, 5], dtype=dtype, index=pd.date_range("2020-01-01", periods=5, tz="UTC", name="observed"), name="asset")
+    data.attrs = {"unit": "return"}
+    original = data.copy(deep=True)
+    calls = []
+
+    def callback(sample):
+        calls.append(sample.copy(deep=True))
+        return sample.mean()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        actual = data.rollapply(window, callback) if pandas_method else ffn.rollapply(data, window, callback)
+    expected = pd.Series(np.nan, index=data.index, name=data.name)
+    expected.attrs = data.attrs.copy()
+    for end in range(window - 1, len(data)):
+        observed = [float(value) for value in data.iloc[end - window + 1 : end + 1] if not pd.isna(value)]
+        expected.iloc[end] = math.fsum(observed) / len(observed) if observed else np.nan
+    pd.testing.assert_series_equal(actual, expected)
+    assert actual.attrs == expected.attrs
+    assert len(calls) == max(0, len(data) - window + 1)
+    for end, sample in enumerate(calls, start=window - 1):
+        pd.testing.assert_series_equal(sample, data.iloc[end - window + 1 : end + 1])
+        assert sample.attrs == data.attrs
+    pd.testing.assert_series_equal(data, original)
+    if len(data):
+        actual.iloc[0] = 100.0
+        pd.testing.assert_series_equal(data, original)
+
+
+@mark.parametrize(
+    "row",
+    [np.float32(7.5), None, pd.NA, 1 + 2j, "1.5", True, float("inf"), np.float64("-inf")],
+    ids=["float32", "none", "pd-NA", "complex", "numeric-string", "boolean", "infinity", "negative-infinity"],
+)
+@mark.parametrize("position", [1, 3], ids=["middle", "last"])
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_series_preserves_assignment_fallback(row, position, pandas_method):
+    """A later non-float result must retain earlier floats and native assignment policy."""
+    data = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0], name="asset")
+    original = data.copy(deep=True)
+    calls = []
+    values = [1.5, 2.5, 3.5, 4.5]
+    values[position] = row
+    incompatible = isinstance(row, (complex, str, bool))
+    modern = Version(pd.__version__) >= Version("3")
+
+    def callback(sample):
+        calls.append(tuple(sample.index))
+        return values[len(calls) - 1]
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        if incompatible and modern:
+            with raises(TypeError):
+                data.rollapply(2, callback) if pandas_method else ffn.rollapply(data, 2, callback)
+        else:
+            actual = data.rollapply(2, callback) if pandas_method else ffn.rollapply(data, 2, callback)
+    count = position + 1 if incompatible and modern else 4
+    assert calls == [(start, start + 1) for start in range(count)]
+    # pandas 2.1+ warns before its legacy incompatible-dtype promotion; pandas 3 rejects it.
+    expected_warnings = [FutureWarning] if incompatible and Version("2.1") <= Version(pd.__version__) < Version("3") else []
+    # pandas 1.x promotion still calls NumPy's deprecated helper on this supported band.
+    legacy_promotion = isinstance(row, (complex, str)) and Version(pd.__version__) < Version("2") and Version("1.25") <= Version(np.__version__) < Version("2")
+    if legacy_promotion:
+        expected_warnings = [DeprecationWarning]
+    assert [warning.category for warning in caught] == expected_warnings
+    if legacy_promotion:
+        assert str(caught[0].message).startswith("np.find_common_type is deprecated.")
+    if not (incompatible and modern):
+        dtype = complex if isinstance(row, complex) else object if isinstance(row, (str, bool)) else float
+        expected_values = [np.nan] + [np.nan if value is None or value is pd.NA else value for value in values]
+        expected = pd.Series(expected_values, dtype=dtype, name="asset")
+        pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(data, original)
+
+
+@mark.skipif(Version(pd.__version__) >= Version("3"), reason="pandas 3 removed use_inf_as_na")
+@mark.parametrize("use_inf_as_na", [False, True])
+@mark.parametrize("row", [float("inf"), np.float64("-inf")], ids=["infinity", "negative-infinity"])
+@mark.parametrize("position", [1, 3], ids=["middle", "last"])
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_series_preserves_infinity_assignment_option(use_inf_as_na, row, position, pandas_method):
+    data = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0], name="asset")
+    original = data.copy(deep=True)
+    values = [1.5, 2.5, 3.5, 4.5]
+    values[position] = row
+    calls = []
+
+    def callback(sample):
+        calls.append(tuple(sample.index))
+        return values[len(calls) - 1]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="use_inf_as_na option is deprecated", category=FutureWarning)
+        with pd.option_context("mode.use_inf_as_na", use_inf_as_na):
+            actual = data.rollapply(2, callback) if pandas_method else ffn.rollapply(data, 2, callback)
+
+    expected_values = [np.nan] + values
+    if use_inf_as_na:
+        expected_values[position + 1] = np.nan
+    # Compare raw values: pandas missing-value comparisons can treat infinity as NaN under this option.
+    np.testing.assert_array_equal(actual.to_numpy(), expected_values)
+    pd.testing.assert_series_equal(actual, pd.Series(expected_values, name="asset"))
+    assert calls == [(start, start + 1) for start in range(4)]
+    pd.testing.assert_series_equal(data, original)
+
+
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_series_observes_callback_changes(pandas_method):
+    """Buffering output must not snapshot later windows or reread result metadata."""
+    data = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0], name="asset")
+    names = []
+
+    def callback(sample):
+        names.append(sample.name)
+        if len(names) == 1:
+            data.iloc[-1] = 20.0
+            data.name = "renamed"
+        return float(sample.mean())
+
+    actual = data.rollapply(2, callback) if pandas_method else ffn.rollapply(data, 2, callback)
+    pd.testing.assert_series_equal(actual, pd.Series([np.nan, 1.5, 2.5, 3.5, 12.0], name="asset"))
+    assert names == ["asset", "renamed", "renamed", "renamed"]
+
+
 @mark.parametrize(
     "dtype,columns",
     [
