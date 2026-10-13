@@ -3031,6 +3031,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Limits weights and redistributes excedent amount</span>
 <span class="sd">    proportionally.</span>
 
+<span class="sd">    Integer weights are converted to floating point when capping is needed,</span>
+<span class="sd">    so redistribution can retain fractional allocations.</span>
+
 <span class="sd">    ex:</span>
 <span class="sd">        - weights are {a: 0.7, b: 0.2, c: 0.1}</span>
 <span class="sd">        - call with limit=0.5</span>
@@ -3057,6 +3060,9 @@ window.runMermaid = runMermaid;</script>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Expecting weights (that sum to 1) - sum is </span><span class="si">{</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">res</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">is_integer_dtype</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="c1"># Fractional redistribution needs float storage; keep uncapped integer weights unchanged.</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
     <span class="n">to_rebalance</span> <span class="o">=</span> <span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">]</span> <span class="o">-</span> <span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
 
     <span class="n">ok</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&lt;</span> <span class="n">limit</span><span class="p">]</span>

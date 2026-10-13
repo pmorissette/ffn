@@ -1028,6 +1028,8 @@ uncertain or index is not DateTime like, just return None</p>
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">limit_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#limit_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.limit_weights" title="Link to this definition">¶</a></dt>
 <dd><p>Limits weights and redistributes excedent amount
 proportionally.</p>
+<p>Integer weights are converted to floating point when capping is needed,
+so redistribution can retain fractional allocations.</p>
 <dl class="simple">
 <dt>ex:</dt><dd><ul class="simple">
 <li><p>weights are {a: 0.7, b: 0.2, c: 0.1}</p></li>
