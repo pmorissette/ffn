@@ -2264,7 +2264,11 @@ def test_rollapply_series_preserves_float_callbacks(dtype, window, pandas_method
         pd.testing.assert_series_equal(data, original)
 
 
-@mark.parametrize("row", [np.float32(7.5), None, pd.NA, 1 + 2j, "1.5", True], ids=["float32", "none", "pd-NA", "complex", "numeric-string", "boolean"])
+@mark.parametrize(
+    "row",
+    [np.float32(7.5), None, pd.NA, 1 + 2j, "1.5", True, float("inf"), np.float64("-inf")],
+    ids=["float32", "none", "pd-NA", "complex", "numeric-string", "boolean", "infinity", "negative-infinity"],
+)
 @mark.parametrize("position", [1, 3], ids=["middle", "last"])
 @mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
 def test_rollapply_series_preserves_assignment_fallback(row, position, pandas_method):
@@ -2304,6 +2308,37 @@ def test_rollapply_series_preserves_assignment_fallback(row, position, pandas_me
         expected_values = [np.nan] + [np.nan if value is None or value is pd.NA else value for value in values]
         expected = pd.Series(expected_values, dtype=dtype, name="asset")
         pd.testing.assert_series_equal(actual, expected)
+    pd.testing.assert_series_equal(data, original)
+
+
+@mark.skipif(Version(pd.__version__) >= Version("3"), reason="pandas 3 removed use_inf_as_na")
+@mark.parametrize("use_inf_as_na", [False, True])
+@mark.parametrize("row", [float("inf"), np.float64("-inf")], ids=["infinity", "negative-infinity"])
+@mark.parametrize("position", [1, 3], ids=["middle", "last"])
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_series_preserves_infinity_assignment_option(use_inf_as_na, row, position, pandas_method):
+    data = pd.Series([1.0, 2.0, 3.0, 4.0, 5.0], name="asset")
+    original = data.copy(deep=True)
+    values = [1.5, 2.5, 3.5, 4.5]
+    values[position] = row
+    calls = []
+
+    def callback(sample):
+        calls.append(tuple(sample.index))
+        return values[len(calls) - 1]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="use_inf_as_na option is deprecated", category=FutureWarning)
+        with pd.option_context("mode.use_inf_as_na", use_inf_as_na):
+            actual = data.rollapply(2, callback) if pandas_method else ffn.rollapply(data, 2, callback)
+
+    expected_values = [np.nan] + values
+    if use_inf_as_na:
+        expected_values[position + 1] = np.nan
+    # Compare raw values: pandas missing-value comparisons can treat infinity as NaN under this option.
+    np.testing.assert_array_equal(actual.to_numpy(), expected_values)
+    pd.testing.assert_series_equal(actual, pd.Series(expected_values, name="asset"))
+    assert calls == [(start, start + 1) for start in range(4)]
     pd.testing.assert_series_equal(data, original)
 
 

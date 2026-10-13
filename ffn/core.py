@@ -2611,7 +2611,8 @@ def rollapply(data, window, fn):
     for i in range(window - 1, n):
         row = fn(data.iloc[i - window + 1 : i + 1])
         if buffer is not None:
-            if type(row) in (float, np.float64):
+            # Scalar pandas assignment honors use_inf_as_na on older pandas.
+            if type(row) in (float, np.float64) and not np.isinf(row):
                 buffer[i] = row
                 continue
             res.iloc[:] = buffer
