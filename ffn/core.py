@@ -181,6 +181,8 @@ class PerformanceStats:
         Set annual risk-free rate property and calculate properly annualized
         monthly and daily rates. Then performance stats are recalculated.
         Affects only this instance of the PerformanceStats.
+        The selected date range is preserved; call ``set_date_range()`` to restore
+        the original range.
 
         Args:
             * rf (float, np.floating, Series): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_,
@@ -189,7 +191,7 @@ class PerformanceStats:
         # Recalculate off-object so a rejected risk-free input cannot leave stale state.
         updated = copy.copy(self)
         updated.rf = rf
-        updated._update(updated.prices)
+        updated._update(updated._current_prices)
         self.__dict__.update(updated.__dict__)
 
     def _update(self, obj):
@@ -234,6 +236,9 @@ class PerformanceStats:
         self.lookback_returns.name = self.name
 
         self.stats = self._create_stats_series()
+        # Retain raw selected prices: daily samples lose intraday endpoints and empty reporting bins.
+        # self.prices remains the original input for date-range resets.
+        self._current_prices = obj
 
     def _calculate(self, obj):
         # default values

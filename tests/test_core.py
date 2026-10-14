@@ -4219,13 +4219,111 @@ def _assert_attribute_graph_unchanged(obj, expected):
         assert obj.__dict__[name] is value, name
 
 
-def test_performance_stats_failed_riskfree_update_preserves_state():
+@mark.parametrize("scenario", ["daily", "nullable-utc", "intraday", "trailing-months"])
+@mark.parametrize("series_rf", [False, True], ids=["scalar-riskfree", "price-riskfree"])
+def test_riskfree_update_preserves_selected_raw_window(scenario, series_rf):
+    """Reprice risk-free inputs without changing the raw window or its reporting bins."""
+    tz = None if scenario == "daily" else "UTC"
+    dates = pd.date_range("2024-01-01", periods=10, tz=tz)
+    values = [100.0, 101.0, 99.0, 100.0, 110.0, 90.0, 120.0, 100.0, 140.0, 150.0]
+    first, last = 3, 7
+    daily_values = [100.0, 110.0, 90.0, 120.0, 100.0]
+    daily_dates = pd.date_range("2024-01-04", periods=5, tz=tz)
+    if scenario == "intraday":
+        # The raw first price is 100, but that day's closing price is 120.
+        dates = pd.date_range("2024-01-01", periods=10, freq="12h", tz=tz)
+        values = [80.0, 90.0, 100.0, 120.0, 110.0, 130.0, 100.0, 150.0, 140.0, 160.0]
+        first, last = 2, 6
+        daily_values = [120.0, 130.0, 100.0]
+        daily_dates = pd.date_range("2024-01-02", periods=3, tz=tz)
+    elif scenario == "trailing-months":
+        # Rebuilding from observed endpoints would discard the two empty selected months.
+        dates = pd.DatetimeIndex(["2024-01-01", "2024-01-04", "2024-01-05", "2024-01-08", "2024-02-29", "2024-03-31", "2024-04-01"], tz=tz)
+        values = [80.0, 100.0, 110.0, 100.0, np.nan, np.nan, 150.0]
+        first, last = 1, 5
+        daily_values = [100.0, 110.0, 100.0]
+        daily_dates = pd.DatetimeIndex(["2024-01-04", "2024-01-05", "2024-01-08"], tz=tz)
+    prices = pd.Series(values, index=dates, name="asset", dtype="Float64" if scenario == "nullable-utc" else "float64")
+    original = prices.copy()
+    selected = prices.iloc[first : last + 1]
+    rf_dates = pd.date_range(dates[0].normalize(), dates[-1].normalize())
+    rf = pd.Series(100.0 * 1.001 ** np.arange(len(rf_dates)), index=rf_dates, name="rf") if series_rf else 0.05
+    stats = ffn.PerformanceStats(prices, annualization_factor=365)
+    stats.set_date_range(dates[first], dates[last])
+    assert stats.total_return == 0.0  # Every selected raw window starts and ends at 100.
+    expected = ffn.PerformanceStats(selected, rf=rf, annualization_factor=365)
+
+    stats.set_riskfree_rate(rf)
+
+    assert stats.total_return == 0.0
+    assert stats.prices is prices
+    pd.testing.assert_series_equal(stats.stats, expected.stats)
+    pd.testing.assert_series_equal(stats.lookback_returns, expected.lookback_returns)
+    pd.testing.assert_frame_equal(stats.return_table, expected.return_table)
+    for field in ("daily_prices", "monthly_prices", "yearly_prices"):
+        pd.testing.assert_series_equal(getattr(stats, field), getattr(expected, field))
+    if scenario == "trailing-months":
+        assert list(stats.monthly_prices.index) == list(pd.DatetimeIndex(["2024-01-31", "2024-02-29", "2024-03-31"], tz=tz))
+        assert stats.monthly_prices.iloc[1:].isna().all()
+
+    # Derive the excess sample from fixed daily endpoints, independently of the update's selection.
+    daily_values = np.array(daily_values)
+    excess = np.diff(daily_values) / daily_values[:-1]
+    if series_rf:
+        rf_levels = rf.loc[daily_dates].to_numpy()
+        excess -= np.diff(rf_levels) / rf_levels[:-1]
+    else:
+        excess -= (1.0 + rf) ** (1.0 / 365) - 1.0
+    assert stats.daily_sharpe == approx(excess.mean() / excess.std(ddof=1) * np.sqrt(365))
+    assert stats.annualization_factor == 365
+
+    stats.set_riskfree_rate(0.03)
+    assert stats.total_return == 0.0
+    stats.set_date_range()
+    stats.set_riskfree_rate(0.04)
+    assert stats.total_return == approx(values[-1] / values[0] - 1.0)
+    pd.testing.assert_series_equal(prices, original)
+
+
+@mark.parametrize("series_rf", [False, True], ids=["scalar-riskfree", "price-riskfree"])
+def test_group_riskfree_update_preserves_individual_child_window(series_rf):
+    """A directly selected child keeps its own window during a group-wide rate update."""
+    dates = pd.date_range("2024-01-01", periods=10, tz="UTC")
+    prices = pd.DataFrame(
+        {
+            "A": [100.0, 101.0, 99.0, 100.0, 110.0, 90.0, 120.0, 100.0, 140.0, 150.0],
+            "B": [80.0, 82.0, 81.0, 83.0, 84.0, 85.0, 87.0, 90.0, 92.0, 96.0],
+        },
+        index=dates,
+    )
+    original = prices.copy()
+    rf = pd.Series(100.0 * 1.001 ** np.arange(len(dates)), index=dates, name="rf") if series_rf else 0.05
+    group = ffn.GroupStats(prices, annualization_factor=365)
+    child = group["A"]
+    child.set_date_range(dates[3], dates[7])
+
+    group.set_riskfree_rate(rf)
+
+    assert group["A"] is child
+    assert child.total_return == 0.0
+    assert group.stats.loc["total_return", "A"] == 0.0
+    assert group.stats.loc["total_return", "B"] == approx(96.0 / 80.0 - 1)
+    pd.testing.assert_series_equal(child.stats, ffn.PerformanceStats(prices["A"].iloc[3:8], rf=rf, annualization_factor=365).stats)
+    group.set_date_range()
+    assert group["A"].total_return == 0.5
+    pd.testing.assert_frame_equal(prices, original)
+
+
+@mark.parametrize("selected", [False, True], ids=["full-window", "selected-window"])
+def test_performance_stats_failed_riskfree_update_preserves_state(selected):
     """Reject incompatible risk-free prices without partially updating statistics."""
     dates = pd.date_range("2024-01-01", periods=8, tz="UTC")
     prices = pd.Series([100.0, 101.0, 99.0, 102.0, 104.0, 103.0, 106.0, 108.0], index=dates, name="asset")
     invalid_rf = pd.Series(np.linspace(100.0, 101.0, len(dates)), index=dates.tz_localize(None), name="rf")
     original_rf = invalid_rf.copy()
     stats = ffn.PerformanceStats(prices, rf=0.03, annualization_factor=365)
+    if selected:
+        stats.set_date_range(dates[1], dates[6])
     original_state = stats.__dict__.copy()
 
     with raises(TypeError, match="tz-naive and tz-aware"):
@@ -4235,7 +4333,8 @@ def test_performance_stats_failed_riskfree_update_preserves_state():
     pd.testing.assert_series_equal(invalid_rf, original_rf)
 
 
-def test_group_stats_failed_riskfree_update_preserves_all_children():
+@mark.parametrize("selected", [False, True], ids=["full-window", "selected-window"])
+def test_group_stats_failed_riskfree_update_preserves_all_children(selected):
     """Stage every child so one rejected update cannot leave a partially changed group."""
     dates = pd.date_range("2024-01-01", periods=8, tz="UTC")
     prices = pd.DataFrame(
@@ -4249,6 +4348,8 @@ def test_group_stats_failed_riskfree_update_preserves_all_children():
     original_rf = invalid_rf.copy()
     stats = ffn.GroupStats(prices, annualization_factor=365)
     stats.set_riskfree_rate(0.03)
+    if selected:
+        stats.set_date_range(dates[1], dates[6])
     original_state = stats.__dict__.copy()
     original_children = {name: stats[name] for name in stats._names}
     original_child_states = {name: child.__dict__.copy() for name, child in original_children.items()}
@@ -4264,14 +4365,15 @@ def test_group_stats_failed_riskfree_update_preserves_all_children():
 
     # A later valid transition must still commit through the existing child objects.
     stats.set_riskfree_rate(0.05)
-    expected = ffn.GroupStats(prices, annualization_factor=365)
+    expected = ffn.GroupStats(prices.loc[dates[1] : dates[6]] if selected else prices, annualization_factor=365)
     expected.set_riskfree_rate(0.05)
     assert all(stats[name] is original_children[name] for name in stats._names)
     pd.testing.assert_frame_equal(stats.stats, expected.stats)
     pd.testing.assert_frame_equal(stats.lookback_returns, expected.lookback_returns)
 
 
-def test_group_stats_later_riskfree_failure_preserves_all_children(monkeypatch):
+@mark.parametrize("selected", [False, True], ids=["full-window", "selected-window"])
+def test_group_stats_later_riskfree_failure_preserves_all_children(monkeypatch, selected):
     """Do not commit an earlier staged child when a later child rejects the update."""
     dates = pd.date_range("2024-01-01", periods=8)
     prices = pd.DataFrame(
@@ -4283,6 +4385,8 @@ def test_group_stats_later_riskfree_failure_preserves_all_children(monkeypatch):
     )
     stats = ffn.GroupStats(prices, annualization_factor=365)
     stats.set_riskfree_rate(0.03)
+    if selected:
+        stats.set_date_range(dates[1], dates[6])
     original_state = stats.__dict__.copy()
     original_children = {name: stats[name] for name in stats._names}
     original_child_states = {name: child.__dict__.copy() for name, child in original_children.items()}
