@@ -1172,8 +1172,13 @@ def test_calc_erc_weights_rejects_duplicate_columns_before_covariance(monkeypatc
         (np.array([0.0, 0.0, 0.0]), "finite and nonnegative with a positive total"),
         (np.array([0.8, np.nan, 0.2]), "finite and nonnegative with a positive total"),
         (np.array([0.8, np.inf, 0.2]), "finite and nonnegative with a positive total"),
+        # Shape/type rejection must precede mask reduction, especially for structured masks.
+        (np.ma.array([[0.8, 0.1, 0.1]], mask=True), "one value per return column"),
+        (np.ma.array([0.8 + 0j, 0.1, 0.1], mask=True), "real numeric values"),
+        (np.ma.array([0.8, 0.1 + 1j, 0.1], dtype=object, mask=True), "real numeric values"),
+        (np.ma.array([(1.0,), (2.0,), (3.0,)], dtype=[("risk", float)], mask=True), "real numeric values"),
     ],
-    ids=["short", "long", "two-dimensional", "negative", "zero", "nan", "infinite"],
+    ids=["short", "long", "two-dimensional", "negative", "zero", "nan", "infinite", "masked-shape", "masked-complex", "masked-object-complex", "masked-structured"],
 )
 def test_calc_erc_weights_rejects_invalid_risk_weights_before_covariance(monkeypatch, risk_weights, message):
     """Reject malformed targets before covariance or solver work begins."""
@@ -1254,6 +1259,70 @@ def test_calc_erc_weights_rejects_nonreal_or_missing_targets_before_covariance(m
         pd.testing.assert_series_equal(risk_weights, original)
     else:
         np.testing.assert_array_equal(risk_weights, original)
+
+
+@mark.parametrize(
+    "target",
+    [
+        np.ma.fix_invalid(np.array([1.0, np.nan]), fill_value=2.0),
+        np.ma.array([1, 2], dtype="float32", mask=[False, True]),
+        np.ma.array([1, 2], dtype="int64", mask=True),
+        np.ma.array([1, 2], dtype=object, mask=[True, False]),
+    ],
+    ids=["filled-invalid", "float32", "all-masked-integer", "object"],
+)
+@mark.parametrize("covar_method", ["standard", "ledoit-wolf"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_erc_weights_rejects_masked_targets_before_covariance(monkeypatch, target, covar_method, use_pandas_method):
+    """Finite placeholders do not turn unavailable risk budgets into configured targets."""
+    returns = pd.DataFrame([[0.01, 0.02], [-0.01, 0.02], [0.01, -0.02], [-0.01, -0.02]], columns=["A", "B"])
+    original_returns = returns.copy(deep=True)
+    original_target = target.copy()
+
+    def unexpected_operation(*args, **kwargs):
+        raise AssertionError("masked targets must be rejected before covariance or solver work")
+
+    monkeypatch.setattr(pd.DataFrame, "cov", unexpected_operation)
+    monkeypatch.setattr(ffn.core.sklearn.covariance, "ledoit_wolf", unexpected_operation)
+    monkeypatch.setattr(ffn.core, "_erc_weights_ccd", unexpected_operation)
+    monkeypatch.setattr(ffn.core, "_erc_weights_slsqp", unexpected_operation)
+    calculate = returns.calc_erc_weights if use_pandas_method else ffn.calc_erc_weights
+    args = () if use_pandas_method else (returns,)
+
+    with raises(ValueError, match="risk_weights must be finite and nonnegative with a positive total"):
+        calculate(*args, risk_weights=target, covar_method=covar_method)
+
+    # Compare hidden payloads too: masked equality alone would conceal a caller-data change.
+    np.testing.assert_array_equal(target.data, original_target.data)
+    np.testing.assert_array_equal(np.ma.getmaskarray(target), np.ma.getmaskarray(original_target))
+    pd.testing.assert_frame_equal(returns, original_returns)
+
+
+@mark.parametrize("dtype", ["float32", "float64", "int64", object])
+@mark.parametrize("mask", [np.ma.nomask, [False, False]], ids=["nomask", "false-array"])
+@mark.parametrize("covar_method", ["standard", "ledoit-wolf"])
+@mark.parametrize("risk_parity_method", ["ccd", "slsqp"])
+def test_calc_erc_weights_preserves_unmasked_targets(dtype, mask, covar_method, risk_parity_method):
+    """A MaskedArray with no unavailable entries remains a valid relative budget."""
+    returns = pd.DataFrame([[0.01, 0.02], [-0.01, 0.02], [0.01, -0.02], [-0.01, -0.02]], columns=["A", "B"])
+    target = np.ma.array([1, 2], dtype=dtype, mask=mask)
+    original = target.copy()
+
+    actual = returns.calc_erc_weights(risk_weights=target, covar_method=covar_method, risk_parity_method=risk_parity_method, tolerance=1e-9)
+
+    # Centered orthogonal columns give diagonal covariance; LW's shrinkage is
+    # sum(Var(x_i*x_j))/4 divided by sum((cov - mean_variance*I)**2) = 4/9.
+    variance = np.array([0.01**2, 0.02**2])
+    variance = variance * 4 / 3 if covar_method == "standard" else variance * 5 / 9 + variance.mean() * 4 / 9
+    expected = np.sqrt(np.array([1.0, 2.0]) / variance)
+    expected /= expected.sum()
+    np.testing.assert_allclose(actual, expected, atol=5e-6)
+    contributions = actual.to_numpy() ** 2 * variance
+    np.testing.assert_allclose(contributions / contributions.sum(), [1 / 3, 2 / 3], atol=5e-6)
+    assert actual.name == "erc"
+    pd.testing.assert_index_equal(actual.index, returns.columns)
+    np.testing.assert_array_equal(target.data, original.data)
+    np.testing.assert_array_equal(np.ma.getmaskarray(target), np.ma.getmaskarray(original))
 
 
 @mark.parametrize("risk_parity_method", ["ccd", "slsqp"])

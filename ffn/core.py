@@ -2107,6 +2107,7 @@ def calc_erc_weights(
         * initial_weights (array-like): Starting asset weights [default inverse vol].
         * risk_weights (array-like): Finite, nonnegative relative risk targets, one per
           return column and with at least one positive value [default equal weight].
+          Masked entries are invalid risk targets.
         * covar_method (str): Covariance matrix estimation method:
           `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_ (default) or ``standard``.
         * risk_parity_method (str): Risk parity estimation method:
@@ -2130,6 +2131,8 @@ def calc_erc_weights(
 
     if risk_weights is None:
         risk_weights = np.ones(n)
+    # Preserve missing-target metadata before np.asarray discards the mask.
+    risk_mask = np.ma.getmask(risk_weights) if np.ma.isMaskedArray(risk_weights) else False
     risk_weights = np.asarray(risk_weights)
     if risk_weights.shape != (n,):
         raise ValueError("risk_weights must have one value per return column")
@@ -2141,7 +2144,7 @@ def calc_erc_weights(
         risk_weights = risk_weights.astype(dtype, copy=False)
     except (TypeError, ValueError) as error:
         raise ValueError("risk_weights must contain real numeric values") from error
-    if not np.isfinite(risk_weights).all() or (risk_weights < 0).any() or not (risk_weights > 0).any():
+    if np.any(risk_mask) or not np.isfinite(risk_weights).all() or (risk_weights < 0).any() or not (risk_weights > 0).any():
         raise ValueError("risk_weights must be finite and nonnegative with a positive total")
     risk_weights = risk_weights / np.max(risk_weights)
     risk_weights = risk_weights / np.sum(risk_weights)
