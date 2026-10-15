@@ -582,7 +582,8 @@ DataFrame of returns.</p>
 <li><p><strong>returns</strong> (<em>*</em>) – Returns for multiple securities with unique column labels.</p></li>
 <li><p><strong>initial_weights</strong> (<em>*</em>) – Starting asset weights [default inverse vol].</p></li>
 <li><p><strong>risk_weights</strong> (<em>*</em>) – Finite, nonnegative relative risk targets, one per
-return column and with at least one positive value [default equal weight].</p></li>
+return column and with at least one positive value [default equal weight].
+Masked entries are invalid risk targets.</p></li>
 <li><p><strong>covar_method</strong> (<em>*</em>) – Covariance matrix estimation method:
 <a class="reference external" href="http://www.ledoit.net/honey.pdf">ledoit-wolf</a> (default) or <code class="docutils literal notranslate"><span class="pre">standard</span></code>.</p></li>
 <li><p><strong>risk_parity_method</strong> (<em>*</em>) – Risk parity estimation method:
