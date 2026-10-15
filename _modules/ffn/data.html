@@ -528,7 +528,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Helper function for retrieving data as a DataFrame.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        * tickers (list, string, csv string): Tickers to download.</span>
+<span class="sd">        * tickers (list, tuple, string, csv string): Tickers to download.</span>
 <span class="sd">        * provider (callable, str): A DataProvider or an ``ffn.providers``</span>
 <span class="sd">            entry-point name. Defaults to ffn.data.DEFAULT_PROVIDER.</span>
 <span class="sd">            An unset default falls back to Yahoo with a deprecation warning.</span>
@@ -579,7 +579,7 @@ window.runMermaid = runMermaid;</script>
         <span class="k">if</span> <span class="n">refresh_parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">refresh_parameter</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">POSITIONAL_OR_KEYWORD</span><span class="p">,</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">KEYWORD_ONLY</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="p">[</span><span class="s2">"mrefresh"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
 
-    <span class="n">tickers</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">parse_arg</span><span class="p">(</span><span class="n">tickers</span><span class="p">)</span>
+    <span class="n">tickers</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">utils</span><span class="o">.</span><span class="n">parse_arg</span><span class="p">(</span><span class="n">tickers</span><span class="p">))</span>
 
     <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">ticker</span> <span class="ow">in</span> <span class="n">tickers</span><span class="p">:</span>

@@ -267,8 +267,9 @@ return series here treats its values as price levels rather than
 returns, so it does not generally behave like rf=0.
 Daily statistics use risk-free prices on the asset’s own observed daily
 endpoints; an interval missing either risk-free price is excluded, not filled.
-Monthly and yearly risk-free prices are sampled in the asset’s timezone
-before their returns are aligned with the asset’s calendar-period returns.</p>
+Monthly and yearly risk-free prices are sampled in the asset’s timezone,
+excluding observations after the asset’s last usable price, before their
+returns are aligned with the asset’s calendar-period returns.</p>
 </p></li>
 </ul>
 </dd>
