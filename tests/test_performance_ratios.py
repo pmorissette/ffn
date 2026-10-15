@@ -307,7 +307,7 @@ def test_performance_stats_reuses_excess_returns(monkeypatch, dtype, risk_free_k
         rf = risk_free
         if isinstance(rf, pd.Series):
             if offset:
-                rf = rf.resample(offset).last().to_returns()
+                rf = rf[rf.index <= prices.dropna().index[-1]].resample(offset).last().to_returns()
             else:
                 # Daily excess returns compare both holdings over the same observed asset interval.
                 # rf.to_returns() on rf's own calendar paired Fri->Mon asset returns with Sun->Mon rf
@@ -430,10 +430,13 @@ def _periodic_timezone_prices(calendar="business", dtype="float64"):
 def _calendar_risk_ratios(prices, risk_free, periods):
     """Derive paired calendar returns without ffn ratios, pandas resampling, or label subtraction."""
     endpoints = []
-    for series in (prices, risk_free):
+    last_observed = prices.dropna().index[-1]
+    for is_risk_free, series in enumerate((prices, risk_free)):
         values = {}
         for date, value in series.items():
             # The asset's calendar defines both holdings' periods, irrespective of RF storage zone.
+            if is_risk_free and date > last_observed:
+                continue
             local_date = date.tz_convert(prices.index.tz)
             key = (local_date.year, local_date.month) if periods == 12 else local_date.year
             if pd.notna(value):
@@ -450,6 +453,63 @@ def _calendar_risk_ratios(prices, risk_free, periods):
     deviation = (sum((value - mean) ** 2 for value in excess) / (len(excess) - 1)) ** 0.5
     downside = (sum(min(value, 0.0) ** 2 for value in excess) / len(excess)) ** 0.5
     return mean / deviation * periods**0.5, mean / downside * periods**0.5
+
+
+def _periodic_future_riskfree_prices(periods):
+    if periods == 12:
+        dates = ["2024-01-15", "2024-01-31", "2024-02-29", "2024-03-15", "2024-03-31"]
+    else:
+        dates = ["2019-12-15", "2019-12-31", "2020-12-31", "2021-06-15", "2021-12-31"]
+    index = pd.DatetimeIndex(dates, tz="America/New_York")
+    prices = pd.Series([100.0, 100.0, 90.0, 108.0, np.nan], index=index, name="asset")
+    causal_risk_free = pd.Series(100.0, index=index[:-1], name="rf")
+    future_risk_free = pd.concat((pd.Series([110.0], index=index[-1:], name="rf"), causal_risk_free))
+    return prices, causal_risk_free, future_risk_free
+
+
+@pytest.mark.parametrize(
+    "periods,expected",
+    [
+        (12, (0.816496580928, 2.449489742783)),
+        (1, (0.235702260396, 0.707106781187)),
+    ],
+    ids=["monthly", "yearly"],
+)
+@pytest.mark.parametrize("rf_timezone", ["America/New_York", "UTC"])
+def test_performance_stats_periodic_riskfree_ignores_future_prices(periods, expected, rf_timezone):
+    """Calendar ratios use the last usable asset price, not a later risk-free observation."""
+    prices, causal_risk_free, future_risk_free = _periodic_future_riskfree_prices(periods)
+    causal_risk_free = causal_risk_free.tz_convert(rf_timezone)
+    future_risk_free = future_risk_free.tz_convert(rf_timezone)
+    original_causal, original_future = causal_risk_free.copy(), future_risk_free.copy()
+
+    stats = ffn.PerformanceStats(prices, rf=future_risk_free)
+    causal_stats = ffn.PerformanceStats(prices, rf=causal_risk_free)
+    frequency = "monthly" if periods == 12 else "yearly"
+
+    assert stats.end == prices.dropna().index[-1]
+    for ratio, value in zip(("sharpe", "sortino"), expected):
+        actual = getattr(stats, frequency + "_" + ratio)
+        assert actual == pytest.approx(value, abs=1e-12)
+        assert actual == pytest.approx(getattr(causal_stats, frequency + "_" + ratio), abs=1e-12)
+    assert stats.rf is future_risk_free
+    pd.testing.assert_series_equal(causal_risk_free, original_causal)
+    pd.testing.assert_series_equal(future_risk_free, original_future)
+
+
+@pytest.mark.parametrize("periods", [12, 1], ids=["monthly", "yearly"])
+def test_performance_stats_periodic_riskfree_missing_final_endpoint_excludes_interval(periods):
+    """A missing final risk-free endpoint excludes that interval instead of using a future price."""
+    prices, _, risk_free = _periodic_future_riskfree_prices(periods)
+    risk_free = risk_free[risk_free.index != prices.dropna().index[-1]]
+    original_risk_free = risk_free.copy()
+
+    stats = ffn.PerformanceStats(prices, rf=risk_free)
+    frequency = "monthly" if periods == 12 else "yearly"
+
+    assert np.isnan(getattr(stats, frequency + "_sharpe"))
+    assert getattr(stats, frequency + "_sortino") == pytest.approx(-np.sqrt(periods))
+    pd.testing.assert_series_equal(risk_free, original_risk_free)
 
 
 @pytest.mark.parametrize("calendar", ["business", "monthly", "yearly"])

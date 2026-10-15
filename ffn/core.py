@@ -142,8 +142,9 @@ class PerformanceStats:
             returns, so it does not generally behave like rf=0.
             Daily statistics use risk-free prices on the asset's own observed daily
             endpoints; an interval missing either risk-free price is excluded, not filled.
-            Monthly and yearly risk-free prices are sampled in the asset's timezone
-            before their returns are aligned with the asset's calendar-period returns.
+            Monthly and yearly risk-free prices are sampled in the asset's timezone,
+            excluding observations after the asset's last usable price, before their
+            returns are aligned with the asset's calendar-period returns.
 
     Raises:
         * ValueError: If the price series contains no usable value.
@@ -407,7 +408,8 @@ class PerformanceStats:
         periodic_rf = self.rf
         if not isinstance(periodic_rf, _FLOATING_SCALAR_TYPES) and mp.index.tz is not None and getattr(periodic_rf.index, "tz", None) is not None:
             periodic_rf = periodic_rf.tz_convert(mp.index.tz)
-
+        if not isinstance(periodic_rf, _FLOATING_SCALAR_TYPES) and (mp.index.tz is None) == (getattr(periodic_rf.index, "tz", None) is None):
+            periodic_rf = periodic_rf[periodic_rf.index <= self.end]
         # Will calculate monthly figures only if the input data has at least monthly frequency or higher (e.g daily)
         # Rather < 32 days than <= 31 days in case of data taken at different hours of the days
         if typical_period < pd.Timedelta("32 days"):
