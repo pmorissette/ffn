@@ -10,6 +10,31 @@ def sample_provider(ticker, field):
     return pd.Series(prices[ticker], index=pd.date_range("2024-01-01", periods=4))
 
 
+@pytest.mark.parametrize(
+    ("tickers", "values"),
+    [
+        (("DEF", "ABC"), [[3.0, 1.0], [4.0, 2.0]]),
+        (("ABC",), [[1.0], [2.0]]),
+        (("ABC", "ABC"), [[1.0, 1.0], [2.0, 2.0]]),
+        ((), []),
+    ],
+)
+def test_get_accepts_tuple_tickers(tickers, values):
+    index = pd.date_range("2024-01-01", periods=2)
+    calls = []
+
+    def provider(ticker, field):
+        calls.append((ticker, field))
+        return pd.Series([1.0, 2.0] if ticker == "ABC" else [3.0, 4.0], index=index)
+
+    expected = pd.DataFrame(values, columns=list(tickers), index=index) if tickers else pd.DataFrame()
+
+    actual = ffn.get(tickers, provider=provider, clean_tickers=False)
+
+    pd.testing.assert_frame_equal(actual, expected)
+    assert calls == [(ticker, None) for ticker in tickers]
+
+
 @pytest.mark.parametrize("provider_kind", ["lambda", "closure", "memoized"])
 @pytest.mark.parametrize("refresh", [False, True])
 def test_get_supports_uncacheable_providers(provider_kind, refresh):
