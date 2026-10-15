@@ -629,6 +629,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Set annual risk-free rate property and calculate properly annualized</span>
 <span class="sd">        monthly and daily rates. Then performance stats are recalculated.</span>
 <span class="sd">        Affects only this instance of the PerformanceStats.</span>
+<span class="sd">        The selected date range is preserved; call ``set_date_range()`` to restore</span>
+<span class="sd">        the original range.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            * rf (float, np.floating, Series): Annual `risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_,</span>
@@ -637,7 +639,7 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># Recalculate off-object so a rejected risk-free input cannot leave stale state.</span>
         <span class="n">updated</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">updated</span><span class="o">.</span><span class="n">rf</span> <span class="o">=</span> <span class="n">rf</span>
-        <span class="n">updated</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="n">prices</span><span class="p">)</span>
+        <span class="n">updated</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="n">_current_prices</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span></div>
 
 
@@ -683,6 +685,9 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">lookback_returns</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_stats_series</span><span class="p">()</span>
+        <span class="c1"># Retain raw selected prices: daily samples lose intraday endpoints and empty reporting bins.</span>
+        <span class="c1"># self.prices remains the original input for date-range resets.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current_prices</span> <span class="o">=</span> <span class="n">obj</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_calculate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="c1"># default values</span>

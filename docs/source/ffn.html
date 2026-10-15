@@ -410,7 +410,9 @@ range, just call with no args.</p>
 <span class="sig-name descname"><span class="pre">set_riskfree_rate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#PerformanceStats.set_riskfree_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_riskfree_rate" title="Link to this definition">¶</a></dt>
 <dd><p>Set annual risk-free rate property and calculate properly annualized
 monthly and daily rates. Then performance stats are recalculated.
-Affects only this instance of the PerformanceStats.</p>
+Affects only this instance of the PerformanceStats.
+The selected date range is preserved; call <code class="docutils literal notranslate"><span class="pre">set_date_range()</span></code> to restore
+the original range.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>rf</strong> (<em>*</em>) – <p>Annual <a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">risk-free rate</a>,
