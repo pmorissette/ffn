@@ -3265,11 +3265,19 @@ def calc_prob_backtest_overfitting(trial_returns, n_blocks=16, metric=None, full
         raise ValueError("trial_returns index must be monotonic increasing")
     trial_returns = trial_returns.iloc[:rows].astype(float)
     blocks = np.array_split(np.arange(rows), n_blocks)
+    dense_scores = metric is None and type(trial_returns) is pd.DataFrame and all(isinstance(dtype, np.dtype) and dtype == np.dtype(float) for dtype in trial_returns.dtypes)
 
     def performance(sample):
         if metric is None:
             std = sample.std(ddof=1)
-            std = std.where((std > 0) & (sample.max() > sample.min()))
+            if dense_scores:
+                # Plain float64 reductions keep column order; avoid rebuilding labeled masks.
+                deviation = std.to_numpy()
+                valid = (deviation > 0) & (sample.max().to_numpy() > sample.min().to_numpy())
+                std = np.where(valid, deviation, np.nan)
+            else:
+                # Subclasses and extension storage retain native alignment and option behavior.
+                std = std.where((std > 0) & (sample.max() > sample.min()))
             return (sample.mean() / std).to_numpy()
         return np.array([metric(series) for _, series in sample.items()], dtype=float)
 
@@ -3306,8 +3314,14 @@ def calc_prob_backtest_overfitting(trial_returns, n_blocks=16, metric=None, full
             directions.append((n_combinations - fold - 1, oos_perf, is_perf))
         for position, train_perf, test_perf in directions:
             winner = np.argmax(train_perf)
-            # Relative rank of the winner's out-of-sample performance in (0, 1)
-            omega = scipy.stats.rankdata(test_perf, method="average")[winner] / (n_trials + 1.0)
+            if metric is None and not dense_scores:
+                # Preserve SciPy's normalization of score arrays emitted by subclasses.
+                rank = scipy.stats.rankdata(test_perf, method="average")[winner]
+            else:
+                # Ordinary finite scores need only the winner's average tie rank, not a full sort.
+                score = test_perf[winner]
+                rank = np.count_nonzero(test_perf < score) + (np.count_nonzero(test_perf == score) + 1.0) / 2.0
+            omega = rank / (n_trials + 1.0)
             if metric is None:
                 logits[position] = np.log(omega / (1.0 - omega))
                 ranks[position] = omega

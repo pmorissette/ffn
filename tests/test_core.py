@@ -3584,6 +3584,130 @@ def test_calc_prob_backtest_overfitting_pairs_default_folds(monkeypatch, n_block
     pd.testing.assert_frame_equal(returns, original)
 
 
+@mark.parametrize("case", ["dense", "nullable-missing", "float32-multiindex", "object-unhashable", "sparse", "subclass", "constant", "tiny", "inf-option-off", "inf-option-on"])
+def test_calc_prob_backtest_overfitting_preserves_native_scores(monkeypatch, case):
+    """Final ranks can hide score changes, so compare the native division results directly."""
+    from contextlib import nullcontext
+
+    if case.startswith("inf-option") and Version(pd.__version__) >= Version("3"):
+        from pytest import skip
+
+        skip("pandas 3 removed use_inf_as_na")
+    data = pd.DataFrame(np.random.default_rng(47).normal(0.001, 0.01, (8, 4)), index=pd.date_range("2020-01-01", periods=8, tz="UTC"))
+    if case == "nullable-missing":
+        data = data.astype("Float64")
+        data.iloc[[1, 6], 1] = pd.NA
+        data.columns = ["a", "a", "c", "d"]
+    elif case == "float32-multiindex":
+        data = data.astype("float32")
+        data.columns = pd.MultiIndex.from_tuples([(0, "a"), (0, "b"), (1, "c"), (1, "d")])
+    elif case == "object-unhashable":
+        # Native masking accepts list labels; a uniqueness check would reject them.
+        labels = np.empty(4, dtype=object)
+        labels[:] = [[1], [2], [3], [4]]
+        data = data.astype(object).set_axis(pd.Index(labels), axis=1)
+    elif case == "sparse":
+        data = data.astype(pd.SparseDtype("float64", 0))
+    elif case == "subclass":
+        class ReversedStd(pd.DataFrame):
+            @property
+            def _constructor(self):
+                return ReversedStd
+
+            def std(self, *args, **kwargs):
+                return super().std(*args, **kwargs).iloc[::-1]
+
+        # A subclass can reorder reducer labels, so its denominator must stay labeled.
+        data = ReversedStd(data)
+    elif case == "constant":
+        data.iloc[:, -1] = 0.1
+    elif case == "tiny":
+        data *= 1e-150
+    elif case.startswith("inf-option"):
+        data.iloc[0, 0] = np.inf
+    original = data.copy(deep=True)
+    divide = pd.Series.__truediv__
+    scores = []
+
+    def capture_scores(mean, denominator):
+        result = divide(mean, denominator)
+        scores.append(result.copy(deep=True))
+        return result
+
+    option = pd.option_context("mode.use_inf_as_na", case == "inf-option-on") if case.startswith("inf-option") else nullcontext()
+    with option:
+        expected = []
+        with warnings.catch_warnings(record=True) as native_warnings:
+            warnings.simplefilter("always")
+            converted = data.astype(float)
+            for sample in (converted.iloc[:4], converted.iloc[4:]):
+                std = sample.std(ddof=1)
+                denominator = std.where((std > 0) & (sample.max() > sample.min()))
+                expected.append(divide(sample.mean(), denominator))
+        monkeypatch.setattr(pd.Series, "__truediv__", capture_scores)
+        with warnings.catch_warnings(record=True) as actual_warnings:
+            warnings.simplefilter("always")
+            data.calc_prob_backtest_overfitting(n_blocks=2, full_output=True)
+    assert [(w.category, str(w.message)) for w in actual_warnings] == [(w.category, str(w.message)) for w in native_warnings]
+    assert len(scores) == len(expected) == 2
+    for actual, native in zip(scores, expected):
+        pd.testing.assert_series_equal(actual, native, check_exact=True)
+        # Compare stored bits outside the option: inf-as-NA equality can hide differences.
+        assert actual.to_numpy().tobytes() == native.to_numpy().tobytes()
+    pd.testing.assert_frame_equal(data, original)
+
+
+@mark.parametrize("method", [False, True])
+def test_calc_prob_backtest_overfitting_preserves_subclass_rank_normalization(method):
+    """Native ranking normalizes masked subclass scores before selecting the winner's rank."""
+    class MaskedScores(pd.Series):
+        @property
+        def _constructor(self):
+            return MaskedScores
+
+        def to_numpy(self, *args, **kwargs):
+            values = super().to_numpy(*args, **kwargs)
+            return np.ma.array(values, mask=values == np.partition(values, 1)[1])
+
+    class MaskedFrame(pd.DataFrame):
+        @property
+        def _constructor(self):
+            return MaskedFrame
+
+        @property
+        def _constructor_sliced(self):
+            return MaskedScores
+
+    data = MaskedFrame([[1.0, 2.0, 0.0, -1.0], [3.0, 4.0, 2.0, 1.0], [-1.0, 0.0, 2.0, 1.0], [1.0, 2.0, 4.0, 3.0]])
+    original = data.copy(deep=True)
+    calculate = data.calc_prob_backtest_overfitting if method else lambda **kwargs: ffn.calc_prob_backtest_overfitting(data, **kwargs)
+    result = calculate(n_blocks=2, full_output=True)
+
+    # Both winners rank second out of four after native mask normalization: 2 / (4 + 1).
+    np.testing.assert_array_equal(result["logits"], [np.log(0.4 / 0.6)] * 2)
+    assert result["mean_oos_rank"] == 0.4
+    assert result["pbo"] == 1.0
+    pd.testing.assert_frame_equal(data, original)
+
+
+@mark.parametrize("scores", [[2.0, 2.0, 0.0, -1.0], [-0.0, 0.0, -1.0, 1.0], [1.0, np.nextafter(1.0, 2.0), 0.0, -1.0], [1.0] * 4])
+def test_calc_prob_backtest_overfitting_winner_average_rank(scores):
+    """Sorted ordinal positions independently define ties, including signed zero and adjacent floats."""
+    train = [2.0, 3.0, 1.0, 0.0]
+    data = pd.DataFrame([train, scores])
+    expected = []
+    for inside, outside in ((train, scores), (scores, train)):
+        winner = inside.index(max(inside))
+        ordered = sorted(outside)
+        positions = [i + 1 for i, value in enumerate(ordered) if value == outside[winner]]
+        expected.append(sum(positions) / len(positions) / 5.0)
+    result = data.calc_prob_backtest_overfitting(n_blocks=2, metric=lambda sample: sample.iloc[0], full_output=True)
+    expected = np.array(expected)
+    np.testing.assert_array_equal(result["logits"], np.log(expected / (1.0 - expected)))
+    assert result["mean_oos_rank"] == expected.mean()
+    assert result["pbo"] == np.mean(expected <= 0.5)
+
+
 def test_calc_prob_backtest_overfitting_default_fold_order():
     returns = pd.DataFrame([[3, 1, 2], [4, 2, 3], [4, 3, 2], [5, 4, 3], [1, 4, 3], [2, 5, 4], [2, 3, 4], [3, 4, 5]])
 
