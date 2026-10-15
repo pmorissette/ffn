@@ -76,7 +76,7 @@ def get(
     Helper function for retrieving data as a DataFrame.
 
     Args:
-        * tickers (list, string, csv string): Tickers to download.
+        * tickers (list, tuple, string, csv string): Tickers to download.
         * provider (callable, str): A DataProvider or an ``ffn.providers``
             entry-point name. Defaults to ffn.data.DEFAULT_PROVIDER.
             An unset default falls back to Yahoo with a deprecation warning.
@@ -127,7 +127,7 @@ def get(
         if refresh_parameter is not None and refresh_parameter.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY):
             kwargs["mrefresh"] = True
 
-    tickers = utils.parse_arg(tickers)
+    tickers = list(utils.parse_arg(tickers))
 
     data = {}
     for ticker in tickers:
