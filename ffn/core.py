@@ -1421,10 +1421,12 @@ def _lookback_prices(prices, months):
     A series that ends on the last business day of its month is anchored on the
     month ``months`` earlier, not on the same day number: Jun 30 less three months
     is Mar 30, and the last month-end price on or before that is Feb 28.
+    Calendar month-ends follow the same rule; intervening weekend dates retain
+    their day-number anchor.
     """
     end = prices.index[-1]
     last_business_day = pd.offsets.BMonthEnd().rollback(end + pd.offsets.MonthEnd(0))
-    if end.normalize() >= last_business_day.normalize():
+    if end.is_month_end or end.normalize() == last_business_day.normalize():
         months_elapsed = prices.index.year * 12 + prices.index.month
         return prices[months_elapsed <= end.year * 12 + end.month - months]
     return prices[: end - pd.DateOffset(months=months)]
