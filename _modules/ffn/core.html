@@ -3085,7 +3085,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">]</span> <span class="o">=</span> <span class="n">limit</span>
     <span class="n">res</span><span class="p">[</span><span class="n">res</span> <span class="o">&lt;</span> <span class="n">limit</span><span class="p">]</span> <span class="o">=</span> <span class="n">ok</span>
 
-    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="n">limit</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">res</span><span class="p">):</span>
+    <span class="c1"># Use the same dtype-aware comparison as the redistribution masks above.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="k">return</span> <span class="n">limit_weights</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">res</span></div>
