@@ -2633,6 +2633,17 @@ def rollapply(data, window, fn):
     # Buffer ordinary floats to avoid repeated pandas assignment; other result types need
     # pandas conversion, warning and rejection behavior for the rest of the call.
     buffer = np.full(n, np.nan) if type(data) is pd.Series and type(window) is int and window >= 1 else None
+    frame_buffer = None
+    # Match pandas' single-block assignment path: column-wise bulk writes can add legacy
+    # deprecation warnings. The result's storage may differ from the current global option.
+    if (
+        type(data) is pd.DataFrame
+        and type(window) is int
+        and window >= 1
+        and getattr(getattr(res, "_mgr", None), "is_single_block", False)
+        and all(isinstance(dtype, np.dtype) and dtype == np.dtype(float) for dtype in data.dtypes)
+    ):
+        frame_buffer = np.full(data.shape, np.nan)
 
     for i in range(window - 1, n):
         row = fn(data.iloc[i - window + 1 : i + 1])
@@ -2657,10 +2668,28 @@ def rollapply(data, window, fn):
             positions = row_labels.get_indexer(columns)
             if (positions >= 0).all() and row_labels.take(positions).equals(columns):
                 row = row.iloc[positions]
+        if frame_buffer is not None:
+            # Store aligned float64 rows once, avoiding repeated pandas assignment. Other rows
+            # retain native conversion, warnings and option-sensitive infinity handling.
+            # Inspect numerical storage so pandas' ufunc machinery cannot copy callback metadata.
+            if (
+                type(row) in (pd.Series, np.ndarray)
+                and row.ndim == 1
+                and isinstance(row.dtype, np.dtype)
+                and row.dtype == np.dtype(float)
+                and len(row) == res.shape[1]
+                and not np.isinf(np.asarray(row)).any()
+            ):
+                frame_buffer[i] = row
+                continue
+            res.iloc[:] = frame_buffer
+            frame_buffer = None
         res.iloc[i] = row
 
     if buffer is not None:
         res.iloc[:] = buffer
+    if frame_buffer is not None:
+        res.iloc[:] = frame_buffer
 
     return res
 
