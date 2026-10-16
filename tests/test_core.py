@@ -2151,6 +2151,22 @@ def test_limit_weights_preserves_noninteger_redistribution(dtype):
     pd.testing.assert_series_equal(weights, original)
 
 
+@mark.parametrize("dtype", ["float16", "float32", "float64", "Float32", "Float64"])
+def test_limit_weights_caps_low_precision_weights(dtype):
+    """A cap rounded in the working dtype must not cause endless redistribution."""
+    weights = pd.Series([0.75, 0.25], index=pd.Index(["a", "b"], name="asset"), name="weight", dtype=dtype)
+    original = weights.copy(deep=True)
+    expected = pd.Series([0.6, 0.4], index=weights.index, name=weights.name)
+    precision = np.finfo(dtype.lower()).eps
+
+    actual = ffn.limit_weights(weights, limit=0.6)
+
+    pd.testing.assert_series_equal(actual.astype(float), expected, rtol=precision, atol=0)
+    pd.testing.assert_series_equal(weights, original)
+    assert actual.sum() == approx(1.0, abs=precision)
+    assert not (actual > 0.6).any()
+
+
 @mark.parametrize("dtype", ["int64", "uint64", "Int64", "UInt64"])
 @mark.parametrize("invalid", ["budget", "limit"])
 def test_limit_weights_rejects_invalid_integer_allocation_without_mutation(dtype, invalid):

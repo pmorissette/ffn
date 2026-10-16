@@ -2498,7 +2498,8 @@ def limit_weights(weights, limit=0.1):
     res[res > limit] = limit
     res[res < limit] = ok
 
-    if any(x > limit for x in res):
+    # Use the same dtype-aware comparison as the redistribution masks above.
+    if (res > limit).any():
         return limit_weights(res, limit=limit)
 
     return res
