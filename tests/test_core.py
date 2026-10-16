@@ -5409,6 +5409,121 @@ def test_performance_stats_date_range_reset_uses_observed_endpoints():
     assert stats.total_return == 110.0 / 100.0 - 1
 
 
+@fixture(params=["aware-prices", "aware-riskfree", "nonnumeric", "index"])
+def rejected_range_inputs(request):
+    """A sparse report skips RF ratios; its first two daily prices reach rejection."""
+    dates = pd.to_datetime(["2024-01-01", "2024-01-02", "2024-01-09", "2024-01-16"])
+    kind = request.param
+    prices = pd.Series([100.0, 101.0, 99.0, 103.0], index=dates.tz_localize("UTC") if kind == "aware-prices" else dates, name="asset")
+    rf = pd.Series(
+        ["bad"] * 4 if kind == "nonnumeric" else [100.0, 100.1, 100.2, 100.3],
+        index=range(4) if kind == "index" else dates.tz_localize("UTC") if kind == "aware-riskfree" else dates,
+        name="rf",
+    )
+    return prices, rf
+
+
+@mark.parametrize("selected", [False, True], ids=["full-window", "one-price-window"])
+def test_performance_stats_rejected_nonempty_date_range_preserves_state(rejected_range_inputs, selected):
+    """Reject recalculation without mixing a new scalar return with the old report."""
+    prices, rf = rejected_range_inputs
+    original_prices, original_rf = prices.copy(), rf.copy()
+    stats = ffn.PerformanceStats(prices, rf=rf, annualization_factor=365)
+    if selected:
+        stats.set_date_range(prices.index[0], prices.index[0])
+    original_state = stats.__dict__.copy()
+    original_stats = stats.stats.copy()
+    original_lookbacks = stats.lookback_returns.copy()
+    original_return_table = stats.return_table.copy()
+
+    with raises(TypeError):
+        stats.set_date_range(prices.index[0], prices.index[1])
+
+    _assert_attribute_graph_unchanged(stats, original_state)
+    pd.testing.assert_series_equal(stats.stats, original_stats)
+    pd.testing.assert_series_equal(stats.lookback_returns, original_lookbacks)
+    pd.testing.assert_frame_equal(stats.return_table, original_return_table)
+    pd.testing.assert_series_equal(prices, original_prices)
+    pd.testing.assert_series_equal(rf, original_rf)
+
+    # Reset must still use the original sparse prices, not the rejected daily window.
+    stats.set_date_range()
+    expected = ffn.PerformanceStats(prices, rf=rf, annualization_factor=365)
+    assert stats.total_return == approx(103 / 100 - 1)
+    pd.testing.assert_series_equal(stats.stats, expected.stats)
+
+
+@mark.parametrize("selected", [False, True], ids=["full-window", "one-price-window"])
+@mark.parametrize("failure_first", [False, True], ids=["later-child", "first-child"])
+def test_group_stats_rejected_nonempty_date_range_preserves_all_children(rejected_range_inputs, failure_first, selected):
+    """Preserve the group and child identities when any selected child cannot recalculate."""
+    prices, rf = rejected_range_inputs
+    frame = pd.DataFrame({"sparse": prices, "daily": prices})
+    frame.loc[prices.index[1], "sparse"] = np.nan
+    if failure_first:
+        frame = frame[["daily", "sparse"]]
+    original_prices, original_rf = frame.copy(), rf.copy()
+    stats = ffn.GroupStats(frame, annualization_factor=365)
+    stats.set_riskfree_rate(rf)
+    if selected:
+        stats.set_date_range(prices.index[0], prices.index[0])
+    original_state = stats.__dict__.copy()
+    original_children = dict(stats)
+    original_child_states = {name: child.__dict__.copy() for name, child in original_children.items()}
+    original_group_prices = stats.prices.copy()
+    original_stats = stats.stats.copy()
+    original_lookbacks = stats.lookback_returns.copy()
+
+    # The sparse child has one usable price and succeeds; the daily child reaches RF rejection.
+    with raises(TypeError):
+        stats.set_date_range(prices.index[0], prices.index[1])
+
+    _assert_attribute_graph_unchanged(stats, original_state)
+    assert list(stats) == list(original_children)
+    for name, child in original_children.items():
+        assert stats[name] is child
+        _assert_attribute_graph_unchanged(child, original_child_states[name])
+    pd.testing.assert_frame_equal(stats.prices, original_group_prices)
+    pd.testing.assert_frame_equal(stats.stats, original_stats)
+    pd.testing.assert_frame_equal(stats.lookback_returns, original_lookbacks)
+    pd.testing.assert_frame_equal(frame, original_prices)
+    pd.testing.assert_series_equal(rf, original_rf)
+
+    # Successful reconstruction still replaces children, retaining each native calendar.
+    stats.set_date_range()
+    expected = ffn.GroupStats(frame, annualization_factor=365)
+    expected.set_riskfree_rate(rf)
+    assert all(stats[name] is not child for name, child in original_children.items())
+    assert all(stats[name].total_return == approx(103 / 100 - 1) for name in stats)
+    pd.testing.assert_frame_equal(stats.stats, expected.stats)
+    pd.testing.assert_frame_equal(stats.lookback_returns, expected.lookback_returns)
+
+
+@mark.parametrize("grouped", [False, True], ids=["single", "group"])
+def test_date_range_report_failure_preserves_state(monkeypatch, grouped):
+    """Do not commit calculated fields or rebuilt children before report assembly succeeds."""
+    dates = pd.date_range("2024-01-01", periods=8)
+    prices = pd.Series([100.0, 101.0, 99.0, 103.0, 102.0, 108.0, 107.0, 110.0], index=dates, name="asset")
+    stats = ffn.GroupStats(prices) if grouped else ffn.PerformanceStats(prices)
+    original_state = stats.__dict__.copy()
+    children = dict(stats) if grouped else {}
+    child_states = {name: child.__dict__.copy() for name, child in children.items()}
+
+    def reject_report(*args):
+        raise RuntimeError("report assembly failed")
+
+    # Inject at the final native report stage, after all numerical updates have succeeded.
+    owner, method = (ffn.GroupStats, "_update_stats") if grouped else (ffn.PerformanceStats, "_create_stats_series")
+    monkeypatch.setattr(owner, method, reject_report)
+    with raises(RuntimeError, match="report assembly failed"):
+        stats.set_date_range(dates[1], dates[5])
+
+    _assert_attribute_graph_unchanged(stats, original_state)
+    for name, child in children.items():
+        assert stats[name] is child
+        _assert_attribute_graph_unchanged(child, child_states[name])
+
+
 @mark.parametrize(
     ("start", "end"),
     (
