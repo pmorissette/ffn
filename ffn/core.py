@@ -570,6 +570,7 @@ class PerformanceStats:
         Update date range of stats, charts, etc. If None then
         the original date is used. So to reset to the original
         range, just call with no args.
+        A failed recalculation leaves the current statistics unchanged.
 
         Args:
             * start (date): start date
@@ -584,7 +585,10 @@ class PerformanceStats:
         prices = self.prices.loc[start:end]
         if prices.dropna().empty:
             raise ValueError("The selected date range contains no usable data.")
-        self._update(prices)
+        # Recalculate off-object: a later failure must not mix new fields with old reports.
+        updated = copy.copy(self)
+        updated._update(prices)
+        self.__dict__.update(updated.__dict__)
 
     def display(self):
         """
@@ -1008,6 +1012,7 @@ class GroupStats(dict):
         Update date range of stats, charts, etc. If None then
         the original date range is used. So to reset to the original
         range, just call with no args.
+        A failed recalculation preserves the group and its existing children.
 
         Args:
             * start (date): start date
@@ -1023,7 +1028,11 @@ class GroupStats(dict):
         # The shared calendar may be empty while every series still has usable data.
         if full_prices.count().eq(0).any():
             raise ValueError("The selected date range contains no usable data for one or more series.")
-        self._update(prices, full_prices)
+        # Build every child and report before replacing any part of the current group.
+        updated = copy.copy(self)
+        updated._update(prices, full_prices)
+        self.update(updated)
+        self.__dict__.update(updated.__dict__)
 
     def display(self):
         """
