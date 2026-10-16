@@ -2732,6 +2732,190 @@ def test_rollapply_preserves_unmatched_callback_rows(columns, row, expected, pan
     pd.testing.assert_series_equal(row, snapshot)
 
 
+@mark.parametrize("uncopyable", [False, True], ids=["copy-side-effect", "uncopyable"])
+@mark.parametrize("fallback", [False, True], ids=["final-write", "fallback-write"])
+def test_rollapply_frame_does_not_copy_callback_metadata(uncopyable, fallback):
+    """Inspecting callback values must not copy unrelated metadata or invoke its hooks."""
+    copies = []
+
+    class Metadata:
+        def __deepcopy__(self, memo):
+            copies.append(True)
+            if uncopyable:
+                raise TypeError("callback metadata cannot be copied")
+            return self
+
+    metadata = Metadata()
+    data = pd.DataFrame({"A": [1.0, 2.0, 3.0], "B": [10.0, 20.0, 30.0]})
+    row = pd.Series([3.0, 30.0], index=data.columns)
+    row.attrs = {"metadata": metadata}
+    calls = []
+
+    def callback(sample):
+        calls.append(tuple(sample.index))
+        return [5.0, 50.0] if fallback and len(calls) == 2 else row
+
+    actual = ffn.rollapply(data, 2, callback)
+    last_row = [5.0, 50.0] if fallback else [3.0, 30.0]
+    expected = pd.DataFrame([[np.nan, np.nan], [3.0, 30.0], last_row], columns=data.columns)
+    pd.testing.assert_frame_equal(actual, expected)
+    pd.testing.assert_frame_equal(data, pd.DataFrame({"A": [1.0, 2.0, 3.0], "B": [10.0, 20.0, 30.0]}))
+    assert copies == []
+    assert row.attrs["metadata"] is metadata
+    assert calls == [(0, 1), (1, 2)]
+
+
+@mark.parametrize("labeled", [False, True], ids=["array", "series"])
+@mark.parametrize("pandas_method", [False, True], ids=["module", "pandas"])
+def test_rollapply_frame_snapshots_callback_rows(labeled, pandas_method):
+    """Reused callback storage must be copied without snapshotting later input windows."""
+    data = pd.DataFrame({"A": [1.0, 2.0, 3.0, 4.0], "B": [10.0, 20.0, 30.0, 40.0]})
+    data.attrs = {"source": "caller"}
+    data.flags.allows_duplicate_labels = False
+    shared = np.empty(2)
+    calls = []
+
+    def callback(sample):
+        calls.append(tuple(sample.index))
+        shared[:] = sample.to_numpy().sum(axis=0)
+        if len(calls) == 1:
+            data.iloc[-1, 0] = 20.0
+        return pd.Series(shared[::-1], index=["B", "A"]) if labeled else shared
+
+    actual = data.rollapply(2, callback) if pandas_method else ffn.rollapply(data, 2, callback)
+    shared[:] = -100.0
+    expected = pd.DataFrame([[np.nan, np.nan], [3.0, 30.0], [5.0, 50.0], [23.0, 70.0]], columns=data.columns)
+    expected.attrs = {"source": "caller"}
+    expected.flags.allows_duplicate_labels = False
+    pd.testing.assert_frame_equal(actual, expected)
+    assert actual.attrs == expected.attrs
+    assert calls == [(0, 1), (1, 2), (2, 3)]
+    pd.testing.assert_frame_equal(data, expected.assign(A=[1.0, 2.0, 3.0, 20.0], B=[10.0, 20.0, 30.0, 40.0]))
+
+
+@mark.parametrize(
+    "row",
+    [
+        np.array([7.5, 8.5], dtype="float32"),
+        pd.Series([pd.NA, 8.5], dtype="Float64"),
+        pd.Series([7.5]),
+        [7.5, 8.5],
+        np.inf,
+        np.array([np.inf, -0.0]),
+        np.array([1 + 2j, 3 + 0j]),
+        np.ones(3),
+    ],
+    ids=["float32", "nullable", "partial", "list", "scalar-inf", "array-inf", "complex", "wrong-width"],
+)
+@mark.parametrize("position", [1, 2], ids=["middle", "last"])
+def test_rollapply_frame_preserves_assignment_fallback(row, position):
+    """Compare conversion, rejection and warning policy with native row assignment."""
+    data = pd.DataFrame({"A": [1.0, 2.0, 3.0, 4.0], "B": [10.0, 20.0, 30.0, 40.0]})
+    original = data.copy(deep=True)
+    rows = [np.array([3.0, -0.0]), np.array([5.0, 50.0]), np.array([7.0, 70.0])]
+    rows[position] = row
+
+    def run(native):
+        calls = []
+
+        def callback(sample):
+            calls.append(tuple(sample.index))
+            return rows[len(calls) - 1]
+
+        error = None
+        result = None
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            try:
+                if native:
+                    result = data.copy().astype(float)
+                    result[:] = np.nan
+                    for i in range(1, len(data)):
+                        result.iloc[i] = callback(data.iloc[i - 1 : i + 1])
+                else:
+                    result = ffn.rollapply(data, 2, callback)
+            except (TypeError, ValueError) as exc:
+                error = (type(exc), str(exc))
+        return result, error, calls, [(item.category, str(item.message)) for item in caught]
+
+    expected, expected_error, expected_calls, expected_warnings = run(True)
+    actual, error, calls, caught = run(False)
+    assert (error, calls, caught) == (expected_error, expected_calls, expected_warnings)
+    if error is None:
+        pd.testing.assert_frame_equal(actual, expected)
+        assert actual.to_numpy().tobytes() == expected.to_numpy().tobytes()
+    pd.testing.assert_frame_equal(data, original)
+
+
+@mark.skipif(Version(pd.__version__) >= Version("3"), reason="pandas 3 removed use_inf_as_na")
+@mark.parametrize("use_inf_as_na", [False, True])
+@mark.parametrize("scalar", [False, True], ids=["array", "scalar"])
+def test_rollapply_frame_preserves_infinity_assignment_option(use_inf_as_na, scalar):
+    """Scalar and full-row infinity have different native missing-value conversions."""
+    data = pd.DataFrame({"A": [1.0, 2.0, 3.0, 4.0], "B": [10.0, 20.0, 30.0, 40.0]})
+    rows = [np.array([3.0, -0.0]), np.inf if scalar else np.array([np.inf, -np.inf]), np.array([7.0, 70.0])]
+    calls = []
+
+    def callback(sample):
+        calls.append(tuple(sample.index))
+        return rows[len(calls) - 1]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="use_inf_as_na option is deprecated", category=FutureWarning)
+        with pd.option_context("mode.use_inf_as_na", use_inf_as_na):
+            actual = data.rollapply(2, callback)
+
+    infinity = np.nan if scalar and use_inf_as_na else np.inf
+    expected = pd.DataFrame([[np.nan, np.nan], [3.0, -0.0], [infinity, infinity if scalar else -np.inf], [7.0, 70.0]], columns=data.columns)
+    # Inspect stored bits outside the option context; pandas equality there can hide infinity.
+    np.testing.assert_array_equal(actual.to_numpy().view("uint64"), expected.to_numpy().view("uint64"))
+    pd.testing.assert_frame_equal(actual, expected)
+    assert calls == [(0, 1), (1, 2), (2, 3)]
+
+
+@mark.skipif(Version(pd.__version__) >= Version("3"), reason="pandas 3 removed ArrayManager")
+@mark.parametrize("created_with,active_manager", [("array", "block"), ("block", "array")])
+@mark.parametrize("columns", [1, 2])
+@mark.parametrize("fallback", [False, True], ids=["final-write", "fallback-write"])
+def test_rollapply_frame_preserves_storage_assignment_warnings(created_with, active_manager, columns, fallback):
+    """Stored layout, not the current option, determines pandas' assignment warning path."""
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="data_manager option is deprecated", category=FutureWarning)
+        with pd.option_context("mode.data_manager", created_with):
+            data = pd.DataFrame(np.arange(4 * columns, dtype=float).reshape(4, columns))
+        with pd.option_context("mode.data_manager", active_manager):
+            rows = [np.arange(columns, dtype=float) + i for i in range(3)]
+            if fallback:
+                rows[1] = rows[1].tolist()
+
+            def native(data, window, fn):
+                result = data.copy().astype(float)
+                result[:] = np.nan
+                for i in range(window - 1, len(data)):
+                    result.iloc[i] = fn(data.iloc[i - window + 1 : i + 1])
+                return result
+
+            results = []
+            for implementation in [native, ffn.rollapply]:
+                calls = []
+
+                def callback(sample, calls=calls):
+                    calls.append(tuple(sample.index))
+                    return rows[len(calls) - 1]
+
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always")
+                    result = implementation(data, 2, callback)
+                results.append((result, calls, [(item.category, str(item.message)) for item in caught]))
+
+    expected, expected_calls, expected_warnings = results[0]
+    actual, calls, caught = results[1]
+    pd.testing.assert_frame_equal(actual, expected)
+    assert actual.to_numpy().tobytes() == expected.to_numpy().tobytes()
+    assert (calls, caught) == (expected_calls, expected_warnings)
+    pd.testing.assert_frame_equal(data, pd.DataFrame(np.arange(4 * columns, dtype=float).reshape(4, columns)))
+
+
 def test_rollapply_preserves_extra_callback_row_rejection():
     data = pd.DataFrame({"A": [1.0, 2.0], "B": [10.0, 20.0]})
     original = data.copy(deep=True)
