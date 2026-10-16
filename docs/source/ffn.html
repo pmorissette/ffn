@@ -192,7 +192,8 @@ Refer to pandas docs for valid freq strings.</p></li>
 <span class="sig-name descname"><span class="pre">set_date_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#GroupStats.set_date_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.GroupStats.set_date_range" title="Link to this definition">¶</a></dt>
 <dd><p>Update date range of stats, charts, etc. If None then
 the original date range is used. So to reset to the original
-range, just call with no args.</p>
+range, just call with no args.
+A failed recalculation preserves the group and its existing children.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -392,7 +393,8 @@ Refer to pandas docs for valid period strings.</p></li>
 <span class="sig-name descname"><span class="pre">set_date_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#PerformanceStats.set_date_range"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.PerformanceStats.set_date_range" title="Link to this definition">¶</a></dt>
 <dd><p>Update date range of stats, charts, etc. If None then
 the original date is used. So to reset to the original
-range, just call with no args.</p>
+range, just call with no args.
+A failed recalculation leaves the current statistics unchanged.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

@@ -1021,6 +1021,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Update date range of stats, charts, etc. If None then</span>
 <span class="sd">        the original date is used. So to reset to the original</span>
 <span class="sd">        range, just call with no args.</span>
+<span class="sd">        A failed recalculation leaves the current statistics unchanged.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            * start (date): start date</span>
@@ -1035,7 +1036,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">prices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">prices</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The selected date range contains no usable data."</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span></div>
+        <span class="c1"># Recalculate off-object: a later failure must not mix new fields with old reports.</span>
+        <span class="n">updated</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">updated</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="PerformanceStats.display">
@@ -1486,6 +1490,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Update date range of stats, charts, etc. If None then</span>
 <span class="sd">        the original date range is used. So to reset to the original</span>
 <span class="sd">        range, just call with no args.</span>
+<span class="sd">        A failed recalculation preserves the group and its existing children.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            * start (date): start date</span>
@@ -1501,7 +1506,11 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># The shared calendar may be empty while every series still has usable data.</span>
         <span class="k">if</span> <span class="n">full_prices</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The selected date range contains no usable data for one or more series."</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">full_prices</span><span class="p">)</span></div>
+        <span class="c1"># Build every child and report before replacing any part of the current group.</span>
+        <span class="n">updated</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">updated</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">full_prices</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="GroupStats.display">
