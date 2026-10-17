@@ -556,7 +556,8 @@ Non-Normality”, Journal of Portfolio Management, 40(5), 94-107.</p>
 <li><p><strong>returns</strong> (<em>*</em>) – Return series of the selected (best) trial.</p></li>
 <li><p><strong>trial_sharpe_ratios</strong> (<em>*</em>) – Sharpe ratios of all
 evaluated trials, e.g. as returned by <a class="reference internal" href="#ffn.core.calc_sharpe" title="ffn.core.calc_sharpe"><code class="xref py py-func docutils literal notranslate"><span class="pre">calc_sharpe()</span></code></a>. All
-values must be finite; otherwise the result is <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p></li>
+values must be available and finite; a masked, missing or
+nonfinite score makes the result <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.</p></li>
 <li><p><strong>rf</strong> (<em>*</em>) – <p><a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a>
 expressed in yearly (annualized) terms or return series.</p>
 </p></li>

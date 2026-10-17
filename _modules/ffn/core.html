@@ -3827,7 +3827,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * returns (Series): Return series of the selected (best) trial.</span>
 <span class="sd">        * trial_sharpe_ratios (Series, array-like): Sharpe ratios of all</span>
 <span class="sd">            evaluated trials, e.g. as returned by :func:`calc_sharpe`. All</span>
-<span class="sd">            values must be finite; otherwise the result is ``NaN``.</span>
+<span class="sd">            values must be available and finite; a masked, missing or</span>
+<span class="sd">            nonfinite score makes the result ``NaN``.</span>
 <span class="sd">        * rf (float, np.floating, Series): `Risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_</span>
 <span class="sd">            expressed in yearly (annualized) terms or return series.</span>
 <span class="sd">        * nperiods (int): Frequency of returns (252 for daily, 12 for</span>
@@ -3845,8 +3846,9 @@ window.runMermaid = runMermaid;</script>
 
     <span class="c1"># Work in per-period terms; annualization cancels in the ratio below</span>
     <span class="n">sr</span> <span class="o">=</span> <span class="n">calc_sharpe</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="n">nperiods</span><span class="p">,</span> <span class="n">annualize</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="c1"># Check missing pandas values before conversion to a NumPy float array.</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">trial_sharpe_ratios</span><span class="p">)):</span>
+    <span class="c1"># A finite payload is still unavailable when masked; np.asarray loses the mask.</span>
+    <span class="c1"># Only inspect masked arrays: pandas Series can expose a "_mask" index label.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">isMaskedArray</span><span class="p">(</span><span class="n">trial_sharpe_ratios</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">is_masked</span><span class="p">(</span><span class="n">trial_sharpe_ratios</span><span class="p">))</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">isna</span><span class="p">(</span><span class="n">trial_sharpe_ratios</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
     <span class="n">trial_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">trial_sharpe_ratios</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">trial_values</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
