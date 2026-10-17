@@ -133,6 +133,21 @@ def test_calc_max_drawdown(benchmark, prices):
 
 
 @pytest.mark.benchmark(group="drawdown")
+def test_calc_max_drawdown_intraday(benchmark):
+    """Keep the owned intraday panel workload visible alongside independent running-peak results."""
+    values = np.random.default_rng(42).normal(0.000002, 0.0005, size=(100_000, 50))
+    np.cumsum(values, axis=0, out=values)
+    np.exp(values, out=values)
+    values *= 100
+    prices = pd.DataFrame(values, index=pd.date_range("2020-01-01", periods=len(values), freq="min"), columns=[f"asset_{i}" for i in range(50)], copy=False)
+    expected = pd.Series(np.min(values / np.maximum.accumulate(values, axis=0), axis=0) - 1, index=prices.columns)
+
+    result = benchmark(ffn.calc_max_drawdown, prices)
+
+    pd.testing.assert_series_equal(result, expected, check_exact=True)
+
+
+@pytest.mark.benchmark(group="drawdown")
 def test_drawdown_details(benchmark, drawdown):
     result = benchmark(ffn.drawdown_details, drawdown)
 
