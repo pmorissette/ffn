@@ -99,7 +99,9 @@ Period in rows, series in columns.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py">
 <span class="sig-name descname"><span class="pre">\*</span> <span class="pre">prices</span></span></dt>
-<dd><p>The merged and rebased prices.</p>
+<dd><p>The merged prices at their original levels,
+keeping only dates where every series has data. These prices are
+not rebased; <a class="reference internal" href="#ffn.core.GroupStats.plot" title="ffn.core.GroupStats.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> rebases each series separately for display.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>DataFrame</p>
