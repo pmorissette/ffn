@@ -49,3 +49,17 @@ def test_return_table_preserves_complete_year_precision(dtype):
     expected_values = np.append(monthly_returns, np.prod(1 + monthly_returns) - 1)
     expected = pd.DataFrame([expected_values], index=[2023], columns=stats.return_table.columns)
     pd.testing.assert_frame_equal(stats.return_table, expected, check_exact=True)
+
+
+def test_return_table_ignores_leading_missing_prices():
+    index = pd.bdate_range("2019-01-01", "2022-12-30")
+    rng = np.random.default_rng(1)
+    prices = pd.Series(100 * np.cumprod(1 + rng.normal(0.0005, 0.01, len(index))), index=index, name="asset")
+    prices[:"2020-03-15"] = np.nan
+
+    stats = ffn.PerformanceStats(prices)
+    expected = ffn.PerformanceStats(prices.dropna())
+
+    pd.testing.assert_frame_equal(stats.return_table, expected.return_table)
+    assert stats.pos_month_perc == expected.pos_month_perc
+    assert stats.win_year_perc == expected.win_year_perc

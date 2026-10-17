@@ -315,10 +315,14 @@ class PerformanceStats:
         #  price series didn't have any na values
         #  if months or years are missing then we will need .dropna() too
         self.daily_prices = self.daily_prices.dropna()
+        # Missing leading prices would become empty months and years before the first
+        # observation. Trim only that prefix: trailing bins stay for MTD/YTD.
+        first_valid = obj.first_valid_index()
+        periodic = obj.loc[first_valid:] if first_valid is not None else obj
         # M = month end frequency
-        self.monthly_prices = obj.resample(_MonthEnd).last()  # .dropna()
+        self.monthly_prices = periodic.resample(_MonthEnd).last()  # .dropna()
         # A == year end frequency
-        self.yearly_prices = obj.resample(_YearEnd).last()  # .dropna()
+        self.yearly_prices = periodic.resample(_YearEnd).last()  # .dropna()
 
         # let's save some typing
         dp = self.daily_prices
