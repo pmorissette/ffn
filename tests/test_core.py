@@ -4218,6 +4218,85 @@ def test_calc_deflated_sharpe_ratio_scalar_trial():
         assert np.isnan(ffn.calc_deflated_sharpe_ratio(returns, invalid, nperiods=252))
 
 
+@mark.parametrize(
+    "trials",
+    [
+        np.ma.fix_invalid(np.full(3, np.nan), fill_value=0.0),
+        np.ma.array([0, 1, 2], dtype="float32", mask=[False, True, False]),
+        np.ma.array([0, 1, 2], dtype="int64", mask=[False, True, False]),
+        np.ma.array([0, 1, 2], dtype=object, mask=[False, True, False]),
+        np.ma.array(0.5, mask=True),
+        np.ma.masked,
+    ],
+    ids=["filled-invalid", "float32", "integer", "object", "scalar", "masked-constant"],
+)
+@mark.parametrize("annualized_trials", [True, False])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_deflated_sharpe_ratio_masked_trials(trials, annualized_trials, use_pandas_method):
+    """Unavailable trials cannot supply the complete-search hurdle, even with finite hidden scores."""
+    returns = pd.Series([0.02, -0.01, 0.015, 0.03, -0.02, 0.012, 0.008, 0.018])
+    original_returns = returns.copy(deep=True)
+    original_trials = trials.copy()
+    calculate = returns.calc_deflated_sharpe_ratio if use_pandas_method else ffn.calc_deflated_sharpe_ratio
+    args = () if use_pandas_method else (returns,)
+
+    result = calculate(*args, trial_sharpe_ratios=trials, nperiods=252, annualized_trials=annualized_trials)
+
+    assert np.isnan(result)
+    # Masked equality alone would hide a change to the unavailable scores' payloads.
+    np.testing.assert_array_equal(trials.data, original_trials.data)
+    np.testing.assert_array_equal(np.ma.getmaskarray(trials), np.ma.getmaskarray(original_trials))
+    pd.testing.assert_series_equal(returns, original_returns)
+
+
+@mark.parametrize("dtype", ["float32", "float64", "int64", object])
+@mark.parametrize("explicit_mask", [False, True], ids=["nomask", "false-array"])
+@mark.parametrize("scalar", [False, True], ids=["vector", "scalar"])
+@mark.parametrize("annualized_trials", [True, False])
+def test_calc_deflated_sharpe_ratio_unmasked_trials(dtype, explicit_mask, scalar, annualized_trials):
+    """An all-available masked-array container retains the ordinary scalar or full-search probability."""
+    returns = pd.Series([0.02, -0.01, 0.015, 0.03, -0.02, 0.012, 0.008, 0.018])
+    values = 1 if scalar else [0, 1, 2]
+    mask = np.zeros_like(values, dtype=bool) if explicit_mask else np.ma.nomask
+    trials = np.ma.array(values, dtype=dtype, mask=mask)
+    original_trials = trials.copy()
+
+    # Independent central moments, sample dispersion and normal quantiles give these
+    # probabilities; a scalar trial has a zero multiple-testing hurdle in either unit.
+    expected = 0.8737523924091933 if scalar else (0.8493350275407454 if annualized_trials else 0.2698120560681526)
+    assert ffn.calc_deflated_sharpe_ratio(returns, trials, nperiods=252, annualized_trials=annualized_trials) == approx(expected, rel=1e-13)
+    assert returns.calc_deflated_sharpe_ratio(trials, nperiods=252, annualized_trials=annualized_trials) == approx(expected, rel=1e-13)
+    np.testing.assert_array_equal(trials.data, original_trials.data)
+    np.testing.assert_array_equal(np.ma.getmaskarray(trials), np.ma.getmaskarray(original_trials))
+
+
+@mark.parametrize("dtype", ["float64", object, "Float64"])
+@mark.parametrize("annualized_trials,expected", [(True, 0.8493350275407454), (False, 0.2698120560681526)])
+def test_calc_deflated_sharpe_ratio_trial_labels_are_not_mask_metadata(dtype, annualized_trials, expected):
+    """A trial named _mask is still an available score, not NumPy mask metadata."""
+    returns = pd.Series([0.02, -0.01, 0.015, 0.03, -0.02, 0.012, 0.008, 0.018])
+    trials = pd.Series([1, 0, 2], index=["_mask", "second", "third"], dtype=dtype)
+    original_trials = trials.copy(deep=True)
+
+    # These are the same three available scores as the independent full-search
+    # controls above; changing their order and labels cannot change the hurdle.
+    assert ffn.calc_deflated_sharpe_ratio(returns, trials, nperiods=252, annualized_trials=annualized_trials) == approx(expected, rel=1e-13)
+    assert returns.calc_deflated_sharpe_ratio(trials, nperiods=252, annualized_trials=annualized_trials) == approx(expected, rel=1e-13)
+    pd.testing.assert_series_equal(trials, original_trials)
+
+
+def test_calc_deflated_sharpe_ratio_masked_trials_preserve_riskfree_frequency_error():
+    """Missing search evidence must not suppress an earlier risk-free rate configuration error."""
+    # Undated returns cannot convert a nonzero annual risk-free rate.
+    returns = pd.Series([0.02, -0.01, 0.015, 0.03, -0.02, 0.012, 0.008, 0.018])
+    trials = np.ma.array([0.0, 0.5, 1.0], mask=True)
+
+    with raises(ValueError, match="nperiods"):
+        ffn.calc_deflated_sharpe_ratio(returns, trials, rf=0.03)
+    with raises(ValueError, match="nperiods"):
+        returns.calc_deflated_sharpe_ratio(trials, rf=0.03)
+
+
 def test_calc_deflated_sharpe_ratio_nonfinite_calculated_trials():
     trial_returns = pd.DataFrame(
         {

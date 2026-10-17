@@ -3189,7 +3189,8 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
         * returns (Series): Return series of the selected (best) trial.
         * trial_sharpe_ratios (Series, array-like): Sharpe ratios of all
             evaluated trials, e.g. as returned by :func:`calc_sharpe`. All
-            values must be finite; otherwise the result is ``NaN``.
+            values must be available and finite; a masked, missing or
+            nonfinite score makes the result ``NaN``.
         * rf (float, np.floating, Series): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_
             expressed in yearly (annualized) terms or return series.
         * nperiods (int): Frequency of returns (252 for daily, 12 for
@@ -3207,8 +3208,9 @@ def calc_deflated_sharpe_ratio(returns, trial_sharpe_ratios, rf=0.0, nperiods=No
 
     # Work in per-period terms; annualization cancels in the ratio below
     sr = calc_sharpe(returns, rf=rf, nperiods=nperiods, annualize=False)
-    # Check missing pandas values before conversion to a NumPy float array.
-    if np.any(pd.isna(trial_sharpe_ratios)):
+    # A finite payload is still unavailable when masked; np.asarray loses the mask.
+    # Only inspect masked arrays: pandas Series can expose a "_mask" index label.
+    if (np.ma.isMaskedArray(trial_sharpe_ratios) and np.ma.is_masked(trial_sharpe_ratios)) or np.any(pd.isna(trial_sharpe_ratios)):
         return np.nan
     trial_values = np.asarray(trial_sharpe_ratios, dtype=float)
     if not np.isfinite(trial_values).all():
