@@ -764,10 +764,14 @@ window.runMermaid = runMermaid;</script>
         <span class="c1">#  price series didn't have any na values</span>
         <span class="c1">#  if months or years are missing then we will need .dropna() too</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">daily_prices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">daily_prices</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+        <span class="c1"># Missing leading prices would become empty months and years before the first</span>
+        <span class="c1"># observation. Trim only that prefix: trailing bins stay for MTD/YTD.</span>
+        <span class="n">first_valid</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">first_valid_index</span><span class="p">()</span>
+        <span class="n">periodic</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">first_valid</span><span class="p">:]</span> <span class="k">if</span> <span class="n">first_valid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">obj</span>
         <span class="c1"># M = month end frequency</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">monthly_prices</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_MonthEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>  <span class="c1"># .dropna()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">monthly_prices</span> <span class="o">=</span> <span class="n">periodic</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_MonthEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>  <span class="c1"># .dropna()</span>
         <span class="c1"># A == year end frequency</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">yearly_prices</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_YearEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>  <span class="c1"># .dropna()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yearly_prices</span> <span class="o">=</span> <span class="n">periodic</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">_YearEnd</span><span class="p">)</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>  <span class="c1"># .dropna()</span>
 
         <span class="c1"># let's save some typing</span>
         <span class="n">dp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">daily_prices</span>
