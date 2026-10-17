@@ -893,7 +893,9 @@ class GroupStats(dict):
         * lookback_returns (DataFrame): Returns for diffrent
             lookback periods (1m, 3m, 6m, ytd...)
             Period in rows, series in columns.
-        * prices (DataFrame): The merged and rebased prices.
+        * prices (DataFrame): The merged prices at their original levels,
+            keeping only dates where every series has data. These prices are
+            not rebased; :meth:`plot` rebases each series separately for display.
 
     """
 
