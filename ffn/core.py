@@ -3025,10 +3025,10 @@ def to_excess_returns(returns, rf, nperiods=None):
     else:
         _rf = rf
 
-    # A time-indexed risk-free Series applies to every asset column by date.
-    if isinstance(returns, pd.DataFrame) and isinstance(_rf, pd.Series):
-        return returns.sub(_rf, axis="index")
+    if isinstance(_rf, pd.Series):
+        return _diff_returns(returns, _rf)
 
+    # Retain native column broadcasting for a DataFrame risk-free input.
     return returns - _rf
 
 
