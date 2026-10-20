@@ -641,6 +641,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">updated</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">updated</span><span class="o">.</span><span class="n">rf</span> <span class="o">=</span> <span class="n">rf</span>
         <span class="n">updated</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="n">_current_prices</span><span class="p">)</span>
+        <span class="c1"># Commit removed fields as well as recalculated values after the staged update succeeds.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span></div>
 
 
@@ -779,6 +781,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">yp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yearly_prices</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dp</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># Match a fresh one-price instance rather than retain an earlier window's returns.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"returns"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">"log_returns"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
             <span class="k">return</span>
 
         <span class="c1"># Keep empty reporting bins, but end current-period lookups at the last observed day.</span>
@@ -1043,6 +1048,8 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># Recalculate off-object: a later failure must not mix new fields with old reports.</span>
         <span class="n">updated</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="n">updated</span><span class="o">.</span><span class="n">_update</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+        <span class="c1"># dict.update alone would retain return fields removed by the one-price calculation.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span></div>
 
 
@@ -1485,6 +1492,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">updated</span><span class="o">.</span><span class="n">_riskfree_rate</span> <span class="o">=</span> <span class="n">rf</span>
 
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_names</span><span class="p">:</span>
+            <span class="c1"># Keep each existing child, including omissions from its successful staged update.</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
             <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">updated</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span></div>
 
