@@ -5615,7 +5615,8 @@ def test_group_stats_rejected_nonempty_date_range_preserves_all_children(rejecte
 
 
 @mark.parametrize("grouped", [False, True], ids=["single", "group"])
-def test_date_range_report_failure_preserves_state(monkeypatch, grouped):
+@mark.parametrize("one_price", [False, True], ids=["multi-price", "one-price"])
+def test_date_range_report_failure_preserves_state(monkeypatch, grouped, one_price):
     """Do not commit calculated fields or rebuilt children before report assembly succeeds."""
     dates = pd.date_range("2024-01-01", periods=8)
     prices = pd.Series([100.0, 101.0, 99.0, 103.0, 102.0, 108.0, 107.0, 110.0], index=dates, name="asset")
@@ -5631,7 +5632,7 @@ def test_date_range_report_failure_preserves_state(monkeypatch, grouped):
     owner, method = (ffn.GroupStats, "_update_stats") if grouped else (ffn.PerformanceStats, "_create_stats_series")
     monkeypatch.setattr(owner, method, reject_report)
     with raises(RuntimeError, match="report assembly failed"):
-        stats.set_date_range(dates[1], dates[5])
+        stats.set_date_range(dates[1], dates[1] if one_price else dates[5])
 
     _assert_attribute_graph_unchanged(stats, original_state)
     for name, child in children.items():
@@ -5694,6 +5695,89 @@ def test_performance_stats_empty_date_range_guard_accepts_one_price():
     assert stats.end == dates[1]
     assert len(stats.daily_prices) == 1
     assert pd.isna(stats.total_return)
+
+
+@mark.parametrize("update", ["date-range", "risk-free", "group-risk-free"])
+@mark.parametrize("intraday", [False, True], ids=["one-raw-price", "one-daily-price"])
+@mark.parametrize("dtype", ["float64", "Float64"])
+def test_single_price_updates_clear_derived_returns(update, intraday, dtype):
+    """A selected daily price has no return intervals, even after earlier calculations."""
+    dates = pd.date_range("2024-01-01", periods=5, tz="UTC")
+    if intraday:
+        dates = pd.DatetimeIndex(["2024-01-01", "2024-01-02", "2024-01-03", "2024-01-04 09:00", "2024-01-04 12:00"], tz="UTC")
+    prices = pd.Series([100.0, 120.0, 80.0, 110.0, 121.0], index=dates, dtype=dtype, name="asset")
+    group = ffn.GroupStats(prices) if update == "group-risk-free" else None
+    stats = group["asset"] if group is not None else prices.calc_perf_stats()
+    state = stats.__dict__
+    marker = stats.caller_marker = object()
+    expected_daily_dates = pd.date_range("2024-01-01", periods=4 if intraday else 5, tz="UTC")
+    expected_returns = pd.Series(
+        [np.nan, 0.2, -1 / 3, 121 / 80 - 1] if intraday else [np.nan, 0.2, -1 / 3, 0.375, 0.1],
+        index=expected_daily_dates,
+        dtype=dtype,
+        name="asset",
+    )
+
+    if update == "date-range":
+        stats.set_date_range(dates[-1].normalize(), dates[-1])
+    else:
+        # Prices are retained by reference: an RF update must also handle a feed losing observations.
+        stats.prices.iloc[:3 if intraday else 4] = np.nan
+        owner = group if group is not None else stats
+        owner.set_riskfree_rate(0.03)
+    selected = stats.prices.copy()
+    assert stats.__dict__ is state
+    assert stats.caller_marker is marker
+    assert len(stats.daily_prices) == 1
+    for field in ("returns", "log_returns"):
+        assert not hasattr(stats, field)
+    if intraday:
+        # Raw endpoints still define 10%; two intraday prices do not define a daily return.
+        assert stats.total_return == approx(0.1)
+    else:
+        assert pd.isna(stats.total_return)
+    if group is not None:
+        assert group["asset"] is stats
+
+    owner = group if group is not None else stats
+    owner.set_riskfree_rate(0.05)
+    assert not hasattr(stats, "returns")
+    assert not hasattr(stats, "log_returns")
+    pd.testing.assert_series_equal(stats.prices, selected)
+    fresh = ffn.PerformanceStats(pd.Series([121.0], index=dates[-1:]))
+    assert not hasattr(fresh, "returns")
+    assert not hasattr(fresh, "log_returns")
+
+    # Restore caller-updated prices before testing the original full-range reset.
+    stats.prices.iloc[:] = [100.0, 120.0, 80.0, 110.0, 121.0]
+    owner.set_date_range()
+    stats = group["asset"] if group is not None else stats
+    pd.testing.assert_series_equal(stats.returns, expected_returns)
+    pd.testing.assert_series_equal(stats.log_returns, np.log1p(expected_returns))
+    stats.set_date_range(expected_daily_dates[-2], dates[-1])
+    assert stats.returns.iloc[-1] == approx(121 / 80 - 1 if intraday else 0.1)
+    assert stats.returns.count() == 1
+
+
+@mark.parametrize("grouped", [False, True], ids=["single", "group"])
+def test_single_price_riskfree_report_failure_preserves_returns(monkeypatch, grouped):
+    """Removing fields on a staged one-price calculation must wait for report success."""
+    prices = pd.Series([100.0, 120.0, 80.0, 110.0, 121.0], index=pd.date_range("2024-01-01", periods=5), name="asset")
+    owner = ffn.GroupStats(prices) if grouped else ffn.PerformanceStats(prices)
+    child = owner["asset"] if grouped else owner
+    child.prices.iloc[:-1] = np.nan
+    original_state = child.__dict__.copy()
+
+    def reject_report(*args):
+        raise RuntimeError("report assembly failed")
+
+    monkeypatch.setattr(ffn.PerformanceStats, "_create_stats_series", reject_report)
+    with raises(RuntimeError, match="report assembly failed"):
+        owner.set_riskfree_rate(0.03)
+    _assert_attribute_graph_unchanged(child, original_state)
+    assert child.returns.count() == 4
+    if grouped:
+        assert owner["asset"] is child
 
 
 @mark.parametrize("empty_column", ("A", "B"))
