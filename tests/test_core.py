@@ -5184,6 +5184,92 @@ def test_statistics_specifications_preserve_rows_and_fresh_lists():
     assert group_stats._stats() == expected_group
 
 
+@fixture
+def statistic_report():
+    """Exercise rendering with raw values, independently of statistical calculation."""
+
+    def make_report(mode, schema, **values):
+        child = object.__new__(ffn.PerformanceStats)
+        child.name = "asset"
+        child.__dict__.update(values)
+        child._stats = lambda: schema
+        if mode == "single":
+            return child
+        group = dict.__new__(ffn.GroupStats)
+        group["asset"] = child
+        group._names = ["asset"]
+        group._stats = lambda: schema
+        return group
+
+    return make_report
+
+
+@mark.parametrize("mode", ["single", "group", "display"])
+@mark.parametrize(
+    ("value", "token", "expected"),
+    [
+        ("raw", None, "raw"),
+        (0.125, "p", "12.50%"),
+        (np.float32(0.125), "p", "12.50%"),
+        (-1.25, "n", "-1.25"),
+        (np.int64(-3), "n", "-3.00"),
+        (pd.NA, "p", "-"),
+        (pd.NA, "n", "-"),
+        (None, "p", "-"),
+        (np.nan, "n", "-"),
+        (np.inf, "p", "inf%"),
+        (-np.inf, "n", "-inf"),
+        (pd.Timestamp("2024-01-02 12:00", tz="UTC"), "dt", "2024-01-02"),
+    ],
+)
+def test_statistic_report_value_formatting(mode, value, token, expected, statistic_report, capsys, tmp_path):
+    """Literal values pin the shared policy at each public report owner."""
+    report = statistic_report(mode, [("value", "Value", token), (None, None, None)], value=value)
+    if mode == "display":
+        assert report.display() is None
+        assert capsys.readouterr().out == ffn.core.tabulate([["Stat", "asset"], ["Value", expected], ["", ""]], headers="firstrow") + "\n"
+    else:
+        output = f"Stat;asset\nValue;{expected}\n;"
+        assert report.to_csv(sep=";") == output
+        path = tmp_path / "report.csv"
+        assert report.to_csv(sep=";", path=path) is None
+        assert path.read_bytes() == output.replace("\n", ffn.core.os.linesep).encode()
+
+
+@mark.parametrize("mode", ["single", "group", "display"])
+@mark.parametrize("series_rf", [False, True])
+@mark.parametrize("token", ["p", "unsupported"])
+def test_statistic_report_retains_riskfree_format_policy(mode, series_rf, token, statistic_report, capsys, tmp_path):
+    """RF omission, raw NaN display and formatted CSV fallback are distinct caller policies."""
+    rf = pd.Series([100.0, 101.0]) if series_rf else 0.125
+    report = statistic_report(mode, [("rf", "Risk-free rate", token)], rf=rf)
+    if token == "unsupported" and (not series_rf or mode == "group"):
+        path = tmp_path / "existing.csv"
+        path.write_bytes(b"keep prior output")
+        with raises(NotImplementedError, match="^unsupported format unsupported$"):
+            report.display() if mode == "display" else report.to_csv(path=path)
+        assert path.read_bytes() == b"keep prior output"
+        assert capsys.readouterr().out == ""
+    elif mode == "display":
+        expected = np.nan if series_rf else "12.50%"
+        report.display()
+        assert capsys.readouterr().out == ffn.core.tabulate([["Stat", "asset"], ["Risk-free rate", expected]], headers="firstrow") + "\n"
+    else:
+        expected = "Stat,asset" if series_rf and mode == "single" else "Stat,asset\nRisk-free rate," + ("-" if series_rf else "12.50%")
+        assert report.to_csv() == expected
+
+
+@mark.parametrize("mode", ["single", "group"])
+def test_statistic_report_keeps_unformatted_csv_type_error(mode, statistic_report, tmp_path):
+    """A raw non-string still fails at CSV joining, before an existing file is opened."""
+    report = statistic_report(mode, [("value", "Value", None)], value=1.25)
+    path = tmp_path / "existing.csv"
+    path.write_bytes(b"keep prior output")
+    with raises(TypeError, match="sequence item 1: expected str instance, float found"):
+        report.to_csv(path=path)
+    assert path.read_bytes() == b"keep prior output"
+
+
 def _assert_csv_row_width(output, sep, expected_width):
     import csv
     import io
