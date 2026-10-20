@@ -536,6 +536,23 @@ window.runMermaid = runMermaid;</script>
 <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_stat_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Apply the shared format schema without normalizing raw values.</span>
+
+<span class="sd">    Risk-free suppression and row construction remain the report callers' policies.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"p"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fmtp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"n"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fmtn</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s2">"dt"</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported format </span><span class="si">{</span><span class="n">fmt</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_quote_csv_field</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">sep</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Escape header text without changing separators or metric formatting."""</span>
     <span class="c1"># CR and LF both delimit CSV records, even though this report joins rows with LF.</span>
@@ -1321,16 +1338,7 @@ window.runMermaid = runMermaid;</script>
 
             <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">]</span>
             <span class="n">raw</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"p"</span><span class="p">:</span>
-                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmtp</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"n"</span><span class="p">:</span>
-                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmtn</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
-            <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"dt"</span><span class="p">:</span>
-                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">))</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported format </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_format_stat_value</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
 
             <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
 
@@ -1556,16 +1564,8 @@ window.runMermaid = runMermaid;</script>
                 <span class="c1"># if rf is a series print nan</span>
                 <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                     <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"p"</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmtp</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
-                <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"n"</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmtn</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
-                <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"dt"</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">))</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported format </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_format_stat_value</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
             <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
 
         <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="s2">"firstrow"</span><span class="p">))</span></div>
@@ -1716,16 +1716,7 @@ window.runMermaid = runMermaid;</script>
                 <span class="n">raw</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">k</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="s2">"rf"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">_FLOATING_SCALAR_TYPES</span><span class="p">):</span>
                     <span class="n">raw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
-                <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"p"</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmtp</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
-                <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"n"</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmtn</span><span class="p">(</span><span class="n">raw</span><span class="p">))</span>
-                <span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s2">"dt"</span><span class="p">:</span>
-                    <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y-%m-</span><span class="si">%d</span><span class="s2">"</span><span class="p">))</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported format </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_format_stat_value</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
             <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>
 
         <span class="n">res</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
