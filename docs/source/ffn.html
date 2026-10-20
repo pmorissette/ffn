@@ -705,7 +705,10 @@ actual drawdown series, please use to_drawdown_series.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>returns</strong> (<em>*</em>) – Returns for multiple securities with unique column labels.</p></li>
 <li><p><strong>weight_bounds</strong> (<em>*</em>) – Weigh limits for optimization.</p></li>
-<li><p><strong>rf</strong> (<em>*</em>) – <p><a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> used in utility calculation</p>
+<li><p><strong>rf</strong> (<em>*</em>) – <p><a class="reference external" href="https://www.investopedia.com/terms/r/risk-freerate.asp">Risk-free rate</a> used in utility calculation.
+Expressed per observation period, matching <code class="docutils literal notranslate"><span class="pre">returns</span></code>; it is not automatically deannualized.
+For daily returns on a 252-period annual basis, convert a 3% annual rate
+with <code class="docutils literal notranslate"><span class="pre">ffn.deannualize(0.03,</span> <span class="pre">252)</span></code> before passing it as <code class="docutils literal notranslate"><span class="pre">rf</span></code>.</p>
 </p></li>
 <li><p><strong>covar_method</strong> (<em>*</em>) – <p>Covariance matrix estimation method:
 <a class="reference external" href="http://www.ledoit.net/honey.pdf">ledoit-wolf</a> or <code class="docutils literal notranslate"><span class="pre">standard</span></code>.</p>
