@@ -4525,6 +4525,42 @@ def test_to_excess_returns_dataframe_with_series_risk_free():
     )
 
 
+def test_to_excess_returns_partial_series_risk_free():
+    """Pair risk-free observations by date without filling an unmatched return."""
+    index = pd.date_range("2025-01-01", periods=4, freq="D", name="date")
+    returns = pd.DataFrame(
+        {"a": [0.01, 0.02, -0.01, 0.03], "b": [0.02, -0.03, 0.04, 0.05]},
+        index=index,
+    )
+    risk_free = pd.Series([0.003, 0.001, 0.002], index=index[[3, 0, 2]])
+    # The omitted second date stays missing; the reordered dates use their own rates.
+    expected = pd.DataFrame(
+        {"a": [0.009, np.nan, -0.012, 0.027], "b": [0.019, np.nan, 0.038, 0.047]},
+        index=index,
+    )
+
+    pd.testing.assert_frame_equal(ffn.to_excess_returns(returns, risk_free), expected)
+    pd.testing.assert_frame_equal(returns.to_excess_returns(risk_free), expected)
+
+
+def test_to_excess_returns_dataframe_risk_free_preserves_column_alignment():
+    """Keep native column broadcasting when the risk-free input is a DataFrame."""
+    returns = pd.Series([0.1, 0.2, -0.1, 0.3])
+    risk_free = pd.DataFrame({0: [0.01, 0.02, 0.03, 0.04], 2: [0.02, 0.03, 0.04, 0.05]})
+    # Each Series label selects a column-wide minuend, not a row's return.
+    expected = pd.DataFrame(
+        {
+            0: [0.09, 0.08, 0.07, 0.06],
+            1: [np.nan] * 4,
+            2: [-0.12, -0.13, -0.14, -0.15],
+            3: [np.nan] * 4,
+        }
+    )
+
+    pd.testing.assert_frame_equal(ffn.to_excess_returns(returns, risk_free), expected)
+    pd.testing.assert_frame_equal(returns.to_excess_returns(risk_free), expected)
+
+
 def test_numpy_floating_risk_free_rates_match_python_float():
     """Apply annualized-rate semantics to every NumPy floating scalar."""
     index = pd.date_range("2025-01-01", periods=20, freq="B")
