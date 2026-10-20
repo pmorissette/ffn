@@ -3409,7 +3409,7 @@ def resample_returns(returns, func, seed=0, num_trials=100):
 
     :param returns (Series, DataFrame): Returns
     :param func: Given the resampled returns calculate a statistic
-    :param seed: Seed for random number generator
+    :param seed: Integer seed for random number generator; trial i adds i
     :param num_trials: Number of times to resample and run the experiment
     :return: Series of resampled statistics
     """
@@ -3424,7 +3424,14 @@ def resample_returns(returns, func, seed=0, num_trials=100):
 
     n = returns.shape[0]
     for i in range(num_trials):
-        trial_seed = seed + i
+        # Promote before addition to avoid fixed-width rollover or uint64-to-float coercion.
+        # Read mutable 0D seeds each trial because callbacks can update their value.
+        trial_seed = seed
+        # Invalid starting seeds retain their native validation and representation.
+        # timedelta64 also subclasses np.integer; only integer dtypes may be promoted.
+        if (isinstance(seed, np.integer) or (type(seed) is np.ndarray and seed.ndim == 0)) and seed.dtype.kind in "iu" and 0 <= seed < 2**32:
+            trial_seed = int(seed)
+        trial_seed = trial_seed + i
         # Match sklearn's legacy draws without its per-trial pandas dispatch.
         # Delegate empty inputs and other seeds to preserve native validation.
         # Callbacks may resize the caller: keep the initial draw count, but use current rows.

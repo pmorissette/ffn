@@ -5894,6 +5894,7 @@ def test_resample_returns_duplicate_labels():
     pd.testing.assert_frame_equal(returns, original)
 
 
+@mark.parametrize("seed_type", [int, np.int64])
 @mark.parametrize("as_frame", [False, True])
 @mark.parametrize(
     "index,positions,seed",
@@ -5903,7 +5904,7 @@ def test_resample_returns_duplicate_labels():
         (pd.timedelta_range("0 days", periods=3, freq="D", name="elapsed"), [2, 1, 0], 6),
     ],
 )
-def test_resample_returns_preserves_sampled_index_metadata(as_frame, index, positions, seed):
+def test_resample_returns_preserves_sampled_index_metadata(as_frame, index, positions, seed, seed_type):
     returns = pd.Series(np.arange(len(index), dtype=float), index=index, name="returns")
     if as_frame:
         returns = returns.to_frame()
@@ -5919,7 +5920,81 @@ def test_resample_returns_preserves_sampled_index_metadata(as_frame, index, posi
             pd.testing.assert_series_equal(sample, expected)
         return sample.sum()
 
-    ffn.resample_returns(returns, statistic, seed=seed, num_trials=1)
+    ffn.resample_returns(returns, statistic, seed=seed_type(seed), num_trials=1)
+
+
+@mark.filterwarnings("error::RuntimeWarning")
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize("as_array", [False, True])
+@mark.parametrize(
+    "seed_type,initial_seed,trials",
+    [
+        (np.int8, 126, 4),
+        (np.uint8, 250, 10),
+        (np.int16, 32766, 4),
+        (np.uint16, 65534, 4),
+        (np.int32, 2**31 - 2, 4),
+        (np.uint32, 2**32 - 3, 3),
+        (np.int64, 2**32 - 3, 3),
+        (np.uint64, 250, 10),
+    ],
+)
+def test_resample_returns_advances_numpy_integer_seeds(as_frame, as_array, seed_type, initial_seed, trials):
+    """Storage-width rollover must not change the numeric seed or any sampled row."""
+    seed = np.array(initial_seed, dtype=seed_type) if as_array else seed_type(initial_seed)
+    returns = pd.Series(np.arange(20.0), index=pd.Index([str(i // 2) for i in range(20)], name="row"), name="return")
+    if as_frame:
+        returns = pd.DataFrame({"return": returns, "scaled": returns / 10})
+        returns.columns.name = "asset"
+    original = returns.copy(deep=True)
+    calls = []
+
+    def statistic(sample):
+        # The Python-integer fixture avoids repeating fixed-width arithmetic in the oracle.
+        positions = np.random.RandomState(initial_seed + len(calls)).choice(20, size=20, replace=True)
+        expected = original.iloc[positions]
+        if as_frame:
+            pd.testing.assert_frame_equal(sample, expected)
+        else:
+            pd.testing.assert_series_equal(sample, expected)
+        calls.append(expected.sum())
+        return calls[-1]
+
+    actual = ffn.resample_returns(returns, statistic, seed=seed, num_trials=trials)
+
+    assert len(calls) == trials
+    np.testing.assert_array_equal(seed, np.array(initial_seed, dtype=seed_type))
+    if as_frame:
+        pd.testing.assert_frame_equal(actual, pd.DataFrame(calls, dtype=object))
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        pd.testing.assert_series_equal(actual, pd.Series(calls, dtype=float))
+        pd.testing.assert_series_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+def test_resample_returns_rereads_mutable_seed(as_frame):
+    """A callback's seed update must affect the next trial's base, as before promotion."""
+    seed = np.array(250, dtype=np.uint8)
+    returns = pd.Series([1.0, 2.0, 3.0], name="return")
+    if as_frame:
+        returns = returns.to_frame()
+    calls = []
+
+    def statistic(sample):
+        # Trial zero uses 250; after the callback changes the base to 10, trial one uses 11.
+        positions = np.random.RandomState([250, 11][len(calls)]).choice(3, size=3, replace=True)
+        expected = returns.iloc[positions]
+        if as_frame:
+            pd.testing.assert_frame_equal(sample, expected)
+        else:
+            pd.testing.assert_series_equal(sample, expected)
+        calls.append(sample.sum())
+        seed[...] = 10
+        return calls[-1]
+
+    ffn.resample_returns(returns, statistic, seed=seed, num_trials=2)
+    assert len(calls) == 2 and seed.item() == 10
 
 
 @mark.parametrize("as_frame", [False, True])
@@ -5965,8 +6040,20 @@ def test_resample_returns_preserves_seeded_callbacks(as_frame, dtype, seed):
 
 
 @mark.parametrize("as_frame", [False, True])
-@mark.parametrize("seed, trials", [(-1, 1), (2**32, 1), (0.5, 1), (2**32 - 1, 2)])
-def test_resample_returns_preserves_native_rejections(as_frame, seed, trials):
+@mark.parametrize(
+    "seed,trials,rejected_seed",
+    [
+        (-1, 1, -1),
+        (2**32, 1, 2**32),
+        (0.5, 1, 0.5),
+        (2**32 - 1, 2, 2**32),
+        (np.uint32(2**32 - 1), 2, 2**32),
+        (np.array(2**32 - 1, dtype=np.uint32), 2, 2**32),
+        (np.uint64(2**32 - 1), 2, 2**32),
+        (np.array(2**32 - 1, dtype=np.uint64), 2, 2**32),
+    ],
+)
+def test_resample_returns_preserves_native_rejections(as_frame, seed, trials, rejected_seed):
     """Dependency-owned error forms may vary, but must match the native sampler."""
     size = 3
     returns = pd.Series(np.arange(size, dtype=float), name="return")
@@ -5976,7 +6063,8 @@ def test_resample_returns_preserves_native_rejections(as_frame, seed, trials):
     calls = []
 
     with raises((ValueError, TypeError)) as native:
-        ffn.core.resample(returns, returns.index, n_samples=size, random_state=seed + trials - 1)
+        # The rejected seed is literal so the reference cannot wrap along with production.
+        ffn.core.resample(returns, returns.index, n_samples=size, random_state=rejected_seed)
 
     def statistic(sample):
         calls.append(len(sample))
@@ -5987,6 +6075,40 @@ def test_resample_returns_preserves_native_rejections(as_frame, seed, trials):
     assert str(actual.value) == str(native.value)
     # A valid maximum seed still calls the statistic before the next seed fails.
     assert calls == [size] * (trials - 1)
+    if as_frame:
+        pd.testing.assert_frame_equal(returns, original)
+    else:
+        pd.testing.assert_series_equal(returns, original)
+
+
+@mark.parametrize("as_frame", [False, True])
+@mark.parametrize("as_array", [False, True])
+@mark.parametrize("unit", ["D", "ns"])
+@mark.parametrize("value", [1, -1, 0, "NaT"])
+def test_resample_returns_preserves_timedelta_seed_rejection(as_frame, as_array, unit, value):
+    """Duration scalars subclass np.integer but must retain native seed rejection."""
+    # D and ns cover int() conversion to datetime.timedelta versus an integer.
+    native_seed = np.timedelta64(value, unit)
+    seed = np.array(native_seed) if as_array else native_seed
+    returns = pd.Series([1.0, 2.0, 3.0], name="return")
+    if as_frame:
+        returns = returns.to_frame()
+    original = returns.copy(deep=True)
+    calls = []
+
+    with raises((TypeError, ValueError)) as native:
+        # Accepted addition exposes this duration scalar for both scalar and 0D inputs.
+        ffn.core.resample(returns, returns.index, n_samples=len(returns), random_state=native_seed)
+
+    def statistic(sample):
+        calls.append(len(sample))
+        return sample.sum()
+
+    with raises(type(native.value)) as actual:
+        ffn.resample_returns(returns, statistic, seed=seed, num_trials=2)
+    assert str(actual.value) == str(native.value)
+    assert calls == []
+    np.testing.assert_array_equal(seed, native_seed)
     if as_frame:
         pd.testing.assert_frame_equal(returns, original)
     else:
