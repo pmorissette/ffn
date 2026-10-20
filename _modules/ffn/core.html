@@ -3648,10 +3648,10 @@ window.runMermaid = runMermaid;</script>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">_rf</span> <span class="o">=</span> <span class="n">rf</span>
 
-    <span class="c1"># A time-indexed risk-free Series applies to every asset column by date.</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_rf</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">returns</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">_rf</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="s2">"index"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_rf</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_diff_returns</span><span class="p">(</span><span class="n">returns</span><span class="p">,</span> <span class="n">_rf</span><span class="p">)</span>
 
+    <span class="c1"># Retain native column broadcasting for a DataFrame risk-free input.</span>
     <span class="k">return</span> <span class="n">returns</span> <span class="o">-</span> <span class="n">_rf</span></div>
 
 
