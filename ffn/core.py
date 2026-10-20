@@ -92,6 +92,23 @@ _STATISTICS = (
 )
 
 
+def _format_stat_value(value, fmt):
+    """Apply the shared format schema without normalizing raw values.
+
+    Risk-free suppression and row construction remain the report callers' policies.
+    """
+    if fmt is None:
+        return value
+    elif fmt == "p":
+        return fmtp(value)
+    elif fmt == "n":
+        return fmtn(value)
+    elif fmt == "dt":
+        return value.strftime("%Y-%m-%d")
+    else:
+        raise NotImplementedError(f"unsupported format {fmt}")
+
+
 def _quote_csv_field(text, sep):
     """Escape header text without changing separators or metric formatting."""
     # CR and LF both delimit CSV records, even though this report joins rows with LF.
@@ -852,16 +869,7 @@ class PerformanceStats:
 
             row = [n]
             raw = getattr(self, k)
-            if f is None:
-                row.append(raw)
-            elif f == "p":
-                row.append(fmtp(raw))
-            elif f == "n":
-                row.append(fmtn(raw))
-            elif f == "dt":
-                row.append(raw.strftime("%Y-%m-%d"))
-            else:
-                raise NotImplementedError(f"unsupported format {f}")
+            row.append(_format_stat_value(raw, f))
 
             data.append(sep.join(row))
 
@@ -1075,16 +1083,8 @@ class GroupStats(dict):
                 # if rf is a series print nan
                 if k == "rf" and not isinstance(raw, _FLOATING_SCALAR_TYPES):
                     row.append(np.nan)
-                elif f is None:
-                    row.append(raw)
-                elif f == "p":
-                    row.append(fmtp(raw))
-                elif f == "n":
-                    row.append(fmtn(raw))
-                elif f == "dt":
-                    row.append(raw.strftime("%Y-%m-%d"))
                 else:
-                    raise NotImplementedError(f"unsupported format {f}")
+                    row.append(_format_stat_value(raw, f))
             data.append(row)
 
         print(tabulate(data, headers="firstrow"))
@@ -1217,16 +1217,7 @@ class GroupStats(dict):
                 raw = getattr(self[key], k)
                 if k == "rf" and not isinstance(raw, _FLOATING_SCALAR_TYPES):
                     raw = np.nan
-                if f is None:
-                    row.append(raw)
-                elif f == "p":
-                    row.append(fmtp(raw))
-                elif f == "n":
-                    row.append(fmtn(raw))
-                elif f == "dt":
-                    row.append(raw.strftime("%Y-%m-%d"))
-                else:
-                    raise NotImplementedError(f"unsupported format {f}")
+                row.append(_format_stat_value(raw, f))
             data.append(sep.join(row))
 
         res = "\n".join(data)
