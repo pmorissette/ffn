@@ -193,6 +193,8 @@ class PerformanceStats:
         updated = copy.copy(self)
         updated.rf = rf
         updated._update(updated._current_prices)
+        # Commit removed fields as well as recalculated values after the staged update succeeds.
+        self.__dict__.clear()
         self.__dict__.update(updated.__dict__)
 
     def _update(self, obj):
@@ -330,6 +332,9 @@ class PerformanceStats:
         yp = self.yearly_prices
 
         if len(dp) == 1:
+            # Match a fresh one-price instance rather than retain an earlier window's returns.
+            self.__dict__.pop("returns", None)
+            self.__dict__.pop("log_returns", None)
             return
 
         # Keep empty reporting bins, but end current-period lookups at the last observed day.
@@ -592,6 +597,8 @@ class PerformanceStats:
         # Recalculate off-object: a later failure must not mix new fields with old reports.
         updated = copy.copy(self)
         updated._update(prices)
+        # dict.update alone would retain return fields removed by the one-price calculation.
+        self.__dict__.clear()
         self.__dict__.update(updated.__dict__)
 
     def display(self):
@@ -1010,6 +1017,8 @@ class GroupStats(dict):
         updated._riskfree_rate = rf
 
         for key in self._names:
+            # Keep each existing child, including omissions from its successful staged update.
+            self[key].__dict__.clear()
             self[key].__dict__.update(updated[key].__dict__)
         self.__dict__.update(updated.__dict__)
 
