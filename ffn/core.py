@@ -1949,7 +1949,10 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
     Args:
         * returns (DataFrame): Returns for multiple securities with unique column labels.
         * weight_bounds ((low, high)): Weigh limits for optimization.
-        * rf (float): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in utility calculation
+        * rf (float): `Risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ used in utility calculation.
+            Expressed per observation period, matching ``returns``; it is not automatically deannualized.
+            For daily returns on a 252-period annual basis, convert a 3% annual rate
+            with ``ffn.deannualize(0.03, 252)`` before passing it as ``rf``.
         * covar_method (str): Covariance matrix estimation method:
           `ledoit-wolf <http://www.ledoit.net/honey.pdf>`_ or ``standard``.
         * options (dict): options for minimizing, e.g. {'maxiter': 10000 }
