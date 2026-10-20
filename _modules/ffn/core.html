@@ -4053,7 +4053,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    :param returns (Series, DataFrame): Returns</span>
 <span class="sd">    :param func: Given the resampled returns calculate a statistic</span>
-<span class="sd">    :param seed: Seed for random number generator</span>
+<span class="sd">    :param seed: Integer seed for random number generator; trial i adds i</span>
 <span class="sd">    :param num_trials: Number of times to resample and run the experiment</span>
 <span class="sd">    :return: Series of resampled statistics</span>
 <span class="sd">    """</span>
@@ -4068,7 +4068,14 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">n</span> <span class="o">=</span> <span class="n">returns</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
-        <span class="n">trial_seed</span> <span class="o">=</span> <span class="n">seed</span> <span class="o">+</span> <span class="n">i</span>
+        <span class="c1"># Promote before addition to avoid fixed-width rollover or uint64-to-float coercion.</span>
+        <span class="c1"># Read mutable 0D seeds each trial because callbacks can update their value.</span>
+        <span class="n">trial_seed</span> <span class="o">=</span> <span class="n">seed</span>
+        <span class="c1"># Invalid starting seeds retain their native validation and representation.</span>
+        <span class="c1"># timedelta64 also subclasses np.integer; only integer dtypes may be promoted.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span> <span class="ow">is</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="ow">and</span> <span class="n">seed</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span> <span class="ow">and</span> <span class="n">seed</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="ow">in</span> <span class="s2">"iu"</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">seed</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="p">:</span>
+            <span class="n">trial_seed</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">trial_seed</span> <span class="o">=</span> <span class="n">trial_seed</span> <span class="o">+</span> <span class="n">i</span>
         <span class="c1"># Match sklearn's legacy draws without its per-trial pandas dispatch.</span>
         <span class="c1"># Delegate empty inputs and other seeds to preserve native validation.</span>
         <span class="c1"># Callbacks may resize the caller: keep the initial draw count, but use current rows.</span>
