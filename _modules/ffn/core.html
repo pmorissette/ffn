@@ -1256,7 +1256,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">daily_prices</span>
 
         <span class="k">if</span> <span class="n">freq</span> <span class="o">==</span> <span class="s2">"y"</span><span class="p">:</span>
-            <span class="n">freq</span> <span class="o">=</span> <span class="s2">"a"</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="n">_YearEnd</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">daily_prices</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="s2">"ffill"</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_create_stats_series</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1668,7 +1668,7 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span>
 
         <span class="k">if</span> <span class="n">freq</span> <span class="o">==</span> <span class="s2">"y"</span><span class="p">:</span>
-            <span class="n">freq</span> <span class="o">=</span> <span class="s2">"a"</span>
+            <span class="n">freq</span> <span class="o">=</span> <span class="n">_YearEnd</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">asfreq</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="s2">"ffill"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="GroupStats.to_csv">
