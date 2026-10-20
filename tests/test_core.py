@@ -6417,3 +6417,17 @@ def test_calc_sortino_annualizes_weekly():
     downside = np.sqrt((returns.clip(upper=0.0) ** 2).mean())
     expected = returns.mean() / downside * np.sqrt(52)
     assert np.allclose(returns.calc_sortino_ratio(), expected)
+
+
+def test_plot_yearly_frequency():
+    index = pd.bdate_range("2020-01-01", periods=800)
+    prices = pd.Series(100 * np.cumprod(1 + np.random.default_rng(0).normal(0, 0.01, len(index))), index=index, name="a")
+
+    stats = prices.calc_stats()
+    stats.plot(freq="y")
+    yearly = stats._get_series("y")
+    assert list(yearly.index.year) == [2020, 2021, 2022]
+
+    group = prices.to_frame().calc_stats()
+    group.plot(freq="y")
+    assert list(group._get_series("y").index.year) == [2020, 2021, 2022]

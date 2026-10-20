@@ -789,7 +789,7 @@ class PerformanceStats:
             return self.daily_prices
 
         if freq == "y":
-            freq = "a"
+            freq = _YearEnd
         return self.daily_prices.asfreq(freq, "ffill")
 
     def _create_stats_series(self):
@@ -1171,7 +1171,7 @@ class GroupStats(dict):
             return self.prices
 
         if freq == "y":
-            freq = "a"
+            freq = _YearEnd
         return self.prices.asfreq(freq, "ffill")
 
     def to_csv(self, sep=",", path=None):
