@@ -1404,7 +1404,9 @@ def to_drawdown_series(prices):
     # Rolling maximum
     roll_max = drawdown.cummax()
 
-    drawdown = drawdown / roll_max - 1.0
+    # Release the filled-price buffer before subtraction allocates another full-size result.
+    drawdown = drawdown / roll_max
+    drawdown = drawdown - 1.0
     return drawdown
 
 
