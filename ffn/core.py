@@ -3055,7 +3055,7 @@ def calc_calmar_ratio(prices):
 
 def to_ulcer_index(prices):
     """
-    Calculates the Ulcer Index for a series of investment returns.
+    Calculates the Ulcer Index from price levels.
 
     Converts from prices -> `Ulcer index <https://www.investopedia.com/terms/u/ulcerindex.asp>`_
 
@@ -3067,7 +3067,7 @@ def to_ulcer_index(prices):
         * prices (Series, DataFrame, ndarray): Prices
 
     Returns:
-        * float (Series if prices has more than one column) -- The Ulcer Index.
+        * float (Series if prices has more than one column) -- The Ulcer Index in percentage points.
     """
     if not isinstance(prices, PandasObject):
         prices = pd.DataFrame(prices) if np.ndim(prices) > 1 else pd.Series(prices)
