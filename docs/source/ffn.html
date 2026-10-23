@@ -1296,7 +1296,7 @@ they remain supported when the first row is entirely missing.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="ffn.core.to_ulcer_index">
 <span class="sig-prename descclassname"><span class="pre">ffn.core.</span></span><span class="sig-name descname"><span class="pre">to_ulcer_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ffn/core.html#to_ulcer_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ffn.core.to_ulcer_index" title="Link to this definition">¶</a></dt>
-<dd><p>Calculates the Ulcer Index for a series of investment returns.</p>
+<dd><p>Calculates the Ulcer Index from price levels.</p>
 <p>Converts from prices -&gt; <a class="reference external" href="https://www.investopedia.com/terms/u/ulcerindex.asp">Ulcer index</a></p>
 <p>See <a class="reference external" href="https://en.wikipedia.org/wiki/Ulcer_index">https://en.wikipedia.org/wiki/Ulcer_index</a></p>
 <p>Method ignores all gaps of NaN’s in the price series.</p>
@@ -1306,7 +1306,7 @@ they remain supported when the first row is entirely missing.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p>float (Series if prices has more than one column) – The Ulcer Index.</p></li>
+<li><p>float (Series if prices has more than one column) – The Ulcer Index in percentage points.</p></li>
 </ul>
 </p>
 </dd>

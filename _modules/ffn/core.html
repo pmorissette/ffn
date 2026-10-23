@@ -3684,7 +3684,7 @@ window.runMermaid = runMermaid;</script>
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.to_ulcer_index">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">to_ulcer_index</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    Calculates the Ulcer Index for a series of investment returns.</span>
+<span class="sd">    Calculates the Ulcer Index from price levels.</span>
 
 <span class="sd">    Converts from prices -&gt; `Ulcer index &lt;https://www.investopedia.com/terms/u/ulcerindex.asp&gt;`_</span>
 
@@ -3696,7 +3696,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * prices (Series, DataFrame, ndarray): Prices</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        * float (Series if prices has more than one column) -- The Ulcer Index.</span>
+<span class="sd">        * float (Series if prices has more than one column) -- The Ulcer Index in percentage points.</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">PandasObject</span><span class="p">):</span>
         <span class="n">prices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
