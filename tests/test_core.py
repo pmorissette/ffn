@@ -2112,6 +2112,14 @@ def test_limit_weights():
     aae(actual["e"], 0.300, 3)
 
 
+@mark.parametrize("total", [0.96, 1.04])
+def test_limit_weights_rejects_materially_unbalanced_portfolios(total):
+    weights = pd.Series({"a": total / 2, "b": total / 2, "c": 0.0})
+
+    with raises(ValueError, match="sum"):
+        ffn.limit_weights(weights, limit=0.6)
+
+
 @mark.parametrize("dtype", ["int64", "uint64", "Int64", "UInt64", None], ids=["signed", "unsigned", "nullable-signed", "nullable-unsigned", "dict"])
 @mark.parametrize("size, limit", [(3, 0.4), (3, 0.5), (3, 1.0 / 3), (49, 1.0 / 49)])
 def test_limit_weights_redistributes_integer_weights(dtype, size, limit):
