@@ -147,10 +147,13 @@ def test_get_snapshots_reused_provider_buffer(dtype):
 
 def test_get_snapshots_reused_provider_index():
     buffer = prices("source")
+    # Mutate provider-owned storage; pandas 3.1 makes index.array read-only.
+    index_values = buffer.index.to_numpy(copy=True)
+    buffer.index = pd.DatetimeIndex(index_values, freq=buffer.index.freq, copy=False)
 
     def provider(ticker, field):
         if ticker == "DEF":
-            buffer.index.array[:] = pd.date_range("2024-01-03", periods=2)
+            index_values[:] = pd.date_range("2024-01-03", periods=2).to_numpy()
         return buffer
 
     result = ffn.get("ABC,DEF", provider=provider, common_dates=False)
@@ -160,6 +163,7 @@ def test_get_snapshots_reused_provider_index():
         index=pd.date_range("2024-01-01", periods=4),
     )
     pd.testing.assert_frame_equal(result, expected)
+    pd.testing.assert_index_equal(buffer.index, pd.date_range("2024-01-03", periods=2))
 
 
 def test_get_does_not_cache_credentials_or_provider_state(monkeypatch):
