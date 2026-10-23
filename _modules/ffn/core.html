@@ -1925,7 +1925,9 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># Rolling maximum</span>
     <span class="n">roll_max</span> <span class="o">=</span> <span class="n">drawdown</span><span class="o">.</span><span class="n">cummax</span><span class="p">()</span>
 
-    <span class="n">drawdown</span> <span class="o">=</span> <span class="n">drawdown</span> <span class="o">/</span> <span class="n">roll_max</span> <span class="o">-</span> <span class="mf">1.0</span>
+    <span class="c1"># Release the filled-price buffer before subtraction allocates another full-size result.</span>
+    <span class="n">drawdown</span> <span class="o">=</span> <span class="n">drawdown</span> <span class="o">/</span> <span class="n">roll_max</span>
+    <span class="n">drawdown</span> <span class="o">=</span> <span class="n">drawdown</span> <span class="o">-</span> <span class="mf">1.0</span>
     <span class="k">return</span> <span class="n">drawdown</span></div>
 
 
