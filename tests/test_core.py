@@ -639,6 +639,31 @@ def test_to_drawdown_series_handles_dataframe_gaps():
     pd.testing.assert_frame_equal(prices, original)
 
 
+@mark.parametrize("dtype", ["float64", "Float64"])
+@mark.parametrize("as_frame", [False, True])
+def test_to_drawdown_series_preserves_container_and_input(dtype, as_frame):
+    """Shorter temporary-buffer lifetimes must preserve gaps, axes, dtype and caller values."""
+    index = pd.date_range("2024-01-01", periods=6, freq="h", tz="UTC", name="time")
+    prices = pd.Series([np.nan, 100, 90, np.nan, 110, 88], index=index, dtype=dtype, name="asset")
+    expected = pd.Series([np.nan, 0, -0.1, -0.1, 0, -0.2], index=index.copy(), dtype=dtype, name="asset")
+    if as_frame:
+        prices = prices.to_frame()
+        expected = expected.to_frame()
+        prices.columns.name = expected.columns.name = "assets"
+    original = prices.copy(deep=True)
+
+    for calculate in (ffn.to_drawdown_series, lambda data: data.to_drawdown_series()):
+        actual = calculate(prices)
+        if as_frame:
+            pd.testing.assert_frame_equal(actual, expected, rtol=0, atol=1e-15)
+            actual.iloc[-1, 0] = 123
+            pd.testing.assert_frame_equal(prices, original)
+        else:
+            pd.testing.assert_series_equal(actual, expected, rtol=0, atol=1e-15)
+            actual.iloc[-1] = 123
+            pd.testing.assert_series_equal(prices, original)
+
+
 def test_max_drawdown_ts(ts):
     data = ts
     actual = data.calc_max_drawdown()
