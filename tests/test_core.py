@@ -2,6 +2,8 @@ import ffn
 import pandas as pd
 import numpy as np
 import warnings
+import math
+import random
 from pytest import approx, fixture, mark, raises, warns
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
@@ -2374,6 +2376,148 @@ def test_random_weights():
         .all()
         .all()
     )
+
+
+@fixture
+def random_weights_rng():
+    """Keep deterministic draws local to these tests without reseeding other tests."""
+    state = random.getstate()
+    random.seed(4321)
+    yield
+    random.setstate(state)
+
+
+@mark.parametrize("dtype", [np.int8, np.uint8, np.int64, np.uint64])
+@mark.parametrize("as_array", [False, True], ids=["scalar", "zero-dimensional"])
+@mark.parametrize("high,total", [(1, 1), (100, 100), (None, 1)], ids=["unit", "percentage", "dtype-maximum"])
+def test_random_weights_integer_bounds(dtype, as_array, high, total, random_weights_rng):
+    """Prevent unsigned negation and signed/unsigned feasibility products from wrapping."""
+    high = int(np.iinfo(dtype).max) if high is None else high
+    bounds = tuple(np.array(value, dtype=dtype) if as_array else dtype(value) for value in (0, high))
+    original = tuple(value.copy() for value in bounds)
+    expected = ffn.random_weights(3, (0, high), total)
+    expected_state = random.getstate()
+    random.seed(4321)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        actual = ffn.random_weights(3, bounds, total)
+
+    assert len(actual) == 3
+    assert all(0 <= value <= high for value in actual)
+    assert math.fsum(actual) == approx(total, rel=1e-12, abs=1e-12)
+    # The independent constraints above prove validity; this separately preserves seeded draws.
+    assert actual == expected
+    assert random.getstate() == expected_state
+    for value, before in zip(bounds, original):
+        np.testing.assert_array_equal(value, before)
+
+
+@mark.parametrize("dtype", [np.int8, np.uint8, np.int64, np.uint64])
+@mark.parametrize("bounds_kind", ["python", "scalar", "zero-dimensional"])
+def test_random_weights_integer_count(dtype, bounds_kind, random_weights_rng):
+    """A typed count must not reintroduce fixed-width arithmetic with widened bounds."""
+    count = dtype(3)
+    bounds = (0, 100)
+    if bounds_kind == "scalar":
+        bounds = tuple(dtype(value) for value in bounds)
+    elif bounds_kind == "zero-dimensional":
+        bounds = tuple(np.array(value, dtype=dtype) for value in bounds)
+    expected = ffn.random_weights(3, (0, 100), 100)
+    expected_state = random.getstate()
+    random.seed(4321)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        actual = ffn.random_weights(count, bounds, 100)
+
+    assert len(actual) == 3
+    assert all(0 <= value <= 100 for value in actual)
+    assert math.fsum(actual) == approx(100, rel=1e-12, abs=1e-12)
+    assert actual == expected
+    assert random.getstate() == expected_state
+    np.testing.assert_array_equal(count, 3)
+
+
+@mark.parametrize("bound", [np.float32(0.25), np.float64(0.25), np.array(0.25), np.array(0.25, dtype=object)])
+def test_random_weights_preserves_fractional_bounds(bound, random_weights_rng):
+    """Equal quarter-weight bounds have a unique solution and must never be truncated."""
+    assert ffn.random_weights(4, (bound, bound), 1) == [0.25] * 4
+
+
+@mark.parametrize("dtype", [np.int8, np.int64])
+@mark.parametrize("as_array", [False, True])
+def test_random_weights_signed_minimum_bound(dtype, as_array, random_weights_rng):
+    """Widen the lower-bound product before negating a signed minimum."""
+    low = int(np.iinfo(dtype).min)
+    bounds = tuple(np.array(value, dtype=dtype) if as_array else dtype(value) for value in (low, 0))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        actual = ffn.random_weights(3, bounds, -1)
+    assert len(actual) == 3
+    assert all(low <= value <= 0 for value in actual)
+    assert math.fsum(actual) == approx(-1, rel=1e-12, abs=1e-12)
+
+
+@mark.parametrize("as_array", [False, True])
+@mark.parametrize(
+    "low,high,expected",
+    [
+        (np.float32(0.1), np.float32(0.9), [0.4092776842616345, 0.31272564165891487, 0.2779966740794506]),
+        (np.float32(0.1), np.int8(1), [0.4092776842616345, 0.31272564165891487, 0.2779966740794506]),
+        # NumPy 2 keeps float32 arithmetic in the mixed-type first draw; preserve each band's values.
+        (
+            np.int8(0),
+            np.float32(0.9),
+            [0.45689095749941333, 0.3142561744204475, 0.22885285317897797]
+            if Version(np.__version__) >= Version("2")
+            else [0.4568909621939171, 0.31425617764939473, 0.22885286015668813],
+        ),
+    ],
+    ids=["both-floating", "floating-lower", "floating-upper"],
+)
+def test_random_weights_preserves_mixed_float_draws(low, high, expected, as_array, random_weights_rng):
+    """Integer count promotion must not change accepted floating-bound draws."""
+    bounds = tuple(np.array(value) for value in (low, high)) if as_array else (low, high)
+    assert ffn.random_weights(np.int64(3), bounds, 1) == expected
+
+
+def test_random_weights_preserves_float32_boundary_admission(random_weights_rng):
+    """Keep the native float32 feasibility rounding outside this integer correction."""
+    actual = ffn.random_weights(np.int8(3), (np.float32(1 / 3), np.float32(0.5)), 1)
+    # Admission is the preserved behavior here; exact seeded draws are protected separately.
+    assert len(actual) == 3
+
+
+def test_random_weights_preserves_float32_boundary_rejection(random_weights_rng):
+    """A wide count retains the stricter float64 feasibility product on both bands."""
+    low = np.float32(1 / 3)
+    assert 3 * float(low) > 1  # The exact stored lower bound makes this budget infeasible.
+    state = random.getstate()
+    with raises(ValueError, match="solution not possible"):
+        ffn.random_weights(np.int64(3), (low, np.float32(0.5)), 1)
+    assert random.getstate() == state
+
+
+@mark.parametrize("count", [3.0, np.float64(3), np.array(3.0)])
+def test_random_weights_preserves_nonintegral_count_rejection(count, random_weights_rng):
+    state = random.getstate()
+    with raises(TypeError):
+        ffn.random_weights(count)
+    assert random.getstate() == state
+
+
+@mark.parametrize("as_array", [False, True])
+@mark.parametrize("position", ["count", "upper-bound"])
+def test_random_weights_preserves_duration_rejection(as_array, position, random_weights_rng):
+    """Duration scalars inherit np.integer but are not counts or weight bounds."""
+    value = np.timedelta64(3, "ns")
+    value = np.array(value) if as_array else value
+    count, bounds = (value, (0, 1)) if position == "count" else (3, (0, value))
+    state = random.getstate()
+    with raises(TypeError):
+        ffn.random_weights(count, bounds)
+    assert random.getstate() == state
 
 
 def test_random_weights_throws_error():

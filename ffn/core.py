@@ -2550,6 +2550,13 @@ def random_weights(n, bounds=(0.0, 1.0), total=1.0):
     low = bounds[0]
     high = bounds[1]
 
+    # Widen all-integer constraints before feasibility products and residual negation can wrap.
+    # Keep mixed floating constraints on their native rounding path; durations are not integer weights.
+    if isinstance(n, (int, np.integer)) and all(
+        type(value) is int or ((isinstance(value, np.integer) or (type(value) is np.ndarray and value.ndim == 0)) and value.dtype.kind in "iu") for value in (n, low, high)
+    ):
+        n, low, high = (int(value) for value in (n, low, high))
+
     if high < low:
         raise ValueError("Higher bound must be greater or equal to lower bound")
 
