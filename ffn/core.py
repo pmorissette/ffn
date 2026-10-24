@@ -2504,10 +2504,18 @@ def limit_weights(weights, limit=0.1):
     if isinstance(weights, dict):
         weights = pd.Series(weights)
 
+    # Keep the original precision through redistribution, which can promote the dtype.
+    budget_rtol = 1e-5
+    if weights.dtype.kind == "f":
+        budget_rtol = max(budget_rtol, np.finfo(weights.dtype.type).eps)
+    return _limit_weights(weights, limit, budget_rtol)
+
+
+def _limit_weights(weights, limit, budget_rtol):
     if weights.isna().any() or not np.isfinite(weights.to_numpy(dtype=float, na_value=np.nan)).all():
         raise ValueError("weights must contain only finite values")
 
-    if not np.isclose(weights.sum(), 1.0):
+    if not np.isclose(weights.sum(), 1.0, rtol=budget_rtol):
         raise ValueError(f"Expecting weights (that sum to 1) - sum is {weights.sum()}")
 
     res = weights.copy()
@@ -2528,7 +2536,7 @@ def limit_weights(weights, limit=0.1):
 
     # Use the same dtype-aware comparison as the redistribution masks above.
     if (res > limit).any():
-        return limit_weights(res, limit=limit)
+        return _limit_weights(res, limit, budget_rtol)
 
     return res
 
