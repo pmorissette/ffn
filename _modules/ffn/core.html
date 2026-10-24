@@ -3091,10 +3091,19 @@ window.runMermaid = runMermaid;</script>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
         <span class="n">weights</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
 
+    <span class="c1"># Keep the original precision through redistribution, which can promote the dtype.</span>
+    <span class="n">budget_rtol</span> <span class="o">=</span> <span class="mf">1e-5</span>
+    <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="s2">"f"</span><span class="p">:</span>
+        <span class="n">budget_rtol</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">budget_rtol</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">type</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_limit_weights</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">budget_rtol</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_limit_weights</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">budget_rtol</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">na_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"weights must contain only finite values"</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">rtol</span><span class="o">=</span><span class="n">budget_rtol</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Expecting weights (that sum to 1) - sum is </span><span class="si">{</span><span class="n">weights</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
     <span class="n">res</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -3115,10 +3124,9 @@ window.runMermaid = runMermaid;</script>
 
     <span class="c1"># Use the same dtype-aware comparison as the redistribution masks above.</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-        <span class="k">return</span> <span class="n">limit_weights</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_limit_weights</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">limit</span><span class="p">,</span> <span class="n">budget_rtol</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">res</span></div>
-
+    <span class="k">return</span> <span class="n">res</span>
 
 
 <div class="viewcode-block" id="random_weights">
