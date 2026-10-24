@@ -2112,6 +2112,56 @@ def test_limit_weights():
     aae(actual["e"], 0.300, 3)
 
 
+@mark.parametrize("total", [0.96, 1.04])
+@mark.parametrize("dtype", ["float16", "float32", "float64", "Float32", "Float64", object])
+def test_limit_weights_rejects_materially_unbalanced_portfolios(total, dtype):
+    weights = pd.Series({"a": total / 2, "b": total / 2, "c": 0.0}, dtype=dtype)
+    original = weights.copy(deep=True)
+
+    with raises(ValueError, match="sum"):
+        ffn.limit_weights(weights, limit=0.6)
+
+    pd.testing.assert_series_equal(weights, original)
+
+
+@mark.parametrize("dtype", ["float16", "float32", "float64", "Float32", "Float64"])
+@mark.parametrize(
+    "values,limit,expected",
+    [
+        ([0.6, 0.3, 0.1], 0.5, [0.5, 0.375, 0.125]),
+        ([0.5, 0.25, 0.125, 0.125], 0.3, [0.3, 0.3, 0.2, 0.2]),
+    ],
+    ids=["rounded-input", "recursive-redistribution"],
+)
+def test_limit_weights_preserves_input_precision_budget(dtype, values, limit, expected):
+    """Retain the original precision even if recursive capping promotes the dtype."""
+    weights = pd.Series(values, index=pd.Index(range(len(values)), name="asset"), name="weight", dtype=dtype)
+    original = weights.copy(deep=True)
+    expected = pd.Series(expected, index=weights.index, name=weights.name)
+    precision = np.finfo(dtype.lower()).eps
+
+    actual = ffn.limit_weights(weights, limit=limit)
+
+    pd.testing.assert_series_equal(actual.astype(float), expected, rtol=precision, atol=precision)
+    assert math.fsum(actual) == approx(1.0, abs=precision)
+    assert not (actual > limit).any()
+    pd.testing.assert_series_equal(weights, original)
+    actual.iloc[0] = 0
+    pd.testing.assert_series_equal(weights, original)
+
+
+@mark.parametrize("total", [1 - 1e-12, 1 + 1e-12])
+def test_limit_weights_accepts_budget_roundoff(total):
+    weights = pd.Series(np.array([0.7, 0.2, 0.1]) * total)
+    original = weights.copy(deep=True)
+    expected = pd.Series([0.5, (total - 0.5) * 2 / 3, (total - 0.5) / 3])
+
+    actual = ffn.limit_weights(weights, limit=0.5)
+
+    pd.testing.assert_series_equal(actual, expected, rtol=0, atol=1e-15)
+    pd.testing.assert_series_equal(weights, original)
+
+
 @mark.parametrize("dtype", ["int64", "uint64", "Int64", "UInt64", None], ids=["signed", "unsigned", "nullable-signed", "nullable-unsigned", "dict"])
 @mark.parametrize("size, limit", [(3, 0.4), (3, 0.5), (3, 1.0 / 3), (49, 1.0 / 49)])
 def test_limit_weights_redistributes_integer_weights(dtype, size, limit):
