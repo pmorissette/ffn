@@ -1283,6 +1283,8 @@ def to_price_index(returns, start=100):
     """
     r = returns.replace(to_replace=np.nan, value=0)
     cp = (1 + r).cumprod() * start
+    if len(returns) == 0:
+        return cp
 
     # If all initial returns are missing (e.g. from to_returns()), the
     # replacement turns them into 0 so cp starts at ``start``. Just return.
