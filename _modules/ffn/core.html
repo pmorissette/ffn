@@ -3148,6 +3148,10 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * bounds ((low, high)): bounds for each weight</span>
 <span class="sd">        * total (float): total sum of the weights</span>
 
+<span class="sd">    Raises:</span>
+<span class="sd">        * ValueError: if bounds are reversed, the total is infeasible, or a</span>
+<span class="sd">          nonempty portfolio has a NaN bound or total.</span>
+
 <span class="sd">    """</span>
     <span class="n">low</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">high</span> <span class="o">=</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -3167,8 +3171,15 @@ window.runMermaid = runMermaid;</script>
 
     <span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
     <span class="n">tgt</span> <span class="o">=</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+    <span class="c1"># NumPy 1 lets a zero-dimensional floating count reach range(n).</span>
+    <span class="c1"># Construct it first to preserve its TypeError before checking NaN.</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="c1"># NaN is unequal to itself; self-comparison also avoids NumPy checks</span>
+    <span class="c1"># that can reject valid large Python integers.</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="n">low</span> <span class="o">!=</span> <span class="n">low</span> <span class="ow">or</span> <span class="n">high</span> <span class="o">!=</span> <span class="n">high</span> <span class="ow">or</span> <span class="n">total</span> <span class="o">!=</span> <span class="n">total</span><span class="p">):</span>  <span class="c1"># noqa: PLR0124</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"bounds and total must not be NaN for a nonempty portfolio"</span><span class="p">)</span>
 
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
         <span class="n">rn</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">rhigh</span> <span class="o">=</span> <span class="n">rn</span> <span class="o">*</span> <span class="n">high</span>
         <span class="n">rlow</span> <span class="o">=</span> <span class="n">rn</span> <span class="o">*</span> <span class="n">low</span>
