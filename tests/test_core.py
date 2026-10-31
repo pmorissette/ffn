@@ -2462,6 +2462,49 @@ def random_weights_rng():
     random.setstate(state)
 
 
+@mark.parametrize("position", [0, 1, 2], ids=["lower", "upper", "total"])
+@mark.parametrize("nan", [float("nan"), np.float32("nan"), np.float64("nan"), np.longdouble("nan"), np.array(np.nan)])
+def test_random_weights_rejects_nan_constraints(position, nan, random_weights_rng):
+    """An unavailable constraint cannot define a portfolio or consume its next draw."""
+    low, high, total = [nan if i == position else value for i, value in enumerate((0, 1, 1))]
+    state = random.getstate()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        with raises(ValueError, match="NaN"):
+            ffn.random_weights(np.int64(3), (low, high), total)
+    assert random.getstate() == state
+
+
+@mark.parametrize(
+    "bounds,total",
+    [((np.nan, 1), 0), ((0, np.array(np.nan)), 0), ((0, 1), np.nan), ((np.nan, np.nan), np.nan)],
+)
+def test_random_weights_preserves_empty_nan_noop(bounds, total, random_weights_rng):
+    """No weights need to satisfy unused constraints when the portfolio is empty."""
+    state = random.getstate()
+    assert ffn.random_weights(0, bounds, total) == []
+    assert random.getstate() == state
+
+
+@mark.parametrize("count", [3.0, np.float64(3), np.array(3.0)])
+@mark.parametrize("bounds,total", [((np.nan, 1), 1), ((0, np.nan), 1), ((0, 1), np.nan)])
+def test_random_weights_preserves_invalid_count_with_nan(count, bounds, total, random_weights_rng):
+    """NaN validation must not replace native count-admission errors."""
+    state = random.getstate()
+    with raises(TypeError):
+        ffn.random_weights(count, bounds, total)
+    assert random.getstate() == state
+
+
+def test_random_weights_preserves_large_integer_constraint(random_weights_rng):
+    """NaN detection must not coerce a valid Python integer through NumPy."""
+    high = 1 << 100
+    actual = ffn.random_weights(3, (0, high), 1)
+    assert len(actual) == 3
+    assert all(math.isfinite(value) and 0 <= value <= high for value in actual)
+    assert math.fsum(actual) == approx(1, rel=1e-12, abs=1e-12)
+
+
 @mark.parametrize("dtype", [np.int8, np.uint8, np.int64, np.uint64])
 @mark.parametrize("as_array", [False, True], ids=["scalar", "zero-dimensional"])
 @mark.parametrize("high,total", [(1, 1), (100, 100), (None, 1)], ids=["unit", "percentage", "dtype-maximum"])
