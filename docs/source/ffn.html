@@ -1147,7 +1147,12 @@ prices remain missing in the returned object.</p>
 <p>Sampled dates are shuffled and may repeat, so annualized ratio functions need
 an explicit frequency, for example
 <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">sample:</span> <span class="pre">calc_sharpe(sample,</span> <span class="pre">nperiods=252)</span></code>. Use <code class="docutils literal notranslate"><span class="pre">annualize=False</span></code>
-instead for per-period ratios.</p>
+instead for per-period ratios when no annual scalar risk-free conversion
+is needed. For a nonzero annual floating risk-free rate, pass the original
+frequency explicitly even with <code class="docutils literal notranslate"><span class="pre">annualize=False</span></code>. For monthly returns
+and a 3% annual risk-free rate, use
+<code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">sample:</span> <span class="pre">calc_sharpe(sample,</span> <span class="pre">rf=0.03,</span> <span class="pre">nperiods=12,</span> <span class="pre">annualize=False)</span></code>.
+Pass the original frequency to <a class="reference internal" href="#ffn.core.to_excess_returns" title="ffn.core.to_excess_returns"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_excess_returns()</span></code></a> via <code class="docutils literal notranslate"><span class="pre">nperiods</span></code> too.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

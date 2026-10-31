@@ -4082,7 +4082,12 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Sampled dates are shuffled and may repeat, so annualized ratio functions need</span>
 <span class="sd">    an explicit frequency, for example</span>
 <span class="sd">    ``lambda sample: calc_sharpe(sample, nperiods=252)``. Use ``annualize=False``</span>
-<span class="sd">    instead for per-period ratios.</span>
+<span class="sd">    instead for per-period ratios when no annual scalar risk-free conversion</span>
+<span class="sd">    is needed. For a nonzero annual floating risk-free rate, pass the original</span>
+<span class="sd">    frequency explicitly even with ``annualize=False``. For monthly returns</span>
+<span class="sd">    and a 3% annual risk-free rate, use</span>
+<span class="sd">    ``lambda sample: calc_sharpe(sample, rf=0.03, nperiods=12, annualize=False)``.</span>
+<span class="sd">    Pass the original frequency to :func:`to_excess_returns` via ``nperiods`` too.</span>
 
 <span class="sd">    :param returns (Series, DataFrame): Returns</span>
 <span class="sd">    :param func: Given the resampled returns calculate a statistic</span>
