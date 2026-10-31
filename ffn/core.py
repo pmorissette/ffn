@@ -2624,21 +2624,27 @@ def plot_heatmap(data, title="Heatmap", show_legend=True, show_labels=True, labe
     if show_legend:
         fig.colorbar(heatmap)
 
+    # Nearest shading centers this regular grid on integers instead of half-integers.
+    shading = kwargs.get("shading")
+    if shading is None:
+        shading = plt.rcParams.get("pcolor.shading", "flat")
+    offset = 0.0 if shading.lower() == "nearest" else 0.5
+
     if show_labels:
         vals = data.values
         for x in range(data.shape[1]):
             for y in range(data.shape[0]):
                 plt.text(
-                    x + 0.5,
-                    y + 0.5,
+                    x + offset,
+                    y + offset,
                     format(vals[y, x], label_fmt),
                     horizontalalignment="center",
                     verticalalignment="center",
                     color=label_color,
                 )
 
-    plt.yticks(np.arange(0.5, len(data.index), 1), data.index)
-    plt.xticks(np.arange(0.5, len(data.columns), 1), data.columns)
+    plt.yticks(np.arange(len(data.index)) + offset, data.index)
+    plt.xticks(np.arange(len(data.columns)) + offset, data.columns)
 
     return plt
 
