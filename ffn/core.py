@@ -2614,7 +2614,7 @@ def plot_heatmap(data, title="Heatmap", show_legend=True, show_labels=True, labe
     """
     fig, ax = plt.subplots(figsize=figsize)
 
-    heatmap = ax.pcolor(data, vmin=vmin, vmax=vmax, cmap=cmap)
+    heatmap = ax.pcolor(data, vmin=vmin, vmax=vmax, cmap=cmap, **kwargs)
     # for some reason heatmap has the y values backwards....
     ax.invert_yaxis()
 

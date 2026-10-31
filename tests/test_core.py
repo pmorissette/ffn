@@ -4,6 +4,8 @@ import numpy as np
 import warnings
 import math
 import random
+from io import BytesIO
+from matplotlib.colors import LogNorm
 from pytest import approx, fixture, mark, raises, warns
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
@@ -2650,6 +2652,68 @@ def test_plot_heatmap_labels_each_cell(values, path, recwarn):
     assert [tick.get_text() for tick in axes.get_yticklabels()] == list(data.index)
     pd.testing.assert_frame_equal(data, original)
     assert not recwarn
+    ffn.core.plt.close("all")
+
+
+@mark.parametrize("path", ["package", "pandas"])
+def test_plot_heatmap_forwards_mesh_options(path, recwarn):
+    """Honor color meaning and export styling through the public plotting paths."""
+    data = pd.DataFrame([[0.01, 0.1], [1.0, 0.01]], index=["row-a", "row-b"], columns=["a", "b"])
+    original = data.copy(deep=True)
+    norm = LogNorm(vmin=0.01, vmax=1.0)
+    options = {"norm": norm, "alpha": 0.25, "rasterized": True, "edgecolors": "red", "linewidths": 2}
+
+    ffn.core.plt.close("all")
+    result = ffn.plot_heatmap(data, **options) if path == "package" else data.plot_heatmap(**options)
+    figure = result.gcf()
+    figure.canvas.draw()
+    mesh = figure.axes[0].collections[0]
+
+    # 0.1 is halfway from 0.01 to 1 on a logarithmic scale, not the linear 1/11.
+    assert mesh.norm is norm
+    assert mesh.norm(0.1) == approx(0.5)
+    assert mesh.get_alpha() == 0.25
+    assert mesh.get_rasterized()
+    np.testing.assert_allclose(mesh.get_edgecolors(), [[1.0, 0.0, 0.0, 0.25]])
+    np.testing.assert_allclose(mesh.get_linewidths(), [2.0])
+    assert len(figure.axes) == 2
+    assert result is ffn.core.plt
+    with BytesIO() as output:
+        figure.savefig(output, format="png")
+        assert output.getvalue().startswith(b"\x89PNG\r\n\x1a\n")
+    pd.testing.assert_frame_equal(data, original)
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
+@mark.parametrize("path", ["package", "pandas"])
+def test_plot_corr_heatmap_forwards_mesh_options(path, recwarn):
+    data = pd.DataFrame({"up": [1.0, 2.0, 3.0], "down": [3.0, 2.0, 1.0]})
+
+    ffn.core.plt.close("all")
+    result = ffn.plot_corr_heatmap(data, alpha=0.25, rasterized=True) if path == "package" else data.plot_corr_heatmap(alpha=0.25, rasterized=True)
+    result.gcf().canvas.draw()
+    mesh = result.gca().collections[0]
+
+    np.testing.assert_allclose(mesh.get_array(), [[1.0, -1.0], [-1.0, 1.0]])
+    assert mesh.get_clim() == (-1.0, 1.0)
+    assert mesh.get_alpha() == 0.25
+    assert mesh.get_rasterized()
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
+@mark.parametrize("failure", ["unknown_option", "conflicting_norm_bounds"])
+def test_plot_heatmap_preserves_native_option_errors(failure):
+    data = pd.DataFrame([[0.01, 0.1], [1.0, 0.01]])
+    if failure == "unknown_option":
+        options, error, message = {"unsupported_mesh_option": True}, AttributeError, "unsupported_mesh_option"
+    else:
+        options, error, message = {"norm": LogNorm(vmin=0.01, vmax=1.0), "vmin": 0.01}, ValueError, "Normalize"
+
+    ffn.core.plt.close("all")
+    with raises(error, match=message):
+        ffn.plot_heatmap(data, **options)
     ffn.core.plt.close("all")
 
 
