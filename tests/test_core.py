@@ -4,7 +4,10 @@ import numpy as np
 import warnings
 import math
 import random
-from pytest import approx, fixture, mark, raises, warns
+import matplotlib
+from io import BytesIO
+from matplotlib.colors import LogNorm
+from pytest import approx, fixture, mark, param, raises, warns
 from numpy.testing import assert_almost_equal as aae
 from packaging.version import Version
 
@@ -2668,7 +2671,18 @@ def test_random_weights_throws_error():
     ids=["square", "wide", "tall"],
 )
 @mark.parametrize("path", ["package", "pandas"])
-def test_plot_heatmap_labels_each_cell(values, path, recwarn):
+@mark.parametrize(
+    "shading,configured_shading,offset",
+    [
+        (None, "auto", 0.5),
+        ("flat", "auto", 0.5),
+        ("auto", "nearest", 0.5),
+        param("nearest", "auto", 0.0, marks=mark.skipif(Version(matplotlib.__version__) < Version("3.10"), reason="Matplotlib <3.10 rejects nearest pcolor shading")),
+        param("NEAREST", "auto", 0.0, marks=mark.skipif(Version(matplotlib.__version__) < Version("3.10"), reason="Matplotlib <3.10 rejects nearest pcolor shading")),
+        param(None, "nearest", 0.0, marks=mark.skipif(Version(matplotlib.__version__) < Version("3.10"), reason="Matplotlib <3.10 rejects nearest pcolor shading")),
+    ],
+)
+def test_plot_heatmap_labels_each_cell(values, path, shading, configured_shading, offset, recwarn):
     """Map every rectangular cell to its matching text and coordinates."""
     data = pd.DataFrame(
         values,
@@ -2676,23 +2690,115 @@ def test_plot_heatmap_labels_each_cell(values, path, recwarn):
         columns=[f"column-{i}" for i in range(len(values[0]))],
     )
     original = data.copy(deep=True)
-    expected = {(column + 0.5, row + 0.5): format(data.iloc[row, column], ".1f") for row in range(data.shape[0]) for column in range(data.shape[1])}
+    expected = {(column + offset, row + offset): format(data.iloc[row, column], ".1f") for row in range(data.shape[0]) for column in range(data.shape[1])}
 
     ffn.core.plt.close("all")
-    if path == "package":
-        result = ffn.plot_heatmap(data, show_legend=False, label_fmt=".1f")
-    else:
-        result = data.plot_heatmap(show_legend=False, label_fmt=".1f")
+    with matplotlib.rc_context({"pcolor.shading": configured_shading}):
+        if path == "package":
+            result = ffn.plot_heatmap(data, show_legend=False, label_fmt=".1f", shading=shading)
+        else:
+            result = data.plot_heatmap(show_legend=False, label_fmt=".1f", shading=shading)
     result.gcf().canvas.draw()
 
     axes = result.gca()
     actual = {text.get_position(): text.get_text() for text in axes.texts}
     assert result is ffn.core.plt
     assert actual == expected
+    centers = {(path.vertices.min(axis=0) + path.vertices.max(axis=0))[0] / 2 for path in axes.collections[0].get_paths()}
+    assert centers == set(axes.get_xticks())
+    centers = {(path.vertices.min(axis=0) + path.vertices.max(axis=0))[1] / 2 for path in axes.collections[0].get_paths()}
+    assert centers == set(axes.get_yticks())
+    np.testing.assert_array_equal(axes.get_xticks(), np.arange(data.shape[1]) + offset)
+    np.testing.assert_array_equal(axes.get_yticks(), np.arange(data.shape[0]) + offset)
     assert [tick.get_text() for tick in axes.get_xticklabels()] == list(data.columns)
     assert [tick.get_text() for tick in axes.get_yticklabels()] == list(data.index)
     pd.testing.assert_frame_equal(data, original)
     assert not recwarn
+    ffn.core.plt.close("all")
+
+
+@mark.parametrize("path", ["package", "pandas"])
+def test_plot_heatmap_forwards_mesh_options(path, recwarn):
+    """Honor color meaning and export styling through the public plotting paths."""
+    if Version(matplotlib.__version__) < Version("3.10"):
+        # Older Matplotlib's logarithmic colorbar renderer uses deprecated pyparsing spellings.
+        warnings.filterwarnings(
+            "ignore",
+            message=(
+                r"'(?:parseString|resetCache|oneOf|leaveWhitespace|setName|setParseAction|endQuoteChar|unquoteResults|parseAll)' "
+                r"(?:deprecated -|argument is deprecated,) use '[a-z_]+'$"
+            ),
+            category=DeprecationWarning,
+            module=r"(?:matplotlib\._(?:fontconfig_pattern|mathtext)|pyparsing\.util)$",
+        )
+    data = pd.DataFrame([[0.01, 0.1], [1.0, 0.01]], index=["row-a", "row-b"], columns=["a", "b"])
+    original = data.copy(deep=True)
+    norm = LogNorm(vmin=0.01, vmax=1.0)
+    options = {"norm": norm, "alpha": 0.25, "rasterized": True, "edgecolors": "red", "linewidths": 2}
+
+    ffn.core.plt.close("all")
+    result = ffn.plot_heatmap(data, **options) if path == "package" else data.plot_heatmap(**options)
+    figure = result.gcf()
+    figure.canvas.draw()
+    mesh = figure.axes[0].collections[0]
+
+    # 0.1 is halfway from 0.01 to 1 on a logarithmic scale, not the linear 1/11.
+    assert mesh.norm is norm
+    assert mesh.norm(0.1) == approx(0.5)
+    assert mesh.get_alpha() == 0.25
+    assert mesh.get_rasterized()
+    np.testing.assert_allclose(mesh.get_edgecolors(), [[1.0, 0.0, 0.0, 0.25]])
+    np.testing.assert_allclose(mesh.get_linewidths(), [2.0])
+    assert len(figure.axes) == 2
+    assert result is ffn.core.plt
+    with BytesIO() as output:
+        figure.savefig(output, format="png")
+        assert output.getvalue().startswith(b"\x89PNG\r\n\x1a\n")
+    pd.testing.assert_frame_equal(data, original)
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
+@mark.parametrize("path", ["package", "pandas"])
+@mark.parametrize(
+    "shading,offset",
+    [
+        ("flat", 0.5),
+        param("nearest", 0.0, marks=mark.skipif(Version(matplotlib.__version__) < Version("3.10"), reason="Matplotlib <3.10 rejects nearest pcolor shading")),
+    ],
+)
+def test_plot_corr_heatmap_forwards_mesh_options(path, shading, offset, recwarn):
+    data = pd.DataFrame({"up": [1.0, 2.0, 3.0], "down": [3.0, 2.0, 1.0]})
+
+    ffn.core.plt.close("all")
+    options = {"alpha": 0.25, "rasterized": True, "shading": shading}
+    result = ffn.plot_corr_heatmap(data, **options) if path == "package" else data.plot_corr_heatmap(**options)
+    result.gcf().canvas.draw()
+    mesh = result.gca().collections[0]
+
+    np.testing.assert_allclose(mesh.get_array(), [[1.0, -1.0], [-1.0, 1.0]])
+    assert mesh.get_clim() == (-1.0, 1.0)
+    assert mesh.get_alpha() == 0.25
+    assert mesh.get_rasterized()
+    axes = result.gca()
+    assert [text.get_position() for text in axes.texts] == [(x + offset, y + offset) for x in range(2) for y in range(2)]
+    np.testing.assert_array_equal(axes.get_xticks(), np.arange(2) + offset)
+    np.testing.assert_array_equal(axes.get_yticks(), np.arange(2) + offset)
+    assert not recwarn
+    ffn.core.plt.close("all")
+
+
+@mark.parametrize("failure", ["unknown_option", "conflicting_norm_bounds"])
+def test_plot_heatmap_preserves_native_option_errors(failure):
+    data = pd.DataFrame([[0.01, 0.1], [1.0, 0.01]])
+    if failure == "unknown_option":
+        options, error, message = {"unsupported_mesh_option": True}, AttributeError, "unsupported_mesh_option"
+    else:
+        options, error, message = {"norm": LogNorm(vmin=0.01, vmax=1.0), "vmin": 0.01}, ValueError, "Normalize"
+
+    ffn.core.plt.close("all")
+    with raises(error, match=message):
+        ffn.plot_heatmap(data, **options)
     ffn.core.plt.close("all")
 
 
