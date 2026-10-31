@@ -2143,7 +2143,7 @@ def test_limit_weights_preserves_input_precision_budget(dtype, values, limit, ex
     actual = ffn.limit_weights(weights, limit=limit)
 
     pd.testing.assert_series_equal(actual.astype(float), expected, rtol=precision, atol=precision)
-    assert math.fsum(actual) == approx(1.0, abs=precision)
+    assert math.fsum(actual) == approx(1.0, abs=float(precision))
     assert not (actual > limit).any()
     pd.testing.assert_series_equal(weights, original)
     actual.iloc[0] = 0
@@ -2240,7 +2240,7 @@ def test_limit_weights_caps_low_precision_weights(dtype):
 
     pd.testing.assert_series_equal(actual.astype(float), expected, rtol=precision, atol=0)
     pd.testing.assert_series_equal(weights, original)
-    assert actual.sum() == approx(1.0, abs=precision)
+    assert actual.sum() == approx(1.0, abs=float(precision))
     assert not (actual > 0.6).any()
 
 
