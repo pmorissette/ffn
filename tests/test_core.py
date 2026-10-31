@@ -4,6 +4,7 @@ import numpy as np
 import warnings
 import math
 import random
+import matplotlib
 from io import BytesIO
 from matplotlib.colors import LogNorm
 from pytest import approx, fixture, mark, raises, warns
@@ -2658,6 +2659,17 @@ def test_plot_heatmap_labels_each_cell(values, path, recwarn):
 @mark.parametrize("path", ["package", "pandas"])
 def test_plot_heatmap_forwards_mesh_options(path, recwarn):
     """Honor color meaning and export styling through the public plotting paths."""
+    if Version(matplotlib.__version__) < Version("3.10"):
+        # Older Matplotlib's logarithmic colorbar renderer uses deprecated pyparsing spellings.
+        warnings.filterwarnings(
+            "ignore",
+            message=(
+                r"'(?:parseString|resetCache|oneOf|leaveWhitespace|setName|setParseAction|endQuoteChar|unquoteResults|parseAll)' "
+                r"(?:deprecated -|argument is deprecated,) use '[a-z_]+'$"
+            ),
+            category=DeprecationWarning,
+            module=r"(?:matplotlib\._(?:fontconfig_pattern|mathtext)|pyparsing\.util)$",
+        )
     data = pd.DataFrame([[0.01, 0.1], [1.0, 0.01]], index=["row-a", "row-b"], columns=["a", "b"])
     original = data.copy(deep=True)
     norm = LogNorm(vmin=0.01, vmax=1.0)
