@@ -3427,7 +3427,12 @@ def resample_returns(returns, func, seed=0, num_trials=100):
     Sampled dates are shuffled and may repeat, so annualized ratio functions need
     an explicit frequency, for example
     ``lambda sample: calc_sharpe(sample, nperiods=252)``. Use ``annualize=False``
-    instead for per-period ratios.
+    instead for per-period ratios when no annual scalar risk-free conversion
+    is needed. For a nonzero annual floating risk-free rate, pass the original
+    frequency explicitly even with ``annualize=False``. For monthly returns
+    and a 3% annual risk-free rate, use
+    ``lambda sample: calc_sharpe(sample, rf=0.03, nperiods=12, annualize=False)``.
+    Pass the original frequency to :func:`to_excess_returns` via ``nperiods`` too.
 
     :param returns (Series, DataFrame): Returns
     :param func: Given the resampled returns calculate a statistic
