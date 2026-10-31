@@ -2558,6 +2558,10 @@ def random_weights(n, bounds=(0.0, 1.0), total=1.0):
         * bounds ((low, high)): bounds for each weight
         * total (float): total sum of the weights
 
+    Raises:
+        * ValueError: if bounds are reversed, the total is infeasible, or a
+          nonempty portfolio has a NaN bound or total.
+
     """
     low = bounds[0]
     high = bounds[1]
@@ -2577,8 +2581,15 @@ def random_weights(n, bounds=(0.0, 1.0), total=1.0):
 
     w = [0] * n
     tgt = -float(total)
+    # NumPy 1 lets a zero-dimensional floating count reach range(n).
+    # Construct it first to preserve its TypeError before checking NaN.
+    indices = range(n)
+    # NaN is unequal to itself; self-comparison also avoids NumPy checks
+    # that can reject valid large Python integers.
+    if n > 0 and (low != low or high != high or total != total):  # noqa: PLR0124
+        raise ValueError("bounds and total must not be NaN for a nonempty portfolio")
 
-    for i in range(n):
+    for i in indices:
         rn = n - i - 1
         rhigh = rn * high
         rlow = rn * low
