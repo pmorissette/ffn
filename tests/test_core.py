@@ -242,6 +242,68 @@ def test_performance_stats_current_period_padding_public_reports_and_range_reset
     pd.testing.assert_series_equal(prices, original)
 
 
+@mark.parametrize(
+    "periods, final_price, expected",
+    [
+        (31, 102.0, ["2.00%", "-", "-", "2.00%", "-", "-", "-", "-", "27.26%"]),
+        (182, 121.0, ["0.10%", "9.56%", "21.00%", "21.00%", "-", "-", "-", "-", "46.91%"]),
+    ],
+)
+def test_performance_stats_display_lookback_return_labels(periods, final_price, expected, capsys):
+    """Short-period gains and annualized inception returns need different labels."""
+    dates = pd.date_range("2023-01-01", periods=periods)
+    prices = pd.Series(np.linspace(100.0, final_price, periods), index=dates, name="asset")
+    stats = ffn.PerformanceStats(prices)
+    # Endpoint ratios give 2%/21%; annualizing over 30/181 days gives 27.26%/46.91%.
+    assert stats.ytd == approx(final_price / 100.0 - 1)
+    assert stats.incep == approx((final_price / 100.0) ** (365.25 / (periods - 1)) - 1)
+
+    assert stats.display() is None
+
+    output = capsys.readouterr().out
+    assert "Annualized Returns:" not in output
+    assert "Lookback Returns:\n" in output
+    table = output.split("Lookback Returns:\n", 1)[1].split("\n\nPeriodic:", 1)[0]
+    headers = ["mtd", "3m", "6m", "ytd", "1y", "3y (ann.)", "5y (ann.)", "10y (ann.)", "incep. (ann.)"]
+    assert table == ffn.core.tabulate([expected], headers=headers)
+
+
+@mark.parametrize("path", ["direct", "package", "pandas", "group-child"])
+def test_performance_stats_display_preserves_annualized_lookbacks(path, capsys):
+    """Relabeling must retain genuinely annualized values and the underlying report data."""
+    dates = pd.date_range("2010-01-01", "2023-01-01")
+    # This price path earns 8% per 365.25-day year at every long-term endpoint.
+    days = (dates - dates[0]).days.to_numpy()
+    prices = pd.Series(100.0 * np.exp(np.log(1.08) * days / 365.25), index=dates, name="asset")
+    original_prices = prices.copy(deep=True)
+    if path == "direct":
+        stats = ffn.PerformanceStats(prices)
+    elif path == "package":
+        stats = ffn.calc_perf_stats(prices)
+    elif path == "pandas":
+        stats = prices.calc_perf_stats()
+    else:
+        stats = ffn.GroupStats(prices)["asset"]
+    original_stats = stats.stats.copy(deep=True)
+    original_lookbacks = stats.lookback_returns.copy(deep=True)
+    original_csv = stats.to_csv()
+
+    assert stats.display() is None
+
+    output = capsys.readouterr().out
+    assert "Lookback Returns:\n" in output
+    table = output.split("Lookback Returns:\n", 1)[1].split("\n\nPeriodic:", 1)[0]
+    values = table.splitlines()[-1].split()
+    assert len(values) == 9
+    assert values[-4:] == ["8.00%"] * 4
+    for label in ("3y (ann.)", "5y (ann.)", "10y (ann.)", "incep. (ann.)"):
+        assert label in table.splitlines()[0]
+    pd.testing.assert_series_equal(stats.stats, original_stats)
+    pd.testing.assert_series_equal(stats.lookback_returns, original_lookbacks)
+    pd.testing.assert_series_equal(prices, original_prices)
+    assert stats.to_csv() == original_csv
+
+
 def test_to_returns_ts(ts):
     data = ts
     actual = data.to_returns()

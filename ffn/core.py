@@ -637,7 +637,7 @@ class PerformanceStats:
         ]
         print(tabulate(data, headers=["Total Return", "Sharpe", "CAGR", "Max Drawdown"]))
 
-        print("\nAnnualized Returns:")
+        print("\nLookback Returns:")
         data = [
             [
                 fmtp(self.mtd),
@@ -654,7 +654,7 @@ class PerformanceStats:
         print(
             tabulate(
                 data,
-                headers=["mtd", "3m", "6m", "ytd", "1y", "3y", "5y", "10y", "incep."],
+                headers=["mtd", "3m", "6m", "ytd", "1y", "3y (ann.)", "5y (ann.)", "10y (ann.)", "incep. (ann.)"],
             )
         )
 
