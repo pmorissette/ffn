@@ -7167,3 +7167,269 @@ def test_plot_yearly_frequency():
     group = prices.to_frame().calc_stats()
     group.plot(freq="y")
     assert list(group._get_series("y").index.year) == [2020, 2021, 2022]
+
+
+@fixture
+def statistics_chart_prices():
+    """Provide distinct, nonconstant returns with enough history for weekly KDE plots."""
+    x = np.arange(420)
+    return pd.DataFrame(
+        {"A": 100 * np.exp(np.cumsum(0.0003 + 0.01 * np.sin(x / 7))), "B": 80 * np.exp(np.cumsum(0.0002 + 0.008 * np.cos(x / 11)))},
+        index=pd.date_range("2020-01-01", periods=len(x)),
+    )
+
+
+@fixture
+def chart_pyplot():
+    plt = ffn.core.plt
+    figures = set(plt.get_fignums())
+    yield plt
+    for number in set(plt.get_fignums()) - figures:
+        plt.close(number)
+
+
+@mark.parametrize("freq,ragged", [(None, False), ("W", True)])
+@mark.parametrize("explicit_figure,grouped", [(False, False), (True, False), (False, True)])
+@mark.parametrize("legend", [False, True])
+def test_performance_histogram_uses_supplied_axes(freq, ragged, explicit_figure, grouped, legend, statistics_chart_prices, chart_pyplot):
+    prices = statistics_chart_prices.iloc[::3] if ragged else statistics_chart_prices
+    snapshot = prices.copy(deep=True)
+    stats = prices.A.calc_stats()
+    selected = prices.A if freq is None else prices.A.asfreq(freq, method="ffill")
+    returns = (selected / selected.shift(1) - 1).dropna()
+    plt = chart_pyplot
+    fig, ax = plt.subplots()
+    # Make another figure current to expose drawing through pyplot's global state.
+    other, other_ax = plt.subplots()
+    other_ax.set_title("Unrelated report")
+    figures = set(plt.get_fignums())
+    options = {"figure": fig} if explicit_figure else {}
+    if grouped:
+        # Grouped Series.hist must not receive the ordinary-path figure argument.
+        options["by"] = lambda date: "one regime"
+    title = None if freq is None else "Embedded asset"
+
+    with warnings.catch_warnings(record=True) as plot_warnings:
+        warnings.simplefilter("always")
+        result = stats.plot_histogram(freq=freq, ax=ax, title=title, bins=7, legend=legend, **options)
+
+        assert result is ax
+        assert set(plt.get_fignums()) == figures
+        assert ax.get_title() == ("A Return Histogram" if title is None else title)
+        heights, edges = np.histogram(returns.to_numpy(), bins=7, density=True)
+        np.testing.assert_allclose([patch.get_height() for patch in ax.patches], heights)
+        np.testing.assert_allclose([patch.get_x() for patch in ax.patches], edges[:-1])
+        assert len(ax.lines) == 2
+        np.testing.assert_array_equal(ax.lines[0].get_xdata(), [0, 0])
+        assert ax.lines[0].get_linewidth() == 4
+        kde = ax.lines[1]
+        # Compute density independently at pandas' chosen plotting coordinates.
+        np.testing.assert_allclose(kde.get_ydata(), ffn.core.scipy.stats.gaussian_kde(returns.to_numpy())(kde.get_xdata()))
+        if legend:
+            assert [text.get_text() for text in ax.get_legend().get_texts()] == ["A"]
+        else:
+            assert ax.get_legend() is None
+        assert all(artist.figure is fig for artist in [*ax.patches, *ax.lines])
+        assert other_ax.get_title() == "Unrelated report"
+        assert not other_ax.patches and not other_ax.lines
+        fig.canvas.draw()
+        other.canvas.draw()
+        output = BytesIO()
+        fig.savefig(output, format="png")
+        assert output.getvalue().startswith(b"\x89PNG")
+        pd.testing.assert_frame_equal(prices, snapshot)
+    assert not plot_warnings
+
+
+def test_performance_histogram_preserves_existing_legend_and_color_cycle(statistics_chart_prices, chart_pyplot):
+    stats = statistics_chart_prices.A.calc_stats()
+    fig, ax = chart_pyplot.subplots()
+    ax.set_prop_cycle(color=["black", "green", "red"])
+    ax.plot([0, 1], [0, 1], label="Existing")
+    legend = ax.legend(title="Caller legend", loc="lower left", fontsize=8, facecolor="ivory", framealpha=0.7)
+
+    with warnings.catch_warnings(record=True) as plot_warnings:
+        warnings.simplefilter("always")
+        result = stats.plot_histogram(ax=ax)
+        assert result is ax
+        assert ax.get_legend() is legend
+        assert [text.get_text() for text in legend.get_texts()] == ["Existing"]
+        assert legend.get_title().get_text() == "Caller legend"
+        # The histogram consumes green; the KDE must use the next caller-selected color.
+        assert ax.lines[-1].get_color() == "red"
+        assert ax.plot([0, 1], [1, 0])[0].get_color() == "black"
+        fig.canvas.draw()
+    assert not plot_warnings
+
+
+@mark.parametrize("grouped,grid", [(False, False), (False, True), (True, True)])
+def test_performance_histogram_preserves_pandas_secondary_axes(grouped, grid, statistics_chart_prices, chart_pyplot):
+    prices = statistics_chart_prices
+    snapshot = prices.copy(deep=True)
+    stats = prices.A.calc_stats()
+    returns = (prices.A / prices.A.shift(1) - 1).dropna()
+    plt = chart_pyplot
+
+    with plt.rc_context({"axes.grid": grid}), warnings.catch_warnings(record=True) as plot_warnings:
+        warnings.simplefilter("always")
+        fig, primary = plt.subplots()
+        primary.plot([-0.05, 0.05], [20, 30])
+        primary.set_ylabel("Primary values")
+        primary_limits = primary.get_ylim()
+        # Pandas-created twins link back to their primary axes, unlike ordinary Matplotlib twins.
+        secondary = pd.Series([1.0, 2.0, 3.0], name="Reference").plot(ax=primary, secondary_y=True, mark_right=False)
+        other, other_ax = plt.subplots()
+        other_ax.set_title("Unrelated report")
+        figures = set(plt.get_fignums())
+        options = {"by": lambda date: "one regime"} if grouped else {}
+        result = stats.plot_histogram(ax=secondary, bins=7, legend=True, **options)
+
+        assert result is secondary
+        assert len(fig.axes) == 2 and set(plt.get_fignums()) == figures
+        assert len(primary.lines) == 1 and not primary.patches
+        np.testing.assert_array_equal(primary.lines[0].get_ydata(), [20, 30])
+        assert primary.get_ylabel() == "Primary values" and primary.get_ylim() == primary_limits
+        heights, _ = np.histogram(returns.to_numpy(), bins=7, density=True)
+        np.testing.assert_allclose([patch.get_height() for patch in secondary.patches], heights)
+        assert len(secondary.lines) == 3
+        np.testing.assert_array_equal(secondary.lines[-2].get_xdata(), [0, 0])
+        kde = secondary.lines[-1]
+        np.testing.assert_allclose(kde.get_ydata(), ffn.core.scipy.stats.gaussian_kde(returns.to_numpy())(kde.get_xdata()))
+        assert secondary.get_title() == "A Return Histogram" and secondary.get_ylabel() == "Density"
+        assert [text.get_text() for text in secondary.get_legend().get_texts()] == ["Reference", "A"]
+        # Selecting pandas' secondary layer must not disable an enabled KDE grid default.
+        assert all(line.get_visible() == grid for line in secondary.get_xgridlines() + secondary.get_ygridlines())
+        assert other_ax.get_title() == "Unrelated report" and not other_ax.lines and not other_ax.patches
+        fig.canvas.draw()
+        other.canvas.draw()
+        output = BytesIO()
+        fig.savefig(output, format="png")
+        assert output.getvalue().startswith(b"\x89PNG")
+        pd.testing.assert_frame_equal(prices, snapshot)
+    assert not plot_warnings
+
+
+@mark.parametrize("kind,flat_axes", [("histogram", False), ("histogram", True), ("scatter", False)])
+@mark.parametrize("freq,ragged", [(None, False), ("W", True)])
+def test_group_charts_use_supplied_axes(kind, freq, ragged, flat_axes, statistics_chart_prices, chart_pyplot):
+    prices = statistics_chart_prices.iloc[::3] if ragged else statistics_chart_prices
+    snapshot = prices.copy(deep=True)
+    stats = prices.calc_stats()
+    selected = prices if freq is None else prices.asfreq(freq, method="ffill")
+    returns = (selected / selected.shift(1) - 1).dropna()
+    plt = chart_pyplot
+    fig, axes = plt.subplots(1 if kind == "histogram" else 2, 2)
+    # Make another figure current to expose drawing through pyplot's global state.
+    other, other_ax = plt.subplots()
+    other_ax.set_title("Unrelated report")
+    figures = set(plt.get_fignums())
+    title = None if freq is None else "Embedded group"
+    supplied = axes.reshape(-1) if flat_axes else axes.reshape(1 if kind == "histogram" else 2, 2)
+
+    with warnings.catch_warnings(record=True) as plot_warnings:
+        warnings.simplefilter("always")
+        if kind == "histogram":
+            result = stats.plot_histograms(freq=freq, ax=supplied, title=title, bins=7)
+            for ax, column in zip(axes.flat, prices.columns):
+                heights, _ = np.histogram(returns[column].to_numpy(), bins=7)
+                np.testing.assert_array_equal([patch.get_height() for patch in ax.patches], heights)
+                assert ax.get_title() == column
+        else:
+            result = stats.plot_scatter_matrix(freq=freq, ax=supplied, title=title, hist_kwds={"bins": 7})
+            np.testing.assert_allclose(axes[0, 1].collections[0].get_offsets(), returns[["B", "A"]].to_numpy())
+            np.testing.assert_allclose(axes[1, 0].collections[0].get_offsets(), returns[["A", "B"]].to_numpy())
+            for i, column in enumerate(prices.columns):
+                heights, _ = np.histogram(returns[column].to_numpy(), bins=7)
+                np.testing.assert_array_equal([patch.get_height() for patch in axes[i, i].patches], heights)
+                assert axes[1, i].get_xlabel() == column
+                assert axes[i, 0].get_ylabel() == column
+        assert result is fig._suptitle
+        assert result.get_text() == (f"Return {'Histogram' if kind == 'histogram' else 'Scatter'} Matrix" if title is None else title)
+        assert set(plt.get_fignums()) == figures
+        assert other_ax.get_title() == "Unrelated report"
+        assert not other_ax.patches and not other_ax.collections
+        fig.canvas.draw()
+        other.canvas.draw()
+        pd.testing.assert_frame_equal(prices, snapshot)
+    assert not plot_warnings
+
+
+@mark.parametrize("groups", [1, 2])
+@mark.parametrize("supplied_axes", [False, True])
+def test_group_histograms_preserve_grouped_axes(groups, supplied_axes, statistics_chart_prices, chart_pyplot):
+    """One effective group returns scalar axes; multiple groups return an array."""
+    prices = statistics_chart_prices
+    snapshot = prices.copy(deep=True)
+    stats = prices.calc_stats()
+    returns = (prices / prices.shift(1) - 1).dropna()
+    cutoff = pd.Timestamp("2020-08-01")
+    plt = chart_pyplot
+    options = {}
+    if supplied_axes:
+        fig, axes = plt.subplots(1, groups)
+        options["ax"] = axes
+    other, other_ax = plt.subplots()
+    other_ax.set_title("Unrelated report")
+    figures = set(plt.get_fignums())
+
+    def group(date):
+        return "first" if groups == 1 or date < cutoff else "second"
+
+    with warnings.catch_warnings(record=True) as plot_warnings:
+        warnings.simplefilter("always")
+        result = stats.plot_histograms(by=group, title="Grouped report", bins=7, **options)
+        owner = fig if supplied_axes else result.figure
+        assert result is owner._suptitle
+        assert result.get_text() == "Grouped report"
+        assert len(owner.axes) == groups
+        for i, ax in enumerate(owner.axes):
+            sample = returns if groups == 1 else returns.loc[returns.index < cutoff if i == 0 else returns.index >= cutoff]
+            # Native grouped histograms share bin edges across the asset columns.
+            _, edges = np.histogram(sample.to_numpy(), bins=7)
+            expected = [np.histogram(sample[column].to_numpy(), bins=edges)[0] for column in prices.columns]
+            np.testing.assert_array_equal(np.asarray([patch.get_height() for patch in ax.patches]).reshape(2, 7), expected)
+            assert ax.get_title() == ("first" if i == 0 else "second")
+        assert len(set(plt.get_fignums()) - figures) == (0 if supplied_axes else 2)
+        assert other_ax.get_title() == "Unrelated report"
+        assert not other_ax.patches and not other_ax.lines
+        owner.canvas.draw()
+        other.canvas.draw()
+        output = BytesIO()
+        owner.savefig(output, format="png")
+        assert output.getvalue().startswith(b"\x89PNG")
+        pd.testing.assert_frame_equal(prices, snapshot)
+    assert not plot_warnings
+
+
+@mark.parametrize("kind,flat_axes,error", [("histogram", False, AttributeError), ("scatter", False, AttributeError), ("scatter", True, IndexError)])
+def test_group_charts_preserve_native_axes_rejection(kind, flat_axes, error, statistics_chart_prices, chart_pyplot):
+    stats = statistics_chart_prices.calc_stats()
+    _, axes = chart_pyplot.subplots(1 if kind == "histogram" else 2, 2)
+    method = stats.plot_histograms if kind == "histogram" else stats.plot_scatter_matrix
+    # Retain pandas' rejection of lists and of one-dimensional scatter grids.
+    with raises(error):
+        method(ax=axes.reshape(-1) if flat_axes else axes.tolist())
+
+
+@mark.parametrize("kind,legend", [("single", False), ("single", True), ("histogram", False), ("scatter", False)])
+def test_statistics_charts_preserve_default_figures(kind, legend, statistics_chart_prices, chart_pyplot):
+    plt = chart_pyplot
+    before = set(plt.get_fignums())
+    prices = statistics_chart_prices
+    stats = ffn.PerformanceStats(prices.A) if kind == "single" else ffn.GroupStats(prices)
+    # Constructor warnings are outside the plotting/rendering contract under test.
+    with warnings.catch_warnings(record=True) as plot_warnings:
+        warnings.simplefilter("always")
+        if kind == "single":
+            result = stats.plot_histogram(title="Default report", legend=legend)
+            assert result.get_title() == "Default report"
+            assert len(result.patches) == 20 and len(result.lines) == 2
+        else:
+            method = stats.plot_histograms if kind == "histogram" else stats.plot_scatter_matrix
+            result = method(title="Default report")
+            assert result is result.figure._suptitle
+            assert result.get_text() == "Default report"
+        # Preserve the existing no-ax construction, including the group wrapper's initial figure.
+        assert len(set(plt.get_fignums()) - before) == (1 if kind == "single" else 2)
+        result.figure.canvas.draw()
+    assert not plot_warnings

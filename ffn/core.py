@@ -2,6 +2,7 @@ import copy
 import itertools
 import os
 import random
+from collections import defaultdict as _defaultdict
 from math import comb as _comb
 
 import matplotlib
@@ -796,7 +797,11 @@ class PerformanceStats:
 
         ser = self._get_series(freq).to_returns().dropna()
 
-        plt.figure(figsize=figsize)
+        if kwargs.get("ax") is None:
+            plt.figure(figsize=figsize)
+        elif kwargs.get("by") is None:
+            # Series.hist otherwise checks the supplied axes against pyplot's current figure.
+            kwargs.setdefault("figure", kwargs["ax"].get_figure())
 
         if Version(matplotlib.__version__) >= Version("2"):
             # normed deprecated
@@ -805,8 +810,11 @@ class PerformanceStats:
             ax = ser.hist(bins=bins, figsize=figsize, normed=True, **kwargs)
 
         ax.set_title(title)
-        plt.axvline(0, linewidth=4)
-        return ser.plot(kind="kde")
+        ax.axvline(0, linewidth=4)
+        # Use one KDE subplot so pandas leaves the histogram legend alone.
+        # None lets Matplotlib continue the axes' existing color cycle.
+        # Honor pandas' linked secondary axes without changing the usual KDE grid default.
+        return ser.plot(kind="kde", ax=ax, subplots=True, secondary_y=hasattr(ax, "left_ax"), grid=plt.rcParams["axes.grid"], color=_defaultdict(lambda: None))[0]
 
     def _get_series(self, freq):
         if freq is None:
@@ -1130,13 +1138,14 @@ class GroupStats(dict):
         if title is None:
             title = self._get_default_plot_title(freq, "Return Scatter Matrix")
 
-        plt.figure()
+        if kwargs.get("ax") is None:
+            plt.figure()
         ser = self._get_series(freq).to_returns().dropna()
         if hasattr(pd, "scatter_matrix"):
-            pd.scatter_matrix(ser, figsize=figsize, **kwargs)
+            axes = pd.scatter_matrix(ser, figsize=figsize, **kwargs)
         else:
-            pd.plotting.scatter_matrix(ser, figsize=figsize, **kwargs)
-        return plt.suptitle(title)
+            axes = pd.plotting.scatter_matrix(ser, figsize=figsize, **kwargs)
+        return axes.flat[0].get_figure().suptitle(title)
 
     def plot_histograms(self, freq=None, title=None, figsize=(10, 10), **kwargs):
         """
@@ -1153,10 +1162,12 @@ class GroupStats(dict):
         if title is None:
             title = self._get_default_plot_title(freq, "Return Histogram Matrix")
 
-        plt.figure()
+        if kwargs.get("ax") is None:
+            plt.figure()
         ser = self._get_series(freq).to_returns().dropna()
-        ser.hist(figsize=figsize, **kwargs)
-        return plt.suptitle(title)
+        axes = ser.hist(figsize=figsize, **kwargs)
+        # Grouped histograms return a single Axes when only one group remains.
+        return np.asarray(axes).flat[0].get_figure().suptitle(title)
 
     def plot_correlation(self, freq=None, title=None, figsize=(12, 6), **kwargs):
         """
