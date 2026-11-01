@@ -2465,6 +2465,204 @@ def random_weights_rng():
     random.setstate(state)
 
 
+@mark.parametrize("n", [49, 98])
+@mark.parametrize("total", [1.0, 2.0, 2.0**-997, 2.0**997])
+@mark.parametrize("kind", ["python", "numpy", "array", "object", "longdouble"])
+def test_random_weights_equal_upper_boundary(n, total, kind, random_weights_rng):
+    """A cap of total/n forces every asset to have the same weight."""
+    cap = total / n
+    high = cap
+    if kind == "numpy":
+        n, high = np.int64(n), np.float64(cap)
+    elif kind == "array":
+        n, high = np.uint64(n), np.array(cap)
+    elif kind == "object":
+        high = np.array(cap, dtype=object)
+    elif kind == "longdouble":
+        high = np.longdouble(cap)
+    state = random.getstate()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        weights = ffn.random_weights(n, (0.0, high), total)
+    assert isinstance(weights, list)
+    assert len(weights) == n
+    assert all(np.isscalar(weight) and weight == cap for weight in weights)
+    assert all(0.0 <= weight <= high for weight in weights)
+    assert math.fsum(weights) == approx(total, rel=1e-14, abs=0)
+    assert random.getstate() == state
+    if isinstance(high, np.ndarray):
+        assert high.item() == cap
+        # The returned allocation must not retain the caller's mutable scalar buffer.
+        high[...] = 0.0
+        assert weights == [cap] * int(n)
+
+
+@mark.parametrize("n", [49, 98])
+def test_random_weights_equal_lower_and_upper_boundary(n, random_weights_rng):
+    cap = 1.0 / n
+    state = random.getstate()
+    assert ffn.core.random_weights(n, (cap, cap)) == [cap] * n
+    assert random.getstate() == state
+
+
+@mark.parametrize("n", [49, 98])
+@mark.parametrize("units", [1, 100])
+def test_random_weights_rejects_underfunded_rounded_cap(n, units, random_weights_rng):
+    """Quotient equality cannot make a zero or materially short budget feasible."""
+    smallest = float.fromhex("0x0.0000000000001p-1022")
+    total = units * smallest
+    cap = total / n
+    assert math.fsum([cap] * n) == (0.0 if units == 1 else 98 * smallest)
+    state = random.getstate()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        with raises(ValueError, match="solution not possible"):
+            ffn.random_weights(n, (0.0, cap), total)
+    assert random.getstate() == state
+
+
+@mark.parametrize("n", [49, 98])
+def test_random_weights_preserves_feasible_subnormal_budget(n, random_weights_rng):
+    total = 98 * float.fromhex("0x0.0000000000001p-1022")
+    cap = total / n
+    state = random.getstate()
+    weights = ffn.random_weights(n, (0.0, cap), total)
+    assert weights == [cap] * n
+    assert math.fsum(weights) == total
+    # This already admitted call must still use the existing sampler.
+    assert random.getstate() != state
+
+
+def test_random_weights_preserves_float16_quotient_admission(random_weights_rng):
+    total = np.float16(1e-6)
+    cap = total / 49
+    state = random.getstate()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        # NumPy 2 retains float16 division; NumPy 1 widens this quotient.
+        if Version(np.__version__) >= Version("2"):
+            assert cap == 0
+            with raises(ValueError, match="solution not possible"):
+                ffn.random_weights(49, (0.0, cap), total)
+            assert random.getstate() == state
+        else:
+            weights = ffn.random_weights(49, (0.0, cap), total)
+            assert len(weights) == 49
+            assert math.fsum(weights) == approx(float(total), rel=1e-14, abs=0)
+            assert random.getstate() != state
+
+
+@mark.parametrize("dtype", [np.float16, np.float32])
+@mark.parametrize("kind", ["scalar", "array", "object"])
+def test_random_weights_rejects_reversed_mixed_precision_bounds(dtype, kind, random_weights_rng):
+    high = 1.0 / 103
+    low = dtype(high)
+    if kind != "scalar":
+        low = np.array(low, dtype=object if kind == "object" else dtype)
+    # Widening float16/32 to Python float exposes the reversed stored interval.
+    assert float(low) > high
+    state = random.getstate()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        with raises(ValueError):
+            ffn.random_weights(103, (low, high))
+    assert random.getstate() == state
+
+
+@mark.parametrize("dtype", [np.float16, np.float32])
+@mark.parametrize("kind", ["scalar", "array", "object"])
+def test_random_weights_accepts_neighboring_mixed_precision_bounds(dtype, kind, random_weights_rng):
+    high = 1.0 / 103
+    low = np.nextafter(dtype(high), dtype(0))
+    if kind != "scalar":
+        low = np.array(low, dtype=object if kind == "object" else dtype)
+    lower_value = float(low)
+    assert lower_value < high
+    state = random.getstate()
+    weights = ffn.random_weights(103, (low, high))
+    assert weights == [high] * 103
+    assert all(lower_value <= float(weight) <= high for weight in weights)
+    assert math.fsum(weights) == approx(1.0, rel=1e-14, abs=0)
+    assert random.getstate() == state
+    assert float(low) == lower_value
+    if isinstance(low, np.ndarray):
+        low[...] = 1
+        assert weights == [high] * 103
+
+
+@mark.parametrize("low", [np.int64(2**53 + 1), np.uint64(2**53 + 1), np.array(np.int64(2**53 + 1), dtype=object)])
+def test_random_weights_rejects_reversed_integer_lower_bound(low, random_weights_rng):
+    high = float(2**53)
+    # A float64 comparison can round this larger integer down to the cap.
+    assert int(low) > int(high)
+    state = random.getstate()
+    with raises(ValueError):
+        ffn.random_weights(49, (low, high), 49 * 2**53 + 1)
+    assert random.getstate() == state
+
+
+@mark.parametrize("low,total", [(np.array(np.int64(1), dtype=object), 128.0), (-np.inf, 1.0), (np.array(np.float32(-1), dtype=object), 1.0)])
+def test_random_weights_preserves_other_feasible_lower_bounds(low, total, random_weights_rng):
+    high = total / 103
+    state = random.getstate()
+    weights = ffn.random_weights(103, (low, high), total)
+    assert weights == [high] * 103
+    assert all(float(low) <= float(weight) <= high for weight in weights)
+    assert math.fsum(weights) == approx(total, rel=1e-14, abs=0)
+    assert random.getstate() == state
+
+
+@mark.parametrize("n", [4, 7, 49, 93, 98])
+@mark.parametrize("total", [1.0, 2.0])
+def test_random_weights_rejects_smaller_upper_boundary(n, total, random_weights_rng):
+    high = math.nextafter(total / n, -math.inf)
+    state = random.getstate()
+    with raises(ValueError, match="solution not possible"):
+        ffn.random_weights(n, (0.0, high), total)
+    assert random.getstate() == state
+
+
+@mark.parametrize("n", [41, 47])
+@mark.parametrize("kind", ["scalar", "array", "object"])
+def test_random_weights_rejects_rounded_float32_cap(n, kind, random_weights_rng):
+    # NumPy's weak scalar comparison can round total/n down to this smaller cap.
+    high = np.float32(1.0 / n)
+    assert float(high) < 1.0 / n
+    if kind == "array":
+        high = np.array(high)
+    elif kind == "object":
+        high = np.array(high, dtype=object)
+    state = random.getstate()
+    with raises(ValueError, match="solution not possible"):
+        ffn.random_weights(n, (0.0, high))
+    assert random.getstate() == state
+
+
+@mark.parametrize("n", [49.0, np.float64(49), np.array(49), np.array(49.0)])
+def test_random_weights_preserves_infeasible_count_error(n, random_weights_rng):
+    state = random.getstate()
+    with raises(ValueError, match="solution not possible"):
+        ffn.random_weights(n, (0.0, 1.0 / 49))
+    assert random.getstate() == state
+
+
+@mark.parametrize("high", [2**53, 2**100])
+def test_random_weights_rejects_exact_integer_shortfall(high, random_weights_rng):
+    # A rounded floating quotient must not erase an exact one-unit budget shortfall.
+    state = random.getstate()
+    with raises(ValueError, match="solution not possible"):
+        ffn.random_weights(49, (0, high), 49 * high + 1)
+    assert random.getstate() == state
+
+
+@mark.parametrize("low, high, total", [(0, 1.0 / 49, 10**400), (float("nan"), 1.0 / 49, 1.0)])
+def test_random_weights_preserves_infeasible_constraint_error(low, high, total, random_weights_rng):
+    state = random.getstate()
+    with raises(ValueError, match="solution not possible"):
+        ffn.random_weights(49, (low, high), total)
+    assert random.getstate() == state
+
+
 @mark.parametrize("position", [0, 1, 2], ids=["lower", "upper", "total"])
 @mark.parametrize("nan", [float("nan"), np.float32("nan"), np.float64("nan"), np.longdouble("nan"), np.array(np.nan)])
 def test_random_weights_rejects_nan_constraints(position, nan, random_weights_rng):

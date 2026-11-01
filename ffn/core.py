@@ -2576,7 +2576,35 @@ def random_weights(n, bounds=(0.0, 1.0), total=1.0):
     if high < low:
         raise ValueError("Higher bound must be greater or equal to lower bound")
 
-    if n * high < total or n * low > total:
+    upper_too_low = n * high < total
+    if upper_too_low or n * low > total:
+        # Multiplication can round n * (total / n) below total at a feasible cap.
+        if upper_too_low and isinstance(n, (int, np.integer)) and n > 0 and total > 0 and all(np.ndim(value) == 0 for value in (low, high, total)):
+            upper = np.asarray(high).item()
+            if isinstance(upper, (float, np.floating)):
+                try:
+                    cap = np.asarray(total / n).item()
+                    # Compare stored values exactly; NumPy can round a Python float
+                    # to a smaller float32 operand during an ordinary equality test.
+                    upper_ratio = upper.as_integer_ratio()
+                    equal_cap = upper_ratio == cap.as_integer_ratio()
+                    if equal_cap:
+                        # Normalize exact scalar ratios so an absolute tolerance cannot
+                        # hide a budget shortfall when the quotient underflows.
+                        total_ratio = np.asarray(total).item().as_integer_ratio()
+                        budget_ratio = int(n) * upper_ratio[0] * total_ratio[1] / (upper_ratio[1] * total_ratio[0])
+                        equal_cap = abs(budget_ratio - 1.0) <= 1e-14
+                    if equal_cap and low > 0:
+                        # Compare positive lower bounds exactly too; a weak NumPy
+                        # comparison can conceal that the stored interval is reversed.
+                        lower = np.asarray(low).item()
+                        lower_ratio = (int(lower), 1) if isinstance(lower, (int, np.integer)) else lower.as_integer_ratio()
+                        equal_cap = lower_ratio[0] * upper_ratio[1] <= upper_ratio[0] * lower_ratio[1]
+                except (AttributeError, OverflowError, TypeError, ValueError):
+                    equal_cap = False
+                if equal_cap and low <= upper:
+                    # The cap forces equal weights; immutable scalars avoid aliasing a caller's array.
+                    return [upper] * n
         raise ValueError("solution not possible with given n and bounds")
 
     w = [0] * n
