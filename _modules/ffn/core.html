@@ -1091,7 +1091,7 @@ window.runMermaid = runMermaid;</script>
         <span class="p">]</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">tabulate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">"Total Return"</span><span class="p">,</span> <span class="s2">"Sharpe"</span><span class="p">,</span> <span class="s2">"CAGR"</span><span class="p">,</span> <span class="s2">"Max Drawdown"</span><span class="p">]))</span>
 
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Annualized Returns:"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Lookback Returns:"</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">[</span>
                 <span class="n">fmtp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mtd</span><span class="p">),</span>
@@ -1108,7 +1108,7 @@ window.runMermaid = runMermaid;</script>
         <span class="nb">print</span><span class="p">(</span>
             <span class="n">tabulate</span><span class="p">(</span>
                 <span class="n">data</span><span class="p">,</span>
-                <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">"mtd"</span><span class="p">,</span> <span class="s2">"3m"</span><span class="p">,</span> <span class="s2">"6m"</span><span class="p">,</span> <span class="s2">"ytd"</span><span class="p">,</span> <span class="s2">"1y"</span><span class="p">,</span> <span class="s2">"3y"</span><span class="p">,</span> <span class="s2">"5y"</span><span class="p">,</span> <span class="s2">"10y"</span><span class="p">,</span> <span class="s2">"incep."</span><span class="p">],</span>
+                <span class="n">headers</span><span class="o">=</span><span class="p">[</span><span class="s2">"mtd"</span><span class="p">,</span> <span class="s2">"3m"</span><span class="p">,</span> <span class="s2">"6m"</span><span class="p">,</span> <span class="s2">"ytd"</span><span class="p">,</span> <span class="s2">"1y"</span><span class="p">,</span> <span class="s2">"3y (ann.)"</span><span class="p">,</span> <span class="s2">"5y (ann.)"</span><span class="p">,</span> <span class="s2">"10y (ann.)"</span><span class="p">,</span> <span class="s2">"incep. (ann.)"</span><span class="p">],</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
