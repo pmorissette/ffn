@@ -377,20 +377,69 @@ def test_get_freq_name_is_case_sensitive_where_pandas_is():
     assert utils.get_freq_name('us') == 'microseconds'
 
 
+@pytest.mark.parametrize(
+    ('period', 'expected'),
+    [
+        ('2D', '2D'),
+        ('5D', '5D'),
+        ('2ME', '2ME'),
+        ('2M', '2M'),
+        ('2W-MON', '2W-MON'),
+        ('2YE-DEC', '2YE-DEC'),
+        ('2A-DEC', '2A-DEC'),
+        ('2ms', '2ms'),
+        ('2MS', '2MS'),
+        ('02D', '02D'),
+        # pandas also accepts Unicode decimal multipliers.
+        ('٢D', '٢D'),
+        ('1D', 'daily'),
+        ('01D', 'daily'),
+        ('١D', 'daily'),
+        ('0D', 'daily'),
+        ('٠D', 'daily'),
+        ('-2D', 'daily'),
+        ('2zzz', None),
+        ('2W-DEC', None),
+        ('2D-NOTREAL', None),
+    ],
+)
+def test_get_freq_name_preserves_frequency_multipliers(period, expected):
+    assert utils.get_freq_name(period) == expected
+
+
+@pytest.mark.parametrize(
+    ('prefix', 'nonunit'),
+    [
+        pytest.param('0' * 5000, False, id='zero'),
+        pytest.param('0' * 5000 + '1', False, id='unit'),
+        pytest.param('0' * 5000 + '2', True, id='nonunit'),
+        pytest.param('-' + '0' * 5000 + '2', False, id='negative'),
+        pytest.param('٠' * 5000 + '١', False, id='unicode-unit'),
+        pytest.param('٠' * 5000 + '٢', True, id='unicode-nonunit'),
+    ],
+)
+def test_get_freq_name_preserves_long_integer_prefixes(prefix, nonunit):
+    # pandas accepts long padding that exceeds Python's int-string conversion limit.
+    period = prefix + 'D'
+    assert utils.get_freq_name(period) == (period if nonunit else 'daily')
+
+
 def test_get_freq_name_accepts_what_infer_freq_returns():
     # the round trip a default plot title actually takes
     for freq, expected in (
         (ffn.core._MonthEnd, 'monthly'),
-        (f'2{ffn.core._MonthEnd}', 'monthly'),
+        (f'2{ffn.core._MonthEnd}', None),
         (ffn.core._YearEnd, 'yearly'),
-        (f'2{ffn.core._YearEnd}', 'yearly'),
+        (f'2{ffn.core._YearEnd}', None),
         ('D', 'daily'),
         ('-1D', 'daily'),
-        ('2h', 'hourly'),
-        ('2ms', 'milliseconds'),
+        ('2h', None),
+        ('2ms', None),
     ):
         idx = pd.date_range('2020-01-31', periods=8, freq=freq)
-        assert utils.get_freq_name(pd.infer_freq(idx)) == expected
+        inferred = pd.infer_freq(idx)
+        # Nonunit labels retain pandas' full alias, including version-specific anchors.
+        assert utils.get_freq_name(inferred) == (inferred if expected is None else expected)
 
 
 def test_as_format():

@@ -7229,3 +7229,84 @@ def test_plot_yearly_frequency():
     group = prices.to_frame().calc_stats()
     group.plot(freq="y")
     assert list(group._get_series("y").index.year) == [2020, 2021, 2022]
+
+
+@mark.parametrize(
+    "freq,stride,title,expected_title",
+    [
+        ("5D", 5, None, "Fund 5D Return Histogram"),
+        ("D", 1, None, "Fund daily Return Histogram"),
+        ("5D", 5, "Custom returns", "Custom returns"),
+        param("0" * 5000 + "1D", 1, None, "Fund daily Return Histogram", id="long-padded-unit"),
+    ],
+)
+def test_histogram_frequency_label_matches_sample(freq, stride, title, expected_title):
+    import matplotlib.pyplot as plt
+
+    x = np.arange(760, dtype=float)
+    prices = pd.Series(
+        100 * np.exp(0.0003 * x + 0.025 * np.sin(x / 3) + 0.018 * np.cos(x / 7)),
+        index=pd.date_range("2020-01-01", periods=760),
+        name="Fund",
+    )
+    before = prices.copy(deep=True)
+    stats = prices.calc_stats()
+    # Select prices independently of ffn's frequency and return helpers.
+    sampled = prices.to_numpy()[::stride]
+    expected_returns = sampled[1:] / sampled[:-1] - 1
+    densities, edges = np.histogram(expected_returns, bins=8, density=True)
+
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            ax = stats.plot_histogram(freq=freq, title=title, bins=8)
+            ax.figure.canvas.draw()
+            ax.figure.savefig(BytesIO(), format="png")
+        assert not caught
+        np.testing.assert_allclose([patch.get_height() for patch in ax.patches], densities, rtol=1e-12, atol=1e-12)
+        np.testing.assert_allclose([patch.get_x() for patch in ax.patches], edges[:-1], rtol=1e-12, atol=1e-12)
+        assert sum(patch.get_width() * patch.get_height() for patch in ax.patches) == approx(1)
+        assert ax.get_title() == expected_title
+        pd.testing.assert_series_equal(prices, before)
+    finally:
+        plt.close("all")
+
+
+@mark.parametrize(
+    "freq,stride,title,expected_title",
+    [
+        ("5D", 5, None, "5D Equity Progression"),
+        ("D", 1, None, "daily Equity Progression"),
+        ("5D", 5, "Custom prices", "Custom prices"),
+    ],
+)
+def test_group_chart_frequency_label_matches_sample(freq, stride, title, expected_title):
+    import matplotlib.pyplot as plt
+
+    x = np.arange(760, dtype=float)
+    prices = pd.Series(
+        100 * np.exp(0.0003 * x + 0.025 * np.sin(x / 3) + 0.018 * np.cos(x / 7)),
+        index=pd.date_range("2020-01-01", periods=760),
+        name="Fund",
+    )
+    before = prices.copy(deep=True)
+    group = prices.to_frame().calc_stats()
+    sampled = prices.to_numpy()[::stride]
+    expected_prices = 100 * sampled / sampled[0]
+
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            ax = group.plot(freq=freq, title=title)
+            ax.figure.canvas.draw()
+            ax.figure.savefig(BytesIO(), format="png")
+        assert not caught
+        line = ax.lines[0]
+        np.testing.assert_allclose(line.get_ydata(), expected_prices, rtol=1e-12, atol=1e-12)
+        # pandas plotting exposes dates as Periods or Timestamps across supported versions.
+        actual_dates = pd.DatetimeIndex([value.start_time if isinstance(value, pd.Period) else value for value in line.get_xdata(orig=True)])
+        pd.testing.assert_index_equal(actual_dates, prices.index[::stride])
+        assert ax.get_title() == expected_title
+        pd.testing.assert_series_equal(prices, before)
+    finally:
+        plt.close("all")
