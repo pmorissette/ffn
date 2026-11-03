@@ -145,11 +145,12 @@ def fmtn(number: float) -> str:
 
 
 def get_freq_name(period: str) -> str | None:
-    match = re.fullmatch(r"(?:-?\d+)?([A-Za-z]+)(?:-([A-Za-z]+))?", period)
+    """Return a unit name or retain the alias for a positive nonunit frequency."""
+    match = re.fullmatch(r"(-?\d+)?([A-Za-z]+)(?:-([A-Za-z]+))?", period)
     if match is None:
         return None
 
-    base, anchor = match.groups()
+    multiplier, base, anchor = match.groups()
     if anchor is not None:
         base_upper = base.upper()
         month_anchored = {"Q", "QE", "BQ", "BQE", "QS", "BQS", "Y", "YE", "A", "BA", "BY", "BYE", "AS", "YS", "BAS", "BYS"}
@@ -160,16 +161,13 @@ def get_freq_name(period: str) -> str | None:
             return None
 
     # These aliases are case sensitive in pandas: "ms" is milliseconds while
-    # "MS" is month start, so they have to be matched before upper casing
+    # "MS" is month start, so they take precedence over case-insensitive aliases.
     case_sensitive = {
         "min": "minutely",
         "ms": "milliseconds",
         "us": "microseconds",
         "ns": "nanoseconds",
     }
-    if base in case_sensitive:
-        return case_sensitive[base]
-
     periods = {
         "B": "business day",
         "C": "custom business day",
@@ -208,7 +206,11 @@ def get_freq_name(period: str) -> str | None:
         "N": "nanoseconds",
     }
 
-    return periods.get(base.upper())
+    name = case_sensitive.get(base, periods.get(base.upper()))
+    # Only distinguish integers above one; float avoids int's digit limit on padded aliases.
+    if name is not None and multiplier is not None and float(multiplier) > 1:
+        return period
+    return name
 
 
 def scale(val: float, src: Sequence[float], dst: Sequence[float]) -> float:
