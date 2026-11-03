@@ -419,7 +419,7 @@ def test_get_freq_name_preserves_frequency_multipliers(period, expected):
     ],
 )
 def test_get_freq_name_preserves_long_integer_prefixes(prefix, nonunit):
-    # pandas accepts long padding that exceeds Python's int-string conversion limit.
+    # Older pandas accepts padding beyond Python's int-string limit; the naming helper still handles it.
     period = prefix + 'D'
     assert utils.get_freq_name(period) == (period if nonunit else 'daily')
 
