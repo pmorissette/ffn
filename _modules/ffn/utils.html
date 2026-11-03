@@ -612,11 +612,12 @@ window.runMermaid = runMermaid;</script>
 <div class="viewcode-block" id="get_freq_name">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.utils.get_freq_name">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">get_freq_name</span><span class="p">(</span><span class="n">period</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?:-?\d+)?([A-Za-z]+)(?:-([A-Za-z]+))?"</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
+<span class="w">    </span><span class="sd">"""Return a unit name or retain the alias for a positive nonunit frequency."""</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(-?\d+)?([A-Za-z]+)(?:-([A-Za-z]+))?"</span><span class="p">,</span> <span class="n">period</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">None</span>
 
-    <span class="n">base</span><span class="p">,</span> <span class="n">anchor</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+    <span class="n">multiplier</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">anchor</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">anchor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">base_upper</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
         <span class="n">month_anchored</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Q"</span><span class="p">,</span> <span class="s2">"QE"</span><span class="p">,</span> <span class="s2">"BQ"</span><span class="p">,</span> <span class="s2">"BQE"</span><span class="p">,</span> <span class="s2">"QS"</span><span class="p">,</span> <span class="s2">"BQS"</span><span class="p">,</span> <span class="s2">"Y"</span><span class="p">,</span> <span class="s2">"YE"</span><span class="p">,</span> <span class="s2">"A"</span><span class="p">,</span> <span class="s2">"BA"</span><span class="p">,</span> <span class="s2">"BY"</span><span class="p">,</span> <span class="s2">"BYE"</span><span class="p">,</span> <span class="s2">"AS"</span><span class="p">,</span> <span class="s2">"YS"</span><span class="p">,</span> <span class="s2">"BAS"</span><span class="p">,</span> <span class="s2">"BYS"</span><span class="p">}</span>
@@ -627,16 +628,13 @@ window.runMermaid = runMermaid;</script>
             <span class="k">return</span> <span class="kc">None</span>
 
     <span class="c1"># These aliases are case sensitive in pandas: "ms" is milliseconds while</span>
-    <span class="c1"># "MS" is month start, so they have to be matched before upper casing</span>
+    <span class="c1"># "MS" is month start, so they take precedence over case-insensitive aliases.</span>
     <span class="n">case_sensitive</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"min"</span><span class="p">:</span> <span class="s2">"minutely"</span><span class="p">,</span>
         <span class="s2">"ms"</span><span class="p">:</span> <span class="s2">"milliseconds"</span><span class="p">,</span>
         <span class="s2">"us"</span><span class="p">:</span> <span class="s2">"microseconds"</span><span class="p">,</span>
         <span class="s2">"ns"</span><span class="p">:</span> <span class="s2">"nanoseconds"</span><span class="p">,</span>
     <span class="p">}</span>
-    <span class="k">if</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">case_sensitive</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">case_sensitive</span><span class="p">[</span><span class="n">base</span><span class="p">]</span>
-
     <span class="n">periods</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">"B"</span><span class="p">:</span> <span class="s2">"business day"</span><span class="p">,</span>
         <span class="s2">"C"</span><span class="p">:</span> <span class="s2">"custom business day"</span><span class="p">,</span>
@@ -675,7 +673,11 @@ window.runMermaid = runMermaid;</script>
         <span class="s2">"N"</span><span class="p">:</span> <span class="s2">"nanoseconds"</span><span class="p">,</span>
     <span class="p">}</span>
 
-    <span class="k">return</span> <span class="n">periods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span></div>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">case_sensitive</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">periods</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
+    <span class="c1"># Only distinguish integers above one; float avoids int's digit limit on padded aliases.</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">multiplier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">float</span><span class="p">(</span><span class="n">multiplier</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">period</span>
+    <span class="k">return</span> <span class="n">name</span></div>
 
 
 
