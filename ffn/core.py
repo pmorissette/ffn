@@ -536,8 +536,8 @@ class PerformanceStats:
             else:
                 rf = periodic_rf.resample(_YearEnd).last().to_returns()
             er = yr.to_excess_returns(rf, nperiods=1)
-            if self.yearly_vol > 0:
-                self.yearly_sharpe = _calc_sharpe(er, nperiods=1)
+            # Raw asset returns can be constant while excess returns still vary.
+            self.yearly_sharpe = _calc_sharpe(er, nperiods=1)
             self.yearly_sortino = _calc_sortino_ratio(er, nperiods=1)
 
             self.best_year = yr.max()

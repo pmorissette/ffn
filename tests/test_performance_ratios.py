@@ -1,3 +1,6 @@
+import csv
+import statistics
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -333,6 +336,81 @@ def test_performance_stats_preserves_zero_yearly_volatility():
     assert stats.yearly_vol == 0
     assert np.isnan(stats.yearly_sharpe)
     assert stats.yearly_sortino == ffn.calc_sortino_ratio(stats.yearly_returns, rf=0.05, nperiods=1)
+
+
+@pytest.mark.filterwarnings("error::RuntimeWarning")
+@pytest.mark.parametrize("dtype", ["float64", "Float64"])
+@pytest.mark.parametrize("grouped", [False, True])
+@pytest.mark.parametrize("rf_sign", [1, -1])
+def test_yearly_sharpe_uses_excess_dispersion(dtype, grouped, rf_sign):
+    """Flat annual asset returns can still have a defined excess-return Sharpe."""
+    dates = pd.to_datetime(["2020-12-31", "2021-12-31", "2022-12-31", "2023-12-31"])
+    prices = pd.Series(100.0, index=dates, dtype=dtype, name="asset")
+    excess = [-rf_sign * rate for rate in (0.02, 0.03, 0.04)]
+    levels = [100.0]
+    for value in excess:
+        levels.append(levels[-1] * (1 - value))
+    risk_free = pd.Series(levels, index=dates, dtype=dtype, name="rf")
+    original_prices, original_rf = prices.copy(), risk_free.copy()
+    expected = statistics.mean(excess) / statistics.stdev(excess)
+
+    if grouped:
+        report = prices.to_frame().calc_stats()
+        report.set_riskfree_rate(risk_free)
+    else:
+        report = ffn.PerformanceStats(prices, rf=risk_free)
+    child = report["asset"] if grouped else report
+    assert child.yearly_sharpe == pytest.approx(expected, rel=1e-12, abs=1e-12)
+
+    # A scalar rate makes the excess sample constant; restoring RF prices must rebuild it.
+    for rf, value in [(0.05, None), (risk_free, expected)]:
+        report.set_riskfree_rate(rf)
+        assert (report["asset"] if grouped else report) is child
+        assert child.yearly_vol == 0
+        np.testing.assert_array_equal(child.yearly_returns.dropna().to_numpy(dtype=float), [0.0, 0.0, 0.0])
+        recorded = report.stats.loc["yearly_sharpe", "asset"] if grouped else report.stats["yearly_sharpe"]
+        row = next(row for row in csv.reader(report.to_csv().splitlines()) if row[0] == "Yearly Sharpe")
+        if value is None:
+            assert pd.isna(child.yearly_sharpe)
+            assert pd.isna(recorded)
+            assert row == ["Yearly Sharpe", "-"]
+        else:
+            assert child.yearly_sharpe == pytest.approx(value, rel=1e-12, abs=1e-12)
+            assert recorded == pytest.approx(value, rel=1e-12, abs=1e-12)
+            assert row == ["Yearly Sharpe", f"{value:.2f}"]
+    pd.testing.assert_series_equal(prices, original_prices)
+    pd.testing.assert_series_equal(risk_free, original_rf)
+
+
+@pytest.mark.filterwarnings("error::RuntimeWarning")
+@pytest.mark.parametrize("dtype", ["float64", "Float64"])
+@pytest.mark.parametrize(
+    "rf_prices,excess",
+    [
+        # The missing endpoint excludes both adjacent intervals, leaving three paired returns.
+        ([100.0, 102.0, np.nan, 106.0, 110.24, 116.8544], [-0.02, -0.04, -0.06]),
+        ([100.0, 102.0, np.nan, np.nan, np.nan, np.nan], None),
+        ([np.nan] * 6, None),
+        ([100.0] * 6, None),
+        ([100.0, 200.0, 400.0, 800.0, 1600.0, 3200.0], None),
+    ],
+    ids=["partial", "one-pair", "no-pairs", "zero-excess", "constant-excess"],
+)
+def test_yearly_sharpe_uses_observed_excess_pairs(dtype, rf_prices, excess):
+    dates = pd.to_datetime([f"{year}-12-31" for year in range(2020, 2026)])
+    prices = pd.Series(100.0, index=dates, dtype=dtype, name="asset")
+    risk_free = pd.Series(rf_prices, index=dates, dtype=dtype)
+    original_rf = risk_free.copy()
+
+    stats = ffn.PerformanceStats(prices, rf=risk_free)
+
+    assert stats.yearly_vol == 0
+    if excess is None:
+        assert pd.isna(stats.yearly_sharpe)
+    else:
+        expected = statistics.mean(excess) / statistics.stdev(excess)
+        assert stats.yearly_sharpe == pytest.approx(expected, rel=1e-12, abs=1e-12)
+    pd.testing.assert_series_equal(risk_free, original_rf)
 
 
 def _daily_riskfree_prices(growth):
