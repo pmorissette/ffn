@@ -2012,7 +2012,17 @@ def calc_mean_var_weights(returns, weight_bounds=(0.0, 1.0), rf=0.0, covar_metho
         raise RuntimeError(optimized.message)
 
     # return weight vector
-    return pd.Series({returns.columns[i]: optimized.x[i] for i in range(n)})
+    allocations = {returns.columns[i]: optimized.x[i] for i in range(n)}
+    result = pd.Series(allocations)
+    # Floating index inference can round an integer ID without creating duplicates.
+    # Compare Python integers so NumPy's mixed comparisons cannot hide that rounding.
+    if result.index.dtype.kind == "f" and any(isinstance(label, (int, np.integer)) and int(label) != int(inferred) for label, inferred in zip(allocations, result.index)):
+        # Keep pandas' normalized neighbors (for example, None becomes NaN).
+        result.index = pd.Index(
+            [label if isinstance(label, (int, np.integer)) and int(label) != int(inferred) else inferred for label, inferred in zip(allocations, result.index)],
+            dtype=object,
+        )
+    return result
 
 
 def _erc_weights_slsqp(x0, cov, b, maximum_iterations, tolerance):

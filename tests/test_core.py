@@ -971,6 +971,118 @@ def test_calc_mean_var_weights(df):
 
 
 @mark.parametrize(
+    "labels",
+    [
+        (2**53 + 1, float(2**53)),
+        (float(2**63), 2**63 + 1),
+        (np.uint64(2**63 + 1), 0.5),
+        (np.int64(-(2**53 + 1)), 0.5),
+    ],
+    ids=["colliding-int", "colliding-reversed", "noncolliding-uint", "noncolliding-negative"],
+)
+@mark.parametrize(
+    ("covar_method", "expected_weights"),
+    [("standard", [8 / 9, 1 / 9]), ("ledoit-wolf", [116 / 139, 23 / 139])],
+)
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_mean_var_weights_preserves_large_integer_labels(labels, covar_method, expected_weights, use_pandas_method):
+    """A numerically correct allocation must still identify each original asset."""
+    returns = pd.DataFrame(
+        [[0.006, 0.022], [-0.004, 0.022], [0.006, -0.018], [-0.004, -0.018]],
+        columns=pd.Index(labels, dtype=object, name="asset"),
+    )
+    original = returns.copy(deep=True)
+    original.columns = returns.columns.copy(deep=True)
+    calculate = returns.calc_mean_var_weights if use_pandas_method else ffn.calc_mean_var_weights
+    args = () if use_pandas_method else (returns,)
+
+    actual = calculate(*args, covar_method=covar_method, options={"ftol": 1e-12})
+
+    # Orthogonal centered returns give diagonal covariance; LW shrinkage is 16/225.
+    # The corresponding tangency weights are 8/9, 1/9 and 116/139, 23/139.
+    pd.testing.assert_index_equal(actual.index, pd.Index(labels, dtype=object))
+    np.testing.assert_allclose(actual, expected_weights, rtol=0, atol=1e-6)
+    allocations = actual.to_dict()
+    assert len(allocations) == 2
+    for label, expected in zip(labels, expected_weights):
+        # Exact dictionary lookup detects rounded IDs that float comparisons can hide.
+        assert allocations[label] == approx(expected, rel=0, abs=1e-6)
+    assert sum(allocations.values()) == approx(1.0, rel=0, abs=1e-12)
+
+    actual.iloc[0] = -1.0
+    actual.index.name = "output"
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize(
+    "columns",
+    [
+        pd.Index(["A", "B"], name="asset"),
+        pd.Index([1, 2.5], dtype=object, name="asset"),
+        pd.Index([1, 2], name="asset"),
+        pd.Index([1, 2], dtype="Int64", name="asset"),
+        pd.CategoricalIndex(["B", "A"], categories=["A", "B", "unused"], ordered=True, name="asset"),
+        pd.date_range("2024-01-01", periods=2, tz="UTC", name="asset"),
+        pd.MultiIndex.from_tuples([("A", 1), ("B", 2)], names=["kind", "number"]),
+        pd.Index([np.nan, 1.0], name="asset"),
+    ],
+    ids=["strings", "small-mixed", "integers", "nullable", "categorical", "dates", "tuples", "missing-float"],
+)
+def test_calc_mean_var_weights_preserves_native_index_normalization(columns):
+    returns = pd.DataFrame(
+        [[0.006, 0.022], [-0.004, 0.022], [0.006, -0.018], [-0.004, -0.018]],
+        columns=columns.copy(deep=True),
+    )
+    original = returns.copy(deep=True)
+    original.columns = returns.columns.copy(deep=True)
+    # Native dictionary construction flattens categories and drops axis names/frequency.
+    expected = pd.Series(dict(zip(columns, [8 / 9, 1 / 9])))
+
+    actual = ffn.calc_mean_var_weights(returns, covar_method="standard", options={"ftol": 1e-12})
+
+    pd.testing.assert_series_equal(actual, expected, check_exact=False, rtol=0, atol=1e-6)
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize(
+    ("labels", "expected_labels"),
+    [
+        ([2**63 + 1, float(2**63), None, np.inf], [2**63 + 1, float(2**63), np.nan, np.inf]),
+        ([np.inf, None, float(2**63), 2**63 + 1], [np.inf, np.nan, float(2**63), 2**63 + 1]),
+        ([2**63 + 1, float(2**63), 7, None], [2**63 + 1, float(2**63), 7.0, np.nan]),
+    ],
+    ids=["missing", "reversed", "small-integer-neighbor"],
+)
+@mark.parametrize("covar_method", ["standard", "ledoit-wolf"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_mean_var_weights_precision_recovery_preserves_normalized_neighbors(labels, expected_labels, covar_method, use_pandas_method):
+    """Recovering one asset ID must not undo native normalization of another."""
+    returns = pd.DataFrame(
+        [[0.006, 0.022, 0.013, 0.025], [-0.004, 0.022, -0.007, 0.025], [0.006, -0.018, 0.013, -0.015], [-0.004, -0.018, -0.007, -0.015]],
+        columns=pd.Index(labels, dtype=object, name="asset"),
+    )
+    original = returns.copy(deep=True)
+    original.columns = returns.columns.copy(deep=True)
+    calculate = returns.calc_mean_var_weights if use_pandas_method else ffn.calc_mean_var_weights
+    args = () if use_pandas_method else (returns,)
+
+    actual = calculate(*args, covar_method=covar_method, weight_bounds=(0.25, 0.25), rf=0.0007)
+
+    # Fixed bounds force these weights independently of the optimization objective.
+    # Native floating-index inference normalizes None to NaN and exact integers to floats.
+    expected = pd.Series([0.25] * 4, index=pd.Index(expected_labels, dtype=object))
+    pd.testing.assert_series_equal(actual, expected)
+    assert actual.loc[np.nan] == 0.25
+    assert actual.to_dict()[2**63 + 1] == 0.25
+    assert len(actual.to_dict()) == 4
+    if 7 in labels:
+        assert isinstance(actual.index[2], float)
+    actual.iloc[0] = -1.0
+    actual.index.name = "output"
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize(
     ("covar_method", "dtype"),
     [("ledoit-wolf", "float64"), ("standard", "float64"), ("standard", "Float64")],
 )
