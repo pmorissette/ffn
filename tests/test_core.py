@@ -242,6 +242,68 @@ def test_performance_stats_current_period_padding_public_reports_and_range_reset
     pd.testing.assert_series_equal(prices, original)
 
 
+@mark.parametrize(
+    "periods, final_price, expected",
+    [
+        (31, 102.0, ["2.00%", "-", "-", "2.00%", "-", "-", "-", "-", "27.26%"]),
+        (182, 121.0, ["0.10%", "9.56%", "21.00%", "21.00%", "-", "-", "-", "-", "46.91%"]),
+    ],
+)
+def test_performance_stats_display_lookback_return_labels(periods, final_price, expected, capsys):
+    """Short-period gains and annualized inception returns need different labels."""
+    dates = pd.date_range("2023-01-01", periods=periods)
+    prices = pd.Series(np.linspace(100.0, final_price, periods), index=dates, name="asset")
+    stats = ffn.PerformanceStats(prices)
+    # Endpoint ratios give 2%/21%; annualizing over 30/181 days gives 27.26%/46.91%.
+    assert stats.ytd == approx(final_price / 100.0 - 1)
+    assert stats.incep == approx((final_price / 100.0) ** (365.25 / (periods - 1)) - 1)
+
+    assert stats.display() is None
+
+    output = capsys.readouterr().out
+    assert "Annualized Returns:" not in output
+    assert "Lookback Returns:\n" in output
+    table = output.split("Lookback Returns:\n", 1)[1].split("\n\nPeriodic:", 1)[0]
+    headers = ["mtd", "3m", "6m", "ytd", "1y", "3y (ann.)", "5y (ann.)", "10y (ann.)", "incep. (ann.)"]
+    assert table == ffn.core.tabulate([expected], headers=headers)
+
+
+@mark.parametrize("path", ["direct", "package", "pandas", "group-child"])
+def test_performance_stats_display_preserves_annualized_lookbacks(path, capsys):
+    """Relabeling must retain genuinely annualized values and the underlying report data."""
+    dates = pd.date_range("2010-01-01", "2023-01-01")
+    # This price path earns 8% per 365.25-day year at every long-term endpoint.
+    days = (dates - dates[0]).days.to_numpy()
+    prices = pd.Series(100.0 * np.exp(np.log(1.08) * days / 365.25), index=dates, name="asset")
+    original_prices = prices.copy(deep=True)
+    if path == "direct":
+        stats = ffn.PerformanceStats(prices)
+    elif path == "package":
+        stats = ffn.calc_perf_stats(prices)
+    elif path == "pandas":
+        stats = prices.calc_perf_stats()
+    else:
+        stats = ffn.GroupStats(prices)["asset"]
+    original_stats = stats.stats.copy(deep=True)
+    original_lookbacks = stats.lookback_returns.copy(deep=True)
+    original_csv = stats.to_csv()
+
+    assert stats.display() is None
+
+    output = capsys.readouterr().out
+    assert "Lookback Returns:\n" in output
+    table = output.split("Lookback Returns:\n", 1)[1].split("\n\nPeriodic:", 1)[0]
+    values = table.splitlines()[-1].split()
+    assert len(values) == 9
+    assert values[-4:] == ["8.00%"] * 4
+    for label in ("3y (ann.)", "5y (ann.)", "10y (ann.)", "incep. (ann.)"):
+        assert label in table.splitlines()[0]
+    pd.testing.assert_series_equal(stats.stats, original_stats)
+    pd.testing.assert_series_equal(stats.lookback_returns, original_lookbacks)
+    pd.testing.assert_series_equal(prices, original_prices)
+    assert stats.to_csv() == original_csv
+
+
 def test_to_returns_ts(ts):
     data = ts
     actual = data.to_returns()
@@ -906,6 +968,118 @@ def test_calc_mean_var_weights(df):
     aae(actual["AAPL"], 0.000, 3)
     aae(actual["MSFT"], 0.000, 3)
     aae(actual["C"], 1.000, 3)
+
+
+@mark.parametrize(
+    "labels",
+    [
+        (2**53 + 1, float(2**53)),
+        (float(2**63), 2**63 + 1),
+        (np.uint64(2**63 + 1), 0.5),
+        (np.int64(-(2**53 + 1)), 0.5),
+    ],
+    ids=["colliding-int", "colliding-reversed", "noncolliding-uint", "noncolliding-negative"],
+)
+@mark.parametrize(
+    ("covar_method", "expected_weights"),
+    [("standard", [8 / 9, 1 / 9]), ("ledoit-wolf", [116 / 139, 23 / 139])],
+)
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_mean_var_weights_preserves_large_integer_labels(labels, covar_method, expected_weights, use_pandas_method):
+    """A numerically correct allocation must still identify each original asset."""
+    returns = pd.DataFrame(
+        [[0.006, 0.022], [-0.004, 0.022], [0.006, -0.018], [-0.004, -0.018]],
+        columns=pd.Index(labels, dtype=object, name="asset"),
+    )
+    original = returns.copy(deep=True)
+    original.columns = returns.columns.copy(deep=True)
+    calculate = returns.calc_mean_var_weights if use_pandas_method else ffn.calc_mean_var_weights
+    args = () if use_pandas_method else (returns,)
+
+    actual = calculate(*args, covar_method=covar_method, options={"ftol": 1e-12})
+
+    # Orthogonal centered returns give diagonal covariance; LW shrinkage is 16/225.
+    # The corresponding tangency weights are 8/9, 1/9 and 116/139, 23/139.
+    pd.testing.assert_index_equal(actual.index, pd.Index(labels, dtype=object))
+    np.testing.assert_allclose(actual, expected_weights, rtol=0, atol=1e-6)
+    allocations = actual.to_dict()
+    assert len(allocations) == 2
+    for label, expected in zip(labels, expected_weights):
+        # Exact dictionary lookup detects rounded IDs that float comparisons can hide.
+        assert allocations[label] == approx(expected, rel=0, abs=1e-6)
+    assert sum(allocations.values()) == approx(1.0, rel=0, abs=1e-12)
+
+    actual.iloc[0] = -1.0
+    actual.index.name = "output"
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize(
+    "columns",
+    [
+        pd.Index(["A", "B"], name="asset"),
+        pd.Index([1, 2.5], dtype=object, name="asset"),
+        pd.Index([1, 2], name="asset"),
+        pd.Index([1, 2], dtype="Int64", name="asset"),
+        pd.CategoricalIndex(["B", "A"], categories=["A", "B", "unused"], ordered=True, name="asset"),
+        pd.date_range("2024-01-01", periods=2, tz="UTC", name="asset"),
+        pd.MultiIndex.from_tuples([("A", 1), ("B", 2)], names=["kind", "number"]),
+        pd.Index([np.nan, 1.0], name="asset"),
+    ],
+    ids=["strings", "small-mixed", "integers", "nullable", "categorical", "dates", "tuples", "missing-float"],
+)
+def test_calc_mean_var_weights_preserves_native_index_normalization(columns):
+    returns = pd.DataFrame(
+        [[0.006, 0.022], [-0.004, 0.022], [0.006, -0.018], [-0.004, -0.018]],
+        columns=columns.copy(deep=True),
+    )
+    original = returns.copy(deep=True)
+    original.columns = returns.columns.copy(deep=True)
+    # Native dictionary construction flattens categories and drops axis names/frequency.
+    expected = pd.Series(dict(zip(columns, [8 / 9, 1 / 9])))
+
+    actual = ffn.calc_mean_var_weights(returns, covar_method="standard", options={"ftol": 1e-12})
+
+    pd.testing.assert_series_equal(actual, expected, check_exact=False, rtol=0, atol=1e-6)
+    pd.testing.assert_frame_equal(returns, original)
+
+
+@mark.parametrize(
+    ("labels", "expected_labels"),
+    [
+        ([2**63 + 1, float(2**63), None, np.inf], [2**63 + 1, float(2**63), np.nan, np.inf]),
+        ([np.inf, None, float(2**63), 2**63 + 1], [np.inf, np.nan, float(2**63), 2**63 + 1]),
+        ([2**63 + 1, float(2**63), 7, None], [2**63 + 1, float(2**63), 7.0, np.nan]),
+    ],
+    ids=["missing", "reversed", "small-integer-neighbor"],
+)
+@mark.parametrize("covar_method", ["standard", "ledoit-wolf"])
+@mark.parametrize("use_pandas_method", [False, True], ids=["package", "pandas"])
+def test_calc_mean_var_weights_precision_recovery_preserves_normalized_neighbors(labels, expected_labels, covar_method, use_pandas_method):
+    """Recovering one asset ID must not undo native normalization of another."""
+    returns = pd.DataFrame(
+        [[0.006, 0.022, 0.013, 0.025], [-0.004, 0.022, -0.007, 0.025], [0.006, -0.018, 0.013, -0.015], [-0.004, -0.018, -0.007, -0.015]],
+        columns=pd.Index(labels, dtype=object, name="asset"),
+    )
+    original = returns.copy(deep=True)
+    original.columns = returns.columns.copy(deep=True)
+    calculate = returns.calc_mean_var_weights if use_pandas_method else ffn.calc_mean_var_weights
+    args = () if use_pandas_method else (returns,)
+
+    actual = calculate(*args, covar_method=covar_method, weight_bounds=(0.25, 0.25), rf=0.0007)
+
+    # Fixed bounds force these weights independently of the optimization objective.
+    # Native floating-index inference normalizes None to NaN and exact integers to floats.
+    expected = pd.Series([0.25] * 4, index=pd.Index(expected_labels, dtype=object))
+    pd.testing.assert_series_equal(actual, expected)
+    assert actual.loc[np.nan] == 0.25
+    assert actual.to_dict()[2**63 + 1] == 0.25
+    assert len(actual.to_dict()) == 4
+    if 7 in labels:
+        assert isinstance(actual.index[2], float)
+    actual.iloc[0] = -1.0
+    actual.index.name = "output"
+    pd.testing.assert_frame_equal(returns, original)
 
 
 @mark.parametrize(
@@ -7433,3 +7607,97 @@ def test_statistics_charts_preserve_default_figures(kind, legend, statistics_cha
         assert len(set(plt.get_fignums()) - before) == (1 if kind == "single" else 2)
         result.figure.canvas.draw()
     assert not plot_warnings
+
+
+@mark.parametrize(
+    "freq,stride,title,expected_title",
+    [
+        ("5D", 5, None, "Fund 5D Return Histogram"),
+        ("D", 1, None, "Fund daily Return Histogram"),
+        ("5D", 5, "Custom returns", "Custom returns"),
+        # Stay within pandas' own integer-parser limit when exercising rendering.
+        param("0" * 100 + "1D", 1, None, "Fund daily Return Histogram", id="padded-unit"),
+    ],
+)
+def test_histogram_frequency_label_matches_sample(freq, stride, title, expected_title):
+    import matplotlib.pyplot as plt
+
+    x = np.arange(760, dtype=float)
+    prices = pd.Series(
+        100 * np.exp(0.0003 * x + 0.025 * np.sin(x / 3) + 0.018 * np.cos(x / 7)),
+        index=pd.date_range("2020-01-01", periods=760),
+        name="Fund",
+    )
+    before = prices.copy(deep=True)
+    stats = prices.calc_stats()
+    # Select prices independently of ffn's frequency and return helpers.
+    sampled = prices.to_numpy()[::stride]
+    expected_returns = sampled[1:] / sampled[:-1] - 1
+    densities, edges = np.histogram(expected_returns, bins=8, density=True)
+
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            ax = stats.plot_histogram(freq=freq, title=title, bins=8)
+            ax.figure.canvas.draw()
+            ax.figure.savefig(BytesIO(), format="png")
+        assert not caught
+        np.testing.assert_allclose([patch.get_height() for patch in ax.patches], densities, rtol=1e-12, atol=1e-12)
+        np.testing.assert_allclose([patch.get_x() for patch in ax.patches], edges[:-1], rtol=1e-12, atol=1e-12)
+        assert sum(patch.get_width() * patch.get_height() for patch in ax.patches) == approx(1)
+        assert ax.get_title() == expected_title
+        pd.testing.assert_series_equal(prices, before)
+    finally:
+        plt.close("all")
+
+
+@mark.parametrize(
+    "freq,stride,title,expected_title",
+    [
+        ("5D", 5, None, "5D Equity Progression"),
+        ("D", 1, None, "daily Equity Progression"),
+        ("5D", 5, "Custom prices", "Custom prices"),
+    ],
+)
+def test_group_chart_frequency_label_matches_sample(freq, stride, title, expected_title):
+    import matplotlib.pyplot as plt
+
+    x = np.arange(760, dtype=float)
+    prices = pd.Series(
+        100 * np.exp(0.0003 * x + 0.025 * np.sin(x / 3) + 0.018 * np.cos(x / 7)),
+        index=pd.date_range("2020-01-01", periods=760),
+        name="Fund",
+    )
+    before = prices.copy(deep=True)
+    group = prices.to_frame().calc_stats()
+    sampled = prices.to_numpy()[::stride]
+    expected_prices = 100 * sampled / sampled[0]
+
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            if Version(pd.__version__) < Version("3") and Version(matplotlib.__version__) >= Version("3.11"):
+                # Older pandas' date converter reads this deprecated Matplotlib attribute.
+                warnings.filterwarnings(
+                    "ignore",
+                    message=r"The locs attribute was deprecated in Matplotlib 3\.11 and will be removed in 3\.13\.$",
+                    category=matplotlib.MatplotlibDeprecationWarning,
+                    module=r"pandas\.plotting\._matplotlib\.converter$",
+                )
+            ax = group.plot(freq=freq, title=title)
+            ax.figure.canvas.draw()
+            ax.figure.savefig(BytesIO(), format="png")
+        assert not caught
+        line = ax.lines[0]
+        np.testing.assert_allclose(line.get_ydata(), expected_prices, rtol=1e-12, atol=1e-12)
+        actual_dates = line.get_xdata(orig=True)
+        if np.issubdtype(actual_dates.dtype, np.number):
+            # pandas 3.1 exposes daily Period ordinals rather than Period objects.
+            np.testing.assert_array_equal(actual_dates, prices.index[::stride].to_period("D").asi8)
+        else:
+            dates = pd.DatetimeIndex([value.start_time if isinstance(value, pd.Period) else value for value in actual_dates])
+            np.testing.assert_array_equal(dates.to_numpy(dtype="datetime64[ns]"), prices.index[::stride].to_numpy(dtype="datetime64[ns]"))
+        assert ax.get_title() == expected_title
+        pd.testing.assert_series_equal(prices, before)
+    finally:
+        plt.close("all")
