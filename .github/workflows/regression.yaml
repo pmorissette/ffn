@@ -22,9 +22,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python: '3.9'
-            pandas: '>=1.5,<2'
-            numpy: '<2'
           - python: '3.11'
             pandas: '>=1.5,<2'
             numpy: '<2'

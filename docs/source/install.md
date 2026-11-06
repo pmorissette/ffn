@@ -23,4 +23,4 @@ Since `ffn` has many dependencies, we strongly recommend installing the [Anacond
 conda install ffn --channel conda-forge
 ```
 
-`ffn` is compatible with Python >=3.9.
+`ffn` is compatible with Python >=3.11.

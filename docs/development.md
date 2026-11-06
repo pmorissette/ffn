@@ -1,6 +1,6 @@
 # How to develop ffn
 
-Use Python 3.11 for development and documentation tools. ffn's runtime supports Python 3.9 and later. Install uv, then create an environment:
+Use Python 3.11 for development and documentation tools. ffn's runtime supports Python 3.11 and later. Install uv, then create an environment:
 
 ```bash
 uv venv --python 3.11
