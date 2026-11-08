@@ -1344,6 +1344,8 @@ def rebase(prices, value=100):
         * value (number): starting value for all series.
 
     """
+    if len(prices) == 0:
+        return prices.copy()
     # Backfill only the baseline lookup so returned missing prices stay missing.
     return prices / prices.bfill().iloc[0] * value
 
