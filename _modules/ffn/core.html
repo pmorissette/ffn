@@ -1856,6 +1856,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        * value (number): starting value for all series.</span>
 
 <span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">prices</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="c1"># Backfill only the baseline lookup so returned missing prices stay missing.</span>
     <span class="k">return</span> <span class="n">prices</span> <span class="o">/</span> <span class="n">prices</span><span class="o">.</span><span class="n">bfill</span><span class="p">()</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">value</span></div>
 
