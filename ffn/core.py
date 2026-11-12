@@ -145,6 +145,12 @@ class PerformanceStats:
     to help with plotting and contains a large amount of descriptive
     statistics.
 
+    Statistics are calculated only at frequencies supported by the observed
+    prices. With weekly or monthly prices, daily statistics such as
+    ``daily_vol`` and ``daily_sharpe`` remain ``NaN``. Monthly and yearly
+    statistics, and full-period measures such as ``cagr``, can still be
+    calculated when sufficient observations are available.
+
     Args:
         * prices (Series): A price series. A DatetimeIndex must be monotonic increasing.
             Unavailable outer observations are excluded from endpoint statistics when total
@@ -163,6 +169,9 @@ class PerformanceStats:
             Monthly and yearly risk-free prices are sampled in the asset's timezone,
             excluding observations after the asset's last usable price, before their
             returns are aligned with the asset's calendar-period returns.
+        * annualization_factor (float, optional): Periods per year used to annualize
+            daily statistics. Overrides frequency inference; it does not resample prices
+            or enable daily statistics for weekly or monthly input.
 
     Raises:
         * ValueError: If the price series contains no usable value.
