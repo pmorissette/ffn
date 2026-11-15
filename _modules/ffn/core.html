@@ -3830,6 +3830,22 @@ window.runMermaid = runMermaid;</script>
     <span class="c1"># too. Otherwise the numerator is a return over the raw series while the</span>
     <span class="c1"># denominator is an Ulcer Index over the filled one.</span>
     <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span>
+    <span class="n">annual_excess</span> <span class="o">=</span> <span class="n">_annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="p">)</span>
+
+    <span class="c1"># to_ulcer_index is expressed in percentage points, so put the excess</span>
+    <span class="c1"># return on the same scale before dividing</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">annual_excess</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">,</span> <span class="n">prices</span><span class="o">.</span><span class="n">to_ulcer_index</span><span class="p">())</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Compound annual return of forward-filled ``prices`` minus the annual</span>
+<span class="sd">    risk-free return over the same holding period, per column.</span>
+
+<span class="sd">    Shared by :func:`to_ulcer_performance_index` and :func:`to_pain_ratio`.</span>
+<span class="sd">    See :func:`to_ulcer_performance_index` for how ``rf`` and ``nperiods`` are read.</span>
+<span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">annual_excess_return</span><span class="p">(</span><span class="n">column</span><span class="p">):</span>
         <span class="n">column</span> <span class="o">=</span> <span class="n">column</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
@@ -3857,13 +3873,69 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="n">annual_return</span> <span class="o">-</span> <span class="n">annual_rf</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="n">annual_excess</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span> <span class="n">index</span><span class="o">=</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">annual_excess</span> <span class="o">=</span> <span class="n">annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="n">annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">prices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span> <span class="n">index</span><span class="o">=</span><span class="n">prices</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
 
-    <span class="c1"># to_ulcer_index is expressed in percentage points, so put the excess</span>
+
+<div class="viewcode-block" id="to_pain_index">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.to_pain_index">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_pain_index</span><span class="p">(</span><span class="n">prices</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Calculates the Pain Index from price levels.</span>
+
+<span class="sd">    The Pain Index, introduced by Zephyr Associates, is the mean absolute</span>
+<span class="sd">    drawdown below the running peak over the whole series. It weights every</span>
+<span class="sd">    drawdown by its depth and duration, where :func:`to_ulcer_index` squares</span>
+<span class="sd">    the depth first, so the Pain Index is never larger than the Ulcer Index</span>
+<span class="sd">    of the same prices.</span>
+
+<span class="sd">    Method ignores all gaps of NaN's in the price series.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        * prices (Series, DataFrame, ndarray): Prices</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        * float (Series if prices has more than one column) -- The Pain Index in percentage points.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">PandasObject</span><span class="p">):</span>
+        <span class="n">prices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">ndim</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+
+    <span class="c1"># Same gap handling and units as to_ulcer_index: to_drawdown_series</span>
+    <span class="c1"># carries the last known price across a gap, and the result is in</span>
+    <span class="c1"># percentage points.</span>
+    <span class="n">absolute_drawdowns</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">to_drawdown_series</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+
+    <span class="c1"># axis=0 so a DataFrame reduces per column</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">absolute_drawdowns</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="to_pain_ratio">
+<a class="viewcode-back" href="../../docs/source/ffn.html#ffn.core.to_pain_ratio">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_pain_ratio</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">nperiods</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    Converts from prices -&gt; Pain ratio.</span>
+
+<span class="sd">    The numerator is the investment's compound annual return minus the annual</span>
+<span class="sd">    risk-free return, as in :func:`to_ulcer_performance_index`, and the</span>
+<span class="sd">    denominator is the :func:`to_pain_index`. Price gaps are forward-filled.</span>
+<span class="sd">    Fewer than two prices, zero elapsed time, or missing risk-free returns</span>
+<span class="sd">    within the holding period produce NaN.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        * prices (Series, DataFrame): Prices</span>
+<span class="sd">        * rf (float, np.floating, Series): Annual `risk-free rate &lt;https://www.investopedia.com/terms/r/risk-freerate.asp&gt;`_ when scalar,</span>
+<span class="sd">            or per-period return Series aligned to the price index.</span>
+<span class="sd">        * nperiods (int): Positive periods per year, required for prices without</span>
+<span class="sd">            a datetime or timedelta index. Dated prices use elapsed calendar time.</span>
+
+<span class="sd">    """</span>
+    <span class="n">prices</span> <span class="o">=</span> <span class="n">prices</span><span class="o">.</span><span class="n">ffill</span><span class="p">()</span>
+    <span class="n">annual_excess</span> <span class="o">=</span> <span class="n">_annual_excess_return</span><span class="p">(</span><span class="n">prices</span><span class="p">,</span> <span class="n">rf</span><span class="p">,</span> <span class="n">nperiods</span><span class="p">)</span>
+
+    <span class="c1"># to_pain_index is expressed in percentage points, so put the excess</span>
     <span class="c1"># return on the same scale before dividing</span>
-    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">annual_excess</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">,</span> <span class="n">prices</span><span class="o">.</span><span class="n">to_ulcer_index</span><span class="p">())</span></div>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">annual_excess</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">,</span> <span class="n">prices</span><span class="o">.</span><span class="n">to_pain_index</span><span class="p">())</span></div>
 
 
 
@@ -4251,7 +4323,9 @@ window.runMermaid = runMermaid;</script>
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">calc_prob_backtest_overfitting</span> <span class="o">=</span> <span class="n">calc_prob_backtest_overfitting</span>
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">to_excess_returns</span> <span class="o">=</span> <span class="n">to_excess_returns</span>
     <span class="n">PandasObject</span><span class="o">.</span><span class="n">to_ulcer_index</span> <span class="o">=</span> <span class="n">to_ulcer_index</span>
-    <span class="n">PandasObject</span><span class="o">.</span><span class="n">to_ulcer_performance_index</span> <span class="o">=</span> <span class="n">to_ulcer_performance_index</span></div>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">to_ulcer_performance_index</span> <span class="o">=</span> <span class="n">to_ulcer_performance_index</span>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">to_pain_index</span> <span class="o">=</span> <span class="n">to_pain_index</span>
+    <span class="n">PandasObject</span><span class="o">.</span><span class="n">to_pain_ratio</span> <span class="o">=</span> <span class="n">to_pain_ratio</span></div>
 
 </pre></div>
 
