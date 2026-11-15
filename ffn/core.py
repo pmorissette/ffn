@@ -3198,6 +3198,21 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
     # too. Otherwise the numerator is a return over the raw series while the
     # denominator is an Ulcer Index over the filled one.
     prices = prices.ffill()
+    annual_excess = _annual_excess_return(prices, rf, nperiods)
+
+    # to_ulcer_index is expressed in percentage points, so put the excess
+    # return on the same scale before dividing
+    return np.divide(annual_excess * 100.0, prices.to_ulcer_index())
+
+
+def _annual_excess_return(prices, rf, nperiods):
+    """
+    Compound annual return of forward-filled ``prices`` minus the annual
+    risk-free return over the same holding period, per column.
+
+    Shared by :func:`to_ulcer_performance_index` and :func:`to_pain_ratio`.
+    See :func:`to_ulcer_performance_index` for how ``rf`` and ``nperiods`` are read.
+    """
 
     def annual_excess_return(column):
         column = column.dropna()
@@ -3225,13 +3240,64 @@ def to_ulcer_performance_index(prices, rf=0.0, nperiods=None):
         return annual_return - annual_rf
 
     if isinstance(prices, pd.DataFrame):
-        annual_excess = pd.Series([annual_excess_return(prices.iloc[:, i]) for i in range(prices.shape[1])], index=prices.columns, dtype=float)
-    else:
-        annual_excess = annual_excess_return(prices)
+        return pd.Series([annual_excess_return(prices.iloc[:, i]) for i in range(prices.shape[1])], index=prices.columns, dtype=float)
+    return annual_excess_return(prices)
 
-    # to_ulcer_index is expressed in percentage points, so put the excess
+
+def to_pain_index(prices):
+    """
+    Calculates the Pain Index from price levels.
+
+    The Pain Index, introduced by Zephyr Associates, is the mean absolute
+    drawdown below the running peak over the whole series. It weights every
+    drawdown by its depth and duration, where :func:`to_ulcer_index` squares
+    the depth first, so the Pain Index is never larger than the Ulcer Index
+    of the same prices.
+
+    Method ignores all gaps of NaN's in the price series.
+
+    Args:
+        * prices (Series, DataFrame, ndarray): Prices
+
+    Returns:
+        * float (Series if prices has more than one column) -- The Pain Index in percentage points.
+    """
+    if not isinstance(prices, PandasObject):
+        prices = pd.DataFrame(prices) if np.ndim(prices) > 1 else pd.Series(prices)
+
+    # Same gap handling and units as to_ulcer_index: to_drawdown_series
+    # carries the last known price across a gap, and the result is in
+    # percentage points.
+    absolute_drawdowns = np.abs(to_drawdown_series(prices) * 100)
+
+    # axis=0 so a DataFrame reduces per column
+    return np.mean(absolute_drawdowns, axis=0)
+
+
+def to_pain_ratio(prices, rf=0.0, nperiods=None):
+    """
+    Converts from prices -> Pain ratio.
+
+    The numerator is the investment's compound annual return minus the annual
+    risk-free return, as in :func:`to_ulcer_performance_index`, and the
+    denominator is the :func:`to_pain_index`. Price gaps are forward-filled.
+    Fewer than two prices, zero elapsed time, or missing risk-free returns
+    within the holding period produce NaN.
+
+    Args:
+        * prices (Series, DataFrame): Prices
+        * rf (float, np.floating, Series): Annual `risk-free rate <https://www.investopedia.com/terms/r/risk-freerate.asp>`_ when scalar,
+            or per-period return Series aligned to the price index.
+        * nperiods (int): Positive periods per year, required for prices without
+            a datetime or timedelta index. Dated prices use elapsed calendar time.
+
+    """
+    prices = prices.ffill()
+    annual_excess = _annual_excess_return(prices, rf, nperiods)
+
+    # to_pain_index is expressed in percentage points, so put the excess
     # return on the same scale before dividing
-    return np.divide(annual_excess * 100.0, prices.to_ulcer_index())
+    return np.divide(annual_excess * 100.0, prices.to_pain_index())
 
 
 def calc_expected_max_sharpe(n_trials, sr_std):
@@ -3605,3 +3671,5 @@ def extend_pandas():
     PandasObject.to_excess_returns = to_excess_returns
     PandasObject.to_ulcer_index = to_ulcer_index
     PandasObject.to_ulcer_performance_index = to_ulcer_performance_index
+    PandasObject.to_pain_index = to_pain_index
+    PandasObject.to_pain_ratio = to_pain_ratio
