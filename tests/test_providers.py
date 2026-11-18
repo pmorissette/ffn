@@ -399,3 +399,22 @@ def test_csv_provider_respects_date_window_and_refresh(tmp_path):
     pd.DataFrame({"ABC": [0.0, 9.0, 2.0]}, index=pd.date_range("2024-01-01", periods=3)).to_csv(path)
     result = ffn.get("ABC", provider="csv", path=path, start="2024-01-02", end="2024-01-03", mrefresh=True)
     assert result["abc"].tolist() == [9.0]
+
+
+@pytest.mark.parametrize("tz", ["UTC", "Etc/GMT+5"])
+@pytest.mark.parametrize("bound_type", [str, pd.Timestamp, lambda v: pd.Timestamp(v).date()])
+def test_csv_date_window_uses_timezone_of_prices(tmp_path, tz, bound_type):
+    index = pd.date_range("2024-01-01", periods=5, tz=tz, name="date")
+    frame = pd.DataFrame({"ABC": [10.0, 11.0, 12.0, 13.0, 14.0]}, index=index)
+    path = tmp_path / "prices.csv"
+    frame.to_csv(path)
+    result = ffn.get(
+        "ABC",
+        provider="csv",
+        path=path,
+        start=bound_type("2024-01-02"),
+        end=bound_type("2024-01-04"),
+        clean_tickers=False,
+    )
+    expected = pd.read_csv(path, index_col=0, parse_dates=True).iloc[1:3]
+    pd.testing.assert_frame_equal(result, expected)
