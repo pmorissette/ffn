@@ -124,6 +124,20 @@ def _validate_prices_index(prices):
         raise ValueError("prices index must be monotonic increasing")
 
 
+def _resolve_date_bound(bound, default, index):
+    """Parse a date-range bound and align it to any timezone on ``index``."""
+    if bound is None:
+        return default
+    resolved = pd.to_datetime(bound)
+    index_tz = getattr(index, "tz", None)
+    if index_tz is not None and isinstance(resolved, pd.Timestamp):
+        if resolved.tzinfo is None:
+            resolved = resolved.tz_localize(index_tz)
+        else:
+            resolved = resolved.tz_convert(index_tz)
+    return resolved
+
+
 def _riskfree_interval_returns(rf_prices, dates):
     """Risk-free price returns between consecutive observed daily asset ``dates``.
 
@@ -616,8 +630,8 @@ class PerformanceStats:
             * ValueError: If the selected range has no usable price.
 
         """
-        start = self._start if start is None else pd.to_datetime(start)
-        end = self._end if end is None else pd.to_datetime(end)
+        start = _resolve_date_bound(start, self._start, self.prices.index)
+        end = _resolve_date_bound(end, self._end, self.prices.index)
         prices = self.prices.loc[start:end]
         if prices.dropna().empty:
             raise ValueError("The selected date range contains no usable data.")
@@ -1061,8 +1075,8 @@ class GroupStats(dict):
         Raises:
             * ValueError: If any series has no usable price in the selected range.
         """
-        start = self._start if start is None else pd.to_datetime(start)
-        end = self._end if end is None else pd.to_datetime(end)
+        start = _resolve_date_bound(start, self._start, self._prices_full.index)
+        end = _resolve_date_bound(end, self._end, self._prices_full.index)
         prices = self._prices.loc[start:end]
         full_prices = self._prices_full.loc[start:end]
         # The shared calendar may be empty while every series still has usable data.
