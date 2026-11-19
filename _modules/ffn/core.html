@@ -568,6 +568,20 @@ window.runMermaid = runMermaid;</script>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"prices index must be monotonic increasing"</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_date_bound</span><span class="p">(</span><span class="n">bound</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Parse a date-range bound and align it to any timezone on ``index``."""</span>
+    <span class="k">if</span> <span class="n">bound</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default</span>
+    <span class="n">resolved</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">bound</span><span class="p">)</span>
+    <span class="n">index_tz</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="s2">"tz"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index_tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">resolved</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">resolved</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolved</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">index_tz</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">resolved</span> <span class="o">=</span> <span class="n">resolved</span><span class="o">.</span><span class="n">tz_convert</span><span class="p">(</span><span class="n">index_tz</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolved</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_riskfree_interval_returns</span><span class="p">(</span><span class="n">rf_prices</span><span class="p">,</span> <span class="n">dates</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Risk-free price returns between consecutive observed daily asset ``dates``.</span>
 
@@ -1067,8 +1081,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            * ValueError: If the selected range has no usable price.</span>
 
 <span class="sd">        """</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span> <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end</span> <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">_resolve_date_bound</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">_resolve_date_bound</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="n">prices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prices</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">prices</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"The selected date range contains no usable data."</span><span class="p">)</span>
@@ -1539,8 +1553,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Raises:</span>
 <span class="sd">            * ValueError: If any series has no usable price in the selected range.</span>
 <span class="sd">        """</span>
-        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span> <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
-        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end</span> <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">end</span><span class="p">)</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">_resolve_date_bound</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prices_full</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">_resolve_date_bound</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prices_full</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="n">prices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prices</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
         <span class="n">full_prices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prices_full</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
         <span class="c1"># The shared calendar may be empty while every series still has usable data.</span>
