@@ -196,7 +196,6 @@ def yf(ticker: str, field=None, start=None, end=None, mrefresh=False) -> pd.Seri
     return _legacy_download(ticker, field=field, start=start, end=end)
 
 
-@utils.memoize
 def _csv_date_bound(value, index):
     bound = pd.Timestamp(value)
     if isinstance(index, pd.DatetimeIndex) and index.tz is not None and bound.tzinfo is None:
@@ -204,6 +203,7 @@ def _csv_date_bound(value, index):
     return bound
 
 
+@utils.memoize
 def csv(ticker: str, path="data.csv", field="", mrefresh=False, start=None, end=None, **kwargs) -> pd.Series:
     """
     Data provider wrapper around pandas' read_csv. Provides memoization.
