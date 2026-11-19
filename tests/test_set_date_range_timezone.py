@@ -3,6 +3,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import pytest
+from packaging.version import Version
 
 import ffn
 
@@ -138,12 +139,22 @@ def test_set_date_range_preserves_naive_index_rejection_and_empty_range_state(gr
 
     with pytest.raises((TypeError, ValueError)):
         naive_stats.set_date_range(start="2024-01-02T00:00:00Z")
-    with pytest.raises(TypeError):
-        naive_stats.set_date_range(start="2024-01-02T00:00:00Z", end="2024-01-05T00:00:00Z")
     if grouped:
         pd.testing.assert_frame_equal(naive_stats.stats, before_naive)
     else:
         pd.testing.assert_series_equal(naive_stats.stats, before_naive)
+
+    if Version(pd.__version__) >= Version("2"):
+        with pytest.raises(TypeError):
+            naive_stats.set_date_range(start="2024-01-02T00:00:00Z", end="2024-01-05T00:00:00Z")
+        if grouped:
+            pd.testing.assert_frame_equal(naive_stats.stats, before_naive)
+        else:
+            pd.testing.assert_series_equal(naive_stats.stats, before_naive)
+    else:
+        # pandas 1.x warns when indexing a tz-naive DatetimeIndex with two tz-aware bounds.
+        with pytest.warns(FutureWarning, match="timezone-naive"):
+            naive_stats.set_date_range(start="2024-01-02T00:00:00Z", end="2024-01-05T00:00:00Z")
 
     tz_a, tz_b = _make_tz_prices(tz="America/New_York", periods=20)
     tz_stats = ffn.GroupStats(tz_a, tz_b) if grouped else ffn.PerformanceStats(tz_a)
