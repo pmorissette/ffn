@@ -196,12 +196,20 @@ def yf(ticker: str, field=None, start=None, end=None, mrefresh=False) -> pd.Seri
     return _legacy_download(ticker, field=field, start=start, end=end)
 
 
+def _csv_date_bound(value, index):
+    bound = pd.Timestamp(value)
+    if isinstance(index, pd.DatetimeIndex) and index.tz is not None and bound.tzinfo is None:
+        bound = bound.tz_localize(index.tz)
+    return bound
+
+
 @utils.memoize
 def csv(ticker: str, path="data.csv", field="", mrefresh=False, start=None, end=None, **kwargs) -> pd.Series:
     """
     Data provider wrapper around pandas' read_csv. Provides memoization.
     The date window includes start and excludes end. Duplicate dates keep
-    the last observation, and the result is sorted by date.
+    the last observation, and the result is sorted by date. Naive bounds are
+    interpreted in the price index timezone when the index is timezone-aware.
     """
     # set defaults if not specified
     if "index_col" not in kwargs:
@@ -223,9 +231,9 @@ def csv(ticker: str, path="data.csv", field="", mrefresh=False, start=None, end=
     series = df[tf]
     series = series[~series.index.duplicated(keep="last")].sort_index()
     if start is not None:
-        series = series.loc[series.index >= pd.Timestamp(start)]
+        series = series.loc[series.index >= _csv_date_bound(start, series.index)]
     if end is not None:
-        series = series.loc[series.index < pd.Timestamp(end)]
+        series = series.loc[series.index < _csv_date_bound(end, series.index)]
     return series
 
 
