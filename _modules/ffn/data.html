@@ -655,6 +655,13 @@ window.runMermaid = runMermaid;</script>
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_csv_date_bound</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+    <span class="n">bound</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DatetimeIndex</span><span class="p">)</span> <span class="ow">and</span> <span class="n">index</span><span class="o">.</span><span class="n">tz</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">bound</span><span class="o">.</span><span class="n">tzinfo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bound</span> <span class="o">=</span> <span class="n">bound</span><span class="o">.</span><span class="n">tz_localize</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">tz</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">bound</span>
+
+
 <div class="viewcode-block" id="csv">
 <a class="viewcode-back" href="../../docs/source/ffn.html#ffn.data.csv">[docs]</a>
 <span class="nd">@utils</span><span class="o">.</span><span class="n">memoize</span>
@@ -662,7 +669,8 @@ window.runMermaid = runMermaid;</script>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Data provider wrapper around pandas' read_csv. Provides memoization.</span>
 <span class="sd">    The date window includes start and excludes end. Duplicate dates keep</span>
-<span class="sd">    the last observation, and the result is sorted by date.</span>
+<span class="sd">    the last observation, and the result is sorted by date. Naive bounds are</span>
+<span class="sd">    interpreted in the price index timezone when the index is timezone-aware.</span>
 <span class="sd">    """</span>
     <span class="c1"># set defaults if not specified</span>
     <span class="k">if</span> <span class="s2">"index_col"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
@@ -684,9 +692,9 @@ window.runMermaid = runMermaid;</script>
     <span class="n">series</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">tf</span><span class="p">]</span>
     <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="p">[</span><span class="o">~</span><span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">duplicated</span><span class="p">(</span><span class="n">keep</span><span class="o">=</span><span class="s2">"last"</span><span class="p">)]</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">start</span><span class="p">)]</span>
+        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&gt;=</span> <span class="n">_csv_date_bound</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
     <span class="k">if</span> <span class="n">end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timestamp</span><span class="p">(</span><span class="n">end</span><span class="p">)]</span>
+        <span class="n">series</span> <span class="o">=</span> <span class="n">series</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">series</span><span class="o">.</span><span class="n">index</span> <span class="o">&lt;</span> <span class="n">_csv_date_bound</span><span class="p">(</span><span class="n">end</span><span class="p">,</span> <span class="n">series</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
     <span class="k">return</span> <span class="n">series</span></div>
 
 
